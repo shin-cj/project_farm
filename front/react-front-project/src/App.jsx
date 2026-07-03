@@ -59,7 +59,7 @@ function App() {
                         <p>시장: {item.mrkt_nm ?? '시장 정보 없음'}</p>
                         <p>단위: {item.unit_sz}{item.unit}</p>
                         <p>가격: {item.exmn_dd_prc}원</p>
-                        <p>kg 환산가격: {item.exmn_dd_cnvs_prc}</p>
+                        <p>kg 환산가격: {item.exmn_dd_cnvs_prc}원</p>
                     </li>
                 ))}
             </ul>
