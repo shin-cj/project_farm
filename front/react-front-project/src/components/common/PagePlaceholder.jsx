@@ -1,0 +1,13 @@
+// 아직 기능 구현 전인 화면에서 담당 기능과 다음 작업을 안내하는 공통 컴포넌트입니다.
+function PagePlaceholder({ title, description }) {
+  return (
+    <section className="page-card">
+      <p className="page-label">AgroLink</p>
+      <h1>{title}</h1>
+      <p>{description}</p>
+      <p className="page-note">이 화면은 담당 팀원이 API 연결과 세부 UI를 구현할 자리입니다.</p>
+    </section>
+  )
+}
+
+export default PagePlaceholder
