@@ -1,107 +1,205 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 export function SuccessPage() {
     const [isConfirmed, setIsConfirmed] = useState(false);
-    const searchParams = new URLSearchParams(window.location.search);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
+
+    const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
     const paymentKey = searchParams.get("paymentKey");
     const orderId = searchParams.get("orderId");
     const amount = searchParams.get("amount");
+    const orderName = searchParams.get("orderName") || "농산물 주문";
+    const formattedAmount = Number(amount || 0).toLocaleString("ko-KR");
 
     async function confirmPayment() {
-        // TODO: API를 호출해서 서버에게 paymentKey, orderId, amount를 넘겨주세요.
-        // 서버에선 해당 데이터를 가지고 승인 API를 호출하면 결제가 완료됩니다.
-        // https://docs.tosspayments.com/reference#%EA%B2%B0%EC%A0%9C-%EC%8A%B9%EC%9D%B8
-        const response = await fetch("/api/payments/confirm", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                paymentKey,
-                orderId,
-                amount
-            })
-        });
+        setIsLoading(true);
+        setErrorMessage("");
 
-        if (response.ok) {
+        try {
+            const response = await fetch("/api/payments/confirm", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    paymentKey,
+                    orderId,
+                    amount: Number(amount)
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("결제 승인 요청에 실패했습니다.");
+            }
+
             setIsConfirmed(true);
+        } catch (error) {
+            console.error(error);
+            setErrorMessage("결제 승인 중 문제가 발생했습니다. 주문 정보를 확인한 뒤 다시 시도해주세요.");
+        } finally {
+            setIsLoading(false);
         }
     }
 
+    const pageStyle = {
+        minHeight: "calc(100vh - 120px)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        padding: "48px 24px",
+        background: "#f6f8f5"
+    };
+
+    const cardStyle = {
+        width: "100%",
+        maxWidth: "620px",
+        padding: "40px",
+        border: "1px solid #dce6dd",
+        borderRadius: "18px",
+        background: "#ffffff",
+        boxShadow: "0 16px 40px rgba(32, 70, 45, 0.1)"
+    };
+
+    const iconStyle = {
+        width: "68px",
+        height: "68px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "50%",
+        background: isConfirmed ? "#e5f4ea" : "#eef3ee",
+        color: "#216b3a",
+        fontSize: "34px",
+        fontWeight: 800
+    };
+
+    const rowStyle = {
+        display: "flex",
+        justifyContent: "space-between",
+        gap: "24px",
+        padding: "14px 0",
+        borderBottom: "1px solid #e8eee8"
+    };
+
+    const buttonStyle = {
+        minHeight: "48px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "8px",
+        fontSize: "16px",
+        fontWeight: 700
+    };
+
     return (
-        <div className="wrapper w-100">
-            {isConfirmed ? (
-                <div
-                    className="flex-column align-center confirm-success w-100 max-w-540"
-                    style={{
-                        display: "flex"
-                    }}
-                >
-                    <img
-                        src="https://static.toss.im/illusts/check-blue-spot-ending-frame.png"
-                        width="120"
-                        height="120"
-                    />
-                    <h2 className="title">결제를 완료했어요</h2>
-                    <div className="response-section w-100">
-                        <div className="flex justify-between">
-                            <span className="response-label">결제 금액</span>
-                            <span id="amount" className="response-text">
-                {amount}
-              </span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="response-label">주문번호</span>
-                            <span id="orderId" className="response-text">
-                {orderId}
-              </span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="response-label">paymentKey</span>
-                            <span id="paymentKey" className="response-text">
-                {paymentKey}
-              </span>
-                        </div>
+        <main style={pageStyle}>
+            <section style={cardStyle}>
+                <div style={iconStyle}>{isConfirmed ? "✓" : "!"}</div>
+
+                <p style={{
+                    margin: "24px 0 0",
+                    color: "#2f8550",
+                    fontSize: "13px",
+                    fontWeight: 800,
+                    letterSpacing: "0.08em"
+                }}>
+                    {isConfirmed ? "PAYMENT COMPLETE" : "PAYMENT READY"}
+                </p>
+
+                <h2 style={{
+                    margin: "8px 0 0",
+                    color: "#213328",
+                    fontSize: "30px",
+                    lineHeight: 1.25
+                }}>
+                    {isConfirmed ? "결제가 완료되었습니다" : "결제 승인만 남았어요"}
+                </h2>
+
+                <p style={{
+                    margin: "12px 0 0",
+                    color: "#68756d",
+                    fontSize: "16px",
+                    lineHeight: 1.6
+                }}>
+                    {isConfirmed
+                        ? "주문 정보가 정상적으로 저장되었습니다."
+                        : "토스 결제 요청은 성공했고, 아래 버튼을 누르면 서버에서 최종 승인합니다."}
+                </p>
+
+                <div style={{
+                    marginTop: "30px",
+                    padding: "22px",
+                    border: "1px solid #dce6dd",
+                    borderRadius: "14px",
+                    background: "#fbfdfb"
+                }}>
+                    <div style={rowStyle}>
+                        <span style={{ color: "#68756d", fontWeight: 700 }}>주문 상품</span>
+                        <strong style={{ color: "#213328", textAlign: "right" }}>{orderName}</strong>
                     </div>
-
-                    <div className="w-100 button-group">
-
-                        <div className="flex" style={{ gap: "16px" }}>
-                            <a
-                                className="btn w-100"
-                                href="https://developers.tosspayments.com/sandbox"
-                            >
-                                다시 테스트하기
-                            </a>
-                            <a
-                                className="btn w-100"
-                                href="https://docs.tosspayments.com/guides/v2/payment-widget/integration"
-                                target="_blank"
-                                rel="noopner noreferer"
-                            >
-                                결제 연동 문서가기
-                            </a>
-                        </div>
+                    <div style={rowStyle}>
+                        <span style={{ color: "#68756d", fontWeight: 700 }}>결제 금액</span>
+                        <strong style={{ color: "#213328" }}>{formattedAmount}원</strong>
+                    </div>
+                    <div style={rowStyle}>
+                        <span style={{ color: "#68756d", fontWeight: 700 }}>주문 번호</span>
+                        <strong style={{ color: "#213328", textAlign: "right", wordBreak: "break-word" }}>{orderId}</strong>
+                    </div>
+                    <div style={{ ...rowStyle, borderBottom: 0 }}>
+                        <span style={{ color: "#68756d", fontWeight: 700 }}>결제 키</span>
+                        <strong style={{ color: "#213328", textAlign: "right", wordBreak: "break-word" }}>{paymentKey}</strong>
                     </div>
                 </div>
-            ) : (
-                <div className="flex-column align-center confirm-loading w-100 max-w-540">
-                    <div className="flex-column align-center">
-                        <img
-                            src="https://static.toss.im/lotties/loading-spot-apng.png"
-                            width="120"
-                            height="120"
-                        />
-                        <h2 className="title text-center">결제 요청까지 성공했어요.</h2>
-                        <h4 className="text-center description">결제 승인하고 완료해보세요.</h4>
-                    </div>
-                    <div className="w-100">
-                        <button className="btn primary w-100" onClick={confirmPayment}>
-                            결제 승인하기
-                        </button>
-                    </div>
+
+                {errorMessage && (
+                    <p style={{
+                        margin: "18px 0 0",
+                        padding: "14px 16px",
+                        borderRadius: "10px",
+                        background: "#fff4f2",
+                        color: "#b42318",
+                        fontSize: "14px",
+                        fontWeight: 700
+                    }}>
+                        {errorMessage}
+                    </p>
+                )}
+
+                <div style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                    marginTop: "28px"
+                }}>
+                    {isConfirmed ? (
+                        <>
+                            <Link className="btn primary" style={buttonStyle} to="/order">
+                                주문 화면으로
+                            </Link>
+                            <Link className="btn" style={buttonStyle} to="/">
+                                홈으로
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                className="btn primary"
+                                style={buttonStyle}
+                                type="button"
+                                onClick={confirmPayment}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? "승인 중..." : "결제 승인하기"}
+                            </button>
+                            <Link className="btn" style={buttonStyle} to="/sandbox">
+                                다시 결제하기
+                            </Link>
+                        </>
+                    )}
                 </div>
-            )}
-        </div>
+            </section>
+        </main>
     );
 }
