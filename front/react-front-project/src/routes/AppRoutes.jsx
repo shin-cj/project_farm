@@ -24,9 +24,9 @@ import UserManagementPage from '../pages/admin/UserManagementPage'
 import ContentManagementPage from '../pages/admin/ContentManagementPage'
 import ReportManagementPage from '../pages/admin/ReportManagementPage'
 import MarketPriceManagementPage from '../pages/admin/MarketPriceManagementPage'
-import { CheckoutPage } from '../payment/checkout'
-import { SuccessPage } from '../payment/success'
-import { FailPage } from '../payment/fail'
+import { CheckoutPage } from '../components/payment/checkout.jsx'
+import { SuccessPage } from '../components/payment/success.jsx'
+import { FailPage } from '../components/payment/fail.jsx'
 
 // URL과 실제 페이지 컴포넌트를 한곳에서 연결합니다.
 function AppRoutes() {
