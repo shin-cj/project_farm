@@ -3,6 +3,7 @@ package me.soldesk.springbootback.domain.chatbot.dto;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** 백엔드가 프론트엔드에 응답할 데이터를 담는 DTO(데이터 전달 객체)입니다. */
 // 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
@@ -25,6 +26,9 @@ public class ChatbotResponse {
 
     /** 추천 레시피 제목 */
     private String recipeTitle;
+
+    /** 레시피 목록 */
+    private List<String> ingredients;
 
     /** 기타 참고사항 */
     private String remark;

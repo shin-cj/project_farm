@@ -28,3 +28,6 @@ external:
 openai:
   api-key: ${OPENAI_API_KEY}
   model: gpt-5.4-mini
+
+tosspayments:
+  secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6

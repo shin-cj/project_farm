@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.chatbot.controller;
 
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.chatbot.dto.ChatbotRequest;
+import me.soldesk.springbootback.domain.chatbot.dto.ChatbotResponse;
 import me.soldesk.springbootback.domain.chatbot.service.ChatbotService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -20,19 +21,16 @@ public class ChatbotController {
 
     private final ChatbotService chatbotService;
 
-    @PostMapping("/test")
-    public ResponseEntity<Map<String,String>> testPrompt(
+    @PostMapping("/recipes")
+    public ResponseEntity<ChatbotResponse> recommend(
             @RequestBody ChatbotRequest request
-            ) {
-
-        String answer = chatbotService.testPrompt(request.getObj1());
-
-        return ResponseEntity.ok(
-                Map.of(
-                        "prompt",request.getObj1(),
-                        "answer",answer
-                )
-        );
+            ){
+            ChatbotResponse response = chatbotService.recommendRecipe(request);
+            return ResponseEntity.ok(response);
     }
+
+
+
+
 
 }
