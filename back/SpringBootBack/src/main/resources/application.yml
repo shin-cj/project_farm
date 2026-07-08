@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 spring:
   application:
     name: SpringBootBack
@@ -5,7 +8,7 @@ spring:
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
     url: jdbc:oracle:thin:@localhost:1521:xe
-    username: sqlstudent
+    username: SQLSTUDENT
     password: 1234
 
   jpa:
@@ -20,6 +23,11 @@ external:
   api01:
     base-url: https://apis.data.go.kr/B552845/recent
     api-key: ${API01_KEY}
+
+
+openai:
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-5.4-mini
 
 tosspayments:
   secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
