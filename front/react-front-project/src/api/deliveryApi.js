@@ -1,7 +1,36 @@
-// delivery 기능의 백엔드 주소가 확정되면 이 객체에 조회·등록·수정·삭제 함수를 추가
+
+
+// 실사용 코드
+// 관리자 배송 목록 조회 API가 생기면 사용
+export async function getAdminDeliveries() {
+     const response = await fetch("http://localhost:8080/api/admin/deliveries")
+
+     if (!response.ok) {
+         throw new Error("관리자 배송 목록을 불러오지 못했습니다.")
+     }
+
+     return response.json()
+ }
+
+// 실사용 코드
+// 관리자 배송 상태 변경 API가 생기면 사용
+ export async function updateAdminDeliveryStatus(deliveryId, deliveryStatus) {
+     const response = await fetch(`http://localhost:8080/api/admin/deliveries/${deliveryId}/status`, {
+         method: "PATCH",
+         headers: {
+             "Content-Type": "application/json",
+         },
+         body: JSON.stringify({ deliveryStatus }),
+     })
+
+     if (!response.ok) {
+         throw new Error("배송 상태 변경에 실패했습니다.")
+     }
+
+     return response.json()
+ }
 const BASE_URL = "http://localhost:8080/api/deliveries"
 
-// 구매자 배송
 export async function getDeliveryByOrderId(orderId) {
     const response = await fetch(`${BASE_URL}?orderId=${orderId}`)
 
@@ -12,7 +41,6 @@ export async function getDeliveryByOrderId(orderId) {
     return response.json()
 }
 
-// 판매자 배송
 export async function registerSellerDelivery(deliveryData) {
     const response = await fetch("http://localhost:8080/api/seller/deliveries", {
         method: "POST",
