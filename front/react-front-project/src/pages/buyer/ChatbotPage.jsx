@@ -5,7 +5,7 @@ import chatbotApi from "../../api/chatbotApi.js";
 function ChatbotPage() {
 
   const [message, setMessage] = useState('')
-  const [answer, setAnswer] = useState('')
+  const [recipeResult, setRecipeResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -17,7 +17,7 @@ function ChatbotPage() {
 
     setLoading(true)
     setError('')
-    setAnswer('')
+    setRecipeResult('')
 
     try {
       const response = await chatbotApi.testPromport({
@@ -25,7 +25,7 @@ function ChatbotPage() {
         obj1: message,
       })
 
-      setAnswer(response.data.answer)
+      setRecipeResult(response.data)
     }catch (e){
       console.log(e)
       setError("응답을 가져오지 못했습니다.")
@@ -49,12 +49,24 @@ function ChatbotPage() {
     </button>
 
     {error && <p>{error}</p>}
-    {answer && (
-        <div>
-          <h2>추천 결과</h2>
-          <p>{answer}</p>
-        </div>
-    )}
+        {recipeResult && (
+            <div>
+              <h2>{recipeResult.recipeTitle}</h2>
+
+              <h3>필요 재료</h3>
+              <ul>
+                {recipeResult.ingredients?.map((ingredient, index) => (
+                    <li key={index}>{ingredient}</li>
+                ))}
+              </ul>
+
+              <h3>조리 방법</h3>
+              <p>{recipeResult.recipe}</p>
+
+              <h3>참고사항</h3>
+              <p>{recipeResult.remark}</p>
+            </div>
+        )}
   </section>
   )
 }
