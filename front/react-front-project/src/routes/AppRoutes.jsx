@@ -24,6 +24,9 @@ import UserManagementPage from '../pages/admin/UserManagementPage'
 import ContentManagementPage from '../pages/admin/ContentManagementPage'
 import ReportManagementPage from '../pages/admin/ReportManagementPage'
 import MarketPriceManagementPage from '../pages/admin/MarketPriceManagementPage'
+import { CheckoutPage } from '../components/payment/checkout.jsx'
+import { SuccessPage } from '../components/payment/success.jsx'
+import { FailPage } from '../components/payment/fail.jsx'
 
 // URL과 실제 페이지 컴포넌트를 한곳에서 연결합니다.
 function AppRoutes() {
@@ -59,6 +62,10 @@ function AppRoutes() {
         <Route path="reports" element={<ReportManagementPage />} />
         <Route path="market-prices" element={<MarketPriceManagementPage />} />
       </Route>
+
+      <Route path="/sandbox" element={<CheckoutPage />} />
+      <Route path="/sandbox/success" element={<SuccessPage />} />
+      <Route path="/sandbox/fail" element={<FailPage />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
