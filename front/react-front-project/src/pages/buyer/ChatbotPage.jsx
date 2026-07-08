@@ -4,10 +4,10 @@ import chatbotApi from "../../api/chatbotApi.js";
 // AI 식재료 도우미 기능을 담당하는 페이지 컴포넌트입니다.
 function ChatbotPage() {
 
-  const {message, setMessage} = useState('')
-  const {answer, setAnswer} = useState('')
-  const {loading, setLoading} = useState(false)
-  const {error, setError} = useState('')
+  const [message, setMessage] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async () =>{
     if(!message.trim()){

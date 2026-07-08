@@ -12,18 +12,21 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chatbot")
 public class ChatbotController {
 
+    private final ChatbotService chatbotService;
 
     @PostMapping("/test")
     public ResponseEntity<Map<String,String>> testPrompt(
             @RequestBody ChatbotRequest request
             ) {
 
-        String answer = ChatbotService.testPrompt(request.getObj1());
+        String answer = chatbotService.testPrompt(request.getObj1());
+
         return ResponseEntity.ok(
                 Map.of(
                         "prompt",request.getObj1(),
