@@ -45,11 +45,23 @@ public class OpenAiRecipeClient {
                                 반드시 아래 JSON 형식으로만 응답해라.
                                 설명 문장, 마크다운, 코드 블록 없이 JSON만 응답해라.
                                 
+                                ingredients는 화면에 보여줄 전체 재료명이다.
+                                searchIngredients는 DB 상품 검색에 사용할 핵심 농산물 이름만 넣어라.
+                                searchIngredients에는 수량, 단위, 손질 상태, 부위명, 설명을 넣지 마라.
+                                searchIngredients에는 우리 쇼핑몰에서 판매할 수 있는 농산물/채소/과일/식재료 이름만 넣어라.
+                                
+                                예:
+                                "양파 1개" -> "양파"
+                                "대파 1대" -> "대파"
+                                "다진 마늘 1큰술" -> "마늘"
+                                "돼지고기 앞다리살 300g" -> "돼지고기"
+                                
                                 {
-                                    "recipeTitle":"레시피 제목",
-                                    "ingredients":["재료1","재료2","재료3"],
-                                    "recipe":"조리 순서",
-                                    "remark":"참고 사항"
+                                  "recipeTitle": "레시피 제목",
+                                  "ingredients": ["재료1", "재료2", "재료3"],
+                                  "searchIngredients": ["재료1", "재료2", "재료3"],
+                                  "recipe": "조리 순서",
+                                  "remark": "참고 사항"
                                 }
                                 """,
                         "input",userMessage

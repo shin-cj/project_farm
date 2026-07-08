@@ -22,3 +22,94 @@ a { color: inherit; text-decoration: none; }
   .side-menu { position: static; }
   .role-content { padding: 24px; }
 }
+.chatbot-page h1 {
+  margin: 0 0 24px;
+}
+
+.chatbot-input-area {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.chatbot-input-area textarea {
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid #cfd8d1;
+  border-radius: 8px;
+}
+
+.chatbot-input-area button,
+.product-card button {
+  border: 0;
+  border-radius: 8px;
+  background: #216b3a;
+  color: white;
+  cursor: pointer;
+}
+
+.chatbot-input-area button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.chatbot-error {
+  color: #c0392b;
+}
+
+.recipe-result-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 28px;
+  align-items: start;
+}
+
+.recipe-panel,
+.recommended-products {
+  background: #ffffff;
+  border: 1px solid #dce6dd;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.recipe-panel h2,
+.recommended-products h2 {
+  margin-top: 0;
+}
+
+.product-card {
+  padding: 14px 0;
+  border-bottom: 1px solid #edf2ee;
+}
+
+.product-card:last-child {
+  border-bottom: 0;
+}
+
+.product-card span {
+  display: block;
+  color: #68756d;
+  font-size: 0.9rem;
+}
+
+.product-card strong {
+  display: block;
+  margin: 4px 0;
+}
+
+.product-card button {
+  width: 100%;
+  height: 36px;
+}
+
+.empty-products {
+  color: #68756d;
+}
+
+@media (max-width: 760px) {
+  .chatbot-input-area,
+  .recipe-result-layout {
+    grid-template-columns: 1fr;
+  }
+}

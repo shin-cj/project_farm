@@ -1,73 +1,96 @@
-import {useState} from "react";
-import chatbotApi from "../../api/chatbotApi.js";
+import { useState } from 'react'
+import chatbotApi from '../../api/chatbotApi.js'
 
-// AI 식재료 도우미 기능을 담당하는 페이지 컴포넌트입니다.
 function ChatbotPage() {
-
   const [message, setMessage] = useState('')
   const [recipeResult, setRecipeResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async () =>{
-    if(!message.trim()){
-      alert("질문을 입력해주세요!")
+  const handleSubmit = async () => {
+    const question = message.trim()
+
+    if (!question) {
+      alert('질문을 입력해주세요.')
       return
     }
 
-    setLoading(true)
-    setError('')
-    setRecipeResult('')
-
     try {
-      const response = await chatbotApi.testPromport({
+      setLoading(true)
+      setError('')
+      setRecipeResult(null)
+
+      const { data } = await chatbotApi.recommendRecipe({
         userId: 1,
-        obj1: message,
+        obj1: question,
       })
 
-      setRecipeResult(response.data)
-    }catch (e){
-      console.log(e)
-      setError("응답을 가져오지 못했습니다.")
-    }finally {
+      setRecipeResult(data)
+    } catch (e) {
+      console.error(e)
+      setError('레시피 추천을 가져오지 못했습니다.')
+    } finally {
       setLoading(false)
     }
   }
 
-
   return (
-      <section>
-    <h1>AI 레시피 추천</h1>
-    <textarea value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="예 : 김치랑 계란이 있는데 뭐 만들 수 있어?"
-              rows={5}
-    />
+      <section className="chatbot-page">
+        <h1>AI 레시피 추천</h1>
 
-    <button onClick={handleSubmit} disabled={loading}>
-      {loading ? '추천받는 중...':'추천 받기'}
-    </button>
+        <div className="chatbot-input-area">
+        <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="예: 25000원이 있는데 칼칼한 한식 메뉴 추천해줘"
+            rows={4}
+        />
 
-    {error && <p>{error}</p>}
+          <button type="button" onClick={handleSubmit} disabled={loading}>
+            {loading ? '추천 받는 중...' : '추천 받기'}
+          </button>
+        </div>
+
+        {error && <p className="chatbot-error">{error}</p>}
+
         {recipeResult && (
-            <div>
-              <h2>{recipeResult.recipeTitle}</h2>
+            <div className="recipe-result-layout">
+              <section className="recipe-panel">
+                <h2>{recipeResult.recipeTitle}</h2>
 
-              <h3>필요 재료</h3>
-              <ul>
-                {recipeResult.ingredients?.map((ingredient, index) => (
-                    <li key={index}>{ingredient}</li>
-                ))}
-              </ul>
+                <h3>필요 재료</h3>
+                <ul>
+                  {recipeResult.ingredients?.map((ingredient, index) => (
+                      <li key={index}>{ingredient}</li>
+                  ))}
+                </ul>
 
-              <h3>조리 방법</h3>
-              <p>{recipeResult.recipe}</p>
+                <h3>조리 방법</h3>
+                <p>{recipeResult.recipe}</p>
 
-              <h3>참고사항</h3>
-              <p>{recipeResult.remark}</p>
+                <h3>참고사항</h3>
+                <p>{recipeResult.remark}</p>
+              </section>
+
+              <aside className="recommended-products">
+                <h2>추천 상품</h2>
+
+                {recipeResult.matchedProducts?.length > 0 ? (
+                    recipeResult.matchedProducts.map((product) => (
+                        <div className="product-card" key={product.productId}>
+                          <span>{product.ingredientName}</span>
+                          <strong>{product.productName}</strong>
+                          <p>{product.price.toLocaleString()}원 / {product.unit}</p>
+                          <button type="button">장바구니 담기</button>
+                        </div>
+                    ))
+                ) : (
+                    <p className="empty-products">추천 가능한 판매 상품이 없습니다.</p>
+                )}
+              </aside>
             </div>
         )}
-  </section>
+      </section>
   )
 }
 

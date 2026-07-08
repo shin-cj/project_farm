@@ -13,6 +13,8 @@ public class OpenAiRecipeResponse {
 
     private List<String> ingredients;
 
+    private List<String> searchIngredients;
+
     private String recipe;
 
     private String remark;

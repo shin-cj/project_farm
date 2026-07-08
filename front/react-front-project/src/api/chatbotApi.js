@@ -2,7 +2,7 @@
 import httpClient from "./httpClient.js";
 
 const chatbotApi = {
-    testPromport(request){
+    recommendRecipe(request){
         return httpClient.post('/chatbot/recipes',request)
     },
 }
