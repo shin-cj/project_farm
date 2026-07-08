@@ -1,42 +1,98 @@
-package me.soldesk.springbootback.domain.category.entity;
+// 상품 목록 기능을 담당하는 페이지 컴포넌트입니다.
+import { useEffect, useState } from 'react'
+import { getCategories } from '../../api/categoryApi.js'
+import { getProducts } from '../../api/productApi.js'
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+function ProductListPage() {
+  const [categories, setCategories] = useState([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null)
+  const [products, setProducts] = useState([])
 
-/** categories 테이블의 한 행을 Java 객체로 표현하는 Entity(엔티티)입니다. */
-// 이 클래스가 JPA에서 관리하는 Entity임을 표시합니다.
-@Entity
-// 연결할 실제 Oracle 테이블 이름을 지정합니다.
-@Table(name = "categories")
-// 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
-@Getter
-// 모든 필드의 setter 메서드를 Lombok이 자동 생성합니다.
-@Setter
-// JPA가 객체를 만들 때 필요한 기본 생성자를 Lombok이 자동 생성합니다.
-@NoArgsConstructor
-public class Category {
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-    /** 카테고리 고유 번호 */
-    // 이 필드가 테이블의 PK(기본키)임을 표시합니다.
-    @Id
-    // Oracle 시퀀스와 JPA에서 사용할 생성기 이름을 연결합니다.
-    @SequenceGenerator(name = "categories_seq_generator", sequenceName = "categories_seq", allocationSize = 1)
-    // 새 데이터 저장 시 위 시퀀스로 PK 값을 자동 생성합니다.
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "categories_seq_generator")
-    // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "category_id", nullable = false)
-    private Long categoryId;
+    // 카테고리 목록은 화면이 처음 열릴 때 한 번 조회합니다.
+    useEffect(() => {
+            async function loadCategories() {
+      const data = await getCategories()
+    setCategories(data)
+    }
 
-    /** 카테고리 이름 */
-    // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "category_name", nullable = false)
-    private String categoryName;
+    loadCategories()
+  }, [])
 
-    /** 화면 표시 순서 */
-    // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "display_order", nullable = false)
-    private Integer displayOrder = 0;
+    // 전체 상품 또는 선택한 카테고리의 상품을 조회합니다.
+    useEffect(() => {
+            async function loadProducts() {
+    try {
+        const data = await getProducts(selectedCategoryId)
+        setProducts(data)
+    } catch (err) {
+        setError(err.message || '상품을 불러오지 못했습니다.')
+    } finally {
+        setLoading(false)
+    }
+    }
 
+    loadProducts()
+  }, [selectedCategoryId])
+
+    // 전체 상품 또는 카테고리 버튼을 클릭했을 때 실행합니다.
+    function handleCategorySelect(categoryId) {
+            setLoading(true)
+            setError('')
+            setSelectedCategoryId(categoryId)
+    }
+
+    return (
+            <main>
+            <h1>상품 목록</h1>
+
+            <h2>카테고리</h2>
+
+            <button
+    type="button"
+    onClick={() => handleCategorySelect(null)}
+            >
+            전체 상품
+            </button>
+
+            <ul>
+            {categories.map((category) => (
+                            <li key={category.categoryId}>
+                            <button
+                    type="button"
+                    onClick={() => handleCategorySelect(category.categoryId)}
+                            >
+                            {category.categoryName}
+                            </button>
+                            </li>
+            ))}
+      </ul>
+
+            <h2>상품</h2>
+
+            {loading && <p>상품을 불러오는 중입니다.</p>}
+
+    {error && <p>{error}</p>}
+
+    {!loading && !error && products.length === 0 && (
+            <p>등록된 상품이 없습니다.</p>
+      )}
+
+    {!loading && !error && products.length > 0 && (
+            <ul>
+            {products.map((product) => (
+                    <li key={product.productId}>
+                    <strong>{product.productName}</strong>
+                    <span> {product.price}원</span>
+                    <span> 재고: {product.stockQuantity}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  )
 }
+
+export default ProductListPage
