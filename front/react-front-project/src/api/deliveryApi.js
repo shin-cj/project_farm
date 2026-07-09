@@ -56,3 +56,13 @@ export async function registerSellerDelivery(deliveryData) {
 
     return response.json()
 }
+
+export async function getSellerOrderInfo(orderId){
+    const response = await fetch(`http://localhost:8080/api/seller/orders/${orderId}`)
+
+    if(!response.ok){
+        throw new Error("주문 정보를 불러오지 못했습니다.")
+    }
+
+    return response.json()
+}

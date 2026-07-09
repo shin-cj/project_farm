@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react"
-import { getDeliveryByOrderId } from "../../api/deliveryApi.js"
+import {useEffect, useState} from "react"
+import {getDeliveryByOrderId} from "../../api/deliveryApi.js"
 
 function DeliveryStatusPage() {
     const [delivery, setDelivery] = useState(null)
@@ -25,7 +25,7 @@ function DeliveryStatusPage() {
             try {
                 const data = await getDeliveryByOrderId(orderId)
                 setDelivery(data)
-            } catch (err) {
+            } catch (error) {
                 setError("배송정보가 없습니다.")
             }
         }
@@ -38,8 +38,8 @@ function DeliveryStatusPage() {
     return (
         <section className="page-card">
             <p className="page-label">Delivery</p>
-            <h1 style={{ marginBottom: "8px" }}>배송 조회</h1>
-            <p style={{ color: "#68756d", marginTop: 0 }}>
+            <h1 style={{marginBottom: "8px"}}>배송 조회</h1>
+            <p style={{color: "#68756d", marginTop: 0}}>
                 주문한 상품의 배송 현황을 확인할 수 있습니다.
             </p>
 
@@ -79,10 +79,10 @@ function DeliveryStatusPage() {
                         }}
                     >
                         <div>
-                            <strong style={{ display: "block", fontSize: "1.2rem", color: "#213328" }}>
+                            <strong style={{display: "block", fontSize: "1.2rem", color: "#213328"}}>
                                 주문번호 {delivery.orderId}
                             </strong>
-                            <span style={{ display: "block", marginTop: "8px", color: "#68756d" }}>
+                            <span style={{display: "block", marginTop: "8px", color: "#68756d"}}>
                 배송번호 {delivery.deliveryId}
               </span>
                         </div>
@@ -113,7 +113,7 @@ function DeliveryStatusPage() {
                             const active = step >= index + 1
 
                             return (
-                                <div key={label} style={{ textAlign: "center" }}>
+                                <div key={label} style={{textAlign: "center"}}>
                                     <div
                                         style={{
                                             width: "42px",
@@ -130,7 +130,7 @@ function DeliveryStatusPage() {
                                     >
                                         {index + 1}
                                     </div>
-                                    <strong style={{ color: active ? "#213328" : "#68756d" }}>
+                                    <strong style={{color: active ? "#213328" : "#68756d"}}>
                                         {label}
                                     </strong>
                                 </div>
@@ -146,10 +146,10 @@ function DeliveryStatusPage() {
                             marginTop: "34px",
                         }}
                     >
-                        <InfoItem label="택배사" value={delivery.courierName || "택배사 등록 전"} />
-                        <InfoItem label="송장번호" value={delivery.trackingNumber || "송장번호 등록 전"} />
-                        <InfoItem label="배송 시작일" value={delivery.shippedAt || "배송 시작 전"} />
-                        <InfoItem label="배송 완료일" value={delivery.deliveredAt || "배송 완료 전"} />
+                        <InfoItem label="택배사" value={delivery.courierName || "택배사 등록 전"}/>
+                        <InfoItem label="송장번호" value={delivery.trackingNumber || "송장번호 등록 전"}/>
+                        <InfoItem label="배송 시작일" value={delivery.shippedAt || "배송 시작 전"}/>
+                        <InfoItem label="배송 완료일" value={delivery.deliveredAt || "배송 완료 전"}/>
                     </div>
                 </div>
             )}
@@ -157,7 +157,7 @@ function DeliveryStatusPage() {
     )
 }
 
-function InfoItem({ label, value }) {
+function InfoItem({label, value}) {
     return (
         <div
             style={{
@@ -167,10 +167,10 @@ function InfoItem({ label, value }) {
                 border: "1px solid #e8eee8",
             }}
         >
-      <span style={{ display: "block", color: "#68756d", fontSize: "0.9rem", fontWeight: 700 }}>
+      <span style={{display: "block", color: "#68756d", fontSize: "0.9rem", fontWeight: 700}}>
         {label}
       </span>
-            <strong style={{ display: "block", marginTop: "6px", color: "#213328" }}>
+            <strong style={{display: "block", marginTop: "6px", color: "#213328"}}>
                 {value}
             </strong>
         </div>

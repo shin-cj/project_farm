@@ -9,6 +9,8 @@ const statusLabel = {
   DELIVERED: "배송 완료",
 }
 
+
+
 function AdminDeliveryManagementPage() {
   const [deliveries, setDeliveries] = useState([])
   const [message, setMessage] = useState("")
