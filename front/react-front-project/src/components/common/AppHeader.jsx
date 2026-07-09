@@ -6,6 +6,7 @@ function AppHeader() {
     <header className="app-header">
       <NavLink className="brand" to="/">농부링크</NavLink>
       <nav className="main-nav" aria-label="주요 메뉴">
+        <NavLink to="/chatbot">레시피 챗봇</NavLink>
         <NavLink to="/products">상품</NavLink>
         <NavLink to="/market-prices">주간 시세</NavLink>
         <NavLink to="/cart">장바구니</NavLink>

@@ -3,7 +3,10 @@ package me.soldesk.springbootback.domain.chatbot.service;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.chatbot.dto.ChatbotRequest;
 import me.soldesk.springbootback.domain.chatbot.dto.ChatbotResponse;
+import me.soldesk.springbootback.domain.chatbot.dto.ChatbotSaveRequest;
 import me.soldesk.springbootback.domain.chatbot.dto.RecommendedProductResponse;
+import me.soldesk.springbootback.domain.chatbot.entity.Chatbot;
+import me.soldesk.springbootback.domain.chatbot.repository.ChatbotRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.external.openai.OpenAiRecipeClient;
@@ -23,7 +26,7 @@ public class ChatbotService {
     private static final String SELLIING_STATUS = "ON_SALE";
     private final OpenAiRecipeClient openAiRecipeClient;
     private final ProductRepository productRepository;
-
+    private final ChatbotRepository chatbotRepository;
 
     public ChatbotResponse recommendRecipe(ChatbotRequest request) {
         OpenAiRecipeResponse aiResponse = openAiRecipeClient.crateRecipe(request.getObj1());
@@ -88,6 +91,30 @@ public class ChatbotService {
         }
 
         return result;
+    }
+
+    public ChatbotResponse saveRecipe(ChatbotSaveRequest request){
+        Chatbot chatbot = new Chatbot();
+
+        chatbot.setUserId(request.getUser_id());
+        chatbot.setObj1(request.getObj1());
+        chatbot.setRecipeTitle(request.getRecipeTitle());
+        chatbot.setRecipe(request.getRecipe());
+        chatbot.setRemark(request.getRemark());
+        chatbot.setCreatedAt(LocalDateTime.now());
+
+        Chatbot savedChatbot = chatbotRepository.save(chatbot);
+
+        ChatbotResponse response = new ChatbotResponse();
+        response.setChatbotId(savedChatbot.getChatbotId());
+        response.setUserId(savedChatbot.getUserId());
+        response.setObj1(savedChatbot.getObj1());
+        response.setRecipeTitle(savedChatbot.getRecipeTitle());
+        response.setRecipe(savedChatbot.getRecipe());
+        response.setRemark(savedChatbot.getRemark());
+        response.setCreatedAt(savedChatbot.getCreatedAt());
+
+        return response;
     }
 
 

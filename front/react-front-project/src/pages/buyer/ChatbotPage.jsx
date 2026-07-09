@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import chatbotApi from '../../api/chatbotApi.js'
+import AddCartButton from '../../components/cart/AddCartButton.jsx'
 
 function ChatbotPage() {
   const [message, setMessage] = useState('')
@@ -34,6 +35,29 @@ function ChatbotPage() {
     }
   }
 
+  const handleSaveRecipe = async () => {
+    if(!recipeResult){
+      alert('저장할 레시피가 없습니다.')
+      return
+    }
+
+    try {
+      await chatbotApi.saveRecipe({
+        //해당 값은 현재 테스트 용으로 하드 코딩 되어있습니다.
+        //로그인 구현 뒤 사용자의 실제 id값을 가져와 넣어야 합니다.
+        user_id: 8,
+        obj1:message,
+        recipTitle:recipeResult.recipTitle,
+        recipeResult:recipeResult.recipe,
+        remark:recipeResult.remark,
+      })
+      alert('레시피가 저장되었습니다.')
+    }catch (e){
+      console.error(e)
+      alert('레시피 저장에 실패했습니다.')
+    }
+  }
+
   return (
       <section className="chatbot-page">
         <h1>AI 레시피 추천</h1>
@@ -58,6 +82,10 @@ function ChatbotPage() {
               <section className="recipe-panel">
                 <h2>{recipeResult.recipeTitle}</h2>
 
+                <button type="button" onClick={handleSaveRecipe}>
+                  레시피 저장
+                </button>
+
                 <h3>필요 재료</h3>
                 <ul>
                   {recipeResult.ingredients?.map((ingredient, index) => (
@@ -70,6 +98,7 @@ function ChatbotPage() {
 
                 <h3>참고사항</h3>
                 <p>{recipeResult.remark}</p>
+
               </section>
 
               <aside className="recommended-products">
@@ -81,7 +110,10 @@ function ChatbotPage() {
                           <span>{product.ingredientName}</span>
                           <strong>{product.productName}</strong>
                           <p>{product.price.toLocaleString()}원 / {product.unit}</p>
-                          <button type="button">장바구니 담기</button>
+                          <AddCartButton
+                          productId={product.productId}
+                          userid={8}//유저의 고유 id 값 필요
+                          />
                         </div>
                     ))
                 ) : (
