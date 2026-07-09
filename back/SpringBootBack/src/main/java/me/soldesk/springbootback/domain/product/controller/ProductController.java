@@ -1,11 +1,9 @@
 package me.soldesk.springbootback.domain.product.controller;
 
+import me.soldesk.springbootback.domain.product.dto.ProductRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductResponse;
 import me.soldesk.springbootback.domain.product.service.ProductService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,5 +22,15 @@ public class ProductController {
             @RequestParam(required = false) Long categoryId
     ) {
         return productService.getProducts(categoryId);
+    }
+
+    @PostMapping
+    public ProductResponse createProduct(@RequestBody ProductRequest request) {
+        return productService.createProduct(request);
+    }
+
+    @GetMapping("/{productId}")
+    public ProductResponse getProduct(@PathVariable Long productId){
+        return productService.getProduct(productId);
     }
 }
