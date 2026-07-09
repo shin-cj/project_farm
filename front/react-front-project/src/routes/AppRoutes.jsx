@@ -24,6 +24,7 @@ import UserManagementPage from '../pages/admin/UserManagementPage'
 import ContentManagementPage from '../pages/admin/ContentManagementPage'
 import ReportManagementPage from '../pages/admin/ReportManagementPage'
 import MarketPriceManagementPage from '../pages/admin/MarketPriceManagementPage'
+import AdminDeliveryManagementPage from '../pages/admin/AdminDeliveryManagementPage'
 import { CheckoutPage } from '../components/payment/checkout.jsx'
 import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
@@ -61,6 +62,7 @@ function AppRoutes() {
         <Route path="users" element={<UserManagementPage />} />
         <Route path="content" element={<ContentManagementPage />} />
         <Route path="reports" element={<ReportManagementPage />} />
+        <Route path="deliveries" element={<AdminDeliveryManagementPage />} />
         <Route path="market-prices" element={<MarketPriceManagementPage />} />
       </Route>
 
