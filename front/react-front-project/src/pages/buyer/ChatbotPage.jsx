@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import chatbotApi from '../../api/chatbotApi.js'
+import AddCartButton from '../../components/cart/AddCartButton.jsx'
 
 function ChatbotPage() {
   const [message, setMessage] = useState('')
@@ -109,7 +110,10 @@ function ChatbotPage() {
                           <span>{product.ingredientName}</span>
                           <strong>{product.productName}</strong>
                           <p>{product.price.toLocaleString()}원 / {product.unit}</p>
-                          <button type="button">장바구니 담기</button>
+                          <AddCartButton
+                          productId={product.productId}
+                          userid={8}//유저의 고유 id 값 필요
+                          />
                         </div>
                     ))
                 ) : (
