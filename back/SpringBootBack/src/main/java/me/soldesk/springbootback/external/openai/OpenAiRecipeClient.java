@@ -16,6 +16,7 @@ public class OpenAiRecipeClient {
     private final String model;
     private final ObjectMapper objectMapper;
 
+    //오픈 ai호출 하기 위한 함수
     public OpenAiRecipeClient(
             @Value("${openai.api-key}") String apikey,
             @Value("${openai.model}") String model,
@@ -31,7 +32,7 @@ public class OpenAiRecipeClient {
         this.objectMapper = objectMapper;
     }
 
-
+    //사용자에게 입력 받은 질문으로 ai 프롬포트를 뽑아내고 json 형태로 반환 받는 함수
     public OpenAiRecipeResponse crateRecipe(String userMessage) {
         Map<String, Object> response = restClient.post()
                 .uri("/responses")

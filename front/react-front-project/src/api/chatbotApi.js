@@ -5,6 +5,10 @@ const chatbotApi = {
     recommendRecipe(request){
         return httpClient.post('/chatbot/recipes',request)
     },
+
+    saveRecipe(request){
+        return httpClient.post('/chatbot/recipes/save',request)
+    },
 }
 
 export default chatbotApi
