@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.cart.dto.CartRequest;
 import me.soldesk.springbootback.domain.cart.dto.CartResponse;
 import me.soldesk.springbootback.domain.cart.entity.Cart;
-import me.soldesk.springbootback.domain.cart.repository.CartItemRepository;
+import me.soldesk.springbootback.domain.cartitem.repository.CartItemRepository;
 import me.soldesk.springbootback.domain.cart.repository.CartRepository;
 import me.soldesk.springbootback.domain.cartitem.entity.CartItem;
 import me.soldesk.springbootback.domain.product.entity.Product;

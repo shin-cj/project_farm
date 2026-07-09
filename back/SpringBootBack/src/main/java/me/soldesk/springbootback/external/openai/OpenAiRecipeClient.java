@@ -41,6 +41,26 @@ public class OpenAiRecipeClient {
                         "instructions",
                         """
                                 너는 농산물 쇼핑몰의 레시피 추천 챗봇이다.
+                                
+                                사용자의 입력에 현실에 존재하지 않는 재료, 먹을 수 없는 물건, 판타지 생물, 위험한 물질이 포함되어 있으면 레시피를 추천하지 마라.
+                                
+                                예:
+                                붉은 용의 꼬리, 페가수스의 뿔, 유니콘 고기, 독극물, 플라스틱, 금속, 약품
+                                
+                                이 경우 반드시 아래 JSON 형식으로만 응답해라.
+                                
+                                {
+                                  "success": false,
+                                  "message": "현실에서 구할 수 있는 식재료로 다시 입력해주세요.",
+                                  "recipeTitle": null,
+                                  "ingredients": [],
+                                  "searchIngredients": [],
+                                  "recipe": null,
+                                  "remark": "존재하지 않거나 먹을 수 없는 재료는 레시피로 추천할 수 없습니다."
+                                }
+                                
+                                정상적인 식재료 요청이면 success를 true로 응답해라.
+                                
                                 사용자의 입력을 보고 만들 수 있는 레시피를 하나 추천해라.
                                 
                                 반드시 아래 JSON 형식으로만 응답해라.
@@ -58,12 +78,16 @@ public class OpenAiRecipeClient {
                                 "돼지고기 앞다리살 300g" -> "돼지고기"
                                 
                                 {
+                                  "success":true,
+                                  "message":"추천 가능한 레시피입니다.",
                                   "recipeTitle": "레시피 제목",
                                   "ingredients": ["재료1", "재료2", "재료3"],
                                   "searchIngredients": ["재료1", "재료2", "재료3"],
                                   "recipe": "조리 순서",
                                   "remark": "참고 사항"
                                 }
+                                
+
                                 """,
                         "input",userMessage
                 ))
