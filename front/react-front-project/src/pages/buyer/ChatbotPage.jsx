@@ -77,7 +77,11 @@ function ChatbotPage() {
 
         {error && <p className="chatbot-error">{error}</p>}
 
-        {recipeResult && (
+        {recipeResult && recipeResult.success == false &&(
+            <p className="chatbot-error">{recipeResult.message}</p>
+        )}
+
+        {recipeResult && recipeResult.success !== false && (
             <div className="recipe-result-layout">
               <section className="recipe-panel">
                 <h2>{recipeResult.recipeTitle}</h2>
@@ -111,8 +115,8 @@ function ChatbotPage() {
                           <strong>{product.productName}</strong>
                           <p>{product.price.toLocaleString()}원 / {product.unit}</p>
                           <AddCartButton
-                          productId={product.productId}
-                          userid={8}//유저의 고유 id 값 필요
+                              productId={product.productId}
+                              userid={8}//유저의 고유 id 값 필요
                           />
                         </div>
                     ))

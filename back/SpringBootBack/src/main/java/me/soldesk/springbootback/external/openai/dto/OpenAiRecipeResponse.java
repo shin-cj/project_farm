@@ -9,6 +9,10 @@ import java.util.List;
 @Setter
 public class OpenAiRecipeResponse {
 
+    private Boolean success;
+
+    private String message;
+
     private String recipeTitle;
 
     private List<String> ingredients;

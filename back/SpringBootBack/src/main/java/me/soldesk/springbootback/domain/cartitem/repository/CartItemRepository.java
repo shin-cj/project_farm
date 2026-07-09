@@ -1,4 +1,4 @@
-package me.soldesk.springbootback.domain.cart.repository;
+package me.soldesk.springbootback.domain.cartitem.repository;
 
 import me.soldesk.springbootback.domain.cartitem.entity.CartItem;
 import org.springframework.data.jpa.repository.JpaRepository;

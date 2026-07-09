@@ -12,6 +12,10 @@ import java.util.List;
 @Setter
 public class ChatbotResponse {
 
+    private Boolean success;
+
+    private String message;
+
     /** 챗봇 기록 고유 번호 */
     private Long chatbotId;
 
