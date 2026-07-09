@@ -5,6 +5,8 @@ import me.soldesk.springbootback.domain.delivery.dto.DeliveryResponse;
 import me.soldesk.springbootback.domain.delivery.service.DeliveryService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 public class DeliveryController {
@@ -23,5 +25,16 @@ public class DeliveryController {
     @PostMapping("/api/seller/deliveries")
     public DeliveryResponse registerDelivery(@RequestBody DeliveryRequest deliveryRequest){
         return deliveryService.registerDelivery(deliveryRequest);
+    }
+
+    @GetMapping("/api/admin/deliveries")
+    public List<DeliveryResponse> getAdminDeliveries(){
+        return deliveryService.getAdminDeliveries();
+    }
+
+    @PatchMapping("/api/admin/deliveries/{deliveryId}/status")
+    public DeliveryResponse updateDeliveryStatus(
+            @PathVariable Long deliveryId,@RequestBody DeliveryRequest request){
+     return deliveryService.updateDeliveryStatus(deliveryId,request);
     }
 }
