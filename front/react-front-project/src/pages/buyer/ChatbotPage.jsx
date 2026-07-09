@@ -1,8 +1,97 @@
-import PagePlaceholder from '../../components/common/PagePlaceholder'
+import { useState } from 'react'
+import chatbotApi from '../../api/chatbotApi.js'
 
-// AI 식재료 도우미 기능을 담당하는 페이지 컴포넌트입니다.
 function ChatbotPage() {
-  return <PagePlaceholder title="AI 식재료 도우미" description="예산별 레시피와 장기 보관법을 상담하는 화면입니다." />
+  const [message, setMessage] = useState('')
+  const [recipeResult, setRecipeResult] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async () => {
+    const question = message.trim()
+
+    if (!question) {
+      alert('질문을 입력해주세요.')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError('')
+      setRecipeResult(null)
+
+      const { data } = await chatbotApi.recommendRecipe({
+        userId: 1,
+        obj1: question,
+      })
+
+      setRecipeResult(data)
+    } catch (e) {
+      console.error(e)
+      setError('레시피 추천을 가져오지 못했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+      <section className="chatbot-page">
+        <h1>AI 레시피 추천</h1>
+
+        <div className="chatbot-input-area">
+        <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="예: 25000원이 있는데 칼칼한 한식 메뉴 추천해줘"
+            rows={4}
+        />
+
+          <button type="button" onClick={handleSubmit} disabled={loading}>
+            {loading ? '추천 받는 중...' : '추천 받기'}
+          </button>
+        </div>
+
+        {error && <p className="chatbot-error">{error}</p>}
+
+        {recipeResult && (
+            <div className="recipe-result-layout">
+              <section className="recipe-panel">
+                <h2>{recipeResult.recipeTitle}</h2>
+
+                <h3>필요 재료</h3>
+                <ul>
+                  {recipeResult.ingredients?.map((ingredient, index) => (
+                      <li key={index}>{ingredient}</li>
+                  ))}
+                </ul>
+
+                <h3>조리 방법</h3>
+                <p>{recipeResult.recipe}</p>
+
+                <h3>참고사항</h3>
+                <p>{recipeResult.remark}</p>
+              </section>
+
+              <aside className="recommended-products">
+                <h2>추천 상품</h2>
+
+                {recipeResult.matchedProducts?.length > 0 ? (
+                    recipeResult.matchedProducts.map((product) => (
+                        <div className="product-card" key={product.productId}>
+                          <span>{product.ingredientName}</span>
+                          <strong>{product.productName}</strong>
+                          <p>{product.price.toLocaleString()}원 / {product.unit}</p>
+                          <button type="button">장바구니 담기</button>
+                        </div>
+                    ))
+                ) : (
+                    <p className="empty-products">추천 가능한 판매 상품이 없습니다.</p>
+                )}
+              </aside>
+            </div>
+        )}
+      </section>
+  )
 }
 
 export default ChatbotPage
