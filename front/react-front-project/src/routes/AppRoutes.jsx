@@ -16,6 +16,7 @@ import ChatbotPage from '../pages/buyer/ChatbotPage'
 import SellerDashboardPage from '../pages/seller/SellerDashboardPage'
 import FarmManagementPage from '../pages/seller/FarmManagementPage'
 import ProductManagementPage from '../pages/seller/ProductManagementPage'
+import ProductCreatePage from '../pages/seller/ProductCreatePage'
 import SellerOrderPage from '../pages/seller/SellerOrderPage'
 import DeliveryManagementPage from '../pages/seller/DeliveryManagementPage'
 import SalesStatisticsPage from '../pages/seller/SalesStatisticsPage'
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route index element={<SellerDashboardPage />} />
         <Route path="farms" element={<FarmManagementPage />} />
         <Route path="products" element={<ProductManagementPage />} />
+        <Route path="products/new" element={<ProductCreatePage />} />
         <Route path="orders" element={<SellerOrderPage />} />
         <Route path="deliveries" element={<DeliveryManagementPage />} />
         <Route path="statistics" element={<SalesStatisticsPage />} />
