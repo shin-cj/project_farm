@@ -175,8 +175,8 @@ export function SuccessPage() {
                 }}>
                     {isConfirmed ? (
                         <>
-                            <Link className="btn primary" style={buttonStyle} to="/order">
-                                주문 화면으로
+                            <Link className="btn primary" style={buttonStyle} to="/">
+                                마이페이지로
                             </Link>
                             <Link className="btn" style={buttonStyle} to="/">
                                 홈으로

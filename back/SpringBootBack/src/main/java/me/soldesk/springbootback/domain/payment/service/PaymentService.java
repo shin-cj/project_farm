@@ -56,7 +56,7 @@ public class PaymentService {
         // Toss 승인 성공 후 DB에 결제 정보 저장
         Payment payment = new Payment();
 
-        payment.setPaymentId(order.getOrderId());
+        payment.setOrderId(order.getOrderId());
         payment.setPaymentAmount(request.getAmount());
         payment.setPgPaymentId(request.getPaymentKey());
         // Toss 응답에서 결제 상태와 결제 수단 추출
