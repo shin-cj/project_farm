@@ -3,6 +3,8 @@ import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
+import orderApi from "../../api/orderApi.js";
+
 
 // 장바구니 기능을 담당하는 페이지 컴포넌트입니다.
 function CartPage() {
@@ -39,14 +41,33 @@ function CartPage() {
         }
     }
 
-    const handleBuy = (item) => {
-      navigate('/order',{
-        state: {
-          product_id: item.product_id,
-          cart_item_id: item.cart_item_id,
-          quantity: item.quantity,
-        },
-      })
+    const handleBuy = async (item) => {
+      try {
+          const {data} = await orderApi.createOrder({
+              buyerId : userid,
+              cartItemId : item.cart_item_id,
+              receiverName : "구매자 이름",
+              receiverPhone : "010-1234-5678",
+              receiverAddress : "서울시 강남구",
+              receiverDetailAddress : "테스트주소",
+              requestMessage : "문 앞에 놔주세용"
+          })
+
+          const params = new URLSearchParams({
+              amount : String(data.finalPrice),
+              orderName : data.orderName,
+              orderId : data.orderNumber,
+              receiverName: "장바구니구매자",
+              receiverPhone: "010-8888-8888",
+              receiverAddress: "서울시 강남구",
+              receiverDetailAddress: "테스트아파트 101호",
+          })
+
+          navigate(`/sandbox?${params.toString()}`)
+      }catch (error){
+          console.error(error)
+          alert("주문 생성에 실패했습니다.")
+      }
     }
 
   return(

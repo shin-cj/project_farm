@@ -12,6 +12,8 @@ const generateOrderId = () => {
     return window.btoa(String(Math.random())).slice(0, 20);
 };
 
+
+
 export function CheckoutPage() {
     const [searchParams] = useSearchParams();
     const paymentAmount = Number(searchParams.get("amount")) || 50_000;
@@ -19,6 +21,17 @@ export function CheckoutPage() {
     const [ready, setReady] = useState(false);
     const [widgets, setWidgets] = useState(null);
     const paymentMethodWidgetRef = useRef(null);
+    const orderId = searchParams.get("orderId") || generateOrderId();
+
+    const orderInfo = {
+        orderId: searchParams.get("orderId"),
+        orderNumber: searchParams.get("orderId"),
+        orderName,
+        receiverName: searchParams.get("receiverName") || "장바구니구매자",
+        receiverPhone: searchParams.get("receiverPhone") || "010-8888-8888",
+        receiverAddress: searchParams.get("receiverAddress") || "서울시 강남구",
+        receiverDetailAddress: searchParams.get("receiverDetailAddress") || "테스트아파트 101호",
+    }
 
     useEffect(() => {
         async function fetchPaymentWidgets() {
@@ -72,7 +85,7 @@ export function CheckoutPage() {
             console.log("selectedPaymentMethod: ", selectedPaymentMethod);
 
             await widgets?.requestPayment({
-                orderId: generateOrderId(),
+                orderId,
                 orderName,
                 customerName: "AgroLink customer",
                 customerEmail: "customer123@gmail.com",
@@ -85,32 +98,205 @@ export function CheckoutPage() {
     };
 
     return (
-        <div className="wrapper w-100">
-            <div className="max-w-540 w-100">
-                <div className="response-section w-100" style={{ marginBottom: "32px" }}>
-                    <div className="flex justify-between">
-                        <span className="response-label">Order</span>
-                        <span className="response-text">{orderName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="response-label">Amount</span>
-                        <span className="response-text">
-                            {paymentAmount.toLocaleString()} KRW
-                        </span>
-                    </div>
-                </div>
+        <div
+            style={{
+                minHeight: "calc(100vh - 80px)",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "flex-start",
+                padding: "40px 24px",
+                background: "#f6f8f5",
+            }}
+        >
+            <div
+                style={{
+                    width: "100%",
+                    maxWidth: "980px",
+                    display: "grid",
+                    gridTemplateColumns: "340px 1fr",
+                    gap: "20px",
+                    alignItems: "stretch",
+                }}
+            >
+                <aside
+                    style={{
+                        padding: "22px",
+                        border: "1px solid #dce6dd",
+                        borderRadius: "8px",
+                        background: "#ffffff",
+                    }}
+                >
+                    <p
+                        style={{
+                            margin: "0 0 6px",
+                            color: "#216b3a",
+                            fontSize: "12px",
+                            fontWeight: 800,
+                        }}
+                    >
+                        주문 정보
+                    </p>
 
-                <div id="payment-method" className="w-100" />
-                <div id="agreement" className="w-100" />
-                <div className="btn-wrapper w-100">
+                    <h3
+                        style={{
+                            margin: "0 0 18px",
+                            color: "#213328",
+                            fontSize: "20px",
+                            lineHeight: 1.35,
+                        }}
+                    >
+                        {orderInfo.orderName}
+                    </h3>
+
+                    <div style={{ display: "grid", gap: "12px" }}>
+                        {[
+                            ["주문번호", orderInfo.orderId],
+                            ["주문번호 코드", orderInfo.orderNumber],
+                            ["주문자", orderInfo.receiverName],
+                            ["전화번호", orderInfo.receiverPhone],
+                            [
+                                "배송지",
+                                `${orderInfo.receiverAddress} ${orderInfo.receiverDetailAddress}`,
+                            ],
+                        ].map(([label, value]) => (
+                            <div
+                                key={label}
+                                style={{
+                                    display: "grid",
+                                    gap: "3px",
+                                }}
+                            >
+                            <span
+                                style={{
+                                    color: "#7b877f",
+                                    fontSize: "12px",
+                                    fontWeight: 700,
+                                }}
+                            >
+                                {label}
+                            </span>
+                                <strong
+                                    style={{
+                                        color: "#24362b",
+                                        fontSize: "14px",
+                                        lineHeight: 1.45,
+                                        wordBreak: "break-word",
+                                    }}
+                                >
+                                    {value}
+                                </strong>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div
+                        style={{
+                            marginTop: "20px",
+                            paddingTop: "16px",
+                            borderTop: "1px solid #e5ece5",
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "baseline",
+                                gap: "12px",
+                            }}
+                        >
+                        <span
+                            style={{
+                                color: "#68756d",
+                                fontSize: "13px",
+                                fontWeight: 800,
+                            }}
+                        >
+                            총 결제금액
+                        </span>
+                            <strong
+                                style={{
+                                    color: "#216b3a",
+                                    fontSize: "22px",
+                                    lineHeight: 1,
+                                }}
+                            >
+                                {paymentAmount.toLocaleString()}원
+                            </strong>
+                        </div>
+                    </div>
+                </aside>
+
+                <section
+                    style={{
+                        padding: "22px",
+                        border: "1px solid #dce6dd",
+                        borderRadius: "8px",
+                        background: "#ffffff",
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: "18px",
+                        }}
+                    >
+                        <div>
+                            <p
+                                style={{
+                                    margin: 0,
+                                    color: "#216b3a",
+                                    fontSize: "12px",
+                                    fontWeight: 800,
+                                }}
+                            >
+                                결제 수단
+                            </p>
+                            <h2
+                                style={{
+                                    margin: "4px 0 0",
+                                    color: "#213328",
+                                    fontSize: "22px",
+                                }}
+                            >
+                                결제하기
+                            </h2>
+                        </div>
+
+                        <strong
+                            style={{
+                                color: "#213328",
+                                fontSize: "18px",
+                            }}
+                        >
+                            {paymentAmount.toLocaleString()}원
+                        </strong>
+                    </div>
+
+                    <div id="payment-method" />
+                    <div id="agreement" />
+
                     <button
-                        className="btn primary w-100"
+                        type="button"
                         disabled={!ready}
                         onClick={handlePayment}
+                        style={{
+                            width: "100%",
+                            height: "50px",
+                            marginTop: "18px",
+                            border: "none",
+                            borderRadius: "8px",
+                            background: ready ? "#216b3a" : "#b8c4bb",
+                            color: "#ffffff",
+                            fontSize: "16px",
+                            fontWeight: 800,
+                            cursor: ready ? "pointer" : "not-allowed",
+                        }}
                     >
-                        Pay Now
+                        {paymentAmount.toLocaleString()}원 결제하기
                     </button>
-                </div>
+                </section>
             </div>
         </div>
     );
