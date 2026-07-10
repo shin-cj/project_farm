@@ -86,7 +86,7 @@ function ChatbotPage() {
               <section className="recipe-panel">
                 <h2>{recipeResult.recipeTitle}</h2>
 
-                <button type="button" onClick={handleSaveRecipe}>
+                <button type="button" className="recipe-save-button" onClick={handleSaveRecipe}>
                   레시피 저장
                 </button>
 

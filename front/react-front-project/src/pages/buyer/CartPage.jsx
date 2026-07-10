@@ -49,11 +49,27 @@ function CartPage() {
       })
     }
 
+    const handleBuyAll = () => {
+        if (cartItems.length === 0){
+            alert('장바구니에 상품이 없습니다.')
+            return
+        }
+
+        navigate('/order',{
+            state: {
+                items: cartItems
+            }
+        })
+    }
+
+
   return(
       <section className="cart-page">
         <div className="cart-header">
           <h1>장바구니</h1>
-
+            <button type="button" onClick={handleBuyAll}>
+                상품 전체 구매
+            </button>
           <AddCartButton
               productId={testProductId}
               userid={userid}
@@ -108,11 +124,35 @@ function CartPage() {
         {selectedItem && (
             <div className="cart-modal-backdrop" onClick={() => setSelectedItem(null)}>
               <div className="cart-modal" onClick={(e) => e.stopPropagation()}>
-                <h2>{selectedItem.productName}</h2>
 
-                <p>상품 번호: {selectedItem.product_id}</p>
-                <p>가격: {selectedItem.product_price.toLocaleString()}원</p>
-                <p>수량: {selectedItem.quantity}</p>
+                  <div className="cart-modal-main">
+                      <div className="cart-modal-info">
+                          <h2>{selectedItem.productName}</h2>
+
+                          <p>상품 번호 : {selectedItem.product_id}</p>
+                          <p>가격 : {selectedItem.product_price.toString()}원</p>
+                          <p>수량 : {selectedItem.quantity}</p>
+
+                          <button type="button" onClick={() => navigate(`/products/${selectedItem.product_id}`)}
+                                  >상세보기</button>
+                      </div>
+
+
+                      <div className="cart-modal-image-box">
+                          <span>등록된 이미지가 없습니다.</span>
+
+                          {selectedItem.productImageUrl && (
+                              <img
+                                  key={selectedItem.product_id}
+                                  src={selectedItem.productImageUrl}
+                                  alt={selectedItem.productName}
+                                  onError={(e) => {
+                                      e.currentTarget.style.display = 'none'
+                                  }}
+                              />
+                          )}
+                      </div>
+                  </div>
 
                 <div className="cart-modal-actions">
                   <button type="button" onClick={() => handleBuy(selectedItem)}>
