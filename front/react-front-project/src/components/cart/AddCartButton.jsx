@@ -6,6 +6,7 @@ function AddCartButton({
                            userid,
                            quantity = 1,
                            onSuccess,
+                           className ='',
                        }) {
     const [loading, setLoading] = useState(false)
 
