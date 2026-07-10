@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+﻿import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { loadTossPayments, ANONYMOUS } from "@tosspayments/tosspayments-sdk";
 
 const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
@@ -12,26 +12,60 @@ const generateOrderId = () => {
     return window.btoa(String(Math.random())).slice(0, 20);
 };
 
+const inputStyle = {
+    width: "100%",
+    height: "46px",
+    padding: "0 14px",
+    border: "1px solid #dce6dd",
+    borderRadius: "8px",
+    background: "#ffffff",
+    color: "#213328",
+    fontSize: "17px",
+    fontWeight: 700,
+    boxSizing: "border-box",
+};
 
+const labelStyle = {
+    display: "block",
+    marginBottom: "8px",
+    color: "#68756d",
+    fontSize: "16px",
+    fontWeight: 800,
+};
 
 export function CheckoutPage() {
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const paymentAmount = Number(searchParams.get("amount")) || 50_000;
     const orderName = searchParams.get("orderName") || "AgroLink order";
+    const orderId = searchParams.get("orderId") || generateOrderId();
+
+    const [receiverName, setReceiverName] = useState(
+        searchParams.get("receiverName") || "장바구니구매자"
+    );
+    const [receiverPhone, setReceiverPhone] = useState(
+        searchParams.get("receiverPhone") || "010-8888-8888"
+    );
+    const [receiverAddress, setReceiverAddress] = useState(
+        searchParams.get("receiverAddress") || "서울시 강남구"
+    );
+    const [receiverDetailAddress, setReceiverDetailAddress] = useState(
+        searchParams.get("receiverDetailAddress") || "테스트아파트 101호"
+    );
+
     const [ready, setReady] = useState(false);
     const [widgets, setWidgets] = useState(null);
     const paymentMethodWidgetRef = useRef(null);
-    const orderId = searchParams.get("orderId") || generateOrderId();
 
     const orderInfo = {
-        orderId: searchParams.get("orderId"),
-        orderNumber: searchParams.get("orderId"),
+        orderId,
+        orderNumber: orderId,
         orderName,
-        receiverName: searchParams.get("receiverName") || "장바구니구매자",
-        receiverPhone: searchParams.get("receiverPhone") || "010-8888-8888",
-        receiverAddress: searchParams.get("receiverAddress") || "서울시 강남구",
-        receiverDetailAddress: searchParams.get("receiverDetailAddress") || "테스트아파트 101호",
-    }
+        receiverName,
+        receiverPhone,
+        receiverAddress,
+        receiverDetailAddress,
+    };
 
     useEffect(() => {
         async function fetchPaymentWidgets() {
@@ -84,13 +118,19 @@ export function CheckoutPage() {
                 await paymentMethodWidgetRef.current?.getSelectedPaymentMethod();
             console.log("selectedPaymentMethod: ", selectedPaymentMethod);
 
+            const paymentQuery = new URLSearchParams(window.location.search);
+            paymentQuery.set("receiverName", receiverName);
+            paymentQuery.set("receiverPhone", receiverPhone);
+            paymentQuery.set("receiverAddress", receiverAddress);
+            paymentQuery.set("receiverDetailAddress", receiverDetailAddress);
+
             await widgets?.requestPayment({
                 orderId,
                 orderName,
-                customerName: "AgroLink customer",
+                customerName: receiverName,
                 customerEmail: "customer123@gmail.com",
-                successUrl: `${window.location.origin}/sandbox/success${window.location.search}`,
-                failUrl: `${window.location.origin}/sandbox/fail${window.location.search}`,
+                successUrl: `${window.location.origin}/sandbox/success?${paymentQuery.toString()}`,
+                failUrl: `${window.location.origin}/sandbox/fail?${paymentQuery.toString()}`,
             });
         } catch (error) {
             console.error(error);
@@ -98,137 +138,167 @@ export function CheckoutPage() {
     };
 
     return (
-        <div
+        <main
             style={{
                 minHeight: "calc(100vh - 80px)",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "flex-start",
-                padding: "40px 24px",
+                padding: "32px 24px",
                 background: "#f6f8f5",
             }}
         >
             <div
                 style={{
                     width: "100%",
-                    maxWidth: "980px",
+                    maxWidth: "1100px",
                     display: "grid",
-                    gridTemplateColumns: "340px 1fr",
-                    gap: "20px",
+                    gridTemplateColumns: "390px minmax(0, 1fr)",
+                    gap: "22px",
                     alignItems: "stretch",
                 }}
             >
                 <aside
                     style={{
-                        padding: "22px",
+                        padding: "26px",
                         border: "1px solid #dce6dd",
                         borderRadius: "8px",
                         background: "#ffffff",
                     }}
                 >
-                    <p
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
                         style={{
-                            margin: "0 0 6px",
+                            height: "42px",
+                            padding: "0 15px",
+                            border: "1px solid #dce6dd",
+                            borderRadius: "8px",
+                            background: "#ffffff",
                             color: "#216b3a",
-                            fontSize: "12px",
+                            fontSize: "16px",
                             fontWeight: 800,
+                            cursor: "pointer",
                         }}
                     >
-                        주문 정보
-                    </p>
+                        ← 뒤로가기
+                    </button>
 
-                    <h3
-                        style={{
-                            margin: "0 0 18px",
-                            color: "#213328",
-                            fontSize: "20px",
-                            lineHeight: 1.35,
-                        }}
-                    >
-                        {orderInfo.orderName}
-                    </h3>
+                    <div style={{ marginTop: "22px" }}>
+                        <p
+                            style={{
+                                margin: "0 0 8px",
+                                color: "#216b3a",
+                                fontSize: "16px",
+                                fontWeight: 900,
+                            }}
+                        >
+                            주문 정보
+                        </p>
+                        <h1
+                            style={{
+                                margin: "0 0 22px",
+                                color: "#213328",
+                                fontSize: "27px",
+                                lineHeight: 1.3,
+                            }}
+                        >
+                            {orderInfo.orderName}
+                        </h1>
+                    </div>
 
-                    <div style={{ display: "grid", gap: "12px" }}>
-                        {[
-                            ["주문번호", orderInfo.orderId],
-                            ["주문번호 코드", orderInfo.orderNumber],
-                            ["주문자", orderInfo.receiverName],
-                            ["전화번호", orderInfo.receiverPhone],
-                            [
-                                "배송지",
-                                `${orderInfo.receiverAddress} ${orderInfo.receiverDetailAddress}`,
-                            ],
-                        ].map(([label, value]) => (
-                            <div
-                                key={label}
+                    <div style={{ display: "grid", gap: "16px" }}>
+                        <div>
+                            <span style={labelStyle}>주문번호</span>
+                            <p
                                 style={{
-                                    display: "grid",
-                                    gap: "3px",
+                                    margin: 0,
+                                    color: "#213328",
+                                    fontSize: "17px",
+                                    fontWeight: 900,
+                                    wordBreak: "break-word",
                                 }}
                             >
-                            <span
-                                style={{
-                                    color: "#7b877f",
-                                    fontSize: "12px",
-                                    fontWeight: 700,
-                                }}
-                            >
-                                {label}
-                            </span>
-                                <strong
-                                    style={{
-                                        color: "#24362b",
-                                        fontSize: "14px",
-                                        lineHeight: 1.45,
-                                        wordBreak: "break-word",
-                                    }}
-                                >
-                                    {value}
-                                </strong>
-                            </div>
-                        ))}
+                                {orderInfo.orderId}
+                            </p>
+                        </div>
+
+                        <label>
+                            <span style={labelStyle}>주문자</span>
+                            <input
+                                type="text"
+                                value={receiverName}
+                                onChange={(event) => setReceiverName(event.target.value)}
+                                style={inputStyle}
+                            />
+                        </label>
+
+                        <label>
+                            <span style={labelStyle}>전화번호</span>
+                            <input
+                                type="text"
+                                value={receiverPhone}
+                                onChange={(event) => setReceiverPhone(event.target.value)}
+                                style={inputStyle}
+                            />
+                        </label>
+
+                        <label>
+                            <span style={labelStyle}>배송지</span>
+                            <input
+                                type="text"
+                                value={receiverAddress}
+                                onChange={(event) => setReceiverAddress(event.target.value)}
+                                style={inputStyle}
+                            />
+                        </label>
+
+                        <label>
+                            <span style={labelStyle}>상세 배송지</span>
+                            <input
+                                type="text"
+                                value={receiverDetailAddress}
+                                onChange={(event) => setReceiverDetailAddress(event.target.value)}
+                                style={inputStyle}
+                            />
+                        </label>
                     </div>
 
                     <div
                         style={{
-                            marginTop: "20px",
-                            paddingTop: "16px",
+                            marginTop: "24px",
+                            paddingTop: "20px",
                             borderTop: "1px solid #e5ece5",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "baseline",
+                            gap: "14px",
                         }}
                     >
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "baseline",
-                                gap: "12px",
-                            }}
-                        >
                         <span
                             style={{
                                 color: "#68756d",
-                                fontSize: "13px",
-                                fontWeight: 800,
+                                fontSize: "17px",
+                                fontWeight: 900,
                             }}
                         >
                             총 결제금액
                         </span>
-                            <strong
-                                style={{
-                                    color: "#216b3a",
-                                    fontSize: "22px",
-                                    lineHeight: 1,
-                                }}
-                            >
-                                {paymentAmount.toLocaleString()}원
-                            </strong>
-                        </div>
+                        <strong
+                            style={{
+                                color: "#216b3a",
+                                fontSize: "27px",
+                                lineHeight: 1,
+                            }}
+                        >
+                            {paymentAmount.toLocaleString()}원
+                        </strong>
                     </div>
                 </aside>
 
                 <section
                     style={{
-                        padding: "22px",
+                        padding: "26px",
                         border: "1px solid #dce6dd",
                         borderRadius: "8px",
                         background: "#ffffff",
@@ -239,7 +309,8 @@ export function CheckoutPage() {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            marginBottom: "18px",
+                            gap: "20px",
+                            marginBottom: "20px",
                         }}
                     >
                         <div>
@@ -247,17 +318,18 @@ export function CheckoutPage() {
                                 style={{
                                     margin: 0,
                                     color: "#216b3a",
-                                    fontSize: "12px",
-                                    fontWeight: 800,
+                                    fontSize: "16px",
+                                    fontWeight: 900,
                                 }}
                             >
                                 결제 수단
                             </p>
                             <h2
                                 style={{
-                                    margin: "4px 0 0",
+                                    margin: "6px 0 0",
                                     color: "#213328",
-                                    fontSize: "22px",
+                                    fontSize: "28px",
+                                    lineHeight: 1.25,
                                 }}
                             >
                                 결제하기
@@ -267,7 +339,8 @@ export function CheckoutPage() {
                         <strong
                             style={{
                                 color: "#213328",
-                                fontSize: "18px",
+                                fontSize: "24px",
+                                whiteSpace: "nowrap",
                             }}
                         >
                             {paymentAmount.toLocaleString()}원
@@ -283,14 +356,14 @@ export function CheckoutPage() {
                         onClick={handlePayment}
                         style={{
                             width: "100%",
-                            height: "50px",
-                            marginTop: "18px",
+                            height: "58px",
+                            marginTop: "22px",
                             border: "none",
                             borderRadius: "8px",
                             background: ready ? "#216b3a" : "#b8c4bb",
                             color: "#ffffff",
-                            fontSize: "16px",
-                            fontWeight: 800,
+                            fontSize: "19px",
+                            fontWeight: 900,
                             cursor: ready ? "pointer" : "not-allowed",
                         }}
                     >
@@ -298,6 +371,6 @@ export function CheckoutPage() {
                     </button>
                 </section>
             </div>
-        </div>
+        </main>
     );
 }
