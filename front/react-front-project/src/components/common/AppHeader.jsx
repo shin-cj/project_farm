@@ -10,10 +10,14 @@ function AppHeader() {
         <NavLink to="/products">상품</NavLink>
         <NavLink to="/market-prices">주간 시세</NavLink>
         <NavLink to="/cart">장바구니</NavLink>
+      </nav>
+      <nav className="util-nav" aria-label="사용자 메뉴">
+        <NavLink to="/mypage">마이페이지</NavLink>
         <NavLink to="/seller">판매자</NavLink>
         <NavLink to="/admin">관리자</NavLink>
         <NavLink to="/login">로그인</NavLink>
       </nav>
+
     </header>
   )
 }

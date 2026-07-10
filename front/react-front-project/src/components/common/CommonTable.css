@@ -1,0 +1,38 @@
+.manage-table {
+    background-color: #ffffff;
+    border: 1px solid black;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.manage-table th, .manage-table td {
+    border: 2px #e7e7e7;
+    border-style: solid hidden solid;
+    padding: 10px;
+    text-align: center;
+}
+.buttonBox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 8px;
+}
+
+.pageButton {
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.navButton{
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background-color: #fafafa;
+    color: #000000;
+}
