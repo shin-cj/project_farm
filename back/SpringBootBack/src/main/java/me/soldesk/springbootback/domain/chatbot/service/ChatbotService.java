@@ -86,7 +86,7 @@ public class ChatbotService {
 
 
             Optional<Product> productOptional  =
-                    productRepository.findFirstByProductNameContainingAndProductStatusAndStockQuantityGreaterThanOrderByPriceAsc(
+                    productRepository.findLowestPriceProductByKeyword(
                             keyword,
                             SELLIING_STATUS,
                             0
