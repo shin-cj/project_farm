@@ -10,6 +10,7 @@ function CartPage() {
     const [selectedItem, setSelectedItem] = useState(null)
     const [loading, setLoading] = useState(false)
 
+
     const navigate = useNavigate()
 
     const userid = 8
@@ -63,6 +64,30 @@ function CartPage() {
     }
 
 
+    const handleQuantityChange = async (item, change) => {
+        const newQuantity = item.quantity + change
+
+        if(newQuantity < 1){
+            return
+        }
+
+        try {
+            await cartApi.updateQuantity(item.cart_item_id,newQuantity)
+
+            await loadCartItems()
+
+            if(selectedItem?.cart_item_id === item.cart_item_id){
+                selectedItem({
+                    ...item,
+                    quantity: newQuantity
+                })
+            }
+        }catch (e) {
+            console.log(e)
+            alert('수량 변경에 실패했습니다.')
+        }
+    }
+
   return(
       <section className="cart-page">
         <div className="cart-header">
@@ -90,8 +115,21 @@ function CartPage() {
                   >
                     <div className="cart-card-main">
                       <h2>{item.productName}</h2>
-                      <p>{item.product_price.toLocaleString()}원</p>
-                      <p>수량: {item.quantity}</p>
+                      <p>{(item.product_price * item.quantity).toLocaleString()}원</p>
+                      <div className="cart-quantity" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            type="button"
+                            disabled={item.quantity <= 1}
+                            className="cart-quantity"
+                            onClick={() => handleQuantityChange(item,-1)}
+                        >-</button>
+                          <span>{item.quantity}</span>
+                        <button type = "button"
+                                className="cart-quantity"
+                                onClick={() => handleQuantityChange(item, 1)}>
+                            +
+                        </button>
+                      </div>
                     </div>
 
                     <div className="cart-actions">
@@ -130,11 +168,10 @@ function CartPage() {
                           <h2>{selectedItem.productName}</h2>
 
                           <p>상품 번호 : {selectedItem.product_id}</p>
-                          <p>가격 : {selectedItem.product_price.toString()}원</p>
+                          <p>가격 : {(selectedItem.product_price * selectedItem.quantity).toString()}원</p>
                           <p>수량 : {selectedItem.quantity}</p>
 
-                          <button type="button" onClick={() => navigate(`/products/${selectedItem.product_id}`)}
-                                  >상세보기</button>
+
                       </div>
 
 
@@ -155,6 +192,9 @@ function CartPage() {
                   </div>
 
                 <div className="cart-modal-actions">
+
+                    <button type="button" onClick={() => navigate(`/products/${selectedItem.product_id}`)}
+                    >상세보기</button>
                   <button type="button" onClick={() => handleBuy(selectedItem)}>
                     상품 구매
                   </button>

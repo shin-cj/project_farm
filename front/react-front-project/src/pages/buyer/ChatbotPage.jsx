@@ -110,7 +110,7 @@ function ChatbotPage() {
 
                 {recipeResult.matchedProducts?.length > 0 ? (
                     recipeResult.matchedProducts.map((product) => (
-                        <div className="product-card" key={product.productId}>
+                        <div className="chatbot-product-card" key={product.productId}>
                           <span>{product.ingredientName}</span>
                           <strong>{product.productName}</strong>
                           <p>{product.price.toLocaleString()}원 / {product.unit}</p>

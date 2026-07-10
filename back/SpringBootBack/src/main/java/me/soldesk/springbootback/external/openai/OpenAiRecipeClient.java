@@ -51,7 +51,7 @@ public class OpenAiRecipeClient {
                                 
                                 {
                                   "success": false,
-                                  "message": "현실에서 구할 수 있는 식재료로 다시 입력해주세요.",
+                                  "message": "질문을 다시 입력해주세요!",
                                   "recipeTitle": null,
                                   "ingredients": [],
                                   "searchIngredients": [],
@@ -81,8 +81,8 @@ public class OpenAiRecipeClient {
                                   "success":true,
                                   "message":"추천 가능한 레시피입니다.",
                                   "recipeTitle": "레시피 제목",
-                                  "ingredients": ["재료1", "재료2", "재료3"],
-                                  "searchIngredients": ["재료1", "재료2", "재료3"],
+                                  "ingredients": ["재료1", "재료2", "재료3","재료4","재료5..."],
+                                  "searchIngredients": ["재료1", "재료2", "재료3","재료4","재료5..."],
                                   "recipe": "조리 순서",
                                   "remark": "참고 사항"
                                 }

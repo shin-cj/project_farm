@@ -13,6 +13,10 @@ const cartApi = {
     deleteCartItem(cart_item_Id){
         return httpClient.delete(`/cart/items/${cart_item_Id}`)
     },
+
+    updateQuantity(cart_item_id, quantity){
+        return httpClient.patch(`/cart/items/${cart_item_id}/quantity?quantity=${quantity}`)
+    },
 }
 
 export default cartApi
