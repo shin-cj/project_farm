@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Map;
 
+import me.soldesk.springbootback.domain.order.entity.Order;
+import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.payment.dto.PaymentConfirmRequest;
 import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
@@ -18,17 +20,20 @@ public class PaymentService {
     private final RestClient restClient;
     private final String secretKey;
     private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
 
     public PaymentService(
             RestClient.Builder restClientBuilder,
             @Value("${tosspayments.secret-key}") String secretKey,
-            PaymentRepository paymentRepository
+            PaymentRepository paymentRepository,
+            OrderRepository orderRepository
     ) {
         this.restClient = restClientBuilder
                 .baseUrl("https://api.tosspayments.com")
                 .build();
         this.secretKey = secretKey;
         this.paymentRepository = paymentRepository;
+        this.orderRepository = orderRepository;
     }
 
     public Map<String, Object> confirmPayment(PaymentConfirmRequest request) {
@@ -46,19 +51,17 @@ public class PaymentService {
                 .retrieve()
                 .body(Map.class);
 
+        Order order = orderRepository.findByOrderNumber(request.getOrderId())
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보를 찾을 수 없습니다."));
         // Toss 승인 성공 후 DB에 결제 정보 저장
         Payment payment = new Payment();
 
-        // 지금은 주문 테이블 연결 전이라 더미 주문 ID 사용
-        payment.setOrderId(1L);
-
+        payment.setPaymentId(order.getOrderId());
         payment.setPaymentAmount(request.getAmount());
         payment.setPgPaymentId(request.getPaymentKey());
-
         // Toss 응답에서 결제 상태와 결제 수단 추출
         payment.setPaymentStatus(String.valueOf(tossResponse.get("status")));
         payment.setPaymentMethod(String.valueOf(tossResponse.get("method")));
-
         payment.setPaidAt(LocalDateTime.now());
 
         paymentRepository.save(payment);
