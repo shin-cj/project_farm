@@ -16,6 +16,7 @@ import ChatbotPage from '../pages/buyer/ChatbotPage'
 import SellerDashboardPage from '../pages/seller/SellerDashboardPage'
 import FarmManagementPage from '../pages/seller/FarmManagementPage'
 import ProductManagementPage from '../pages/seller/ProductManagementPage'
+import ProductCreatePage from '../pages/seller/ProductCreatePage'
 import SellerOrderPage from '../pages/seller/SellerOrderPage'
 import DeliveryManagementPage from '../pages/seller/DeliveryManagementPage'
 import SalesStatisticsPage from '../pages/seller/SalesStatisticsPage'
@@ -24,6 +25,7 @@ import UserManagementPage from '../pages/admin/UserManagementPage'
 import ContentManagementPage from '../pages/admin/ContentManagementPage'
 import ReportManagementPage from '../pages/admin/ReportManagementPage'
 import MarketPriceManagementPage from '../pages/admin/MarketPriceManagementPage'
+import AdminDeliveryManagementPage from '../pages/admin/AdminDeliveryManagementPage'
 import { CheckoutPage } from '../components/payment/checkout.jsx'
 import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
@@ -51,6 +53,7 @@ function AppRoutes() {
         <Route index element={<SellerDashboardPage />} />
         <Route path="farms" element={<FarmManagementPage />} />
         <Route path="products" element={<ProductManagementPage />} />
+        <Route path="products/new" element={<ProductCreatePage />} />
         <Route path="orders" element={<SellerOrderPage />} />
         <Route path="deliveries" element={<DeliveryManagementPage />} />
         <Route path="statistics" element={<SalesStatisticsPage />} />
@@ -61,6 +64,7 @@ function AppRoutes() {
         <Route path="users" element={<UserManagementPage />} />
         <Route path="content" element={<ContentManagementPage />} />
         <Route path="reports" element={<ReportManagementPage />} />
+        <Route path="deliveries" element={<AdminDeliveryManagementPage />} />
         <Route path="market-prices" element={<MarketPriceManagementPage />} />
       </Route>
 

@@ -1,4 +1,17 @@
-// product 기능의 백엔드 주소가 확정되면 이 객체에 조회·등록·수정·삭제 함수를 추가합니다.
-const productApi = {}
+import axios from 'axios'
 
-export default productApi
+export async function getProducts(categoryId) {
+  const params = categoryId === null ? {} : { categoryId }
+  const response = await axios.get('/api/products', { params })
+  return response.data
+}
+
+export async function getProduct(productId) {
+  const response = await axios.get(`/api/products/${productId}`)
+  return response.data
+}
+
+export async function createProduct(productData){
+  const response = await axios.post('/api/products', productData)
+  return response.data
+}

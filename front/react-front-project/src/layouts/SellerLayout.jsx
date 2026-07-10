@@ -9,6 +9,7 @@ function SellerLayout() {
         <NavLink to="/seller">대시보드</NavLink>
         <NavLink to="/seller/farms">농장 관리</NavLink>
         <NavLink to="/seller/products">상품 관리</NavLink>
+        <NavLink to="/seller/products/new">상품 등록</NavLink>
         <NavLink to="/seller/orders">주문 접수</NavLink>
         <NavLink to="/seller/deliveries">배송 관리</NavLink>
       </aside>
