@@ -47,8 +47,8 @@ function ChatbotPage() {
         //로그인 구현 뒤 사용자의 실제 id값을 가져와 넣어야 합니다.
         user_id: 8,
         obj1:message,
-        recipTitle:recipeResult.recipTitle,
-        recipeResult:recipeResult.recipe,
+        recipeTitle:recipeResult.recipeTitle,
+        recipe:recipeResult.recipe,
         remark:recipeResult.remark,
       })
       alert('레시피가 저장되었습니다.')
