@@ -11,6 +11,7 @@ function CartPage() {
     const [selectedItem, setSelectedItem] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [quantityInputs, setQuantityInputs] = useState({})
     const navigate = useNavigate()
     const userid = 3
     const testProductId = 9
@@ -86,53 +87,76 @@ function CartPage() {
     }
 
 
-    const handleQuantityChange = async (item, change) => {
-        const newQuantity = item.quantity + change
+    const updateQuantityOnScreen = (cart_item_id, quantity) => {
+        setCartItems(items => items.map(item =>
+            item.cart_item_id === cart_item_id
+                ? {...item, quantity}
+                : item
+        ))
 
-        if(newQuantity < 1){
+        setSelectedItem(item =>
+            item?.cart_item_id === cart_item_id
+                ? {...item, quantity}
+                : item
+        )
+    }
+
+    const saveQuantity = async (item, quantity) => {
+        const newQuantity = Number(quantity)
+
+        if (!Number.isInteger(newQuantity) || newQuantity < 1) {
+            setQuantityInputs(inputs => ({
+                ...inputs,
+                [item.cart_item_id]: String(item.quantity),
+            }))
+            alert('수량은 1 이상의 정수로 입력해주세요.')
             return
         }
 
         try {
-            await cartApi.updateQuantity(item.cart_item_id,newQuantity)
+            await cartApi.updateQuantity(item.cart_item_id, newQuantity)
 
-            await loadCartItems()
-
-            if(selectedItem?.cart_item_id === item.cart_item_id){
-                setSelectedItem({
-                    ...item,
-                    quantity: newQuantity
-                })
-            }
-        }catch (e) {
-            console.log(e)
+            // 목록 전체를 다시 조회하지 않고 변경된 상품만 화면에 반영합니다.
+            updateQuantityOnScreen(item.cart_item_id, newQuantity)
+            setQuantityInputs(inputs => ({
+                ...inputs,
+                [item.cart_item_id]: String(newQuantity),
+            }))
+        } catch (e) {
+            console.error(e)
+            setQuantityInputs(inputs => ({
+                ...inputs,
+                [item.cart_item_id]: String(item.quantity),
+            }))
             alert('수량 변경에 실패했습니다.')
         }
     }
 
+    const handleQuantityInput = (item, value) => {
+        setQuantityInputs(inputs => ({
+            ...inputs,
+            [item.cart_item_id]: value,
+        }))
+    }
+
+    const submitQuantityInput = (item) => {
+        const value = quantityInputs[item.cart_item_id] ?? item.quantity
+        saveQuantity(item, value)
+    }
+
+    const getDisplayQuantity = (item) => {
+        const inputValue =
+            quantityInputs[item.cart_item_id] ?? item.quantity
+        const quantity = Number(inputValue)
+
+        if(!Number.isInteger(quantity) || quantity < 1) {
+            return item.quantity
+        }
+        return quantity
+    }
+
   return(
       <section className="cart-page">
-          {loading ? (
-              <p className="cart-loading">
-                  장바구니를 불러오는 중입니다.
-              </p>
-          ) : error ? (
-              <div className="cart-error">
-                  <p>{error}</p>
-
-                  <button type="button" onClick={loadCartItems}>
-                      다시 시도
-                  </button>
-              </div>
-          ) : cartItems.length === 0 ? (
-              <p className="cart-empty">
-                  장바구니에 담긴 상품이 없습니다.
-              </p>
-          ) : (
-              <div className="cart-list">
-                  {/* 기존 cartItems.map() 부분 유지 */}
-              </div>
-          )}
         <div className="cart-header">
           <h1>장바구니</h1>
             <button type="button" onClick={handleBuyAll}>
@@ -160,47 +184,66 @@ function CartPage() {
                       key={item.cart_item_id}
                       onClick={() => setSelectedItem(item)}
                   >
-                    <div className="cart-card-main">
-                      <h2>{item.productName}</h2>
-                      <p>{(item.product_price * item.quantity).toLocaleString()}원</p>
-                      <div className="cart-quantity" onClick={(e) => e.stopPropagation()}>
-                        <button
-                            type="button"
-                            disabled={item.quantity <= 1}
-                            className="cart-quantity"
-                            onClick={() => handleQuantityChange(item,-1)}
-                        >-</button>
-                          <span>{item.quantity}</span>
-                        <button type = "button"
-                                className="cart-quantity"
-                                onClick={() => handleQuantityChange(item, 1)}>
-                            +
-                        </button>
+                      <div className="cart-card-image">
+                          {item.productImageUrl ? (
+                              <img src={item.productImageUrl}
+                                   alt={item.productName}
+                                   onError={(e) =>
+                                   {e.currentTarget.style.display = 'none'}}
+                              />
+                          ):(
+                              <span>등록된 이미지가 없습니다.</span>
+                          )}
                       </div>
+                    <div className="cart-card-info">
+                        <p className="cart-farm-name">
+                            {item.farmName || '농장 정보 없음'}
+                        </p>
+                        <p className="cart-seller-name">
+                            판매자: {item.sellerName || '판매자 정보 없음'}
+                        </p>
+                        <p className="cart-product-description">
+                            {item.productDescription || '상품 설명이 없습니다.'}
+                        </p>
+                        <strong className="cart-product-price">
+                            {(item.product_price * getDisplayQuantity(item)).toLocaleString()}원
+                        </strong>
+
                     </div>
 
-                    <div className="cart-actions">
-                      <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleBuy(item)
-                          }}
-                      >
-                        상품 구매
-                      </button>
-
-                      <button
-                          type="button"
-                          className="danger"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDelete(item.cart_item_id)
-                          }}
-                      >
-                        삭제
-                      </button>
-                    </div>
+                      <div className="cart-card-side" onClick={(e) => e.stopPropagation()}>
+                          <label className="cart-quantity">
+                              <span>수량</span>
+                              <input
+                                  type="number"
+                                  min="1"
+                                  step="1"
+                                  aria-label={`${item.productName} 수량`}
+                                  value={quantityInputs[item.cart_item_id] ?? item.quantity}
+                                  onChange={(e) => handleQuantityInput(item, e.target.value)}
+                                  onBlur={() => submitQuantityInput(item)}
+                                  onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                          e.currentTarget.blur()
+                                      }
+                                  }}
+                              />
+                          </label>
+                          <button type="button"
+                                  onClick={() => handleBuy(item)}>
+                              상품 구매
+                          </button>
+                          <button
+                              type="button"
+                              className="danger"
+                              onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDelete(item.cart_item_id)
+                              }}
+                          >
+                              삭제
+                          </button>
+                      </div>
                   </article>
               ))}
             </div>

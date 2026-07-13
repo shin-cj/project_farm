@@ -116,6 +116,7 @@ function ChatbotPage() {
                           <p>{product.price.toLocaleString()}원 / {product.unit}</p>
                           <AddCartButton
                               productId={product.productId}
+                              //userid 변경
                               userid={8}//유저의 고유 id 값 필요
                           />
                         </div>
