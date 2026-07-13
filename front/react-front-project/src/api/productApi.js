@@ -1,9 +1,19 @@
 import axios from 'axios'
 
 //상품 목록을 조회
-export async function getProducts(categoryId) {
-  const params = categoryId === null ? {} : { categoryId }
+export async function getProducts(categoryId, farmId = null) {
+  const params = {}
+
+  if (categoryId !== null) {
+    params.categoryId = categoryId
+  }
+
+  if (farmId !== null) {
+    params.farmId = farmId
+  }
+
   const response = await axios.get('/api/products', { params })
+
   return response.data
 }
 

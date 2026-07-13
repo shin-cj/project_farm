@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getProducts, updateProduct } from '../../api/productApi.js'
 import './ProductManagementPage.css'
+import { getFarms } from '../../api/farmApi.js'
 
 // 상품 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductManagementPage() {
@@ -12,6 +13,17 @@ function ProductManagementPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
+  const [farms, setFarms] = useState([])
+  const [selectedFarmId, setSelectedFarmId] = useState('')
+
+  useEffect(() => {
+    async function loadFarms() {
+      const data = await getFarms(null)
+      setFarms(data)
+    }
+
+    loadFarms()
+  }, [])
 
   useEffect(() => {
     async function loadProducts(){
@@ -19,7 +31,11 @@ function ProductManagementPage() {
         setLoading(true)
         setError('')
 
-        const data = await getProducts(null)
+        const farmId = selectedFarmId === ''
+            ? null
+            : Number(selectedFarmId)
+
+        const data = await getProducts(null, farmId)
         setProducts(data)
       }catch (err) {
         setError(err.message || '상품 목록을 불러오지 못했습니다.')
@@ -28,7 +44,7 @@ function ProductManagementPage() {
       }
     }
     loadProducts()
-  }, []);
+  }, [selectedFarmId]);
 
   async function handleChangeStatus(product) {
     const nextStatus = product.productStatus === 'HIDDEN'
@@ -110,6 +126,21 @@ function ProductManagementPage() {
 
         <section className="seller-product-card">
           <div className="seller-product-filter">
+            <select
+                value={selectedFarmId}
+                onChange={(event) => setSelectedFarmId(event.target.value)}
+            >
+              <option value="">전체 농장</option>
+
+              {farms.map((farm) => (
+                  <option
+                      key={farm.farmId}
+                      value={farm.farmId}
+                  >
+                    {farm.farmName}
+                  </option>
+              ))}
+            </select>
             <button
                 type="button"
                 onClick={() => setStatusFilter('ALL')}

@@ -21,13 +21,15 @@ public class ProductService {
     }
 
     //상품 목록 조회 - null 이면 전체 상품 조회
-    public List<ProductResponse> getProducts(Long categoryId) {
+    public List<ProductResponse> getProducts(Long categoryId, Long farmId) {
         List<Product> products;
 
-        if (categoryId == null) {
-            products = productRepository.findAll();
-        } else {
+        if (farmId != null) {
+            products = productRepository.findByFarmId(farmId);
+        } else if (categoryId != null) {
             products = productRepository.findByCategoryId(categoryId);
+        } else {
+            products = productRepository.findAll();
         }
 
         List<ProductResponse> responses = new ArrayList<>();

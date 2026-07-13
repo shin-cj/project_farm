@@ -19,9 +19,10 @@ public class ProductController {
 
     @GetMapping
     public List<ProductResponse> getProducts(
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long farmId
     ) {
-        return productService.getProducts(categoryId);
+        return productService.getProducts(categoryId, farmId);
     }
 
     @PostMapping

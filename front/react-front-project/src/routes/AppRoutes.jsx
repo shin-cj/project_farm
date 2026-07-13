@@ -32,6 +32,7 @@ import { FailPage } from '../components/payment/fail.jsx'
 import DeliveryStatusPage from "../pages/buyer/DeliveryStatusPage.jsx";
 import ProductEditPage from "../pages/seller/ProductEditPage.jsx";
 import FarmCreatePage from '../pages/seller/FarmCreatePage'
+import FarmEditPage from '../pages/seller/FarmEditPage'
 // URL과 실제 페이지 컴포넌트를 한곳에서 연결합니다.
 function AppRoutes() {
   return (
@@ -61,6 +62,7 @@ function AppRoutes() {
         <Route path="products/:productId/edit" element={<ProductEditPage />} />
         <Route path="statistics" element={<SalesStatisticsPage />} />
         <Route path="farms/new" element={<FarmCreatePage />} />
+        <Route path="farms/:farmId/edit" element={<FarmEditPage />} />
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>

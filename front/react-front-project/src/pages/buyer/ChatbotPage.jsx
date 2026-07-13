@@ -45,7 +45,7 @@ function ChatbotPage() {
       await chatbotApi.saveRecipe({
         //해당 값은 현재 테스트 용으로 하드 코딩 되어있습니다.
         //로그인 구현 뒤 사용자의 실제 id값을 가져와 넣어야 합니다.
-        user_id: 8,
+        user_id: 3,
         obj1:message,
         recipTitle:recipeResult.recipTitle,
         recipeResult:recipeResult.recipe,

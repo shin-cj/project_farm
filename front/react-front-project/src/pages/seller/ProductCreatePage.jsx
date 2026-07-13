@@ -3,11 +3,13 @@ import { createProduct } from '../../api/productApi.js'
 import { useNavigate } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
+import { getFarms } from '../../api/farmApi.js'
 
 function ProductCreatePage() {
     const navigate = useNavigate()
 
     const [categories, setCategories] = useState([])
+    const [farms, setFarms] = useState([])
 
     useEffect(() => {
         async function loadCategories() {
@@ -18,8 +20,22 @@ function ProductCreatePage() {
         loadCategories()
     }, [])
 
+    useEffect(() => {
+        async function loadFarms(){
+            try{
+                const data = await getFarms(null)
+                setFarms(data)
+            }catch (error){
+                console.log(error)
+                alert('농장 목록을 불러오지 못했습니다.')
+            }
+        }
+
+        loadFarms()
+    }, []);
+
     const [form, setForm] = useState({
-        farmId: 1,
+        farmId: '',
         categoryId: '',
         productName: '',
         description: '',
@@ -111,13 +127,24 @@ function ProductCreatePage() {
                 <form onSubmit={handleSubmit} className="product-create-form">
                     <div className="product-create-row">
                         <div className="product-create-field">
-                            <label>농장 번호</label>
-                            <input
-                                type="number"
+                            <label>판매 농장</label>
+
+                            <select
                                 name="farmId"
                                 value={form.farmId}
                                 onChange={handleChange}
-                            />
+                            >
+                                <option value="">농장 선택</option>
+
+                                {farms.map((farm) => (
+                                    <option
+                                        key={farm.farmId}
+                                        value={farm.farmId}
+                                    >
+                                        {farm.farmName} - {farm.region}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="product-create-field">
@@ -237,7 +264,7 @@ function ProductCreatePage() {
                         <button
                             type="button"
                             className="product-create-cancel-button"
-                            onClick={() => navigate('/products')}
+                            onClick={() => navigate('/seller/products')}
                         >
                             취소
                         </button>
