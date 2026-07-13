@@ -182,6 +182,7 @@ function CartPage() {
                   <article
                       className="cart-card"
                       key={item.cart_item_id}
+
                       onClick={() => setSelectedItem(item)}
                   >
                       <div className="cart-card-image">
