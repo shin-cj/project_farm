@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getProduct } from '../../api/productApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
-import AddCartButton from '../../components/cart/AddCartButton.jsx'
 
 // 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductDetailPage() {
