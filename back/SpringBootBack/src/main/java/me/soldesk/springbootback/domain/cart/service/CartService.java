@@ -92,4 +92,17 @@ public class CartService {
         return response;
     }
 
+    @Transactional
+    public void updateQuantity(Long cartItemId, int quantity){
+        if(quantity < 1){
+            throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
+        }
+
+        CartItem cartItem = cartItemRepository.findById(cartItemId)
+                .orElseThrow(() -> new IllegalArgumentException("장바구니 상품이 없습니다."));
+
+        cartItem.setQuantity(quantity);
+        cartItemRepository.save(cartItem);
+    }
+
 }
