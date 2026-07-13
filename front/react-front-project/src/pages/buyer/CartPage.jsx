@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
+import AddCartButton from "../../components/cart/AddCartButton.jsx";
 import orderApi from "../../api/orderApi.js";
 
 
@@ -11,7 +12,7 @@ function CartPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const navigate = useNavigate()
-    const userid = 8
+    const userid = 3
     const testProductId = 9
 
     const loadCartItems = async () => {
