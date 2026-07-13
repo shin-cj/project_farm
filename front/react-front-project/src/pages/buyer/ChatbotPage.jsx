@@ -47,8 +47,8 @@ function ChatbotPage() {
         //로그인 구현 뒤 사용자의 실제 id값을 가져와 넣어야 합니다.
         user_id: 3,
         obj1:message,
-        recipTitle:recipeResult.recipTitle,
-        recipeResult:recipeResult.recipe,
+        recipeTitle:recipeResult.recipeTitle,
+        recipe:recipeResult.recipe,
         remark:recipeResult.remark,
       })
       alert('레시피가 저장되었습니다.')
@@ -86,7 +86,7 @@ function ChatbotPage() {
               <section className="recipe-panel">
                 <h2>{recipeResult.recipeTitle}</h2>
 
-                <button type="button" onClick={handleSaveRecipe}>
+                <button type="button" className="recipe-save-button" onClick={handleSaveRecipe}>
                   레시피 저장
                 </button>
 
@@ -110,7 +110,7 @@ function ChatbotPage() {
 
                 {recipeResult.matchedProducts?.length > 0 ? (
                     recipeResult.matchedProducts.map((product) => (
-                        <div className="product-card" key={product.productId}>
+                        <div className="chatbot-product-card" key={product.productId}>
                           <span>{product.ingredientName}</span>
                           <strong>{product.productName}</strong>
                           <p>{product.price.toLocaleString()}원 / {product.unit}</p>
