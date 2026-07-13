@@ -1,8 +1,9 @@
 package me.soldesk.springbootback.domain.delivery.dto;
 
-
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -11,7 +12,7 @@ public class SellerOrderInfoResponse {
     // 주문 번호
     private Long orderId;
 
-    // 화면 표시용 주문 코드
+    // 화면에 표시할 주문 코드
     private String orderNumber;
 
     // 상품명
@@ -28,4 +29,16 @@ public class SellerOrderInfoResponse {
 
     // 상세 주소
     private String receiverDetailAddress;
+
+    // 주문 상태
+    private String orderStatus;
+
+    // 최종 결제 금액
+    private Long finalPrice;
+
+    // 배송 요청사항
+    private String requestMessage;
+
+    // 주문 일시
+    private LocalDateTime orderedAt;
 }
