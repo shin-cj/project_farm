@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getProduct } from '../../api/productApi.js'
-import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
 
 // 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductDetailPage() {
   const {productId} = useParams()
   const navigate = useNavigate()
-  // TODO: 로그인 기능 완성 후 실제 로그인 사용자 번호로 교체합니다.
-  const currentUserId = 3
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -117,12 +114,9 @@ function ProductDetailPage() {
           </dl>
 
           <div className="product-detail-actions">
-            <AddCartButton
-              productId={product.productId}
-              userid={currentUserId}
-              quantity={1}
-              className="product-detail-cart-button"
-            />
+            <button type="button" className="product-detail-cart-button">
+              장바구니 담기
+            </button>
 
             <Link to="/order" className="product-detail-order-link">
               바로 주문하기

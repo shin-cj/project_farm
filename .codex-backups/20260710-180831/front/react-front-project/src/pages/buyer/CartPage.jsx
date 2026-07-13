@@ -1,6 +1,8 @@
+import PagePlaceholder from '../../components/common/PagePlaceholder'
 import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
+import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import orderApi from "../../api/orderApi.js";
 
 
@@ -8,54 +10,21 @@ import orderApi from "../../api/orderApi.js";
 function CartPage() {
     const [cartItems, setCartItems] = useState([])
     const [selectedItem, setSelectedItem] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
 
     const navigate = useNavigate()
 
-    const userid = 3
+    const userid = 8
+    const testProductId = 9
 
     const loadCartItems = async () => {
-      try {
-        setLoading(true)
-        setError('')
-
-        const {data} = await cartApi.getCartItems(userid)
-        setCartItems(data)
-      } catch (error) {
-        console.error(error)
-        setError('장바구니를 불러오지 못했습니다.')
-      } finally {
-        setLoading(false)
-      }
+      const {data} = await cartApi.getCartItems(userid)
+      setCartItems(data)
     }
 
     useEffect(() => {
-      let isMounted = true
-
-      cartApi.getCartItems(userid)
-          .then(({data}) => {
-            if (isMounted) {
-              setCartItems(data)
-            }
-          })
-          .catch((error) => {
-            console.error(error)
-
-            if (isMounted) {
-              setError('장바구니를 불러오지 못했습니다.')
-            }
-          })
-          .finally(() => {
-            if (isMounted) {
-              setLoading(false)
-            }
-          })
-
-      return () => {
-        isMounted = false
-      }
-    }, [userid])
+      loadCartItems()
+    }, [])
 
 
     const handleDelete = async (cart_item_id) => {
@@ -105,13 +74,16 @@ function CartPage() {
       <section className="cart-page">
         <div className="cart-header">
           <h1>장바구니</h1>
+
+          <AddCartButton
+              productId={testProductId}
+              userid={userid}
+              onSuccess={loadCartItems}
+          >
+          </AddCartButton>
         </div>
 
-        {loading ? (
-            <p className="cart-empty">장바구니를 불러오는 중입니다.</p>
-        ) : error ? (
-            <p className="cart-empty">{error}</p>
-        ) : cartItems.length === 0 ? (
+        {cartItems.length === 0 ? (
             <p className="cart-empty">장바구니에 담긴 상품이 없습니다.</p>
         ) : (
             <div className="cart-list">

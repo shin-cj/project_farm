@@ -17,11 +17,6 @@ a { color: inherit; text-decoration: none; }
 .role-layout { min-height: 100vh; display: grid; grid-template-columns: 240px 1fr; }
 .side-menu { display: flex; flex-direction: column; gap: 16px; padding: 32px 24px; background: #1f5130; color: white; }
 .side-menu a.active { color: #bdf0c9; }
-.side-menu-navigation { display: grid; gap: 8px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.22); }
-.side-menu-navigation button,
-.side-menu-home-link { display: flex; align-items: center; justify-content: center; min-height: 40px; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 8px; background: transparent; color: #ffffff; font: inherit; font-weight: 700; cursor: pointer; }
-.side-menu-navigation button:hover,
-.side-menu-home-link:hover { background: rgba(255, 255, 255, 0.12); }
 .role-content { padding: 48px; background: #f6f8f5; }
 @media (max-width: 760px) {
   .app-header { align-items: flex-start; flex-direction: column; }

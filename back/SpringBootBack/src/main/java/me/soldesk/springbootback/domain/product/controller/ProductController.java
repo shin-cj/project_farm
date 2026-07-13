@@ -19,9 +19,10 @@ public class ProductController {
 
     @GetMapping
     public List<ProductResponse> getProducts(
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long farmId
     ) {
-        return productService.getProducts(categoryId);
+        return productService.getProducts(categoryId, farmId);
     }
 
     @PostMapping
@@ -32,5 +33,10 @@ public class ProductController {
     @GetMapping("/{productId}")
     public ProductResponse getProduct(@PathVariable Long productId){
         return productService.getProduct(productId);
+    }
+
+    @PutMapping("/{productId}")
+    public ProductResponse updateProduct(@PathVariable Long productId, @RequestBody ProductRequest request){
+        return productService.updateProduct(productId, request);
     }
 }
