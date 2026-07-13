@@ -1,15 +1,18 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { getProduct, updateProduct } from '../../api/productApi.js'
-import { getCategories } from '../../api/categoryApi.js'
+import {useEffect, useState} from 'react'
+import {useNavigate, useParams} from 'react-router-dom'
+import {getProduct, updateProduct} from '../../api/productApi.js'
+import {getCategories} from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
+import {getFarms} from "../../api/farmApi.js";
 
 function ProductEditPage() {
-    const { productId } = useParams()
+    const {productId} = useParams()
 
     const navigate = useNavigate()
 
     const [categories, setCategories] = useState([])
+
+    const [farms, setFarms] = useState([])
 
     const [loading, setLoading] = useState(true)
 
@@ -40,11 +43,13 @@ function ProductEditPage() {
                 setError('')
 
                 // 카테고리 목록과 기존 상품 정보를 동시에 요청합니다.
-                const [categoryData, productData] = await Promise.all([
+                const [categoryData, farmData, productData] = await Promise.all([
                     getCategories(),
+                    getFarms(null),
                     getProduct(productId),
                 ])
 
+                setFarms(farmData)
                 setCategories(categoryData)
 
                 // 백엔드에서 받아온 기존 상품 정보를 입력 칸에 넣습니다.
@@ -75,7 +80,7 @@ function ProductEditPage() {
 
     // 사용자가 입력 칸을 변경할 때 form의 해당 값만 변경합니다.
     function handleChange(event) {
-        const { name, value } = event.target
+        const {name, value} = event.target
 
         setForm({
             ...form,
@@ -180,12 +185,20 @@ function ProductEditPage() {
                         <div className="product-create-field">
                             <label>농장 번호</label>
 
-                            <input
-                                type="number"
+                            <select
                                 name="farmId"
                                 value={form.farmId}
                                 onChange={handleChange}
-                            />
+                            >
+                                <option value="">농장 선택</option>
+
+                                {farms.map((farm) => (
+                                    <option key={farm.farmId} value={farm.farmId}>
+                                        {farm.farmName}
+                                    </option>
+                                ))}
+                            </select>
+
                         </div>
 
                         <div className="product-create-field">

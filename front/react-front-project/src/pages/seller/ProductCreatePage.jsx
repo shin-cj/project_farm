@@ -108,7 +108,7 @@ function ProductCreatePage() {
             await createProduct(productData)
 
             alert('상품이 등록되었습니다.')
-            navigate('/products')
+            navigate('/seller/products')
         } catch (error) {
             console.error(error)
             alert('상품 등록에 실패했습니다.')
