@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getProducts, updateProduct } from '../../api/productApi.js'
 import './ProductManagementPage.css'
 import { getFarms } from '../../api/farmApi.js'
+import { getCategories } from '../../api/categoryApi.js'
 
 // 상품 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductManagementPage() {
@@ -14,15 +15,27 @@ function ProductManagementPage() {
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [farms, setFarms] = useState([])
+  const [categories, setCategories] = useState([])
+  const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedFarmId, setSelectedFarmId] = useState('')
 
   useEffect(() => {
-    async function loadFarms() {
-      const data = await getFarms(null)
-      setFarms(data)
+    async function loadFilterData() {
+      try {
+        const [farmData, categoryData] = await Promise.all([
+          getFarms(null),
+          getCategories(),
+        ])
+
+        setFarms(farmData)
+        setCategories(categoryData)
+      } catch (err) {
+        console.error(err)
+        setError('필터 정보를 불러오지 못했습니다.')
+      }
     }
 
-    loadFarms()
+    loadFilterData()
   }, [])
 
   useEffect(() => {
@@ -35,7 +48,11 @@ function ProductManagementPage() {
             ? null
             : Number(selectedFarmId)
 
-        const data = await getProducts(null, farmId)
+        const categoryId = selectedCategoryId === ''
+            ? null
+            : Number(selectedCategoryId)
+
+        const data = await getProducts(categoryId, farmId)
         setProducts(data)
       }catch (err) {
         setError(err.message || '상품 목록을 불러오지 못했습니다.')
@@ -44,7 +61,7 @@ function ProductManagementPage() {
       }
     }
     loadProducts()
-  }, [selectedFarmId]);
+  }, [selectedFarmId, selectedCategoryId])
 
   async function handleChangeStatus(product) {
     const nextStatus = product.productStatus === 'HIDDEN'
@@ -138,6 +155,21 @@ function ProductManagementPage() {
                       value={farm.farmId}
                   >
                     {farm.farmName}
+                  </option>
+              ))}
+            </select>
+            <select
+                value={selectedCategoryId}
+                onChange={(event) => setSelectedCategoryId(event.target.value)}
+            >
+              <option value="">전체 카테고리</option>
+
+              {categories.map((category) => (
+                  <option
+                      key={category.categoryId}
+                      value={category.categoryId}
+                  >
+                    {category.categoryName}
                   </option>
               ))}
             </select>

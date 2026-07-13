@@ -28,6 +28,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByFarmId(Long farmId);
     
-    
+    List<Product> findByFarmIdAndCategoryId(Long farmId, Long categoryId);
 }
 
