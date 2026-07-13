@@ -23,4 +23,9 @@ public class OrderController {
         return orderService.createOrder(request);
     }
 
+    @PostMapping("/from-product")
+    public OrderResponse createOrderFromProduct(@RequestBody OrderRequest request) {
+        return orderService.createOrderFromProduct(request);
+    }
+
 }

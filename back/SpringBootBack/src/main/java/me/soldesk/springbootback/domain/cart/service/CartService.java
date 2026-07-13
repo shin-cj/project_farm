@@ -5,11 +5,16 @@ import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.cart.dto.CartRequest;
 import me.soldesk.springbootback.domain.cart.dto.CartResponse;
 import me.soldesk.springbootback.domain.cart.entity.Cart;
+import me.soldesk.springbootback.domain.cart.repository.CartSellerRepository;
 import me.soldesk.springbootback.domain.cartitem.repository.CartItemRepository;
 import me.soldesk.springbootback.domain.cart.repository.CartRepository;
 import me.soldesk.springbootback.domain.cartitem.entity.CartItem;
+import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
+import me.soldesk.springbootback.domain.farm.entity.Farm;
+import me.soldesk.springbootback.domain.farm.service.FarmService;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,8 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final CartSellerRepository cartSellerRepository;
+    private final FarmService farmService;
 
     @Transactional
     public void addCartItem(CartRequest request){
@@ -80,14 +87,23 @@ public class CartService {
         Product product = productRepository.findById(cartItem.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("상품이 없습니다."));
 
+        FarmResponse farm = farmService.getFarm(product.getFarmId());
+        User seller = cartSellerRepository.findById(farm.getSellerId())
+                .orElseThrow(() -> new IllegalArgumentException("판매자 정보가 없습니다."));
         CartResponse response = new CartResponse();
+
+
         response.setCart_item_id(cartItem.getCartItemId());
         response.setCart_id(cartItem.getCartId());
         response.setProduct_id(product.getProductId());
+
         response.setProductName(product.getProductName());
         response.setProduct_price(product.getPrice());
         response.setQuantity(cartItem.getQuantity());
         response.setProductImageUrl(product.getProductImageUrl());
+        response.setProductDescription(product.getDescription());
+        response.setFarmName(farm.getFarmName());
+        response.setSellerName(seller.getName());
 
         return response;
     }

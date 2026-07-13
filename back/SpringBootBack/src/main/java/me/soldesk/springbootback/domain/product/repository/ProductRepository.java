@@ -25,9 +25,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("status")String productStatus,
             @Param("stockQuantity")Integer stockQuantity);
 
-
     List<Product> findByFarmId(Long farmId);
     
     List<Product> findByFarmIdAndCategoryId(Long farmId, Long categoryId);
 }
-
