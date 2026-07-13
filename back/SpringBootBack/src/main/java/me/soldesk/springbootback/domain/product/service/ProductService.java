@@ -20,13 +20,16 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    public List<ProductResponse> getProducts(Long categoryId) {
+    //상품 목록 조회 - null 이면 전체 상품 조회
+    public List<ProductResponse> getProducts(Long categoryId, Long farmId) {
         List<Product> products;
 
-        if (categoryId == null) {
-            products = productRepository.findAll();
-        } else {
+        if (farmId != null) {
+            products = productRepository.findByFarmId(farmId);
+        } else if (categoryId != null) {
             products = productRepository.findByCategoryId(categoryId);
+        } else {
+            products = productRepository.findAll();
         }
 
         List<ProductResponse> responses = new ArrayList<>();
@@ -38,6 +41,7 @@ public class ProductService {
         return responses;
     }
 
+    //상품 상세 정보를 조회
     public ProductResponse getProduct(Long productId) {
 
         Product product = productRepository
@@ -50,6 +54,7 @@ public class ProductService {
         return toResponse(product);
     }
 
+    //새로운 상품을 등록
     public ProductResponse createProduct(ProductRequest request){
 
         Product product = new Product();
@@ -72,6 +77,35 @@ public class ProductService {
 
     }
 
+    //기존 상품 정보를 수정
+    public ProductResponse updateProduct(Long productId, ProductRequest request) {
+
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품을 찾을 수 없습니다."
+                ));
+
+        product.setFarmId(request.getFarmId());
+        product.setCategoryId(request.getCategoryId());
+        product.setProductName(request.getProductName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+        product.setUnit(request.getUnit());
+        product.setOrigin(request.getOrigin());
+        product.setHarvestDate(request.getHarvestDate());
+        product.setExpirationDate(request.getExpirationDate());
+        product.setProductImageUrl(request.getProductImageUrl());
+        product.setProductStatus(request.getProductStatus());
+
+        Product savedProduct = productRepository.save(product);
+
+        return toResponse(savedProduct);
+    }
+
+    //Product 엔티티를 ProductResponse DTO로 변환
     private ProductResponse toResponse(Product product) {
         ProductResponse response = new ProductResponse();
         response.setProductId(product.getProductId());

@@ -1,8 +1,8 @@
-import PagePlaceholder from '../../components/common/PagePlaceholder'
 import {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
-import AddCartButton from '../../components/cart/AddCartButton.jsx'
+import orderApi from "../../api/orderApi.js";
+
 
 // 장바구니 기능을 담당하는 페이지 컴포넌트입니다.
 function CartPage() {
@@ -145,7 +145,11 @@ function CartPage() {
           </AddCartButton>
         </div>
 
-        {cartItems.length === 0 ? (
+        {loading ? (
+            <p className="cart-empty">장바구니를 불러오는 중입니다.</p>
+        ) : error ? (
+            <p className="cart-empty">{error}</p>
+        ) : cartItems.length === 0 ? (
             <p className="cart-empty">장바구니에 담긴 상품이 없습니다.</p>
         ) : (
             <div className="cart-list">

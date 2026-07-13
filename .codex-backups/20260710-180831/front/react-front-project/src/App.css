@@ -17,11 +17,6 @@ a { color: inherit; text-decoration: none; }
 .role-layout { min-height: 100vh; display: grid; grid-template-columns: 240px 1fr; }
 .side-menu { display: flex; flex-direction: column; gap: 16px; padding: 32px 24px; background: #1f5130; color: white; }
 .side-menu a.active { color: #bdf0c9; }
-.side-menu-navigation { display: grid; gap: 8px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.22); }
-.side-menu-navigation button,
-.side-menu-home-link { display: flex; align-items: center; justify-content: center; min-height: 40px; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 8px; background: transparent; color: #ffffff; font: inherit; font-weight: 700; cursor: pointer; }
-.side-menu-navigation button:hover,
-.side-menu-home-link:hover { background: rgba(255, 255, 255, 0.12); }
 .role-content { padding: 48px; background: #f6f8f5; }
 @media (max-width: 760px) {
   .app-header { align-items: flex-start; flex-direction: column; }
@@ -49,13 +44,6 @@ a { color: inherit; text-decoration: none; }
 
 .chatbot-input-area button,
 .product-card button {
-  border: 0;
-  border-radius: 8px;
-  background: #216b3a;
-  color: white;
-  cursor: pointer;
-}
-.recipe-save-button {
   border: 0;
   border-radius: 8px;
   background: #216b3a;
@@ -231,154 +219,6 @@ a { color: inherit; text-decoration: none; }
   gap: 8px;
   margin-top: 20px;
 }
-.cart-modal-main {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 170px;
-  gap: 20px;
-  align-items: start;
-}
-
-.cart-modal-info h2 {
-  margin-top: 0;
-}
-
-.cart-modal-info button {
-  border: 0;
-  border-radius: 8px;
-  padding: 10px 14px;
-  background: #216b3a;
-  color: white;
-  cursor: pointer;
-}
-
-/* 이미지가 들어갈 고정 영역 */
-.cart-modal-image-box {
-  position: relative;
-  width: 170px;
-  height: 190px;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  border: 1px solid #dce6dd;
-  border-radius: 8px;
-  background: #eef3ee;
-  color: #68756d;
-  text-align: center;
-}
-
-/* 이미지는 부모 영역 밖으로 나갈 수 없음 */
-.cart-modal-image-box img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.cart-quantity {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  margin-top: 8px;
-}
-
-.cart-quantity button {
-  width: 19px;
-  height: 19px;
-  padding: 0;
-
-  display: grid;
-  place-items: center;
-
-  border: 1px solid rgba(33, 107, 58, 0.35);
-  border-radius: 5px;
-
-  background-color: rgba(33, 107, 58, 0.08);
-  color: #216b3a;
-
-  font-size: 15px;
-  line-height: 0;
-  cursor: pointer;
-
-  box-shadow: 0 2px 4px rgba(33, 107, 58, 0.15);
-
-  transition:
-      transform 0.1s ease,
-      background-color 0.15s ease,
-      box-shadow 0.1s ease;
-}
-
-.cart-quantity button:hover:not(:disabled){
-  background-color: rgba(33, 107, 58, 0.16);
-  box-shadow: 0 3px 6px rgba(33, 107, 58, 0.2);
-  transform: translateY(-1px);
-}
-
-.cart-quantity button:active:not(:disabled) {
-  background-color: rgba(33, 107, 58, 0.25);
-  box-shadow: inset 0 2px 4px rgba(33, 107, 58, 0.25);
-  transform: translateY(1px) scale(0.95);
-}
-
-.cart-quantity button:focus-visible {
-  outline: 2px solid rgba(33, 107, 58, 0.5);
-  outline-offset: 2px;
-}
-
-.cart-quantity button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.cart-quantity span {
-  min-width: 18px;
-  text-align: center;
-  font-weight: 700;
-}
-
-.chatbot-product-card {
-  padding: 16px;
-  margin-bottom: 12px;
-
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  background-color: #ffffff;
-
-  transition:
-          transform 0.15s ease,
-          box-shadow 0.15s ease;
-}
-
-.chatbot-product-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-}
-
-.chatbot-product-card:last-child {
-  margin-bottom: 0;
-}
-
-.chatbot-product-card span {
-  display: block;
-  color: #68756d;
-  font-size: 0.9rem;
-}
-
-.chatbot-product-card strong {
-  display: block;
-  margin: 4px 0;
-}
-
-.chatbot-product-card button {
-  width: 100%;
-  height: 36px;
-
-  border: 0;
-  border-radius: 8px;
-  background: #216b3a;
-  color: white;
-  cursor: pointer;
-}
 
 @media (max-width: 720px) {
   .cart-header,
@@ -395,6 +235,4 @@ a { color: inherit; text-decoration: none; }
   .cart-modal-actions {
     flex-wrap: wrap;
   }
-
-
 }
