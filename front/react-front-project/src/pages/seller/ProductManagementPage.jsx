@@ -18,6 +18,7 @@ function ProductManagementPage() {
   const [categories, setCategories] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedFarmId, setSelectedFarmId] = useState('')
+  const [searchKeyword, setSearchKeyword] = useState('')
 
   useEffect(() => {
     async function loadFilterData() {
@@ -119,9 +120,20 @@ function ProductManagementPage() {
     return '상태 미등록'
   }
 
-  const filteredProducts = statusFilter === 'ALL'
-      ? products
-      : products.filter((product) => product.productStatus === statusFilter)
+  const normalizedKeyword = searchKeyword.trim().toLowerCase()
+
+  const filteredProducts = products.filter((product) => {
+    const matchesStatus =
+        statusFilter === 'ALL'
+        || product.productStatus === statusFilter
+
+    const productName = (product.productName ?? '').toLowerCase()
+
+    const matchesKeyword =
+        productName.includes(normalizedKeyword)
+
+    return matchesStatus && matchesKeyword
+  })
 
   return (
       <main className="seller-product-page">
@@ -173,6 +185,13 @@ function ProductManagementPage() {
                   </option>
               ))}
             </select>
+            <input
+                type="text"
+                value={searchKeyword}
+                onChange={(event) => setSearchKeyword(event.target.value)}
+                placeholder="상품명 검색"
+            />
+
             <button
                 type="button"
                 onClick={() => setStatusFilter('ALL')}
