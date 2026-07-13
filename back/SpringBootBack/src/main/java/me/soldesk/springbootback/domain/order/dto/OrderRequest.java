@@ -48,4 +48,8 @@ public class OrderRequest {
 
     private Long cartItemId;
 
+    private Long productId;
+
+    private Integer quantity;
+
 }

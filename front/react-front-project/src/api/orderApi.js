@@ -4,7 +4,12 @@ import httpClient from "./httpClient.js";
 const orderApi = {
     createOrder(request){
         return httpClient.post("/orders/from-cart",request)
+    },
+
+    createOrderFromProduct(request) {
+        return httpClient.post("/orders/from-product", request)
     }
+
 }
 
 export default orderApi
