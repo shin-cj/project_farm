@@ -4,14 +4,21 @@ import { getProduct } from '../../api/productApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
 
+import orderApi from "../../api/orderApi.js";
+
 // 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductDetailPage() {
   const {productId} = useParams()
   const navigate = useNavigate()
-  const userid = 8
+  const userid = 1
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  const buyerId = userid;
 
   useEffect(() => {
     async function loadProduct(){
@@ -50,6 +57,44 @@ function ProductDetailPage() {
         <div className="product-detail-message">상품이 없습니다.</div>
       </main>
     )
+  }
+
+  async function handleDirectOrder() {
+    const orderQuantity = Number(quantity);
+
+    if (orderQuantity < 1) {
+      alert("수량은 1개 이상 선택해주세요.");
+      return;
+    }
+
+    if (orderQuantity > product.stockQuantity) {
+      alert("재고보다 많이 주문할 수 없습니다.");
+      return;
+    }
+
+    try {
+      const response = await orderApi.createOrderFromProduct({
+        buyerId: userid,
+        productId: product.productId,
+        quantity: orderQuantity,
+
+        // 지금은 더미 회원/배송 정보
+        receiverName: "테스트 구매자",
+        receiverPhone: "010-1234-5678",
+        receiverAddress: "서울시 강남구",
+        receiverDetailAddress: "101호",
+        requestMessage: "문 앞에 놓아주세요",
+      });
+
+      const order = response.data;
+
+      navigate(
+          `/sandbox?orderId=${order.orderNumber}&amount=${order.finalPrice}&orderName=${order.orderName}`
+      );
+    } catch (error) {
+      console.error(error);
+      alert("주문 생성에 실패했습니다.");
+    }
   }
 
   return (
@@ -119,15 +164,67 @@ function ProductDetailPage() {
                 productId={product.productId}
                 userid={userid}
                 className='product-detail-cart-button'/>
-
-
-
-            <Link to="/order" className="product-detail-order-link">
+            <button
+                type="button"
+                className="product-detail-order-link"
+                onClick={() => {
+                  setQuantity(1)
+                  setIsOrderModalOpen(true)
+                }}
+            >
               바로 주문하기
-            </Link>
+            </button>
+
           </div>
         </div>
       </section>
+      {isOrderModalOpen && (
+          <div className="product-order-modal-backdrop">
+            <div className="product-order-modal">
+              <h2>바로 주문하기</h2>
+
+              <p>상품명: {product.productName}</p>
+              <p>가격: {product.price.toLocaleString()}원</p>
+              <p>남은 재고: {product.stockQuantity}개</p>
+
+              <label>
+                수량
+                <input
+                    type="number"
+                    min="1"
+                    max={product.stockQuantity}
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                />
+              </label>
+
+              <p>
+                총 결제 금액:{" "}
+                {(product.price * Number(quantity || 1)).toLocaleString()}원
+              </p>
+
+              <div>
+                <div className="product-order-modal-buttons">
+                  <button
+                      type="button"
+                      className="product-order-submit"
+                      onClick={handleDirectOrder}
+                  >
+                    결제하기
+                  </button>
+
+                  <button
+                      type="button"
+                      className="product-order-close"
+                      onClick={() => setIsOrderModalOpen(false)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+      )}
     </main>
   )
 }
