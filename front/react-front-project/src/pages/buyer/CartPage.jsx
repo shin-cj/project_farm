@@ -8,23 +8,30 @@ import AddCartButton from '../../components/cart/AddCartButton.jsx'
 function CartPage() {
     const [cartItems, setCartItems] = useState([])
     const [selectedItem, setSelectedItem] = useState(null)
-    const [loading, setLoading] = useState(false)
-
-
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
     const navigate = useNavigate()
-
     const userid = 8
     const testProductId = 9
 
     const loadCartItems = async () => {
-      const {data} = await cartApi.getCartItems(userid)
-      setCartItems(data)
+        try {
+            setLoading(true)
+            setError('')
+
+            const {data} = await cartApi.getCartItems(userid)
+            setCartItems(data)
+        } catch (e) {
+            console.error(e)
+            setError('장바구니 목록을 불러오지 못했습니다.')
+        }finally {
+            setLoading(false)
+        }
     }
 
     useEffect(() => {
-      loadCartItems()
-    }, [])
-
+        loadCartItems()
+    }, [userid])
 
     const handleDelete = async (cart_item_id) => {
       if(!confirm('장바구니에서 삭제하시겠습니까?')){
@@ -41,13 +48,7 @@ function CartPage() {
     }
 
     const handleBuy = (item) => {
-      navigate('/order',{
-        state: {
-          product_id: item.product_id,
-          cart_item_id: item.cart_item_id,
-          quantity: item.quantity,
-        },
-      })
+        moveToOrder([item])
     }
 
     const handleBuyAll = () => {
@@ -56,10 +57,30 @@ function CartPage() {
             return
         }
 
-        navigate('/order',{
+       moveToOrder(cartItems)
+    }
+
+    const moveToOrder = (items) => {
+        if(items.length == 0){
+            alert('구매할 상품이 없습니다.')
+            return
+        }
+
+        const cartItemIds = items.map(item => item.cart_item_id)
+
+        navigate('/order', {
             state: {
-                items: cartItems
-            }
+                //cartItemIds : 구매하려는 CART_ITEMS 테이블의 상품 목록
+                //전체 구매를 위해 배열로 데이터를 전달합니다.
+                //한 건 구매 시에도 배열로 데이터를 전달합니다.
+                //개별 구매 예시 : [18]
+                //전체 구매 예시 : [18,13,21]
+                //product_id, 가격, 상품명 등을 모두 전달하지 않아도
+                //백엔드에서 cart_item_id를 통해 조회 가능
+                cartItemIds,
+                buyerId: userid,
+
+            },
         })
     }
 
@@ -77,7 +98,7 @@ function CartPage() {
             await loadCartItems()
 
             if(selectedItem?.cart_item_id === item.cart_item_id){
-                selectedItem({
+                setSelectedItem({
                     ...item,
                     quantity: newQuantity
                 })
@@ -90,6 +111,27 @@ function CartPage() {
 
   return(
       <section className="cart-page">
+          {loading ? (
+              <p className="cart-loading">
+                  장바구니를 불러오는 중입니다.
+              </p>
+          ) : error ? (
+              <div className="cart-error">
+                  <p>{error}</p>
+
+                  <button type="button" onClick={loadCartItems}>
+                      다시 시도
+                  </button>
+              </div>
+          ) : cartItems.length === 0 ? (
+              <p className="cart-empty">
+                  장바구니에 담긴 상품이 없습니다.
+              </p>
+          ) : (
+              <div className="cart-list">
+                  {/* 기존 cartItems.map() 부분 유지 */}
+              </div>
+          )}
         <div className="cart-header">
           <h1>장바구니</h1>
             <button type="button" onClick={handleBuyAll}>

@@ -92,7 +92,7 @@ public class ChatbotService {
                             0
                     );
 
-            System.out.println("검색 keword = "+keyword);
+            System.out.println("검색 keyword = "+keyword);
             System.out.println("검색 결과 존재 여부 = " + productOptional.isPresent());
             if (productOptional .isEmpty()) {
                 continue;
