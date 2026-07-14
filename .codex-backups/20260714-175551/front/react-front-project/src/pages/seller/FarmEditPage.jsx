@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getFarm, updateFarm } from '../../api/farmApi.js'
 import './FarmCreatePage.css'
-import { getLoginSellerId } from '../../config/devAccount.js'
+import { DEV_SELLER_ID} from "../../config/devAccount.js";
 
 function FarmEditPage() {
     const navigate = useNavigate()
@@ -33,22 +33,16 @@ function FarmEditPage() {
                 setLoading(true)
                 setError('')
 
-                const sellerId = getLoginSellerId()
-
-                if (sellerId === null) {
-                    throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
-                }
-
                 // 백엔드에 농장 한 개를 요청합니다.
                 const data = await getFarm(farmId)
 
-                if (Number(data.sellerId) !== sellerId) {
+                if(Number(data.sellerId) !== DEV_SELLER_ID) {
                     throw new Error('수정 권한이 없는 농장입니다.')
                 }
 
                 // 조회한 농장 정보를 입력칸에 넣습니다.
                 setForm({
-                    sellerId,
+                    sellerId: DEV_SELLER_ID ?? '',
                     farmName: data.farmName ?? '',
                     businessNumber: data.businessNumber ?? '',
                     region: data.region ?? '',
@@ -83,7 +77,7 @@ function FarmEditPage() {
     async function handleSubmit(event) {
         event.preventDefault()
 
-        const sellerId = getLoginSellerId()
+        const sellerId = DEV_SELLER_ID
 
         if (!Number.isFinite(sellerId) || sellerId <= 0) {
             alert('판매자 번호를 올바르게 입력해주세요.')
