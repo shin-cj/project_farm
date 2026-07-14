@@ -13,6 +13,9 @@ import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class OrderService {
 
@@ -34,20 +37,58 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse createOrder(OrderRequest request){
-        CartItem cartItem = cartItemRepository.findById(request.getCartItemId()).orElseThrow(()->new IllegalArgumentException("장바구니 상품이 없습니다."));
+    public OrderResponse createOrder(OrderRequest request) {
+        List<Long> cartItemIds = new ArrayList<>();
 
-        Product product = productRepository.findById(cartItem.getProductId()).orElseThrow(()->new IllegalArgumentException("상품정보가 없습니다"));
+        if (request.getCartItemIds() != null && !request.getCartItemIds().isEmpty()) {
+            cartItemIds.addAll(request.getCartItemIds());
+        } else if (request.getCartItemId() != null) {
+            cartItemIds.add(request.getCartItemId());
+        }
 
-        Long totalPrice=product.getPrice()*cartItem.getQuantity();
+        if (cartItemIds.isEmpty()) {
+            throw new IllegalArgumentException("장바구니 상품이 없습니다.");
+        }
+
+        List<CartItem> cartItems = cartItemIds.stream()
+                .map(cartItemId -> cartItemRepository.findById(cartItemId)
+                        .orElseThrow(() -> new IllegalArgumentException("장바구니 상품이 없습니다.")))
+                .toList();
+
+        Long totalPrice = 0L;
+        Long farmId = null;
+        String orderName = null;
+
+        for (CartItem cartItem : cartItems) {
+            Product product = productRepository.findById(cartItem.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+
+            if (product.getStockQuantity() < cartItem.getQuantity()) {
+                throw new IllegalArgumentException("상품 재고가 부족합니다.");
+            }
+
+            if (farmId == null) {
+                farmId = product.getFarmId();
+            }
+
+            if (orderName == null) {
+                orderName = product.getProductName();
+            }
+
+            totalPrice += product.getPrice() * cartItem.getQuantity();
+        }
+
+        if (cartItems.size() > 1) {
+            orderName = orderName + " 외 " + (cartItems.size() - 1) + "건";
+        }
+
         Long deliveryFee = 0L;
         Long finalPrice = totalPrice + deliveryFee;
 
         Order order = new Order();
-
         order.setOrderNumber("ORDER-" + System.currentTimeMillis());
         order.setBuyerId(request.getBuyerId());
-        order.setFarmId(product.getFarmId());
+        order.setFarmId(farmId);
         order.setTotalProductPrice(totalPrice);
         order.setDeliveryFee(deliveryFee);
         order.setFinalPrice(finalPrice);
@@ -60,20 +101,27 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        OrderItem orderItem = new OrderItem();
-        orderItem.setOrderId(savedOrder.getOrderId());
-        orderItem.setProductId(product.getProductId());
-        orderItem.setProductName(product.getProductName());
-        orderItem.setUnitPrice(product.getPrice());
-        orderItem.setQuantity(cartItem.getQuantity());
-        orderItem.setItemTotalPrice(totalPrice);
+        for (CartItem cartItem : cartItems) {
+            Product product = productRepository.findById(cartItem.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
 
-        orderItemRepository.save(orderItem);
+            Long itemTotalPrice = product.getPrice() * cartItem.getQuantity();
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrderId(savedOrder.getOrderId());
+            orderItem.setProductId(product.getProductId());
+            orderItem.setProductName(product.getProductName());
+            orderItem.setUnitPrice(product.getPrice());
+            orderItem.setQuantity(cartItem.getQuantity());
+            orderItem.setItemTotalPrice(itemTotalPrice);
+
+            orderItemRepository.save(orderItem);
+        }
 
         OrderResponse response = new OrderResponse();
         response.setOrderId(savedOrder.getOrderId());
         response.setOrderNumber(savedOrder.getOrderNumber());
-        response.setOrderName(product.getProductName());
+        response.setOrderName(orderName);
         response.setFinalPrice(finalPrice);
 
         return response;
@@ -132,5 +180,4 @@ public class OrderService {
 
         return response;
     }
-
 }
