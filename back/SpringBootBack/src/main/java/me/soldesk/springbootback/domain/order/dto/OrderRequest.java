@@ -46,4 +46,10 @@ public class OrderRequest {
     /** 배송 요청사항 */
     private String requestMessage;
 
+    private Long cartItemId;
+
+    private Long productId;
+
+    private Integer quantity;
+
 }
