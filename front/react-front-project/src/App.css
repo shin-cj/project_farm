@@ -185,11 +185,11 @@ a { color: inherit; text-decoration: none; }
 .cart-card {
   display: grid;
   /*
-   * 왼쪽 이미지: 140px
-   * 가운데 상품 정보: 남은 공간
-   * 오른쪽 기능 영역: 140px 고정
+   * ??긱걹 ???筌왖: 140px
+   * 揶쎛?????怨밸? ?類ｋ궖: ??? ?⑤벀而?
+   * ??삘뀲筌?疫꿸퀡???怨몃열: 140px ?⑥쥙??
    */
-  grid-template-columns: 140px minmax(0, 1fr) 140px;
+  grid-template-columns: 140px minmax(0, 1fr) 156px;
   align-items: center;
   gap: 20px;
   width: 100%;
@@ -244,8 +244,8 @@ a { color: inherit; text-decoration: none; }
 
 .cart-card-info {
   /*
-  * Grid 자식은 내부 글자 때문에 너비가 늘어날 수 있음.
-  * min-width: 0을 주면 정해진 영역 안에서 줄바꿈됨.
+  * Grid ?癒?뻼?? ??? 疫꼲?????????덊돩揶쎛 ??뤿선??????됱벉.
+  * min-width: 0??雅뚯눖???類λ퉸筌??怨몃열 ??됰퓠??餓κ쑬而?퐛?덈쭡.
   */
   min-width: 0;
   overflow: hidden;
@@ -295,7 +295,7 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.5;
 
   /*
-   * 텍스트가 많으면 최대 2줄까지만 표시
+   * ??용뮞?硫? 筌띾‘?앾쭖?筌ㅼ뮆? 2餓κ쑨?댐쭪?筌???뽯뻻
    */
   overflow: hidden;
   display: -webkit-box;
@@ -319,12 +319,12 @@ a { color: inherit; text-decoration: none; }
 }
 .cart-card-side {
   /*
-   * 부모 Grid에서도 140px으로 잡고,
-   * 이 요소 자체도 같은 너비로 고정
+   * ?봔筌?Grid?癒?퐣??140px??곗쨮 ??뷀?
+   * ???遺용꺖 ?癒?퍥??揶쏆늿? ??덊돩嚥??⑥쥙??
    */
-  width: 140px;
-  min-width: 140px;
-  max-width: 140px;
+  width: 156px;
+  min-width: 156px;
+  max-width: 156px;
 
   display: flex;
   flex-direction: column;
@@ -430,7 +430,7 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
 }
 
-/* 이미지가 들어갈 고정 영역 */
+/* ???筌왖揶쎛 ??쇰선揶??⑥쥙???怨몃열 */
 .cart-modal-image-box {
   position: relative;
   width: 170px;
@@ -445,7 +445,7 @@ a { color: inherit; text-decoration: none; }
   text-align: center;
 }
 
-/* 이미지는 부모 영역 밖으로 나갈 수 없음 */
+/* ???筌왖???봔筌??怨몃열 獄쏅쉼?앮에???띿퍦 ????곸벉 */
 .cart-modal-image-box img {
   position: absolute;
   inset: 0;
@@ -456,18 +456,18 @@ a { color: inherit; text-decoration: none; }
 .cart-quantity {
   width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 52px;
+  grid-template-columns: minmax(0, 1fr) 70px;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   margin: 0;
 }
 
 .cart-card-side .cart-quantity span {
   min-width: 0;
 
-  color: #4d5f53;
-  font-size: 14px;
-  font-weight: 600;
+  color: #213328;
+  font-size: 17px;
+  font-weight: 800;
 
   white-space: normal;
   word-break: keep-all;
@@ -475,15 +475,16 @@ a { color: inherit; text-decoration: none; }
 }
 
 .cart-card-side .cart-quantity input {
-  width: 52px;
-  height: 34px;
-  padding: 0 5px;
+  width: 70px;
+  height: 42px;
+  padding: 0 4px 0 8px;
   border: 1px solid rgba(33, 107, 58, 0.35);
   border-radius: 5px;
   background-color: rgba(255, 255, 255, 0.72);
   color: #173d26;
   text-align: center;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 16px;
 }
 
 .cart-quantity input:focus {

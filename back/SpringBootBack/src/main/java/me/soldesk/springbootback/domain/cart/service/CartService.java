@@ -37,16 +37,16 @@ public class CartService {
     public void addCartItem(CartRequest request){
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("상품이 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("?怨밸?????곷뮸??덈뼄."));
 
         if(!"ON_SALE".equals(product.getProductStatus())){
-            throw new IllegalArgumentException("현재 판매 중인 상품이 아닙니다.");
+            throw new IllegalArgumentException("?袁⑹삺 ?癒?꼻 餓λ쵐???怨밸????袁⑤뻸??덈뼄.");
         }
 
         int addQuantity = request.getQuantity() == null ? 1 : request.getQuantity();
 
         if(addQuantity < 1){
-            throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
+            throw new IllegalArgumentException("??롮쎗?? 1揶???곴맒??곷선????몃빍??");
         }
 
 
@@ -56,15 +56,15 @@ public class CartService {
         CartItem cartItem = cartItemRepository
                 .findByCartIdAndProductId(cart.getCartId(),product.getProductId())
                 .orElseGet(CartItem::new);
-        //장바구니에 담긴 수량 계산
+        //?貫而?뤃??????용┸ ??롮쎗 ?④쑴沅?
         int currentQuantity = cartItem.getCartItemId() == null ? 0 : cartItem.getQuantity();
 
-        //기존 수량과 새로 담을 수량 더하기
+        //疫꿸퀣????롮쎗????덉쨮 ??곸뱽 ??롮쎗 ?酉釉?묾?
         int finalQuantity = currentQuantity + addQuantity;
 
         if(finalQuantity > product.getStockQuantity()){
-            //에러 메시지를 프론트로 던져 재고가 부족해서 장바구니에 담기지 않는지, 다른 예외 상황인지 판단.
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"현재 재고는" + product.getStockQuantity()+"입니다.");
+            //?癒?쑎 筌롫뗄?놅쭪????袁⑥쨴?紐껋쨮 ??륁죬 ???у첎? ?봔鈺곌퉲鍮???貫而?뤃??????용┛筌왖 ??낅뮉筌왖, ??삘뀲 ??됱뇚 ?怨뱀넺?紐? ?癒?뼊.
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "현재 재고는 " + product.getStockQuantity() + "개입니다.");
         }
 
 
@@ -106,11 +106,11 @@ public class CartService {
 
     private CartResponse toCartResponse(CartItem cartItem){
         Product product = productRepository.findById(cartItem.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("상품이 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("?怨밸?????곷뮸??덈뼄."));
 
         FarmResponse farm = farmService.getFarm(product.getFarmId());
         User seller = cartSellerRepository.findById(farm.getSellerId())
-                .orElseThrow(() -> new IllegalArgumentException("판매자 정보가 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("?癒?꼻???類ｋ궖揶쎛 ??곷뮸??덈뼄."));
         CartResponse response = new CartResponse();
 
 
@@ -125,7 +125,16 @@ public class CartService {
         response.setProductImageUrl(product.getProductImageUrl());
         response.setProductDescription(product.getDescription());
         response.setProductStatus(product.getProductStatus());
+        response.setUnit(product.getUnit());
+        response.setOrigin(product.getOrigin());
+        response.setHarvestDate(product.getHarvestDate());
+        response.setExpirationDate(product.getExpirationDate());
         response.setFarmName(farm.getFarmName());
+        response.setFarmAddress(farm.getFarmAddress());
+        response.setFarmDetailAddress(farm.getFarmDetailAddress());
+        response.setFarmRegion(farm.getRegion());
+        response.setFarmDescription(farm.getFarmDescription());
+        response.setFarmImageUrl(farm.getFarmImageUrl());
         response.setSellerName(seller.getName());
 
         return response;
@@ -134,19 +143,19 @@ public class CartService {
     @Transactional
     public void updateQuantity(Long cartItemId, int quantity){
         if(quantity < 1){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수량은 1개 이상이어야 합니다.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "??롮쎗?? 1揶???곴맒??곷선????몃빍??");
         }
 
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"장바구니 상품이 없습니다."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"?貫而?뤃????怨밸?????곷뮸??덈뼄."));
 
         Product product = productRepository
                 .findById(cartItem.getProductId())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"상품이 없습니다."));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"?怨밸?????곷뮸??덈뼄."));
 
         if(quantity > product.getStockQuantity()){
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,"상품 재고를 초과할 수 없습니다."+"현재 재고는 "+product.getStockQuantity() + "입니다."
+                    HttpStatus.CONFLICT,"?怨밸? ???х몴??λ뜃???????곷뮸??덈뼄."+"?袁⑹삺 ?????"+product.getStockQuantity() + "??낅빍??"
             );
         }
 
