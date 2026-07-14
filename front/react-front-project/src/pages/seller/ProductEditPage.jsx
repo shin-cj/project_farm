@@ -4,6 +4,7 @@ import {getProduct, updateProduct} from '../../api/productApi.js'
 import {getCategories} from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
 import {getFarms} from "../../api/farmApi.js";
+import { getLoginSellerId } from '../../config/devAccount.js'
 
 function ProductEditPage() {
     const {productId} = useParams()
@@ -42,12 +43,26 @@ function ProductEditPage() {
                 setLoading(true)
                 setError('')
 
+                const sellerId = getLoginSellerId()
+
+                if (sellerId === null) {
+                    throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
+                }
+
                 // 카테고리 목록과 기존 상품 정보를 동시에 요청합니다.
                 const [categoryData, farmData, productData] = await Promise.all([
                     getCategories(),
-                    getFarms(null),
+                    getFarms(sellerId),
                     getProduct(productId),
                 ])
+
+                const ownsProduct = farmData.some(
+                    (farm) => Number(farm.farmId) === Number(productData.farmId)
+                )
+
+                if (!ownsProduct) {
+                    throw new Error('수정 권한이 없는 상품입니다.')
+                }
 
                 setFarms(farmData)
                 setCategories(categoryData)
@@ -69,7 +84,7 @@ function ProductEditPage() {
                 })
             } catch (err) {
                 console.error(err)
-                setError('상품 정보를 불러오지 못했습니다.')
+                setError(err.message || '상품 정보를 불러오지 못했습니다.')
             } finally {
                 setLoading(false)
             }

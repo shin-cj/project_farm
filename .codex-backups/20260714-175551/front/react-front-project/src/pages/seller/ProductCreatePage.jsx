@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
 import { getFarms } from '../../api/farmApi.js'
-import { getLoginSellerId } from '../../config/devAccount.js'
+import { DEV_SELLER_ID } from '../../config/devAccount.js'
 
 
 function ProductCreatePage() {
@@ -25,13 +25,7 @@ function ProductCreatePage() {
     useEffect(() => {
         async function loadFarms(){
             try{
-                const sellerId = getLoginSellerId()
-
-                if (sellerId === null) {
-                    throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
-                }
-
-                const data = await getFarms(sellerId)
+                const data = await getFarms(DEV_SELLER_ID)
                 setFarms(data)
             }catch (error){
                 console.log(error)

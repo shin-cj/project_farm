@@ -2,12 +2,15 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createFarm } from '../../api/farmApi.js'
 import './FarmCreatePage.css'
+import { getLoginSellerId } from '../../config/devAccount.js'
+
 
 function FarmCreatePage() {
     const navigate = useNavigate()
+    const loginSellerId = getLoginSellerId()
 
     const [form, setForm] = useState({
-        sellerId: 1,
+        sellerId: loginSellerId ?? '',
         farmName: '',
         businessNumber: '',
         region: '',
@@ -81,10 +84,11 @@ function FarmCreatePage() {
                     <div className="farm-create-grid">
                         <label className="farm-create-field">
                             <span>판매자 번호</span>
+
                             <input
                                 name="sellerId"
                                 value={form.sellerId}
-                                onChange={handleChange}
+                                readOnly
                             />
                         </label>
 

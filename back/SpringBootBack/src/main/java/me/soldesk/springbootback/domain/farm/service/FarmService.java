@@ -77,6 +77,13 @@ public class FarmService {
                         "농장을 찾을 수 없습니다."
                 ));
 
+        if (!farm.getSellerId().equals(request.getSellerId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장의 판매자 번호는 변경할 수 없습니다."
+            );
+        }
+
         applyRequestToFarm(farm, request);
 
         Farm savedFarm = farmRepository.save(farm);
