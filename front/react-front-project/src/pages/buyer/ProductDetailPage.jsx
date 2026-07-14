@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getProduct } from '../../api/productApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
+import { getFarm } from '../../api/farmApi.js'
 
 import orderApi from "../../api/orderApi.js";
 
@@ -12,19 +13,27 @@ function ProductDetailPage() {
   const navigate = useNavigate()
   const userid = 1
   const [product, setProduct] = useState(null)
+  const [farm, setFarm] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  const buyerId = userid;
-
   useEffect(() => {
     async function loadProduct(){
       try{
         const data = await getProduct(productId)
         setProduct(data)
+        if(data.farmId){
+          try{
+            const farmData = await getFarm(data.farmId)
+            setFarm(farmData)
+          }catch(farmError){
+            console.log(farmError)
+            setFarm(null)
+          }
+        }
       }catch (err) {
         setError(err.message || '상품을 불러오지 못했습니다.')
       }finally{
@@ -178,6 +187,19 @@ function ProductDetailPage() {
           </div>
         </div>
       </section>
+      {farm && (
+          <section className="product-detail-farm-card">
+            <p>생산 농장</p>
+            <h2>{farm.farmName}</h2>
+            <span>{farm.region}</span>
+
+            <p>{farm.farmAddress}</p>
+
+            {farm.farmDescription && (
+                <p>{farm.farmDescription}</p>
+            )}
+          </section>
+      )}
       {isOrderModalOpen && (
           <div className="product-order-modal-backdrop">
             <div className="product-order-modal">
