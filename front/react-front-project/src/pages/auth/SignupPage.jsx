@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import axios from 'axios';
-// import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function SignupPage() {
-  // const navigate = useNavigate();
+   const navigate = useNavigate();
 
   // 1. 회원가입 입력 필드 상태 관리 (주소, 상세주소 추가)
   const [formData, setFormData] = useState({
@@ -46,7 +46,7 @@ function SignupPage() {
       alert(response.data.message || "회원가입이 완료되었습니다.");
 
       // 로그인 페이지로 이동 처리 예시
-      // navigate('/login');
+      navigate('/login');
     } catch (error) {
       console.error("회원가입 중 에러 발생:", error);
       const errorMsg = error.response?.data?.message || "회원가입에 실패했습니다. 다시 시도해 주세요.";
