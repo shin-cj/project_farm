@@ -1,9 +1,8 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import CartPage from "./CartPage.jsx";
 
-const orderItems = [
-  { name: 'AgroLink sample item', quantity: 2, price: 25000 },
-]
+
 
 function OrderPage() {
   const navigate = useNavigate()
