@@ -4,7 +4,7 @@ import { getProducts, updateProduct } from '../../api/productApi.js'
 import './ProductManagementPage.css'
 import { getFarms } from '../../api/farmApi.js'
 import { getCategories } from '../../api/categoryApi.js'
-import { getLoginSellerId } from '../../config/devAccount.js'
+import { DEV_SELLER_ID } from '../../config/devAccount.js'
 
 // 상품 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductManagementPage() {
@@ -24,14 +24,8 @@ function ProductManagementPage() {
   useEffect(() => {
     async function loadFilterData() {
       try {
-        const sellerId = getLoginSellerId()
-
-        if (sellerId === null) {
-          throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
-        }
-
         const [farmData, categoryData] = await Promise.all([
-          getFarms(sellerId),
+          getFarms(DEV_SELLER_ID),
           getCategories(),
         ])
 
@@ -39,7 +33,7 @@ function ProductManagementPage() {
         setCategories(categoryData)
       } catch (err) {
         console.error(err)
-        setError(err.message || '필터 정보를 불러오지 못했습니다.')
+        setError('필터 정보를 불러오지 못했습니다.')
       }
     }
 

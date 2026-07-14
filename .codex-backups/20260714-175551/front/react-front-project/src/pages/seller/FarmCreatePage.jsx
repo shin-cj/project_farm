@@ -1,18 +1,15 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { getFarm, updateFarm } from '../../api/farmApi.js'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { createFarm } from '../../api/farmApi.js'
 import './FarmCreatePage.css'
-import { getLoginSellerId } from '../../config/devAccount.js'
+import { DEV_SELLER_ID } from '../../config/devAccount.js'
 
-function FarmEditPage() {
+
+function FarmCreatePage() {
     const navigate = useNavigate()
 
-    // 주소에 들어 있는 농장 번호를 꺼냅니다.
-    // 예: /seller/farms/3/edit → farmId는 3
-    const { farmId } = useParams()
-
     const [form, setForm] = useState({
-        sellerId: '',
+        sellerId: DEV_SELLER_ID,
         farmName: '',
         businessNumber: '',
         region: '',
@@ -22,54 +19,6 @@ function FarmEditPage() {
         farmImageUrl: '',
         approvalStatus: 'PENDING',
     })
-
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
-
-    // 수정 페이지가 처음 열리거나 farmId가 바뀌면 실행됩니다.
-    useEffect(() => {
-        async function loadFarm() {
-            try {
-                setLoading(true)
-                setError('')
-
-                const sellerId = getLoginSellerId()
-
-                if (sellerId === null) {
-                    throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
-                }
-
-                // 백엔드에 농장 한 개를 요청합니다.
-                const data = await getFarm(farmId)
-
-                if (Number(data.sellerId) !== sellerId) {
-                    throw new Error('수정 권한이 없는 농장입니다.')
-                }
-
-                // 조회한 농장 정보를 입력칸에 넣습니다.
-                setForm({
-                    sellerId,
-                    farmName: data.farmName ?? '',
-                    businessNumber: data.businessNumber ?? '',
-                    region: data.region ?? '',
-                    farmAddress: data.farmAddress ?? '',
-                    farmDetailAddress: data.farmDetailAddress ?? '',
-                    farmDescription: data.farmDescription ?? '',
-                    farmImageUrl: data.farmImageUrl ?? '',
-                    approvalStatus: data.approvalStatus ?? 'PENDING',
-                })
-            } catch (err) {
-                console.error(err)
-                setError(
-                    err.message || '농장 정보를 불러오지 못했습니다.'
-                )
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        loadFarm()
-    }, [farmId])
 
     function handleChange(event) {
         const { name, value } = event.target
@@ -83,7 +32,7 @@ function FarmEditPage() {
     async function handleSubmit(event) {
         event.preventDefault()
 
-        const sellerId = getLoginSellerId()
+        const sellerId = Number(form.sellerId)
 
         if (!Number.isFinite(sellerId) || sellerId <= 0) {
             alert('판매자 번호를 올바르게 입력해주세요.')
@@ -111,31 +60,22 @@ function FarmEditPage() {
         }
 
         try {
-            // PUT /api/farms/{farmId} 요청을 보냅니다.
-            await updateFarm(farmId, farmData)
+            await createFarm(farmData)
 
-            alert('농장 정보가 수정되었습니다.')
+            alert('농장이 등록되었습니다.')
             navigate('/seller/farms')
         } catch (err) {
             console.error(err)
-            alert('농장 수정에 실패했습니다.')
+            alert('농장 등록에 실패했습니다.')
         }
-    }
-
-    if (loading) {
-        return <p>농장 정보를 불러오는 중입니다.</p>
-    }
-
-    if (error) {
-        return <p>{error}</p>
     }
 
     return (
         <main className="farm-create-page">
             <section className="farm-create-header">
                 <p className="farm-create-label">Seller Farm</p>
-                <h1>농장 수정</h1>
-                <p>등록된 농장 정보를 변경할 수 있습니다.</p>
+                <h1>농장 등록</h1>
+                <p>상품을 판매하기 전에 농장 기본 정보를 먼저 등록합니다.</p>
             </section>
 
             <form className="farm-create-form" onSubmit={handleSubmit}>
@@ -143,6 +83,7 @@ function FarmEditPage() {
                     <div className="farm-create-grid">
                         <label className="farm-create-field">
                             <span>판매자 번호</span>
+
                             <input
                                 name="sellerId"
                                 value={form.sellerId}
@@ -156,6 +97,7 @@ function FarmEditPage() {
                                 name="farmName"
                                 value={form.farmName}
                                 onChange={handleChange}
+                                placeholder="예: 진현농장"
                             />
                         </label>
 
@@ -165,6 +107,7 @@ function FarmEditPage() {
                                 name="businessNumber"
                                 value={form.businessNumber}
                                 onChange={handleChange}
+                                placeholder="예: 123-45-67890"
                             />
                         </label>
 
@@ -174,6 +117,7 @@ function FarmEditPage() {
                                 name="region"
                                 value={form.region}
                                 onChange={handleChange}
+                                placeholder="예: 경기도 수원시"
                             />
                         </label>
 
@@ -183,6 +127,7 @@ function FarmEditPage() {
                                 name="farmAddress"
                                 value={form.farmAddress}
                                 onChange={handleChange}
+                                placeholder="기본 주소"
                             />
                         </label>
 
@@ -192,6 +137,7 @@ function FarmEditPage() {
                                 name="farmDetailAddress"
                                 value={form.farmDetailAddress}
                                 onChange={handleChange}
+                                placeholder="상세 주소"
                             />
                         </label>
 
@@ -201,6 +147,7 @@ function FarmEditPage() {
                                 name="farmDescription"
                                 value={form.farmDescription}
                                 onChange={handleChange}
+                                placeholder="농장 소개를 입력해주세요."
                                 rows={5}
                             />
                         </label>
@@ -211,6 +158,7 @@ function FarmEditPage() {
                                 name="farmImageUrl"
                                 value={form.farmImageUrl}
                                 onChange={handleChange}
+                                placeholder="이미지 URL"
                             />
                         </label>
                     </div>
@@ -224,11 +172,8 @@ function FarmEditPage() {
                             취소
                         </button>
 
-                        <button
-                            type="submit"
-                            className="farm-create-submit"
-                        >
-                            수정 저장
+                        <button type="submit" className="farm-create-submit">
+                            농장 등록
                         </button>
                     </div>
                 </div>
@@ -237,4 +182,4 @@ function FarmEditPage() {
     )
 }
 
-export default FarmEditPage
+export default FarmCreatePage
