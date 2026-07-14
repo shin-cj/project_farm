@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getFarms } from '../../api/farmApi.js'
 import { getProducts } from '../../api/productApi.js'
 import './SellerDashboardPage.css'
-import { getLoginSellerId } from '../../config/devAccount.js'
+import { DEV_SELLER_ID } from '../../config/devAccount.js'
 
 // 주문·매출 API가 완성되기 전까지 그래프 확인에 사용하는 임시 데이터입니다.
 // 실제 API가 연결되면 이 배열은 삭제합니다.
@@ -46,14 +46,8 @@ function SellerDashboardPage() {
         setLoading(true)
         setError('')
 
-        const sellerId = getLoginSellerId()
-
-        if (sellerId === null) {
-          throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
-        }
-
-        // 1. 로그인한 판매자가 등록한 농장을 조회합니다.
-        const farmData = await getFarms(sellerId)
+        // 1. 임시 판매자 번호가 등록한 농장을 조회합니다.
+        const farmData = await getFarms(DEV_SELLER_ID)
 
         // 2. 각 농장에 등록된 상품을 모두 조회합니다.
         const productLists = await Promise.all(
@@ -83,7 +77,7 @@ function SellerDashboardPage() {
         setRecentProducts(sortedProducts)
       } catch (err) {
         console.error(err)
-        setError(err.message || '대시보드 정보를 불러오지 못했습니다.')
+        setError('대시보드 정보를 불러오지 못했습니다.')
       } finally {
         setLoading(false)
       }

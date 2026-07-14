@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { getFarms } from '../../api/farmApi.js'
 import {useNavigate} from "react-router-dom";
 import './FarmManagementPage.css'
-import { getLoginSellerId } from '../../config/devAccount.js'
+import {DEV_SELLER_ID} from "../../config/devAccount.js";
 
 
 // 농장 관리 기능을 담당하는 페이지 컴포넌트입니다.
@@ -19,18 +19,12 @@ function FarmManagementPage() {
         setLoading(true)
         setError('')
 
-        const sellerId = getLoginSellerId()
-
-        if (sellerId === null) {
-          throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
-        }
-
-        const data = await getFarms(sellerId)
+        const data = await getFarms(DEV_SELLER_ID)
 
         setFarms(data)
       } catch (err) {
         console.error(err)
-        setError(err.message || '농장 목록을 불러오지 못했습니다.')
+        setError('농장 목록을 불러오지 못했습니다.')
       } finally {
         setLoading(false)
       }
