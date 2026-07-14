@@ -13,8 +13,10 @@ function CartPage() {
     const [error, setError] = useState('')
     const [quantityInputs, setQuantityInputs] = useState({})
     const navigate = useNavigate()
-    const userid = 3
+    const userid = 8
     const testProductId = 9
+
+    //const {user} = userAuth() 로그인 기능 구현 시 사용 할 변수
 
     const loadCartItems = async () => {
         try {
@@ -46,6 +48,34 @@ function CartPage() {
         }catch (e){
         console.log(e)
         alert('장바구니 삭제에 실패했습니다.')
+        }
+    }
+
+    const handleDeleteAll = async () => {
+        if(cartItems.length == 0){
+            alert('삭제할 상품이 없습니다.')
+            return
+        }
+
+        if(!confirm('장바구니 상품을 모두 삭제하시겠습니까?')){
+            return
+        }
+
+        try{
+            await Promise.all(
+                cartItems.map(item => cartApi.deleteCartItem(item.cart_item_id)
+                )
+            )
+            setCartItems([])
+            setSelectedItem(null)
+            setQuantityInputs({})
+
+            alert('장바구니 상품을 모두 삭제했습니다.')
+        }catch (e){
+            console.log(e)
+
+            await loadCartItems()
+            alert('전체 삭제 중 문제가 발생했습니다.')
         }
     }
 
@@ -105,13 +135,18 @@ function CartPage() {
         const newQuantity = Number(quantity)
 
         if (!Number.isInteger(newQuantity) || newQuantity < 1) {
+            alert('수량은 1 이상의 정수로 입력해주세요.')
+            return
+        }
+        if(newQuantity > item.stockQuantity){
             setQuantityInputs(inputs => ({
                 ...inputs,
                 [item.cart_item_id]: String(item.quantity),
             }))
-            alert('수량은 1 이상의 정수로 입력해주세요.')
+            alert(`현재 재고는 ${item.stockQuantity} 입니다.`)
             return
         }
+
 
         try {
             await cartApi.updateQuantity(item.cart_item_id, newQuantity)
@@ -128,11 +163,30 @@ function CartPage() {
                 ...inputs,
                 [item.cart_item_id]: String(item.quantity),
             }))
-            alert('수량 변경에 실패했습니다.')
+            const message = e.response?.data?.detail ?? e.response?.data?.message ??
+                '수량 변경에 실패했습니다.'
+            alert(message)
         }
     }
 
     const handleQuantityInput = (item, value) => {
+
+        if(value === ''){
+            setQuantityInputs(inputs => ({
+                ...inputs,
+                [item.cart_item_id]: '',
+            }))
+            return
+        }
+
+        const newQuantity = Number(value)
+
+        if(newQuantity > item.stockQuantity){
+            alert(`현재 상품의 재고 수량은 ${item.stockQuantity} 이므로 초과 하실 수 없습니다.`)
+
+            return
+        }
+
         setQuantityInputs(inputs => ({
             ...inputs,
             [item.cart_item_id]: value,
@@ -159,15 +213,17 @@ function CartPage() {
       <section className="cart-page">
         <div className="cart-header">
           <h1>장바구니</h1>
+            <div className="cart-header-actions">
             <button type="button" onClick={handleBuyAll}>
                 상품 전체 구매
             </button>
-          <AddCartButton
-              productId={testProductId}
-              userid={userid}
-              onSuccess={loadCartItems}
-          >
-          </AddCartButton>
+            <button
+                type="button"
+                className="danger"
+                onClick={handleDeleteAll}>
+                전체 삭제
+            </button>
+            </div>
         </div>
 
         {loading ? (
