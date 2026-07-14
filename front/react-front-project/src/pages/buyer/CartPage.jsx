@@ -4,28 +4,50 @@ import cartApi from "../../api/cartApi.js";
 import AddCartButton from "../../components/cart/AddCartButton.jsx";
 
 function CartPage() {
-  const [cartItems, setCartItems] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [quantityInputs, setQuantityInputs] = useState({});
-  const navigate = useNavigate();
+    const [cartItems, setCartItems] = useState([])
+    const [selectedItem, setSelectedItem] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+    const [quantityInputs, setQuantityInputs] = useState({})
+    const navigate = useNavigate()
+    const userid = 1
+    const testProductId = 9
 
-  const userid = 1;
-  const testProductId = 9;
+    const loadCartItems = async () => {
+        try {
+            setLoading(true)
+            setError('')
 
-  const loadCartItems = async () => {
-    try {
-      setLoading(true);
-      setError("");
+            const {data} = await cartApi.getCartItems(userid)
+            setCartItems(data)
+        } catch (e) {
+            console.error(e)
+            setError('장바구니 목록을 불러오지 못했습니다.')
+        }finally {
+            setLoading(false)
+        }
+    }
 
-      const { data } = await cartApi.getCartItems(userid);
-      setCartItems(data);
-    } catch (error) {
-      console.error(error);
-      setError("장바구니 목록을 불러오지 못했습니다.");
-    } finally {
-      setLoading(false);
+    useEffect(() => {
+        loadCartItems()
+    }, [userid])
+
+    const handleDelete = async (cart_item_id) => {
+      if(!confirm('장바구니에서 삭제하시겠습니까?')){
+        return
+      }
+        try {
+          await cartApi.deleteCartItem(cart_item_id)
+          await loadCartItems()
+          setSelectedItem(null)
+        }catch (e){
+        console.log(e)
+        alert('장바구니 삭제에 실패했습니다.')
+        }
+    }
+
+    const handleBuy = (item) => {
+        moveToOrder([item])
     }
   };
 
