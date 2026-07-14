@@ -141,6 +141,12 @@ a { color: inherit; text-decoration: none; }
   gap: 16px;
   margin-bottom: 24px;
 }
+.cart-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
 
 .cart-header h1 {
   margin: 0;
@@ -364,6 +370,18 @@ a { color: inherit; text-decoration: none; }
 .cart-card-side .danger,
 .cart-modal-actions .danger {
   background: #c0392b;
+}
+
+.cart-header-actions .danger {
+  background: #c0392b;
+}
+
+.cart-header-actions .danger:hover {
+  background: #a93226;
+}
+
+.cart-header-actions button:active {
+  transform: translateY(1px);
 }
 
 .cart-modal-backdrop {

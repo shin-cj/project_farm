@@ -11,12 +11,12 @@ public class CartResponse {
     private Long cart_id;
     private Long product_id;
 
-
-
     private String productName;
-    private Long product_price;
     private String productDescription;
+    private String productStatus;
+    private Long product_price;
     private Integer quantity;
+    private Integer stockQuantity;
 
     private String sellerName;
     private String farmName;
