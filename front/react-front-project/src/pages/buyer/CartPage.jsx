@@ -13,7 +13,7 @@ function CartPage() {
     const [error, setError] = useState('')
     const [quantityInputs, setQuantityInputs] = useState({})
     const navigate = useNavigate()
-    const userid = 3
+    const userid = 1
     const testProductId = 9
 
     const loadCartItems = async () => {
