@@ -79,7 +79,7 @@ function CartPage() {
     const handleBuy = (item) => {
         moveToOrder([item])
     }
-  };
+
 
   useEffect(() => {
     loadCartItems();
