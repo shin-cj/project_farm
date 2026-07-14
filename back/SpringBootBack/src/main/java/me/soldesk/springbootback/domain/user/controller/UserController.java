@@ -11,7 +11,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // 프론트 연동을 위한 교차 출처 허용
 public class UserController {
 
     private final UserService userService;
