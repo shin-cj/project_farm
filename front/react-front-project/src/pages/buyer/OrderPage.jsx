@@ -16,6 +16,9 @@ function OrderPage() {
   const orderItems = location.state?.items || [];
   const cartItemIds = location.state?.cartItemIds || [];
   const buyerId = location.state?.buyerId;
+  const purchaseType = location.state?.purchaseType || 'CART'
+  const directProduct = location.state?.directProduct || null
+  const isDirectOrder = purchaseType === 'DIRECT'
 
   const [user, setUser] = useState(null);
   const [receiverName, setReceiverName] = useState("");
@@ -58,69 +61,89 @@ function OrderPage() {
       }
     }
 
-    if (buyerId) {
-      fetchUser();
-    } else {
-      setError("구매자 정보가 없습니다.");
-    }
+      if (!buyerId) {
+          return
+      }
+
+      fetchUser()
   }, [buyerId]);
 
-  async function handlePaymentClick() {
-    if (cartItemIds.length === 0) {
-      setError("구매할 장바구니 상품이 없습니다.");
-      return;
+    async function handlePaymentClick() {
+        if (isDirectOrder) {
+            if (!directProduct?.productId || !directProduct?.quantity) {
+                setError('바로 구매할 상품 정보가 없습니다.')
+                return
+            }
+        } else {
+            if (cartItemIds.length === 0) {
+                setError('구매할 장바구니 상품이 없습니다.')
+                return
+            }
+        }
+
+        if (!buyerId) {
+            setError('구매자 정보가 없습니다.')
+            return
+        }
+
+        if (!isBuyer) {
+            setError('구매자 계정만 결제를 진행할 수 있습니다.')
+            return
+        }
+
+        if (!receiverName || !receiverPhone || !receiverAddress) {
+            setError('주문자, 전화번호, 배송지를 확인해주세요.')
+            return
+        }
+
+        try {
+            setSubmitting(true)
+            setError('')
+
+            const commonOrderData = {
+                buyerId,
+                receiverName,
+                receiverPhone,
+                receiverAddress,
+                receiverDetailAddress,
+                requestMessage,
+            }
+
+            let response
+
+            if (isDirectOrder) {
+                response = await orderApi.createOrderFromProduct({
+                    ...commonOrderData,
+                    productId: directProduct.productId,
+                    quantity: directProduct.quantity,
+                })
+            } else {
+                response = await orderApi.createOrder({
+                    ...commonOrderData,
+                    cartItemIds,
+                })
+            }
+
+            const order = response.data
+
+            const params = new URLSearchParams({
+                orderId: order.orderNumber,
+                amount: String(order.finalPrice),
+                orderName: order.orderName,
+                receiverName,
+                receiverPhone,
+                receiverAddress,
+                receiverDetailAddress,
+            })
+
+            navigate(`/sandbox?${params.toString()}`)
+        } catch (error) {
+            console.error(error)
+            setError('주문 생성에 실패했습니다.')
+        } finally {
+            setSubmitting(false)
+        }
     }
-
-    if (!buyerId) {
-      setError("구매자 정보가 없습니다.");
-      return;
-    }
-
-    if (!isBuyer) {
-      setError("구매자 계정만 결제를 진행할 수 있습니다.");
-      return;
-    }
-
-    if (!receiverName || !receiverPhone || !receiverAddress) {
-      setError("주문자, 전화번호, 배송지를 확인해주세요.");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      setError("");
-
-      const response = await orderApi.createOrder({
-        cartItemIds,
-        buyerId,
-        receiverName,
-        receiverPhone,
-        receiverAddress,
-        receiverDetailAddress,
-        requestMessage,
-      });
-
-      const order = response.data;
-
-      const params = new URLSearchParams({
-        orderId: order.orderNumber,
-        amount: String(order.finalPrice),
-        orderName: order.orderName,
-        receiverName,
-        receiverPhone,
-        receiverAddress,
-        receiverDetailAddress,
-      });
-
-      navigate(`/sandbox?${params.toString()}`);
-    } catch (error) {
-      console.error(error);
-      setError("주문 생성에 실패했습니다.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
       <section className="page-card">
         <p className="page-label">AgroLink</p>
