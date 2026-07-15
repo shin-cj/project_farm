@@ -18,7 +18,6 @@ import FarmManagementPage from '../pages/seller/FarmManagementPage'
 import ProductManagementPage from '../pages/seller/ProductManagementPage'
 import ProductCreatePage from '../pages/seller/ProductCreatePage'
 import SellerOrderPage from '../pages/seller/SellerOrderPage'
-import DeliveryManagementPage from '../pages/seller/DeliveryManagementPage'
 import SalesStatisticsPage from '../pages/seller/SalesStatisticsPage'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import UserManagementPage from '../pages/admin/UserManagementPage'
@@ -58,7 +57,7 @@ function AppRoutes() {
         <Route path="products" element={<ProductManagementPage />} />
         <Route path="products/new" element={<ProductCreatePage />} />
         <Route path="orders" element={<SellerOrderPage />} />
-        <Route path="deliveries" element={<DeliveryManagementPage />} />
+        <Route path="deliveries" element={<Navigate to="/seller/orders" replace />} />
         <Route path="products/:productId/edit" element={<ProductEditPage />} />
         <Route path="statistics" element={<SalesStatisticsPage />} />
         <Route path="farms/new" element={<FarmCreatePage />} />
