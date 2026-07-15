@@ -92,6 +92,9 @@ public class PaymentService {
 
         paymentRepository.save(payment);
 
+        order.setOrderStatus("PAID");
+        orderRepository.save(order);
+
         return tossResponse;
     }
 }

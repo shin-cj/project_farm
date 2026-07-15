@@ -28,4 +28,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByFarmId(Long farmId);
     
     List<Product> findByFarmIdAndCategoryId(Long farmId, Long categoryId);
+
+    @Query("""
+    SELECT p
+    FROM Product p
+    WHERE (:categoryId IS NULL OR p.categoryId = :categoryId)
+      AND (:farmId IS NULL OR p.farmId = :farmId)
+      AND (:productStatus IS NULL OR p.productStatus = :productStatus)
+    """)
+    List<Product> findProducts(
+            @Param("categoryId") Long categoryId,
+            @Param("farmId") Long farmId,
+            @Param("productStatus") String productStatus
+    );
 }

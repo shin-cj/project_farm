@@ -1,7 +1,11 @@
 import axios from 'axios'
 
-//상품 목록을 조회
-export async function getProducts(categoryId, farmId = null) {
+// 카테고리, 농장, 판매 상태를 조건으로 상품 목록을 조회합니다.
+export async function getProducts(
+    categoryId,
+    farmId = null,
+    productStatus = null
+) {
   const params = {}
 
   if (categoryId !== null) {
@@ -12,7 +16,13 @@ export async function getProducts(categoryId, farmId = null) {
     params.farmId = farmId
   }
 
-  const response = await axios.get('/api/products', { params })
+  if (productStatus !== null) {
+    params.productStatus = productStatus
+  }
+
+  const response = await axios.get('/api/products', {
+    params,
+  })
 
   return response.data
 }

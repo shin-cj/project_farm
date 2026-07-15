@@ -5,6 +5,7 @@ import me.soldesk.springbootback.domain.delivery.service.SellerOrderInfoService;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -20,12 +21,14 @@ public class SellerOrderInfoController {
     }
 
     @GetMapping("/api/seller/orders")
-    public List<SellerOrderInfoResponse> getSellerOrders() {
-        return sellerOrderInfoService.getSellerOrders();
+    public List<SellerOrderInfoResponse> getSellerOrders(@RequestParam Long sellerId,
+                                                         @RequestParam(required = false) Long farmId) {
+        return sellerOrderInfoService.getSellerOrders(sellerId, farmId);
     }
 
     @GetMapping("/api/seller/orders/{orderId}")
-    public SellerOrderInfoResponse getSellerOrderInfo(@PathVariable Long orderId) {
-        return sellerOrderInfoService.getSellerOrderInfo(orderId);
+    public SellerOrderInfoResponse getSellerOrderInfo(@PathVariable Long orderId,
+                                                      @RequestParam Long sellerId) {
+        return sellerOrderInfoService.getSellerOrderInfo(orderId, sellerId);
     }
 }
