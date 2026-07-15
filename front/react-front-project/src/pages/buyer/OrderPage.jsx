@@ -110,6 +110,8 @@ function OrderPage() {
         receiverPhone,
         receiverAddress,
         receiverDetailAddress,
+          //결제 완료 후 삭제할 장바구니 상품 번호
+          cartItemIds: cartItemIds.join(",")
       });
 
       navigate(`/sandbox?${params.toString()}`);
