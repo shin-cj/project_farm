@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.payment.service;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,57 @@ public class PaymentService {
 
     @Transactional
     public Map<String, Object> confirmPayment(PaymentConfirmRequest request) {
-        String authorization = "Basic " + Base64.getEncoder()
+
+            if (request.getOrderId() == null || request.getOrderId().isBlank()) {
+                throw new IllegalArgumentException("주문번호가 없습니다.");
+            }
+
+            if (request.getPaymentKey() == null || request.getPaymentKey().isBlank()) {
+                throw new IllegalArgumentException("결제 키가 없습니다.");
+            }
+
+            if (request.getAmount() == null || request.getAmount() <= 0) {
+                throw new IllegalArgumentException("결제 금액이 올바르지 않습니다.");
+            }
+
+            Order order = orderRepository.findByOrderNumber(request.getOrderId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("주문 정보를 찾을 수 없습니다.")
+                    );
+
+            if (!order.getFinalPrice().equals(request.getAmount())) {
+                throw new IllegalArgumentException("주문 금액과 결제 금액이 일치하지 않습니다.");
+            }
+
+            if (!"PAYMENT_WAIT".equals(order.getOrderStatus())) {
+                throw new IllegalArgumentException("이미 결제되었거나 결제할 수 없는 주문입니다.");
+            }
+
+        List<OrderItem> orderItems =
+                orderItemRepository.findByOrderId(order.getOrderId());
+
+        if (orderItems.isEmpty()) {
+            throw new IllegalArgumentException("주문 상품 정보가 없습니다.");
+        }
+
+        List<Product> orderedProducts = new ArrayList<>();
+
+        for (OrderItem item : orderItems) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("상품 정보가 없습니다.")
+                    );
+
+            if (product.getStockQuantity() < item.getQuantity()) {
+                throw new IllegalArgumentException(
+                        product.getProductName() + " 상품의 재고가 부족합니다."
+                );
+            }
+
+            orderedProducts.add(product);
+        }
+
+            String authorization = "Basic " + Base64.getEncoder()
                 .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
 
         Map<String, Object> tossResponse = restClient.post()
@@ -62,20 +113,14 @@ public class PaymentService {
                 .retrieve()
                 .body(Map.class);
 
-        Order order = orderRepository.findByOrderNumber(request.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("주문 정보를 찾을 수 없습니다."));
+        for (int i = 0; i < orderItems.size(); i++) {
+            OrderItem item = orderItems.get(i);
+            Product product = orderedProducts.get(i);
 
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
+            product.setStockQuantity(
+                    product.getStockQuantity() - item.getQuantity()
+            );
 
-        for (OrderItem item : orderItems) {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
-
-            if (product.getStockQuantity() < item.getQuantity()) {
-                throw new IllegalArgumentException("상품 재고가 부족합니다.");
-            }
-
-            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
             productRepository.save(product);
         }
 

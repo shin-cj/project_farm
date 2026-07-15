@@ -5,8 +5,6 @@ import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
 import { getFarm } from '../../api/farmApi.js'
 
-import orderApi from "../../api/orderApi.js";
-
 // 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductDetailPage() {
   const {productId} = useParams()
@@ -69,42 +67,49 @@ function ProductDetailPage() {
     )
   }
 
-  async function handleDirectOrder() {
-    const orderQuantity = Number(quantity);
+  function handleDirectOrder() {
+    const orderQuantity = Number(quantity)
+
+    if (!userid) {
+      alert('로그인이 필요한 기능입니다.')
+      navigate('/login')
+      return
+    }
 
     if (orderQuantity < 1) {
-      alert("수량은 1개 이상 선택해주세요.");
-      return;
+      alert('수량은 1개 이상 선택해주세요.')
+      return
     }
 
     if (orderQuantity > product.stockQuantity) {
-      alert("재고보다 많이 주문할 수 없습니다.");
-      return;
+      alert('재고보다 많이 주문할 수 없습니다.')
+      return
     }
 
-    try {
-      const response = await orderApi.createOrderFromProduct({
+    navigate('/order', {
+      state: {
+        purchaseType: 'DIRECT',
+
         buyerId: userid,
-        productId: product.productId,
-        quantity: orderQuantity,
 
-        // 지금은 더미 회원/배송 정보
-        receiverName: "테스트 구매자",
-        receiverPhone: "010-1234-5678",
-        receiverAddress: "서울시 강남구",
-        receiverDetailAddress: "101호",
-        requestMessage: "문 앞에 놓아주세요",
-      });
+        directProduct: {
+          productId: product.productId,
+          quantity: orderQuantity,
+        },
 
-      const order = response.data;
-
-      navigate(
-          `/sandbox?orderId=${order.orderNumber}&amount=${order.finalPrice}&orderName=${order.orderName}`
-      );
-    } catch (error) {
-      console.error(error);
-      alert("주문 생성에 실패했습니다.");
-    }
+        items: [
+          {
+            cart_item_id: `direct-${product.productId}`,
+            product_id: product.productId,
+            product_price: product.price,
+            productName: product.productName,
+            productImageUrl: product.productImageUrl,
+            farmName: farm?.farmName,
+            quantity: orderQuantity,
+          },
+        ],
+      },
+    })
   }
 
   return (
