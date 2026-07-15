@@ -162,22 +162,22 @@ function CartPage() {
   };
 
   const handleQuantityInput = (item, value) => {
-    const qunatity = Number(value)
+    const quantity = Number(value)
 
-    if(qunatity > item.stockQuantity){
+    if(quantity > item.stockQuantity) {
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.stockQuantity),
       }))
-    }
 
-    if(warningItemId !== item.cart_item_id){
-      setWarningItemId(item.cart_item_id)
-      alert(`현재 재고는 ${item.stockQuantity} 입니다.`)
-    }
+
+      if (warningItemId !== item.cart_item_id) {
+        setWarningItemId(item.cart_item_id)
+        alert(`현재 재고는 ${item.stockQuantity} 입니다.`)
+      }
 
       return;
-
+    }
 
     setWarningItemId(null)
 

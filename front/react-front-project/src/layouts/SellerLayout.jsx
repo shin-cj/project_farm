@@ -69,15 +69,7 @@ function SellerLayout() {
                 className={getMenuClass}
             >
               <span>▤</span>
-              주문 관리
-            </NavLink>
-
-            <NavLink
-                to="/seller/deliveries"
-                className={getMenuClass}
-            >
-              <span>▱</span>
-              배송 관리
+              주문/배송 관리
             </NavLink>
 
             <NavLink
@@ -88,7 +80,6 @@ function SellerLayout() {
               판매 통계
             </NavLink>
           </nav>
-
           <div className="seller-sidebar-message">
             <strong>농부와 소비자를 직접 연결합니다.</strong>
             <p>신뢰할 수 있는 농산물 거래를 시작해 보세요.</p>
