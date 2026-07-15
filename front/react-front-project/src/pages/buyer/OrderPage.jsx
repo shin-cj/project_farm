@@ -16,6 +16,9 @@ function OrderPage() {
   const orderItems = location.state?.items || [];
   const cartItemIds = location.state?.cartItemIds || [];
   const buyerId = location.state?.buyerId;
+  const purchaseType = location.state?.purchaseType || 'CART'
+  const directProduct = location.state?.directProduct || null
+  const isDirectOrder = purchaseType === 'DIRECT'
 
   const [user, setUser] = useState(null);
   const [receiverName, setReceiverName] = useState("");
@@ -58,33 +61,12 @@ function OrderPage() {
       }
     }
 
-    if (buyerId) {
-      fetchUser();
-    } else {
-      setError("구매자 정보가 없습니다.");
-    }
+      if (!buyerId) {
+          return
+      }
+
+      fetchUser()
   }, [buyerId]);
-
-  async function handlePaymentClick() {
-    if (cartItemIds.length === 0) {
-      setError("구매할 장바구니 상품이 없습니다.");
-      return;
-    }
-
-    if (!buyerId) {
-      setError("구매자 정보가 없습니다.");
-      return;
-    }
-
-    if (!isBuyer) {
-      setError("구매자 계정만 결제를 진행할 수 있습니다.");
-      return;
-    }
-
-    if (!receiverName || !receiverPhone || !receiverAddress) {
-      setError("주문자, 전화번호, 배송지를 확인해주세요.");
-      return;
-    }
 
     try {
       setSubmitting(true);
@@ -121,8 +103,6 @@ function OrderPage() {
     } finally {
       setSubmitting(false);
     }
-  }
-
   return (
       <section className="page-card">
         <p className="page-label">AgroLink</p>

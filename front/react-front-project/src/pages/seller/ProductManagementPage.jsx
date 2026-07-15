@@ -14,6 +14,8 @@ function ProductManagementPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  //농장과 카테고리 조회가 끝났는지 저장
+  const [filtersReady, setFiltersReady] = useState(false)
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [farms, setFarms] = useState([])
   const [categories, setCategories] = useState([])
@@ -24,10 +26,15 @@ function ProductManagementPage() {
   useEffect(() => {
     async function loadFilterData() {
       try {
+        setLoading(true)
+        setError('')
+
         const sellerId = getLoginSellerId()
 
         if (sellerId === null) {
-          throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
+          throw new Error(
+              '로그인한 판매자 정보를 확인할 수 없습니다.'
+          )
         }
 
         const [farmData, categoryData] = await Promise.all([
@@ -37,9 +44,19 @@ function ProductManagementPage() {
 
         setFarms(farmData)
         setCategories(categoryData)
+
+        // 필터에 필요한 데이터를 모두 성공적으로 받았습니다.
+        setFiltersReady(true)
       } catch (err) {
         console.error(err)
-        setError(err.message || '필터 정보를 불러오지 못했습니다.')
+
+        setFiltersReady(false)
+        setError(
+            err.message || '필터 정보를 불러오지 못했습니다.'
+        )
+
+        // 상품 조회 Effect가 실행되지 않으므로 여기서 로딩을 끝냅니다.
+        setLoading(false)
       }
     }
 
@@ -47,6 +64,9 @@ function ProductManagementPage() {
   }, [])
 
   useEffect(() => {
+    //농장, 카테고리 조회전에는 상품 조회x
+    if(!filtersReady) {return}
+
     async function loadProducts() {
       try {
         setLoading(true)
@@ -85,7 +105,12 @@ function ProductManagementPage() {
     }
 
     loadProducts()
-  }, [selectedFarmId, selectedCategoryId, farms])
+  }, [
+    filtersReady,
+    selectedFarmId,
+    selectedCategoryId,
+    farms,
+  ])
 
   async function handleChangeStatus(product) {
     const nextStatus = product.productStatus === 'HIDDEN'
