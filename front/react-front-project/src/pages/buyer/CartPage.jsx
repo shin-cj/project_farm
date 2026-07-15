@@ -8,9 +8,11 @@ function CartPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quantityInputs, setQuantityInputs] = useState({});
+  const [warningItemId, setWarningItemId] = useState(null);
   const navigate = useNavigate();
 
-  const userid = 8;
+  const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  const userid = loginUser?.userId;
 
   const loadCartItems = async () => {
     try {
@@ -143,6 +145,8 @@ function CartPage() {
       }));
     } catch (error) {
       console.error(error);
+      console.log("상태 : " , error.response?.status)
+      console.log("응답 : " , error.response?.data)
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.quantity),
@@ -158,20 +162,24 @@ function CartPage() {
   };
 
   const handleQuantityInput = (item, value) => {
-    if (value === "") {
+    const qunatity = Number(value)
+
+    if(qunatity > item.stockQuantity){
       setQuantityInputs((inputs) => ({
         ...inputs,
-        [item.cart_item_id]: "",
-      }));
-      return;
+        [item.cart_item_id]: String(item.stockQuantity),
+      }))
     }
 
-    const newQuantity = Number(value);
-
-    if (newQuantity > item.stockQuantity) {
-      alert(`재고는 최대 ${item.stockQuantity}개까지 가능합니다.`);
-      return;
+    if(warningItemId !== item.cart_item_id){
+      setWarningItemId(item.cart_item_id)
+      alert(`현재 재고는 ${item.stockQuantity} 입니다.`)
     }
+
+      return;
+
+
+    setWarningItemId(null)
 
     setQuantityInputs((inputs) => ({
       ...inputs,
@@ -188,7 +196,7 @@ function CartPage() {
     const inputValue = quantityInputs[item.cart_item_id] ?? item.quantity;
     const quantity = Number(inputValue);
 
-    if (!Number.isInteger(quantity) || quantity < 1) {
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > item.stockQuantity) {
       return item.quantity;
     }
 
