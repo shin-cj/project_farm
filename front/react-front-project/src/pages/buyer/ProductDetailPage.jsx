@@ -11,7 +11,8 @@ import orderApi from "../../api/orderApi.js";
 function ProductDetailPage() {
   const {productId} = useParams()
   const navigate = useNavigate()
-  const userid = 1
+  const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  const userid = loginUser?.userId;
   const [product, setProduct] = useState(null)
   const [farm, setFarm] = useState(null)
   const [loading, setLoading] = useState(true)

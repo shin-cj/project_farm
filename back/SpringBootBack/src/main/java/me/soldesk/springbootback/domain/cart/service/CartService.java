@@ -37,16 +37,16 @@ public class CartService {
     public void addCartItem(CartRequest request){
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("?怨밸?????곷뮸??덈뼄."));
+                .orElseThrow(() -> new IllegalArgumentException("상품이 없습니다."));
 
         if(!"ON_SALE".equals(product.getProductStatus())){
-            throw new IllegalArgumentException("?袁⑹삺 ?癒?꼻 餓λ쵐???怨밸????袁⑤뻸??덈뼄.");
+            throw new IllegalArgumentException("현재 판매 중인 상품이 아닙니다.");
         }
 
         int addQuantity = request.getQuantity() == null ? 1 : request.getQuantity();
 
         if(addQuantity < 1){
-            throw new IllegalArgumentException("??롮쎗?? 1揶???곴맒??곷선????몃빍??");
+            throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
         }
 
 
@@ -56,14 +56,11 @@ public class CartService {
         CartItem cartItem = cartItemRepository
                 .findByCartIdAndProductId(cart.getCartId(),product.getProductId())
                 .orElseGet(CartItem::new);
-        //?貫而?뤃??????용┸ ??롮쎗 ?④쑴沅?
         int currentQuantity = cartItem.getCartItemId() == null ? 0 : cartItem.getQuantity();
 
-        //疫꿸퀣????롮쎗????덉쨮 ??곸뱽 ??롮쎗 ?酉釉?묾?
         int finalQuantity = currentQuantity + addQuantity;
 
         if(finalQuantity > product.getStockQuantity()){
-            //?癒?쑎 筌롫뗄?놅쭪????袁⑥쨴?紐껋쨮 ??륁죬 ???у첎? ?봔鈺곌퉲鍮???貫而?뤃??????용┛筌왖 ??낅뮉筌왖, ??삘뀲 ??됱뇚 ?怨뱀넺?紐? ?癒?뼊.
             throw new ResponseStatusException(HttpStatus.CONFLICT, "현재 재고는 " + product.getStockQuantity() + "개입니다.");
         }
 
@@ -106,11 +103,11 @@ public class CartService {
 
     private CartResponse toCartResponse(CartItem cartItem){
         Product product = productRepository.findById(cartItem.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("?怨밸?????곷뮸??덈뼄."));
+                .orElseThrow(() -> new IllegalArgumentException("상품이 없습니다."));
 
         FarmResponse farm = farmService.getFarm(product.getFarmId());
         User seller = cartSellerRepository.findById(farm.getSellerId())
-                .orElseThrow(() -> new IllegalArgumentException("?癒?꼻???類ｋ궖揶쎛 ??곷뮸??덈뼄."));
+                .orElseThrow(() -> new IllegalArgumentException("판매자 정보가 없습니다."));
         CartResponse response = new CartResponse();
 
 
@@ -143,19 +140,19 @@ public class CartService {
     @Transactional
     public void updateQuantity(Long cartItemId, int quantity){
         if(quantity < 1){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "??롮쎗?? 1揶???곴맒??곷선????몃빍??");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수량은 1개 이상이어야 합니다.");
         }
 
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"?貫而?뤃????怨밸?????곷뮸??덈뼄."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"장바구니 상품이 없습니다."));
 
         Product product = productRepository
                 .findById(cartItem.getProductId())
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"?怨밸?????곷뮸??덈뼄."));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"상품이 없습니다."));
 
         if(quantity > product.getStockQuantity()){
             throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,"?怨밸? ???х몴??λ뜃???????곷뮸??덈뼄."+"?袁⑹삺 ?????"+product.getStockQuantity() + "??낅빍??"
+                    HttpStatus.CONFLICT,"현재 재고는 " + product.getStockQuantity() + "개입니다."
             );
         }
 
