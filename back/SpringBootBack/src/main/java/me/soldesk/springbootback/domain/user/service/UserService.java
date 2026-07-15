@@ -14,6 +14,10 @@ public class UserService {
     private final UserRepository userRepository;
 
     public void registerUser(UserRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("이미 가입된 이메일입니다.");
+        }
+
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(request.getPasswordHash());

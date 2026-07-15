@@ -184,11 +184,6 @@ a { color: inherit; text-decoration: none; }
 
 .cart-card {
   display: grid;
-  /*
-   * ??긱걹 ???筌왖: 140px
-   * 揶쎛?????怨밸? ?類ｋ궖: ??? ?⑤벀而?
-   * ??삘뀲筌?疫꿸퀡???怨몃열: 140px ?⑥쥙??
-   */
   grid-template-columns: 140px minmax(0, 1fr) 156px;
   align-items: center;
   gap: 20px;
@@ -243,10 +238,6 @@ a { color: inherit; text-decoration: none; }
 }
 
 .cart-card-info {
-  /*
-  * Grid ?癒?뻼?? ??? 疫꼲?????????덊돩揶쎛 ??뤿선??????됱벉.
-  * min-width: 0??雅뚯눖???類λ퉸筌??怨몃열 ??됰퓠??餓κ쑬而?퐛?덈쭡.
-  */
   min-width: 0;
   overflow: hidden;
 }
@@ -294,9 +285,6 @@ a { color: inherit; text-decoration: none; }
   font-size: 14px;
   line-height: 1.5;
 
-  /*
-   * ??용뮞?硫? 筌띾‘?앾쭖?筌ㅼ뮆? 2餓κ쑨?댐쭪?筌???뽯뻻
-   */
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -318,10 +306,6 @@ a { color: inherit; text-decoration: none; }
   overflow-wrap: anywhere;
 }
 .cart-card-side {
-  /*
-   * ?봔筌?Grid?癒?퐣??140px??곗쨮 ??뷀?
-   * ???遺용꺖 ?癒?퍥??揶쏆늿? ??덊돩嚥??⑥쥙??
-   */
   width: 156px;
   min-width: 156px;
   max-width: 156px;
@@ -430,7 +414,6 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
 }
 
-/* ???筌왖揶쎛 ??쇰선揶??⑥쥙???怨몃열 */
 .cart-modal-image-box {
   position: relative;
   width: 170px;
@@ -445,7 +428,6 @@ a { color: inherit; text-decoration: none; }
   text-align: center;
 }
 
-/* ???筌왖???봔筌??怨몃열 獄쏅쉼?앮에???띿퍦 ????곸벉 */
 .cart-modal-image-box img {
   position: absolute;
   inset: 0;
@@ -572,6 +554,161 @@ a { color: inherit; text-decoration: none; }
   }
 
 
+}
+.cart-page { max-width: 1200px; margin: 0 auto; }
+
+.cart-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.cart-products,
+.cart-summary {
+  border: 1px solid #dce6dd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.cart-toolbar,
+.cart-farm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5ece5;
+}
+
+.cart-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.cart-farm-header strong {
+  color: #216b3a;
+  font-size: 18px;
+}
+
+.cart-product-name-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #213328;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cart-product-name-button:hover {
+  color: #216b3a;
+  text-decoration: underline;
+}
+
+.cart-product-name-button:focus-visible {
+  outline: 2px solid rgba(33, 107, 58, 0.4);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+
+.cart-farm-header span {
+  color: #68756d;
+  font-size: 14px;
+}
+
+.cart-item-row {
+  display: grid;
+  grid-template-columns:
+    28px 100px minmax(0, 1fr) 100px 100px 110px 56px;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5ece5;
+}
+
+.cart-item-row img {
+  width: 100px;
+  height: 100px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: #eef3ee;
+}
+
+.cart-item-row h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.cart-item-row p {
+  margin: 0 0 8px;
+  color: #68756d;
+}
+
+.cart-item-row > button,
+.cart-toolbar button {
+  min-height: 38px;
+  border: 1px solid #dce6dd;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.cart-item-row .cart-quantity {
+  display: grid;
+  gap: 4px;
+}
+
+.cart-item-row .cart-quantity input {
+  width: 76px;
+  height: 38px;
+  text-align: center;
+}
+
+.cart-summary {
+  position: sticky;
+  top: 90px;
+  padding: 24px;
+}
+
+.cart-summary p,
+.cart-summary-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cart-summary-total {
+  margin: 24px 0;
+  padding-top: 20px;
+  border-top: 1px solid #dce6dd;
+  font-size: 18px;
+}
+
+.cart-summary button {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #216b3a;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cart-summary .danger {
+  border: 1px solid #c0392b;
+  background: #fff;
+  color: #c0392b;
+}
+
+@media (max-width: 900px) {
+  .cart-content { grid-template-columns: 1fr; }
+  .cart-summary { position: static; }
 }
 
 @media (max-width: 480px) {

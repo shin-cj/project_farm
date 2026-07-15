@@ -11,6 +11,8 @@ public class SellerOrderInfoResponse {
 
     private Long orderId;
     private String orderNumber;
+    private Long farmId;
+    private String farmName;
     private String orderName;
     private String receiverName;
     private String receiverPhone;
