@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import cartApi from "../../api/cartApi.js";
 
 export function SuccessPage() {
     const [isConfirmed, setIsConfirmed] = useState(false);
@@ -11,6 +12,12 @@ export function SuccessPage() {
     const orderId = searchParams.get("orderId");
     const amount = searchParams.get("amount");
     const orderName = searchParams.get("orderName") || "농산물 주문";
+    const cartItemIds = (searchParams.get("cartItemIds") || "")
+        .split(",")
+        .filter(id => id !== "")
+        .map(Number)
+        .filter(Number.isFinite) //혹시 잘못된 문자열이 섞여 있어도 NaN이 삭제 API로 넘어가는 것을 막아주는 방어 코드.
+
     const formattedAmount = Number(amount || 0).toLocaleString("ko-KR");
 
     async function confirmPayment() {
@@ -35,6 +42,19 @@ export function SuccessPage() {
             }
 
             setIsConfirmed(true);
+
+            try{
+                if(cartItemIds.length > 0){
+                    await Promise.all(cartItemIds.map(cartItemId =>
+                     cartApi.deleteCartItem(cartItemId)
+                    )
+                    )
+                }
+            }catch (e){
+                console.error("장바구니 삭제 실패 : " , e)
+
+                setErrorMessage("결제는 완료되었지만 장바구니 상품을 정리하지 못했습니다.")
+            }
         } catch (error) {
             console.error(error);
             setErrorMessage("결제 승인 중 문제가 발생했습니다. 주문 정보를 확인한 뒤 다시 시도해주세요.");
