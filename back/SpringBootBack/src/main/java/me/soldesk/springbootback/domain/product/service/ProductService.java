@@ -30,20 +30,18 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    //상품 목록 조회 - null 이면 전체 상품 조회
-    public List<ProductResponse> getProducts(Long categoryId, Long farmId) {
-        List<Product> products;
-
-        if (farmId != null && categoryId != null) {
-            products = productRepository
-                    .findByFarmIdAndCategoryId(farmId, categoryId);
-        } else if (farmId != null) {
-            products = productRepository.findByFarmId(farmId);
-        } else if (categoryId != null) {
-            products = productRepository.findByCategoryId(categoryId);
-        } else {
-            products = productRepository.findAll();
-        }
+    // 카테고리, 농장, 판매 상태를 조건으로 상품 목록을 조회합니다.
+// 각 값이 null이면 해당 조건은 사용하지 않습니다.
+    public List<ProductResponse> getProducts(
+            Long categoryId,
+            Long farmId,
+            String productStatus
+    ) {
+        List<Product> products = productRepository.findProducts(
+                categoryId,
+                farmId,
+                productStatus
+        );
 
         List<ProductResponse> responses = new ArrayList<>();
 

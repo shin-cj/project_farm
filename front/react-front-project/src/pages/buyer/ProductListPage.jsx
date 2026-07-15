@@ -27,7 +27,11 @@ function ProductListPage() {
         setLoading(true)
         setError('')
 
-        const data = await getProducts(selectedCategoryId)
+        const data = await getProducts(
+            selectedCategoryId,
+            null,
+            'ON_SALE'
+        )
         setProducts(data)
       } catch (err) {
         setError(err.message || '상품을 불러오지 못했습니다.')
