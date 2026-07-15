@@ -1,24 +1,35 @@
 package me.soldesk.springbootback.domain.delivery.service;
 
 import me.soldesk.springbootback.domain.delivery.dto.SellerOrderInfoResponse;
+import me.soldesk.springbootback.domain.delivery.entity.Delivery;
+import me.soldesk.springbootback.domain.delivery.repository.DeliveryRepository;
 import me.soldesk.springbootback.domain.delivery.repository.SellerOrderInfoRepository;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
+import me.soldesk.springbootback.domain.payment.entity.Payment;
+import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SellerOrderInfoService {
 
     private final SellerOrderInfoRepository sellerOrderInfoRepository;
     private final OrderItemRepository orderItemRepository;
+    private final PaymentRepository paymentRepository;
+    private final DeliveryRepository deliveryRepository;
 
     public SellerOrderInfoService(SellerOrderInfoRepository sellerOrderInfoRepository,
-                                  OrderItemRepository orderItemRepository) {
+                                  OrderItemRepository orderItemRepository,
+                                  PaymentRepository paymentRepository,
+                                  DeliveryRepository deliveryRepository) {
         this.sellerOrderInfoRepository = sellerOrderInfoRepository;
         this.orderItemRepository = orderItemRepository;
+        this.paymentRepository = paymentRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     public List<SellerOrderInfoResponse> getSellerOrders() {
@@ -47,6 +58,21 @@ public class SellerOrderInfoService {
             }
         }
 
+        String paymentMethod = paymentRepository.findByOrderId(order.getOrderId())
+                .map(Payment::getPaymentMethod)
+                .orElse("결제 전");
+
+        Optional<Delivery> deliveryOptional = deliveryRepository.findByOrderId(order.getOrderId());
+        String deliveryStatus = deliveryOptional
+                .map(Delivery::getDeliveryStatus)
+                .orElse("READY");
+        String courierName = deliveryOptional
+                .map(Delivery::getCourierName)
+                .orElse(null);
+        String trackingNumber = deliveryOptional
+                .map(Delivery::getTrackingNumber)
+                .orElse(null);
+
         SellerOrderInfoResponse response = new SellerOrderInfoResponse();
         response.setOrderId(order.getOrderId());
         response.setOrderNumber(order.getOrderNumber());
@@ -59,6 +85,10 @@ public class SellerOrderInfoService {
         response.setFinalPrice(order.getFinalPrice());
         response.setRequestMessage(order.getRequestMessage());
         response.setOrderedAt(order.getOrderedAt());
+        response.setPaymentMethod(paymentMethod);
+        response.setDeliveryStatus(deliveryStatus);
+        response.setCourierName(courierName);
+        response.setTrackingNumber(trackingNumber);
 
         return response;
     }
