@@ -601,3 +601,35 @@ a { color: inherit; text-decoration: none; }
   appearance: textfield;
   -moz-appearance: textfield;
 }
+
+.cart-card.unavailable {
+  border-color: #d1d5db;
+  background-color: #f3f4f6;
+  opacity: 0.78;
+}
+
+.cart-unavailable-message {
+  margin: 8px 0 0;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.cart-card-side input:disabled {
+  background-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.cart-card-side button:disabled,
+.cart-modal-actions button:disabled {
+  background-color: #9ca3af;
+  color: #f3f4f6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cart-card-side button:disabled:hover,
+.cart-modal-actions button:disabled:hover {
+  background-color: #9ca3af;
+}

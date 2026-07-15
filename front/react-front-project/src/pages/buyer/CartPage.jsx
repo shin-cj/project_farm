@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
+
+
+function isPurchasableCartItem(item) {
+  return item.productStatus === 'ON_SALE'
+      && Number(item.stockQuantity) > 0
+}
 
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
@@ -14,24 +20,23 @@ function CartPage() {
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
 
-  const loadCartItems = async () => {
+  const loadCartItems = useCallback(async () => {
     try {
-      setLoading(true);
-      setError("");
+      const { data } = await cartApi.getCartItems(userid)
 
-      const { data } = await cartApi.getCartItems(userid);
-      setCartItems(data);
+      setCartItems(data)
+      setError('')
     } catch (error) {
-      console.error(error);
-      setError("장바구니 상품을 불러오지 못했습니다.");
+      console.error(error)
+      setError('장바구니 상품을 불러오지 못했습니다.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }, [userid])
 
   useEffect(() => {
-    loadCartItems();
-  }, [userid]);
+    Promise.resolve().then(loadCartItems)
+  }, [loadCartItems])
 
   const handleDelete = async (cartItemId) => {
     if (!confirm("이 상품을 장바구니에서 삭제할까요?")) {
@@ -74,21 +79,29 @@ function CartPage() {
   };
 
   const moveToOrder = (items) => {
-    if (items.length === 0) {
-      alert("구매할 상품이 없습니다.");
-      return;
+    const purchasableItems = items.filter(isPurchasableCartItem)
+
+    if (purchasableItems.length === 0) {
+      alert('구매 가능한 상품이 없습니다. 품절 상품을 삭제해주세요.')
+      return
     }
 
-    const cartItemIds = items.map((item) => item.cart_item_id);
+    if (purchasableItems.length < items.length) {
+      alert('품절 또는 판매 중지된 상품은 주문에서 제외됩니다.')
+    }
 
-    navigate("/order", {
+    const cartItemIds = purchasableItems.map(
+        (item) => item.cart_item_id
+    )
+
+    navigate('/order', {
       state: {
         cartItemIds,
         buyerId: userid,
-        items,
+        items: purchasableItems,
       },
-    });
-  };
+    })
+  }
 
   const handleBuy = (item) => {
     moveToOrder([item]);
@@ -116,67 +129,83 @@ function CartPage() {
   };
 
   const saveQuantity = async (item, quantity) => {
-    const newQuantity = Number(quantity);
+    if (!isPurchasableCartItem(item)) {
+      return
+    }
+
+    const newQuantity = Number(quantity)
 
     if (!Number.isInteger(newQuantity) || newQuantity < 1) {
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.quantity),
-      }));
-      alert("수량은 1개 이상이어야 합니다.");
-      return;
+      }))
+
+      alert('수량은 1개 이상이어야 합니다.')
+      return
     }
 
     if (newQuantity > item.stockQuantity) {
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.quantity),
-      }));
-      alert(`현재 재고는 ${item.stockQuantity}개입니다.`);
-      return;
+      }))
+
+      alert(`현재 재고는 ${item.stockQuantity}개입니다.`)
+      return
     }
 
     try {
-      await cartApi.updateQuantity(item.cart_item_id, newQuantity);
-      updateQuantityOnScreen(item.cart_item_id, newQuantity);
+      await cartApi.updateQuantity(
+          item.cart_item_id,
+          newQuantity
+      )
+
+      updateQuantityOnScreen(
+          item.cart_item_id,
+          newQuantity
+      )
+
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(newQuantity),
-      }));
+      }))
     } catch (error) {
-      console.error(error);
-      console.log("상태 : " , error.response?.status)
-      console.log("응답 : " , error.response?.data)
+      console.error(error)
+
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.quantity),
-      }));
+      }))
 
       const message =
-          error.response?.data?.detail ??
-          error.response?.data?.message ??
-          "수량 변경에 실패했습니다.";
+          error.response?.data?.detail
+          ?? error.response?.data?.message
+          ?? '수량 변경에 실패했습니다.'
 
-      alert(message);
+      alert(message)
     }
-  };
+  }
 
   const handleQuantityInput = (item, value) => {
+    if (!isPurchasableCartItem(item)) {
+      return
+    }
+
     const quantity = Number(value)
 
-    if(quantity > item.stockQuantity) {
+    if (quantity > item.stockQuantity) {
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.stockQuantity),
       }))
 
-
       if (warningItemId !== item.cart_item_id) {
         setWarningItemId(item.cart_item_id)
-        alert(`현재 재고는 ${item.stockQuantity} 입니다.`)
+        alert(`현재 재고는 ${item.stockQuantity}개입니다.`)
       }
 
-      return;
+      return
     }
 
     setWarningItemId(null)
@@ -184,8 +213,8 @@ function CartPage() {
     setQuantityInputs((inputs) => ({
       ...inputs,
       [item.cart_item_id]: value,
-    }));
-  };
+    }))
+  }
 
   const submitQuantityInput = (item) => {
     const value = quantityInputs[item.cart_item_id] ?? item.quantity;
@@ -228,10 +257,15 @@ function CartPage() {
               {cartItems.map((item) => {
                 const displayQuantity = getDisplayQuantity(item);
                 const itemTotalPrice = item.product_price * displayQuantity;
+                const isPurchasable = isPurchasableCartItem(item);
 
                 return (
                     <article
-                        className="cart-card"
+                        className={
+                          isPurchasable
+                              ? 'cart-card'
+                              : 'cart-card unavailable'
+                        }
                         key={item.cart_item_id}
                         onClick={() => setSelectedItem(item)}
                     >
@@ -259,6 +293,11 @@ function CartPage() {
                         <p className="cart-product-description">
                           {item.productDescription || "상품 설명이 없습니다."}
                         </p>
+                        {!isPurchasable && (
+                            <p className="cart-unavailable-message">
+                              품절 또는 판매 중지된 상품입니다.
+                            </p>
+                        )}
                         <strong className="cart-product-price">
                           {itemTotalPrice.toLocaleString()}원
                         </strong>
@@ -272,6 +311,7 @@ function CartPage() {
                           <span>수량</span>
                           <input
                               type="number"
+                              disabled={!isPurchasable}
                               min="1"
                               step="1"
                               aria-label={`${item.productName} 수량`}
@@ -287,9 +327,12 @@ function CartPage() {
                               }}
                           />
                         </label>
-
-                        <button type="button" onClick={() => handleBuy(item)}>
-                          상품 구매
+                        <button
+                            type="button"
+                            disabled={!isPurchasable}
+                            onClick={() => handleBuy(item)}
+                        >
+                          {isPurchasable ? '상품 구매' : '구매 불가'}
                         </button>
                         <button
                             type="button"
@@ -356,8 +399,14 @@ function CartPage() {
                   >
                     상품 상세 보기
                   </button>
-                  <button type="button" onClick={() => handleBuy(selectedItem)}>
-                    구매하기
+                  <button
+                      type="button"
+                      disabled={!isPurchasableCartItem(selectedItem)}
+                      onClick={() => handleBuy(selectedItem)}
+                  >
+                    {isPurchasableCartItem(selectedItem)
+                        ? '구매하기'
+                        : '구매 불가'}
                   </button>
                   <button
                       type="button"
