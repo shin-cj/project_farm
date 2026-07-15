@@ -7,6 +7,8 @@ function ChatbotPage() {
   const [recipeResult, setRecipeResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  const userid = loginUser?.userId;
 
   const handleSubmit = async () => {
     const question = message.trim()
@@ -22,7 +24,7 @@ function ChatbotPage() {
       setRecipeResult(null)
 
       const { data } = await chatbotApi.recommendRecipe({
-        userId: 1,
+        userId: userid,
         obj1: question,
       })
 
@@ -45,7 +47,7 @@ function ChatbotPage() {
       await chatbotApi.saveRecipe({
         //해당 값은 현재 테스트 용으로 하드 코딩 되어있습니다.
         //로그인 구현 뒤 사용자의 실제 id값을 가져와 넣어야 합니다.
-        user_id: 3,
+        user_id: userid,
         obj1:message,
         recipeTitle:recipeResult.recipeTitle,
         recipe:recipeResult.recipe,
@@ -117,7 +119,7 @@ function ChatbotPage() {
                           <AddCartButton
                               productId={product.productId}
                               //userid 변경
-                              userid={8}//유저의 고유 id 값 필요
+                              userid={userid}//유저의 고유 id 값 필요
                           />
                         </div>
                     ))
