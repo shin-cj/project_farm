@@ -603,6 +603,12 @@ a { color: inherit; text-decoration: none; }
   cursor: pointer;
 }
 
+.cart-unavailable-message {
+  display: block;
+  margin-top: 6px;
+  color: #c0392b;
+  font-weight: 700;
+}
 .cart-product-name-button:hover {
   color: #216b3a;
   text-decoration: underline;

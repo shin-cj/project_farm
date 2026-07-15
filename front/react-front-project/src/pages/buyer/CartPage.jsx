@@ -2,11 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
 
-
-function isPurchasableCartItem(item) {
-  return item.productStatus === 'ON_SALE'
-      && Number(item.stockQuantity) > 0
+function isPurchasableCartItem(item){
+  return(
+      item?.productStatus === "ON_SALE" &&
+          Number(item?.stockQuantity) > 0
+  )
 }
+
 
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
@@ -81,24 +83,25 @@ function CartPage() {
   const moveToOrder = (items) => {
     const purchasableItems = items.filter(isPurchasableCartItem)
 
-    if (purchasableItems.length === 0) {
-      alert('구매 가능한 상품이 없습니다. 품절 상품을 삭제해주세요.')
+    if(purchasableItems.length === 0){
+      alert("선택한 상품은 재고가 없거나 판매가 중지되어 구매할 수 없습니다.")
       return
     }
 
-    if (purchasableItems.length < items.length) {
-      alert('품절 또는 판매 중지된 상품은 주문에서 제외됩니다.')
+    if(purchasableItems.length < items.length){
+      alert("품절되었거나 판매 중지된 상품은 주문에서 제외됩니다.")
     }
 
-    const cartItemIds = purchasableItems.map(
-        (item) => item.cart_item_id
-    )
+    const cartItemIds = [
+        ...new Set(purchasableItems.map(item => item.cart_item_id)
+        )
+    ]
 
     navigate('/order', {
       state: {
         cartItemIds,
         buyerId: userid,
-        items: purchasableItems,
+        items:purchasableItems,
       },
     })
   }
@@ -129,11 +132,12 @@ function CartPage() {
   };
 
   const saveQuantity = async (item, quantity) => {
-    if (!isPurchasableCartItem(item)) {
+    if(!isPurchasableCartItem(item)){
+      alert("현재 수량을 변경할 수 없는 상품입니다.")
       return
     }
 
-    const newQuantity = Number(quantity)
+    const newQuantity = Number(quantity);
 
     if (!Number.isInteger(newQuantity) || newQuantity < 1) {
       setQuantityInputs((inputs) => ({
@@ -188,7 +192,7 @@ function CartPage() {
   }
 
   const handleQuantityInput = (item, value) => {
-    if (!isPurchasableCartItem(item)) {
+    if(!isPurchasableCartItem(item)){
       return
     }
 
@@ -232,6 +236,31 @@ function CartPage() {
     return quantity;
   };
 
+  const saleItems = cartItems.filter(isPurchasableCartItem)
+  const selectedItems = cartItems.filter(item => selectedIds.includes(item.cart_item_id))
+  const selectedPurchaseItems = selectedItems.filter(isPurchasableCartItem)
+  const groupedItems = cartItems.reduce((result, item) => {
+    const key = item.farmName || '농장 정보 없음'
+    result[key] = [...(result[key] || []), item]
+
+    return result
+  }, {})
+  const selectedTotal = selectedPurchaseItems.reduce((sum, item) => sum + item.product_price * getDisplayQuantity(item), 0)
+  const allSelected =
+      saleItems.length > 0 &&
+      saleItems.every(item =>
+          selectedIds.includes(item.cart_item_id)
+      )
+  const toggleItem = id => {
+    setSelectedIds(ids =>
+        ids.includes(id) ? ids.filter(value => value !== id) : [...ids, id]
+    )
+  }
+
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? [] : saleItems.map(item => item.cart_item_id))
+  }
+
   return (
       <section className="cart-page">
         <div className="cart-header">
@@ -253,98 +282,116 @@ function CartPage() {
         ) : cartItems.length === 0 ? (
             <p className="cart-empty">장바구니가 비어 있습니다.</p>
         ) : (
-            <div className="cart-list">
-              {cartItems.map((item) => {
-                const displayQuantity = getDisplayQuantity(item);
-                const itemTotalPrice = item.product_price * displayQuantity;
-                const isPurchasable = isPurchasableCartItem(item);
 
-                return (
-                    <article
-                        className={
-                          isPurchasable
-                              ? 'cart-card'
-                              : 'cart-card unavailable'
-                        }
-                        key={item.cart_item_id}
-                        onClick={() => setSelectedItem(item)}
-                    >
-                      <div className="cart-card-image">
-                        {item.productImageUrl ? (
-                            <img
-                                src={item.productImageUrl}
-                                alt={item.productName}
-                                onError={(event) => {
-                                  event.currentTarget.style.display = "none";
-                                }}
-                            />
-                        ) : (
-                            <span>이미지 없음</span>
-                        )}
-                      </div>
 
-                      <div className="cart-card-info">
-                        <p className="cart-farm-name">
-                          {item.farmName || "농장 정보 없음"}
-                        </p>
-                        <p className="cart-seller-name">
-                          판매자: {item.sellerName || "판매자 정보 없음"}
-                        </p>
-                        <p className="cart-product-description">
-                          {item.productDescription || "상품 설명이 없습니다."}
-                        </p>
-                        {!isPurchasable && (
-                            <p className="cart-unavailable-message">
-                              품절 또는 판매 중지된 상품입니다.
-                            </p>
-                        )}
-                        <strong className="cart-product-price">
-                          {itemTotalPrice.toLocaleString()}원
-                        </strong>
-                      </div>
+            <div className="cart-content">
+                <section className="cart-products">
+                  <div className="cart-toolbar">
+                    <label>
+                      <input type="checkbox" checked={allSelected} onChange={toggleAll}/>
+                      전체 선택
+                    </label>
+                    <button
+                        type="button"
+                        onClick={handleDeleteSelected}
+                        disabled={selectedItems.length === 0}>
+                      선택 삭제</button>
+                  </div>
 
-                      <div
-                          className="cart-card-side"
-                          onClick={(event) => event.stopPropagation()}
-                      >
-                        <label className="cart-quantity">
-                          <span>수량</span>
-                          <input
-                              type="number"
-                              disabled={!isPurchasable}
-                              min="1"
-                              step="1"
-                              aria-label={`${item.productName} 수량`}
-                              value={quantityInputs[item.cart_item_id] ?? item.quantity}
-                              onChange={(event) =>
-                                  handleQuantityInput(item, event.target.value)
-                              }
-                              onBlur={() => submitQuantityInput(item)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter") {
-                                  event.currentTarget.blur();
-                                }
-                              }}
-                          />
-                        </label>
-                        <button
-                            type="button"
-                            disabled={!isPurchasable}
-                            onClick={() => handleBuy(item)}
-                        >
-                          {isPurchasable ? '상품 구매' : '구매 불가'}
-                        </button>
-                        <button
-                            type="button"
-                            className="danger"
-                            onClick={() => handleDelete(item.cart_item_id)}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </article>
-                );
-              })}
+                  {Object.entries(groupedItems).map(([farmName, items]) => (
+                      <section className="cart-farm-group" key={farmName}>
+                        <header className="cart-farm-header">
+                          <strong>{farmName}</strong>
+                          <span>판매자 {items[0].sellerName}</span>
+                        </header>
+
+                        {items.map(item => {
+                            const isPurchasable = isPurchasableCartItem(item)
+
+                          return(
+                            <article className=
+                                         {isPurchasable ? "cart-item-row" : "cart-item-row unavailable"}
+                                     key={item.cart_item_id}>
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.includes(item.cart_item_id)}
+                                onChange={() => toggleItem(item.cart_item_id)}
+                              />
+
+                              <img src={item.productImageUrl} alt={item.productName} />
+
+                              <div>
+                                <h2><button
+                                    type="button"
+                                    className="cart-product-name-button"
+                                    onClick={() => setSelectedItem(item)}>{item.productName}</button></h2>
+                                <p>{item.productDescription}</p>
+                                {!isPurchasableCartItem(item) && (
+                                    <small className="cart-unavailable-message">
+                                      품절되었거나 판매가 중지된 상품입니다.
+                                    </small>
+                                )}
+                                <small>재고{item.stockQuantity}개</small>
+                              </div>
+
+                              <strong>{item.product_price.toLocaleString()}원</strong>
+
+                              <label className="cart-quantity">
+                                <span>수량</span>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    disabled={!isPurchasable}
+                                    aria-label={`${item.productName} 수량`}
+                                    value={quantityInputs[item.cart_item_id] ?? item.quantity}
+                                    onChange={(event) =>
+                                        handleQuantityInput(item, event.target.value)
+                                    }
+                                    onBlur={() => submitQuantityInput(item)}
+                                    onKeyDown={(event) => {
+                                      if (event.key === "Enter") {
+                                        event.currentTarget.blur();
+                                      }
+                                    }}
+                                />
+                              </label>
+
+                              <strong>
+                                {(item.product_price *
+                                   getDisplayQuantity(item)).toLocaleString()}원
+                              </strong>
+
+                              <button onClick={() => handleDelete(item.cart_item_id)}>
+                                삭제
+                              </button>
+                            </article>
+                            )
+                        })}
+                      </section>
+                  ))}
+                </section>
+
+              <aside className="cart-summary">
+                <h2>구매 금액</h2>
+                <p>선택 상품 <strong>{selectedPurchaseItems.length}개</strong></p>
+                <p>상품 금액 <strong>{selectedTotal.toLocaleString()}원</strong></p>
+
+                <div className="cart-summary-total">
+                  <span>총 구매 금액</span>
+                  <strong>{selectedTotal.toLocaleString()}원</strong>
+                </div>
+
+                <button
+                    type="button"
+                    disabled={selectedItems.length === 0}
+                    onClick={() => moveToOrder(selectedItems)}>
+                  선택 상품 구매
+                </button>
+                <button className="danger" onClick={handleDeleteAll}>
+                  전체 삭제
+                </button>
+              </aside>
             </div>
         )}
 
@@ -402,11 +449,8 @@ function CartPage() {
                   <button
                       type="button"
                       disabled={!isPurchasableCartItem(selectedItem)}
-                      onClick={() => handleBuy(selectedItem)}
-                  >
-                    {isPurchasableCartItem(selectedItem)
-                        ? '구매하기'
-                        : '구매 불가'}
+                      onClick={() => handleBuy(selectedItem)}>
+                    {isPurchasableCartItem(selectedItem) ? "구매하기" : "구매불가"}
                   </button>
                   <button
                       type="button"
