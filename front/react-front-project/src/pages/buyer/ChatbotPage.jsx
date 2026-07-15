@@ -7,6 +7,8 @@ function ChatbotPage() {
   const [recipeResult, setRecipeResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  const userid = loginUser?.userId;
 
   const handleSubmit = async () => {
     const question = message.trim()
@@ -22,7 +24,7 @@ function ChatbotPage() {
       setRecipeResult(null)
 
       const { data } = await chatbotApi.recommendRecipe({
-        userId: 1,
+        userId: userid,
         obj1: question,
       })
 
@@ -117,7 +119,7 @@ function ChatbotPage() {
                           <AddCartButton
                               productId={product.productId}
                               //userid 변경
-                              userid={8}//유저의 고유 id 값 필요
+                              userid={userid}//유저의 고유 id 값 필요
                           />
                         </div>
                     ))
