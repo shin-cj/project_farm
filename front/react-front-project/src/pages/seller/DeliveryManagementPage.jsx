@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getFarms } from "../../api/farmApi.js";
 import {
   getSellerOrderInfo,
   getSellerOrders,
@@ -17,7 +18,22 @@ const deliveryStatusLabel = {
   DELIVERED: "배송 완료",
 };
 
+function getLoginUser() {
+  try {
+    const storedUser = localStorage.getItem("loginUser");
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch (error) {
+    localStorage.removeItem("loginUser");
+    return null;
+  }
+}
+
 function DeliveryManagementPage() {
+  const loginUser = getLoginUser();
+  const sellerId = loginUser?.userId;
+
+  const [farms, setFarms] = useState([]);
+  const [selectedFarmId, setSelectedFarmId] = useState("");
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderId, setOrderId] = useState("");
@@ -32,14 +48,45 @@ function DeliveryManagementPage() {
   const ordersPerPage = 3;
 
   useEffect(() => {
-    fetchSellerOrders();
-  }, []);
+    fetchSellerFarms();
+  }, [sellerId]);
 
-  async function fetchSellerOrders() {
+  useEffect(() => {
+    if (sellerId) {
+      fetchSellerOrders(selectedFarmId);
+    }
+  }, [sellerId, selectedFarmId]);
+
+  async function fetchSellerFarms() {
+    if (!sellerId) {
+      setError("로그인한 판매자 정보를 찾을 수 없습니다.");
+      return;
+    }
+
+    try {
+      const data = await getFarms(sellerId);
+      setFarms(data);
+      setError("");
+    } catch (error) {
+      console.error(error);
+      setError("농장 목록을 불러오지 못했습니다.");
+    }
+  }
+
+  async function fetchSellerOrders(farmId = selectedFarmId) {
+    if (!sellerId) {
+      setError("로그인한 판매자 정보를 찾을 수 없습니다.");
+      return;
+    }
+
     try {
       setLoading(true);
-      const data = await getSellerOrders();
+      const data = await getSellerOrders(sellerId, farmId || null);
       setOrders(data);
+      setSelectedOrder(null);
+      setOrderId("");
+      setCourierName("");
+      setTrackingNumber("");
       setError("");
     } catch (error) {
       console.error(error);
@@ -79,6 +126,14 @@ function DeliveryManagementPage() {
     return orders.filter((order) => order.deliveryStatus !== "DELIVERED");
   }
 
+  function handleFarmChange(event) {
+    setSelectedFarmId(event.target.value);
+    setCurrentPage(1);
+    setDeliveryFilter("ACTIVE");
+    setMessage("");
+    setError("");
+  }
+
   function handleFilterChange(nextFilter) {
     setDeliveryFilter(nextFilter);
     setCurrentPage(1);
@@ -107,7 +162,16 @@ function DeliveryManagementPage() {
     }
 
     try {
-      const foundOrder = await getSellerOrderInfo(orderId);
+      const foundOrder = await getSellerOrderInfo(orderId, sellerId);
+
+      if (selectedFarmId && String(foundOrder.farmId) !== String(selectedFarmId)) {
+        setSelectedOrder(null);
+        setCourierName("");
+        setTrackingNumber("");
+        setError("선택한 농장의 주문이 아닙니다.");
+        return;
+      }
+
       setSelectedOrder(foundOrder);
       setCourierName(foundOrder.courierName || "");
       setTrackingNumber(foundOrder.trackingNumber || "");
@@ -196,7 +260,7 @@ function DeliveryManagementPage() {
       <p className="page-label">Seller Order / Delivery</p>
       <h1>주문 접수 및 배송 관리</h1>
       <p style={{ color: "#68756d" }}>
-        주문 상태를 확인하고 택배사와 송장번호를 등록할 수 있습니다.
+        농장별 주문을 확인하고 택배사와 송장번호를 등록할 수 있습니다.
       </p>
 
       {message && <p style={{ color: "#216b3a", fontWeight: 700 }}>{message}</p>}
@@ -217,12 +281,12 @@ function DeliveryManagementPage() {
               <div>
                 <h2 style={{ margin: 0, fontSize: "1.35rem" }}>주문 접수</h2>
                 <p style={{ margin: "6px 0 0", color: "#68756d", fontSize: "0.92rem" }}>
-                  상태별 주문을 확인합니다.
+                  선택한 농장의 주문만 표시합니다.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={fetchSellerOrders}
+                onClick={() => fetchSellerOrders()}
                 style={{
                   padding: "9px 12px",
                   border: "1px solid #dce6dd",
@@ -236,6 +300,21 @@ function DeliveryManagementPage() {
               >
                 새로고침
               </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "10px", alignItems: "center" }}>
+              <select value={selectedFarmId} onChange={handleFarmChange} style={inputStyle}>
+                <option value="">전체 농장</option>
+                {farms.map((farm) => (
+                  <option key={farm.farmId} value={farm.farmId}>
+                    {farm.farmName}
+                  </option>
+                ))}
+              </select>
+
+              <span style={{ color: "#68756d", fontSize: "0.9rem", whiteSpace: "nowrap" }}>
+                {visibleOrders.length}건
+              </span>
             </div>
 
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -271,15 +350,14 @@ function DeliveryManagementPage() {
               </div>
             )}
 
-            {!loading && visibleOrders.length === 0 && (
-              <div
-                style={{
-                  padding: "18px",
-                  border: "1px solid #dce6dd",
-                  borderRadius: "10px",
-                  color: "#68756d",
-                }}
-              >
+            {!loading && farms.length === 0 && (
+              <div style={{ padding: "18px", border: "1px solid #dce6dd", borderRadius: "10px", color: "#68756d" }}>
+                등록된 농장이 없습니다.
+              </div>
+            )}
+
+            {!loading && farms.length > 0 && visibleOrders.length === 0 && (
+              <div style={{ padding: "18px", border: "1px solid #dce6dd", borderRadius: "10px", color: "#68756d" }}>
                 표시할 주문이 없습니다.
               </div>
             )}
@@ -292,10 +370,7 @@ function DeliveryManagementPage() {
                 style={{
                   width: "100%",
                   padding: "16px",
-                  border:
-                    selectedOrder?.orderId === order.orderId
-                      ? "2px solid #216b3a"
-                      : "1px solid #dce6dd",
+                  border: selectedOrder?.orderId === order.orderId ? "2px solid #216b3a" : "1px solid #dce6dd",
                   borderRadius: "10px",
                   background: selectedOrder?.orderId === order.orderId ? "#f2f8f3" : "#ffffff",
                   textAlign: "left",
@@ -303,7 +378,8 @@ function DeliveryManagementPage() {
                 }}
               >
                 <strong>주문번호: {order.orderId}</strong>
-                <p style={{ margin: "8px 0 0" }}>상품명: {order.orderName || "상품명 없음"}</p>
+                <p style={{ margin: "8px 0 0" }}>농장명: {order.farmName || "농장 정보 없음"}</p>
+                <p style={{ margin: "6px 0 0" }}>상품명: {order.orderName || "상품명 없음"}</p>
                 <p style={{ margin: "6px 0 0" }}>구매한 날짜: {formatDateTime(order.orderedAt)}</p>
                 <p style={{ margin: "6px 0 0" }}>결제수단: {order.paymentMethod || "결제 전"}</p>
                 <p style={{ margin: "6px 0 0" }}>배송 상태: {getDeliveryStatusLabel(order.deliveryStatus)}</p>
@@ -319,14 +395,7 @@ function DeliveryManagementPage() {
           </div>
 
           {totalPages > 1 && (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: "8px",
-                marginTop: "16px",
-              }}
-            >
+            <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "16px" }}>
               <button
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
@@ -411,6 +480,7 @@ function DeliveryManagementPage() {
               }}
             >
               <h3 style={{ marginTop: 0 }}>선택한 주문 정보</h3>
+              <p>농장명: {selectedOrder.farmName || "농장 정보 없음"}</p>
               <p>주문코드: {selectedOrder.orderNumber}</p>
               <p>상품명: {selectedOrder.orderName}</p>
               <p>구매한 날짜: {formatDateTime(selectedOrder.orderedAt)}</p>
