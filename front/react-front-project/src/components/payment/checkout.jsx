@@ -4,14 +4,6 @@ import { loadTossPayments, ANONYMOUS } from "@tosspayments/tosspayments-sdk";
 
 const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
 
-const generateOrderId = () => {
-    if (window.crypto?.randomUUID) {
-        return window.crypto.randomUUID().replaceAll("-", "").slice(0, 20);
-    }
-
-    return window.btoa(String(Math.random())).slice(0, 20);
-};
-
 const inputStyle = {
     width: "100%",
     height: "46px",
@@ -36,23 +28,29 @@ const labelStyle = {
 export function CheckoutPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const paymentAmount = Number(searchParams.get("amount")) || 50_000;
-    const orderName = searchParams.get("orderName") || "AgroLink order";
-    const orderId = searchParams.get("orderId") || generateOrderId();
+    const amountParam = searchParams.get("amount");
+    const paymentAmount = amountParam === null ? 0 : Number(amountParam);
+    const orderName = searchParams.get("orderName") || "";
+    const orderId = searchParams.get("orderId") || "";
 
     const [receiverName, setReceiverName] = useState(
-        searchParams.get("receiverName") || "장바구니구매자"
+        searchParams.get("receiverName") || ""
     );
     const [receiverPhone, setReceiverPhone] = useState(
-        searchParams.get("receiverPhone") || "010-8888-8888"
+        searchParams.get("receiverPhone") || ""
     );
     const [receiverAddress, setReceiverAddress] = useState(
-        searchParams.get("receiverAddress") || "서울시 강남구"
+        searchParams.get("receiverAddress") || ""
     );
     const [receiverDetailAddress, setReceiverDetailAddress] = useState(
-        searchParams.get("receiverDetailAddress") || "테스트아파트 101호"
+        searchParams.get("receiverDetailAddress") || ""
     );
 
+    const hasValidOrderInfo =
+        orderId.trim() !== ""
+        && orderName.trim() !== ""
+        && Number.isFinite(paymentAmount)
+        && paymentAmount > 0;
     const [ready, setReady] = useState(false);
     const [widgets, setWidgets] = useState(null);
     const paymentMethodWidgetRef = useRef(null);
@@ -79,7 +77,7 @@ export function CheckoutPage() {
 
     useEffect(() => {
         async function renderPaymentWidgets() {
-            if (widgets == null) {
+            if (widgets == null || !hasValidOrderInfo) {
                 return;
             }
 
@@ -110,9 +108,23 @@ export function CheckoutPage() {
         }
 
         renderPaymentWidgets();
-    }, [widgets, paymentAmount]);
+    }, [widgets, paymentAmount, hasValidOrderInfo]);
 
     const handlePayment = async () => {
+        if (!hasValidOrderInfo) {
+            alert("주문 정보가 없습니다. 상품 또는 장바구니에서 다시 주문해주세요.");
+            return;
+        }
+
+        if (
+            !receiverName.trim()
+            || !receiverPhone.trim()
+            || !receiverAddress.trim()
+        ) {
+            alert("주문자, 전화번호, 배송지를 확인해주세요.");
+            return;
+        }
+
         try {
             const selectedPaymentMethod =
                 await paymentMethodWidgetRef.current?.getSelectedPaymentMethod();

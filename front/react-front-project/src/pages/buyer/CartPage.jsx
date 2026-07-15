@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
 
@@ -13,7 +13,6 @@ function isPurchasableCartItem(item){
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quantityInputs, setQuantityInputs] = useState({});
@@ -23,24 +22,23 @@ function CartPage() {
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
 
-  const loadCartItems = async () => {
+  const loadCartItems = useCallback(async () => {
     try {
-      setLoading(true);
-      setError("");
+      const { data } = await cartApi.getCartItems(userid)
 
-      const { data } = await cartApi.getCartItems(userid);
-      setCartItems(data);
+      setCartItems(data)
+      setError('')
     } catch (error) {
-      console.error(error);
-      setError("장바구니 상품을 불러오지 못했습니다.");
+      console.error(error)
+      setError('장바구니 상품을 불러오지 못했습니다.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }, [userid])
 
   useEffect(() => {
-    loadCartItems();
-  }, [userid]);
+    Promise.resolve().then(loadCartItems)
+  }, [loadCartItems])
 
   const handleDelete = async (cartItemId) => {
     if (!confirm("이 상품을 장바구니에서 삭제할까요?")) {
@@ -56,37 +54,6 @@ function CartPage() {
       alert("장바구니 상품 삭제에 실패했습니다.");
     }
   };
-
-  const handleDeleteSelected = async () => {
-    if(selectedItems.length === 0){
-      alert("삭제할 상품을 선택해주세요.")
-      return
-    }
-
-    if(!confirm(`선택한 ${selectedItems.length}개 상품을 삭제 할까요?`)){
-      return
-    }
-
-    try {
-      await Promise.all(
-          selectedItems.map(item => cartApi.deleteCartItem(item.cart_item_id))
-      )
-
-      await loadCartItems()
-
-      setSelectedIds([])
-      setSelectedItem(null)
-      setQuantityInputs({})
-
-      alert("선택한 상품을 삭제했습니다.")
-    }catch (e){
-      console.error(e)
-
-      await loadCartItems()
-
-      alert("선택 상품 삭제 중 문제가 발생했습니다.")
-    }
-  }
 
   const handleDeleteAll = async () => {
     if (cartItems.length === 0) {
@@ -130,14 +97,14 @@ function CartPage() {
         )
     ]
 
-    navigate("/order", {
+    navigate('/order', {
       state: {
         cartItemIds,
         buyerId: userid,
         items:purchasableItems,
       },
-    });
-  };
+    })
+  }
 
   const handleBuy = (item) => {
     moveToOrder([item]);
@@ -176,44 +143,53 @@ function CartPage() {
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.quantity),
-      }));
-      alert("수량은 1개 이상이어야 합니다.");
-      return;
+      }))
+
+      alert('수량은 1개 이상이어야 합니다.')
+      return
     }
 
     if (newQuantity > item.stockQuantity) {
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.quantity),
-      }));
-      alert(`현재 재고는 ${item.stockQuantity}개입니다.`);
-      return;
+      }))
+
+      alert(`현재 재고는 ${item.stockQuantity}개입니다.`)
+      return
     }
 
     try {
-      await cartApi.updateQuantity(item.cart_item_id, newQuantity);
-      updateQuantityOnScreen(item.cart_item_id, newQuantity);
+      await cartApi.updateQuantity(
+          item.cart_item_id,
+          newQuantity
+      )
+
+      updateQuantityOnScreen(
+          item.cart_item_id,
+          newQuantity
+      )
+
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(newQuantity),
-      }));
+      }))
     } catch (error) {
-      console.error(error);
-      console.log("상태 : " , error.response?.status)
-      console.log("응답 : " , error.response?.data)
+      console.error(error)
+
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.quantity),
-      }));
+      }))
 
       const message =
-          error.response?.data?.detail ??
-          error.response?.data?.message ??
-          "수량 변경에 실패했습니다.";
+          error.response?.data?.detail
+          ?? error.response?.data?.message
+          ?? '수량 변경에 실패했습니다.'
 
-      alert(message);
+      alert(message)
     }
-  };
+  }
 
   const handleQuantityInput = (item, value) => {
     if(!isPurchasableCartItem(item)){
@@ -222,19 +198,18 @@ function CartPage() {
 
     const quantity = Number(value)
 
-    if(quantity > item.stockQuantity) {
+    if (quantity > item.stockQuantity) {
       setQuantityInputs((inputs) => ({
         ...inputs,
         [item.cart_item_id]: String(item.stockQuantity),
       }))
 
-
       if (warningItemId !== item.cart_item_id) {
         setWarningItemId(item.cart_item_id)
-        alert(`현재 재고는 ${item.stockQuantity} 입니다.`)
+        alert(`현재 재고는 ${item.stockQuantity}개입니다.`)
       }
 
-      return;
+      return
     }
 
     setWarningItemId(null)
@@ -242,8 +217,8 @@ function CartPage() {
     setQuantityInputs((inputs) => ({
       ...inputs,
       [item.cart_item_id]: value,
-    }));
-  };
+    }))
+  }
 
   const submitQuantityInput = (item) => {
     const value = quantityInputs[item.cart_item_id] ?? item.quantity;
@@ -290,6 +265,14 @@ function CartPage() {
       <section className="cart-page">
         <div className="cart-header">
           <h1>장바구니</h1>
+          <div className="cart-header-actions">
+            <button type="button" onClick={handleBuyAll}>
+              상품 전체 구매
+            </button>
+            <button type="button" className="danger" onClick={handleDeleteAll}>
+              상품 전체 삭제
+            </button>
+          </div>
         </div>
 
         {loading ? (

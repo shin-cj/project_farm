@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,6 +76,8 @@ public class ProductService {
 
         applyRequestToProduct(product, request);
 
+        applyStockStatus(product);
+
         Product savedProduct = productRepository.save(product);
 
         return toResponse(savedProduct);
@@ -94,6 +97,11 @@ public class ProductService {
                 ));
 
         applyRequestToProduct(product, request);
+
+        applyStockStatus(product);
+
+        //상품을 수정한 현재 시간으로 변경
+        product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
 
@@ -208,5 +216,16 @@ public class ProductService {
         product.setProductImageUrl(request.getProductImageUrl());
         product.setProductStatus(request.getProductStatus());
     }
+    // 재고가 없는 판매 중 상품을 자동으로 품절 상태로 변경
+    private void applyStockStatus(Product product) {
+
+        if (product.getStockQuantity() != null
+                && product.getStockQuantity() == 0
+                && "ON_SALE".equals(product.getProductStatus())) {
+
+            product.setProductStatus("SOLD_OUT");
+        }
+    }
+
 
 }

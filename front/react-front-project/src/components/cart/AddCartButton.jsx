@@ -7,6 +7,7 @@ function AddCartButton({
                            quantity = 1,
                            onSuccess,
                            className = '',
+                           disabled = false
                        }) {
     const [loading, setLoading] = useState(false)
 
@@ -54,8 +55,17 @@ function AddCartButton({
     }
 
     return (
-        <button type="button" className={className} onClick={handleAddCart} disabled={loading}>
-            {loading ? '담는 중...' : '장바구니 담기'}
+        <button
+            type="button"
+            className={className}
+            onClick={handleAddCart}
+            disabled={loading || disabled}
+        >
+            {loading
+                ? '담는 중...'
+                : disabled
+                    ? '구매 불가'
+                    : '장바구니 담기'}
         </button>
     )
 }
