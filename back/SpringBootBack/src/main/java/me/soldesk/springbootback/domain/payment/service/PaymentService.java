@@ -121,6 +121,13 @@ public class PaymentService {
                     product.getStockQuantity() - item.getQuantity()
             );
 
+            //결제 후 재고 0이면 품절 처리하는거 추가했습니다 - 진현
+            if (product.getStockQuantity() == 0
+                    && "ON_SALE".equals(product.getProductStatus())) {
+
+                product.setProductStatus("SOLD_OUT");
+            }
+
             productRepository.save(product);
         }
 
