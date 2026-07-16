@@ -303,17 +303,17 @@
     font-size: 10px;
 }
 
-.done,
-.active {
+.chatbot-page .progress-card .done,
+.chatbot-page .progress-card .active {
     color: #216b3a;
     font-weight: 700;
 }
 
-.done {
+.chatbot-page .progress-card .done {
     animation: progress-done-pop 280ms ease-out both;
 }
 
-.active {
+.chatbot-page .progress-card .active {
     animation: progress-active-pulse 1.15s ease-in-out infinite;
 }
 
@@ -333,7 +333,7 @@
     animation: progress-card-complete 550ms ease-out;
 }
 
-.waiting {
+.chatbot-page .progress-card .waiting {
     color: #bcc5be;
 }
 
@@ -384,12 +384,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .done,
-    .active,
-    .progress-card:has(.progress-row:last-child .done),
-    .assistant-bubble.is-loading,
-    .typing-indicator > span,
-    .bot-row.is-loading .small-bot-avatar {
+    .chatbot-page .progress-card .done,
+    .chatbot-page .progress-card .active,
+    .chatbot-page .progress-card:has(.progress-row:last-child .done),
+    .chatbot-page .assistant-bubble.is-loading,
+    .chatbot-page .typing-indicator > span,
+    .chatbot-page .bot-row.is-loading .small-bot-avatar {
         animation: none;
     }
 }
