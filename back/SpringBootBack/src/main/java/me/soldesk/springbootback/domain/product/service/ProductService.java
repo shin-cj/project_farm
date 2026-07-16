@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -94,6 +95,9 @@ public class ProductService {
                 ));
 
         applyRequestToProduct(product, request);
+
+        //상품을 수정한 현재 시간으로 변경
+        product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
 

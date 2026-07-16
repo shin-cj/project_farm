@@ -14,33 +14,36 @@ function ProductCreatePage() {
     const [farms, setFarms] = useState([])
 
     useEffect(() => {
-        async function loadCategories() {
-            const data = await getCategories()
-            setCategories(data)
-        }
-
-        loadCategories()
-    }, [])
-
-    useEffect(() => {
-        async function loadFarms(){
-            try{
+        async function loadFormData() {
+            try {
                 const sellerId = getLoginSellerId()
 
                 if (sellerId === null) {
-                    throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
+                    throw new Error(
+                        '로그인한 판매자 정보를 확인할 수 없습니다.'
+                    )
                 }
 
-                const data = await getFarms(sellerId)
-                setFarms(data)
-            }catch (error){
-                console.log(error)
-                alert('농장 목록을 불러오지 못했습니다.')
+                // 카테고리와 로그인 판매자의 농장을 동시에 요청합니다.
+                const [categoryData, farmData] = await Promise.all([
+                    getCategories(),
+                    getFarms(sellerId),
+                ])
+
+                setCategories(categoryData)
+                setFarms(farmData)
+            } catch (error) {
+                console.error(error)
+
+                alert(
+                    error.message
+                    || '상품 등록에 필요한 정보를 불러오지 못했습니다.'
+                )
             }
         }
 
-        loadFarms()
-    }, []);
+        loadFormData()
+    }, [])
 
     const [form, setForm] = useState({
         farmId: '',
