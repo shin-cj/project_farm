@@ -60,6 +60,7 @@ function ProductDetailPage() {
   }
 
   if (!product) {
+
     return (
       <main className="product-detail-page">
         <div className="product-detail-message">상품이 없습니다.</div>
@@ -67,8 +68,27 @@ function ProductDetailPage() {
     )
   }
 
+  const isPurchasable =
+      product.productStatus === 'ON_SALE'
+      && Number(product.stockQuantity) > 0
+
+  const unavailableMessage =
+      Number(product.stockQuantity) <= 0
+      || product.productStatus === 'SOLD_OUT'
+          ? '품절된 상품입니다.'
+          : product.productStatus === 'PENDING'
+              ? '승인 대기 중인 상품입니다.'
+              : product.productStatus === 'HIDDEN'
+                  ? '판매가 중지된 상품입니다.'
+                  : '현재 구매할 수 없는 상품입니다.'
+
   function handleDirectOrder() {
     const orderQuantity = Number(quantity)
+
+    if (!isPurchasable) {
+      alert(unavailableMessage)
+      return
+    }
 
     if (!userid) {
       alert('로그인이 필요한 기능입니다.')
@@ -178,7 +198,9 @@ function ProductDetailPage() {
             <AddCartButton
                 productId={product.productId}
                 userid={userid}
-                className='product-detail-cart-button'/>
+                disabled={!isPurchasable}
+                className="product-detail-cart-button"
+            />
             <button
                 type="button"
                 className="product-detail-order-link"
@@ -189,7 +211,11 @@ function ProductDetailPage() {
             >
               바로 주문하기
             </button>
-
+            {!isPurchasable && (
+                <p className="product-detail-unavailable">
+                  {unavailableMessage}
+                </p>
+            )}
           </div>
         </div>
       </section>
