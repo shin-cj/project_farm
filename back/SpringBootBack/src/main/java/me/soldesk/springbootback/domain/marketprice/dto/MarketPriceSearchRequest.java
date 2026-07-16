@@ -1,78 +1,58 @@
 package me.soldesk.springbootback.domain.marketprice.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
-/** 조회일 기준 평균가격, 1~4주전 평균가격 추이 제공하는 API */
+import lombok.ToString;
+
 @Getter
 @Setter
+@ToString
 public class MarketPriceSearchRequest {
 
-    /** 조사일자 */
-    private String exmn_ymd;
+    /** 최신일자 (LTE) */
+    @JsonProperty("exmn_ymd_lte")
+    private String exmnYmdLte;
 
-    /** 구분코드 */
-    private String se_cd;
-
-    /** 구분명 */
-    private String se_nm;
+    /** 과거일자 (GTE) */
+    @JsonProperty("exmn_ymd_gte")
+    private String exmnYmdGte;
 
     /** 부류코드 */
-    private String ctgry_cd;
-
-    /** 부류명 */
-    private String ctgry_nm;
+    @JsonProperty("ctgry_cd")
+    private String ctgryCd;
 
     /** 품목코드 */
-    private String item_cd;
+    @JsonProperty("item_cd")
+    private String itemCd;
 
-    /** 품목명 */
-    private String item_nm;
+    private Integer pageNo = 1;
+    private Integer numOfRows = 1000;
+
+    // ==========================================
+    //  추가될 수 있는 검색 조건들
+    // ==========================================
+
+    /** 구분코드 */
+    @JsonProperty("se_cd")
+    private String seCd;
 
     /** 품종코드 */
-    private String vrty_cd;
-
-    /** 품종명 */
-    private String vrty_nm;
+    @JsonProperty("vrty_cd")
+    private String vrtyCd;
 
     /** 등급코드 */
-    private String grd_cd;
+    @JsonProperty("grd_cd")
+    private String grdCd;
 
-    /** 등급명 */
-    private String grd_nm;
+    /** 시군구코드 */
+    @JsonProperty("sgg_cd")
+    private String sggCd;
 
-    /** 단위 */
-    private String unit;
+    /** 시장코드 */
+    @JsonProperty("mrkt_cd")
+    private String mrktCd;
 
-    /** 단위크기 */
-    private String unit_sz;
 
-    /** 조사일평균가격 */
-    private String exmn_dd_avg_prc;
 
-    /** 조사일kg환산평균가격 */
-    private String exmn_dd_cnvs_avg_prc;
-
-    /** 1주일전평균가격 */
-    private String ww1_bfr_avg_prc;
-
-    /** 1주일전kg환산평균가격 */
-    private String ww1_bfr_cnvs_avg_prc;
-
-    /** 2주일전평균가격 */
-    private String ww2_bfr_avg_prc;
-
-    /** 2주일전kg환산평균가격 */
-    private String ww2_bfr_cnvs_avg_prc;
-
-    /** 3주일전평균가격 */
-    private String ww3_bfr_avg_prc;
-
-    /** 3주일전kg환산평균가격 */
-    private String ww3_bfr_cnvs_avg_prc;
-
-    /** 4주일전평균가격 */
-    private String ww4_bfr_avg_prc;
-
-    /** 4주일전kg환산평균가격 */
-    private String ww4_bfr_cnvs_avg_prc;
 }
