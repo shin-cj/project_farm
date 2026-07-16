@@ -3,23 +3,50 @@ import { createProduct } from '../../api/productApi.js'
 import { useNavigate } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
+import { getFarms } from '../../api/farmApi.js'
+import { getLoginSellerId } from '../../config/devAccount.js'
+
 
 function ProductCreatePage() {
     const navigate = useNavigate()
 
     const [categories, setCategories] = useState([])
+    const [farms, setFarms] = useState([])
 
     useEffect(() => {
-        async function loadCategories() {
-            const data = await getCategories()
-            setCategories(data)
+        async function loadFormData() {
+            try {
+                const sellerId = getLoginSellerId()
+
+                if (sellerId === null) {
+                    throw new Error(
+                        '로그인한 판매자 정보를 확인할 수 없습니다.'
+                    )
+                }
+
+                // 카테고리와 로그인 판매자의 농장을 동시에 요청합니다.
+                const [categoryData, farmData] = await Promise.all([
+                    getCategories(),
+                    getFarms(sellerId),
+                ])
+
+                setCategories(categoryData)
+                setFarms(farmData)
+            } catch (error) {
+                console.error(error)
+
+                alert(
+                    error.message
+                    || '상품 등록에 필요한 정보를 불러오지 못했습니다.'
+                )
+            }
         }
 
-        loadCategories()
+        loadFormData()
     }, [])
 
     const [form, setForm] = useState({
-        farmId: 1,
+        farmId: '',
         categoryId: '',
         productName: '',
         description: '',
@@ -92,7 +119,7 @@ function ProductCreatePage() {
             await createProduct(productData)
 
             alert('상품이 등록되었습니다.')
-            navigate('/products')
+            navigate('/seller/products')
         } catch (error) {
             console.error(error)
             alert('상품 등록에 실패했습니다.')
@@ -111,13 +138,24 @@ function ProductCreatePage() {
                 <form onSubmit={handleSubmit} className="product-create-form">
                     <div className="product-create-row">
                         <div className="product-create-field">
-                            <label>농장 번호</label>
-                            <input
-                                type="number"
+                            <label>판매 농장</label>
+
+                            <select
                                 name="farmId"
                                 value={form.farmId}
                                 onChange={handleChange}
-                            />
+                            >
+                                <option value="">농장 선택</option>
+
+                                {farms.map((farm) => (
+                                    <option
+                                        key={farm.farmId}
+                                        value={farm.farmId}
+                                    >
+                                        {farm.farmName} - {farm.region}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <div className="product-create-field">
@@ -237,7 +275,7 @@ function ProductCreatePage() {
                         <button
                             type="button"
                             className="product-create-cancel-button"
-                            onClick={() => navigate('/products')}
+                            onClick={() => navigate('/seller/products')}
                         >
                             취소
                         </button>

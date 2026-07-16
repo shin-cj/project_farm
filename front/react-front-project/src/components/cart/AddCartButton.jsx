@@ -6,6 +6,8 @@ function AddCartButton({
                            userid,
                            quantity = 1,
                            onSuccess,
+                           className = '',
+                           disabled = false
                        }) {
     const [loading, setLoading] = useState(false)
 
@@ -14,6 +16,13 @@ function AddCartButton({
             alert('상품 정보가 없습니다.')
             return
         }
+
+        //로그인 기능 구현 시 해당 로그인 판단 로직 사용
+        // if(!user){
+        //     alert('로그인이 필요합니다.')
+        //     navigator('/login')
+        //     return
+        // }
 
         if (!userid){
             alert('로그인이 필요합니다')
@@ -36,15 +45,27 @@ function AddCartButton({
             }
         } catch (e) {
             console.error(e)
-            alert('장바구니 담기에 실패했습니다.')
+
+            const message = e.response?.data?.detail ?? e.response?.data?.message ??
+                '장바구니 담기에 실패했습니다.'
+            alert(message)
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <button type="button" onClick={handleAddCart} disabled={loading}>
-            {loading ? '담는 중...' : '장바구니 담기'}
+        <button
+            type="button"
+            className={className}
+            onClick={handleAddCart}
+            disabled={loading || disabled}
+        >
+            {loading
+                ? '담는 중...'
+                : disabled
+                    ? '구매 불가'
+                    : '장바구니 담기'}
         </button>
     )
 }

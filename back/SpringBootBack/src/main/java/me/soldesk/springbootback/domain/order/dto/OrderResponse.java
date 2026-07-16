@@ -14,6 +14,8 @@ public class OrderResponse {
     /** 주문 고유 번호 */
     private Long orderId;
 
+    private String orderName;
+
     /** 사용자에게 표시되는 주문번호 */
     private String orderNumber;
 

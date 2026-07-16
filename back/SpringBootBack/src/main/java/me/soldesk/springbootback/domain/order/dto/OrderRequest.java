@@ -2,48 +2,56 @@ package me.soldesk.springbootback.domain.order.dto;
 
 import lombok.Getter;
 import lombok.Setter;
-
-/** 프론트엔드가 백엔드에 요청할 데이터를 담는 DTO(데이터 전달 객체)입니다. */
-// 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
+import java.util.List;
+/** ?꾨줎?몄뿏?쒓? 諛깆뿏?쒖뿉 ?붿껌???곗씠?곕? ?대뒗 DTO(?곗씠???꾨떖 媛앹껜)?낅땲?? */
+// 紐⑤뱺 ?꾨뱶??getter 硫붿꽌?쒕? Lombok???먮룞 ?앹꽦?⑸땲??
 @Getter
-// 모든 필드의 setter 메서드를 Lombok이 자동 생성합니다.
+// 紐⑤뱺 ?꾨뱶??setter 硫붿꽌?쒕? Lombok???먮룞 ?앹꽦?⑸땲??
 @Setter
 public class OrderRequest {
 
-    /** 사용자에게 표시되는 주문번호 */
+    /** ?ъ슜?먯뿉寃??쒖떆?섎뒗 二쇰Ц踰덊샇 */
     private String orderNumber;
 
-    /** 구매자 회원 번호 */
+    /** 援щℓ???뚯썝 踰덊샇 */
     private Long buyerId;
 
-    /** 판매 농장 번호 */
+    /** ?먮ℓ ?띿옣 踰덊샇 */
     private Long farmId;
 
-    /** 상품 금액 합계 */
+    /** ?곹뭹 湲덉븸 ?⑷퀎 */
     private Long totalProductPrice;
 
-    /** 배송비 */
+    /** 諛곗넚鍮?*/
     private Long deliveryFee;
 
-    /** 최종 결제 금액 */
+    /** 理쒖쥌 寃곗젣 湲덉븸 */
     private Long finalPrice;
 
-    /** 주문 처리 상태 */
+    /** 二쇰Ц 泥섎━ ?곹깭 */
     private String orderStatus;
 
-    /** 수령인 이름 */
+    /** ?섎졊???대쫫 */
     private String receiverName;
 
-    /** 수령인 전화번호 */
+    /** ?섎졊???꾪솕踰덊샇 */
     private String receiverPhone;
 
-    /** 배송 기본 주소 */
+    /** 諛곗넚 湲곕낯 二쇱냼 */
     private String receiverAddress;
 
-    /** 배송 상세 주소 */
+    /** 諛곗넚 ?곸꽭 二쇱냼 */
     private String receiverDetailAddress;
 
-    /** 배송 요청사항 */
+    /** 諛곗넚 ?붿껌?ы빆 */
     private String requestMessage;
+
+    private Long cartItemId;
+
+    private List<Long> cartItemIds;
+
+    private Long productId;
+
+    private Integer quantity;
 
 }
