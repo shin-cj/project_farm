@@ -233,3 +233,25 @@
     font-size: 13px;
     font-weight: 800;
 }
+
+.product-list-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.product-search-input {
+    width: 240px;
+    padding: 11px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #243b2f;
+    font-size: 14px;
+}
+
+.product-search-input:focus {
+    outline: none;
+    border-color: #3f7d20;
+    box-shadow: 0 0 0 3px rgba(63, 125, 32, 0.12);
+}

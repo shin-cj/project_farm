@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {Link} from 'react-router-dom'
+import {Link, useSearchParams } from 'react-router-dom'
 import {getCategories} from '../../api/categoryApi.js'
 import {getProducts} from '../../api/productApi.js'
 import './ProductListPage.css'
@@ -12,10 +12,19 @@ function isSoldOutProduct(product) {
 // 카테고리를 선택해 상품을 조회하는 구매자 상품 목록 화면입니다.
 function ProductListPage() {
     const [categories, setCategories] = useState([])
-    const [selectedCategoryId, setSelectedCategoryId] = useState(null)
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    const categoryIdFromUrl = Number(
+        searchParams.get('categoryId')
+    )
+
+    const selectedCategoryId =
+        Number.isInteger(categoryIdFromUrl)
+    && categoryIdFromUrl > 0 ? categoryIdFromUrl : null
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [searchKeyword, setSearchKeyword] = useState('')
 
     useEffect(() => {
         async function loadCategories() {
@@ -62,8 +71,24 @@ function ProductListPage() {
     }, [selectedCategoryId])
 
     function handleCategorySelect(categoryId) {
-        setSelectedCategoryId(categoryId)
+        if(categoryId === null){
+            setSearchParams({})
+            return
+        }
+
+        setSearchParams({
+            categoryId : String(categoryId),
+        })
     }
+
+    const normalizedKeyword =
+        searchKeyword.trim().toLowerCase().replace(/\s+/g, '')
+
+    const searchedProducts = products.filter((product) => {
+        const productName =
+            (product.productName ?? '').toLowerCase().replace(/\s+/g, '')
+        return productName.includes(normalizedKeyword)
+    })
 
     return (
         <main className="product-list-page">
@@ -123,11 +148,20 @@ function ProductListPage() {
                         </p>
                     </div>
 
+                    <div className="product-list-tools">
+                        <input
+                            type="search"
+                            value={searchKeyword}
+                            onChange={(event) => setSearchKeyword(event.target.value)}
+                            placeholder="상품명을 검색하세요"
+                            className="product-search-input"
+                    />
                     <span className="product-count">
-            {products.length}개 상품
+            {searchedProducts.length}개 상품
           </span>
                 </div>
 
+                </div>
                 {loading && (
                     <div className="product-list-message">
                         상품을 불러오는 중입니다.
@@ -140,16 +174,16 @@ function ProductListPage() {
                     </div>
                 )}
 
-                {!loading && !error && products.length === 0 && (
+                {!loading && !error && searchedProducts.length === 0 && (
                     <div className="product-list-empty">
                         <h3>등록된 상품이 없습니다.</h3>
                         <p>다른 카테고리를 선택하거나 나중에 다시 확인해주세요.</p>
                     </div>
                 )}
 
-                {!loading && !error && products.length > 0 && (
+                {!loading && !error && searchedProducts.length > 0 && (
                     <div className="product-grid">
-                        {products.map((product) => (
+                        {searchedProducts.map((product) => (
                             <article
                                 key={product.productId}
                                 className={

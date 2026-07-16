@@ -168,14 +168,14 @@ function ProductManagementPage() {
     return '상태 미등록'
   }
 
-  const normalizedKeyword = searchKeyword.trim().toLowerCase()
+  const normalizedKeyword = searchKeyword.trim().toLowerCase().replace(/\s+/g, '')
 
   const filteredProducts = products.filter((product) => {
     const matchesStatus =
         statusFilter === 'ALL'
         || product.productStatus === statusFilter
 
-    const productName = (product.productName ?? '').toLowerCase()
+    const productName = (product.productName ?? '').toLowerCase().replace(/\s+/g, '')
 
     const matchesKeyword =
         productName.includes(normalizedKeyword)
