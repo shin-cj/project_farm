@@ -271,6 +271,17 @@ function ProductCreatePage() {
                         />
                     </div>
 
+                    {form.productImageUrl.trim() && (
+                    <div className="product-create-image-preview">
+                        <p>상품 이미지 미리보기</p>
+
+                        <img
+                            src={form.productImageUrl}
+                            alt="등록 할 상품 미리보기"
+                            />
+                    </div>
+                    )}
+
                     <div className="product-create-actions">
                         <button
                             type="button"

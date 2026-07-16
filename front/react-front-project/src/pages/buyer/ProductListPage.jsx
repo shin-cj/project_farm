@@ -25,6 +25,7 @@ function ProductListPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [searchKeyword, setSearchKeyword] = useState('')
+    const [sortOption, setSortOption] = useState('LATEST')
 
     useEffect(() => {
         async function loadCategories() {
@@ -90,6 +91,31 @@ function ProductListPage() {
         return productName.includes(normalizedKeyword)
     })
 
+    const sortedProducts = [...searchedProducts].sort(
+        (firstProduct, secondProduct) => {
+            const soldOutOrder =
+                Number(isSoldOutProduct(firstProduct))
+            -Number(isSoldOutProduct(secondProduct))
+
+            if(soldOutOrder !==0){
+                return soldOutOrder
+            }
+
+            if(sortOption === 'PRICE_LOW'){
+                return Number(firstProduct.price)
+                -Number(secondProduct.price)
+            }
+
+            if(sortOption === 'PRICE_HIGH'){
+                return Number(secondProduct.price)
+                - Number(firstProduct.price)
+            }
+
+            return Number(secondProduct.productId)
+                - Number(firstProduct.productId)
+        }
+    )
+
     return (
         <main className="product-list-page">
             <section className="product-list-hero">
@@ -149,6 +175,17 @@ function ProductListPage() {
                     </div>
 
                     <div className="product-list-tools">
+                        <select
+                            value={sortOption}
+                            onChange={(event) =>
+                                setSortOption(event.target.value)
+                            }
+                            className="product-sort-select"
+                        >
+                            <option value="LATEST">최신순</option>
+                            <option value="PRICE_LOW">낮은 가격순</option>
+                            <option value="PRICE_HIGH">높은 가격순</option>
+                        </select>
                         <input
                             type="search"
                             value={searchKeyword}
@@ -183,7 +220,7 @@ function ProductListPage() {
 
                 {!loading && !error && searchedProducts.length > 0 && (
                     <div className="product-grid">
-                        {searchedProducts.map((product) => (
+                        {sortedProducts.map((product) => (
                             <article
                                 key={product.productId}
                                 className={

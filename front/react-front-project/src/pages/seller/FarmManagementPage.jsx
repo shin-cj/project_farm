@@ -4,6 +4,21 @@ import {useNavigate} from "react-router-dom";
 import './FarmManagementPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
 
+function getApprovalStatusText(status) {
+  if (status === 'PENDING') {
+    return '승인 대기'
+  }
+
+  if (status === 'APPROVED') {
+    return '승인 완료'
+  }
+
+  if (status === 'REJECTED') {
+    return '승인 거절'
+  }
+
+  return '상태 미확인'
+}
 
 // 농장 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function FarmManagementPage() {
@@ -76,15 +91,31 @@ function FarmManagementPage() {
             <section className="farm-management-grid">
               {farms.map((farm) => (
                   <article className="farm-management-card" key={farm.farmId}>
+                    <div className="farm-management-image">
+                      {farm.farmImageUrl ? (
+                          <img
+                              src={farm.farmImageUrl}
+                              alt={farm.farmName}
+                          />
+                      ) : (
+                          <span>농장 이미지 없음</span>
+                      )}
+                    </div>
                     <div className="farm-management-card-header">
                       <div>
                         <p className="farm-management-region">{farm.region}</p>
                         <h2>{farm.farmName}</h2>
                       </div>
 
-                      <span className="farm-management-status">
-                      {farm.approvalStatus}
-                    </span>
+                      <span
+                          className={
+                            `farm-management-status ${
+                                farm.approvalStatus?.toLowerCase() ?? 'unknown'
+                            }`
+                          }
+                      >
+  {getApprovalStatusText(farm.approvalStatus)}
+</span>
                     </div>
 
                     <p className="farm-management-address">

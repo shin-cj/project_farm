@@ -336,7 +336,16 @@ function ProductEditPage() {
                             onChange={handleChange}
                         />
                     </div>
+                    {form.productImageUrl.trim() && (
+                        <div className="product-create-image-preview">
+                            <p>상품 이미지 미리보기</p>
 
+                            <img
+                                src={form.productImageUrl}
+                                alt="수정할 상품 미리보기"
+                            />
+                        </div>
+                    )}
                     <div className="product-create-field">
                         <label>판매 상태</label>
 

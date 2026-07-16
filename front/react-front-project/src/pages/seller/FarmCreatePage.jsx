@@ -162,6 +162,16 @@ function FarmCreatePage() {
                                 placeholder="이미지 URL"
                             />
                         </label>
+                        {form.farmImageUrl.trim() && (
+                            <div className="farm-create-image-preview">
+                                <p>농장 대표 이미지 미리보기</p>
+
+                                <img
+                                    src={form.farmImageUrl}
+                                    alt="등록할 농장 미리보기"
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <div className="farm-create-actions">

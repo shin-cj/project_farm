@@ -299,8 +299,26 @@ function ProductManagementPage() {
                 {filteredProducts.map((product) => (
                     <tr key={product.productId}>
                       <td>
-                        <strong>{product.productName}</strong>
-                        <span>{product.origin || '원산지 미등록'}</span>
+                        <div className="seller-product-name-cell">
+                          <div className="seller-product-thumbnail">
+                            {product.productImageUrl ? (
+                                <img
+                                    src={product.productImageUrl}
+                                    alt={product.productName}
+                                />
+                            ) : (
+                                <span>이미지 없음</span>
+                            )}
+                          </div>
+
+                          <div className="seller-product-name-text">
+                            <strong>{product.productName}</strong>
+
+                            <span>
+        {product.origin || '원산지 미등록'}
+      </span>
+                          </div>
+                        </div>
                       </td>
 
                       <td>{product.price?.toLocaleString()}원</td>
