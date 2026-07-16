@@ -3,7 +3,11 @@ import httpClient from "./httpClient.js";
 
 const chatbotApi = {
     recommendRecipe(request){
-        return httpClient.post('/chatbot/recipes',request)
+        return httpClient.post('/chatbot/recipes',request,
+            {
+                timeout: 6000
+            }
+            )
     },
 
     saveRecipe(request){

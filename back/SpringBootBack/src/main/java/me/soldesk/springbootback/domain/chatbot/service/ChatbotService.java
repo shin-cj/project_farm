@@ -29,43 +29,45 @@ public class ChatbotService {
     private final ChatbotRepository chatbotRepository;
 
     public ChatbotResponse recommendRecipe(ChatbotRequest request) {
-        OpenAiRecipeResponse aiResponse = openAiRecipeClient.crateRecipe(request.getObj1());
-
+        OpenAiRecipeResponse aiResponse = openAiRecipeClient.crateRecipe(request.getObj1(),request.getPreviousResponseId());
         System.out.println("AI 검색 재료 = " + aiResponse.getSearchIngredients());
-
         ChatbotResponse response = new ChatbotResponse();
+
+        response.setResponseId(aiResponse.getResponseId());
+        response.setResponseType(aiResponse.getResponseType());
         response.setUserId(request.getUserId());
         response.setObj1(request.getObj1());
         response.setSuccess(aiResponse.getSuccess());
         response.setMessage(aiResponse.getMessage());
+        response.setCreatedAt(LocalDateTime.now());
 
-        //현실적인 재료가 아닌 이상한 재료를 주문 받을 때 방어 코드
-        if(Boolean.FALSE.equals(aiResponse.getSuccess())){
+        if(!"RECIPE".equals(aiResponse.getResponseType())
+                || !Boolean.TRUE.equals(aiResponse.getSuccess())){
             response.setMatchedProducts(List.of());
-            response.setRecipeTitle(aiResponse.getRecipeTitle());
-            response.setIngredients(aiResponse.getIngredients());
-            response.setSearchIngredients(aiResponse.getSearchIngredients());
-            response.setRecipe(aiResponse.getRecipe());
-            response.setRemark(aiResponse.getRemark());
-            response.setCreatedAt(LocalDateTime.now());
             return response;
         }
-
-        List<RecommendedProductResponse> matchedProducts =
-                findLowestPriceVegetableProducts(aiResponse.getSearchIngredients());
-
-        //db내 맞는 상품이 하나도 없을 시 출력
-        if(matchedProducts.isEmpty()){
-            response.setSuccess(false);
-            response.setMessage("현재 판매 중인 상품과 연결할 수 있는 재료가 없습니다.");
-        }
-        response.setMatchedProducts(matchedProducts);
+        List<String> step = aiResponse.getRecipeSteps();
         response.setRecipeTitle(aiResponse.getRecipeTitle());
         response.setIngredients(aiResponse.getIngredients());
         response.setSearchIngredients(aiResponse.getSearchIngredients());
-        response.setRecipe(aiResponse.getRecipe());
+        response.setCookingTime(aiResponse.getCookingTime());
+        response.setServings(aiResponse.getServings());
+        response.setCuisineType(aiResponse.getCuisineType());
+        response.setEstimatedBudget(aiResponse.getEstimatedBudget());
+        response.setRecipeSteps(step);
         response.setRemark(aiResponse.getRemark());
-        response.setCreatedAt(LocalDateTime.now());
+        response.setRecipe(
+                step == null || step.isEmpty()
+                        ? aiResponse.getRecipe() : String.join("", step)
+        );
+        List<RecommendedProductResponse> matchedProducts =
+                findLowestPriceVegetableProducts(aiResponse.getSearchIngredients());
+        response.setMatchedProducts(matchedProducts);
+
+        //db내 맞는 상품이 하나도 없을 시 출력
+        if(matchedProducts.isEmpty()){
+            response.setMessage("레시피는 추천했지만 현재 판매 중인 상품은 찾지 못했습니다.");
+        }
 
         return response;
     }
