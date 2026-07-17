@@ -3,6 +3,9 @@ import { getFarms } from '../../api/farmApi.js'
 import {useNavigate} from "react-router-dom";
 import './FarmManagementPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 
 function getApprovalStatusText(status) {
   if (status === 'PENDING') {
@@ -27,8 +30,11 @@ function FarmManagementPage() {
   const [farms, setFarms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
+    let ignore = false
+
     async function loadFarms() {
       try {
         setLoading(true)
@@ -42,24 +48,46 @@ function FarmManagementPage() {
 
         const data = await getFarms(sellerId)
 
-        setFarms(data)
+        if (!ignore) {
+          setFarms(data)
+        }
       } catch (err) {
-        console.error(err)
-        setError(err.message || '농장 목록을 불러오지 못했습니다.')
+        if (!ignore) {
+          console.error(err)
+          setError(getApiErrorMessage(err, '농장 목록을 불러오지 못했습니다.'))
+        }
       } finally {
-        setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
     loadFarms()
-  }, [])
+
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey])
 
   if (loading) {
-    return <p>농장 정보를 불러오는 중입니다.</p>
+    return (
+        <CatalogPageState
+            title="농장 목록 불러오는 중"
+            message="등록된 농장 정보를 확인하고 있습니다."
+        />
+    )
   }
 
   if (error) {
-    return <p>{error}</p>
+    return (
+        <CatalogPageState
+            title="농장 목록을 불러오지 못했습니다"
+            message={error}
+            actionLabel="다시 시도"
+            onAction={() => setReloadKey((value) => value + 1)}
+        />
+    )
   }
 
   return (
@@ -92,14 +120,11 @@ function FarmManagementPage() {
               {farms.map((farm) => (
                   <article className="farm-management-card" key={farm.farmId}>
                     <div className="farm-management-image">
-                      {farm.farmImageUrl ? (
-                          <img
-                              src={farm.farmImageUrl}
-                              alt={farm.farmName}
-                          />
-                      ) : (
-                          <span>농장 이미지 없음</span>
-                      )}
+                      <CatalogImage
+                          src={farm.farmImageUrl}
+                          alt={farm.farmName}
+                          fallbackText="농장 이미지 없음"
+                      />
                     </div>
                     <div className="farm-management-card-header">
                       <div>

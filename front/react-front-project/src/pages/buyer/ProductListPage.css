@@ -116,6 +116,21 @@
     color: #be123c;
 }
 
+.product-list-message.error span {
+    display: block;
+}
+
+.product-list-message.error button {
+    margin-top: 12px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 7px;
+    background-color: #be123c;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .product-list-empty h3 {
     margin: 0 0 8px;
     color: #374151;

@@ -21,10 +21,11 @@ public class ProductController {
     public List<ProductResponse> getProducts(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long farmId,
-            @RequestParam(required = false) String productStatus
+            @RequestParam(required = false) String productStatus,
+            @RequestParam(defaultValue = "false") boolean publicOnly
 
     ) {
-        return productService.getProducts(categoryId, farmId, productStatus);
+        return productService.getProducts(categoryId, farmId, productStatus, publicOnly);
     }
 
     @PostMapping
@@ -33,8 +34,11 @@ public class ProductController {
     }
 
     @GetMapping("/{productId}")
-    public ProductResponse getProduct(@PathVariable Long productId){
-        return productService.getProduct(productId);
+    public ProductResponse getProduct(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "false") boolean publicOnly
+    ) {
+        return productService.getProduct(productId, publicOnly);
     }
 
     @PutMapping("/{productId}")

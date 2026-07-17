@@ -4,7 +4,8 @@ import axios from 'axios'
 export async function getProducts(
     categoryId,
     farmId = null,
-    productStatus = null
+    productStatus = null,
+    publicOnly = false
 ) {
   const params = {}
 
@@ -20,6 +21,10 @@ export async function getProducts(
     params.productStatus = productStatus
   }
 
+  if (publicOnly) {
+    params.publicOnly = true
+  }
+
   const response = await axios.get('/api/products', {
     params,
   })
@@ -28,8 +33,9 @@ export async function getProducts(
 }
 
 //상품 상세정보를 조회
-export async function getProduct(productId) {
-  const response = await axios.get(`/api/products/${productId}`)
+export async function getProduct(productId, publicOnly = false) {
+  const params = publicOnly ? { publicOnly: true } : {}
+  const response = await axios.get(`/api/products/${productId}`, { params })
   return response.data
 }
 
