@@ -5,6 +5,8 @@ import './ProductManagementPage.css'
 import { getFarms } from '../../api/farmApi.js'
 import { getCategories } from '../../api/categoryApi.js'
 import { getLoginSellerId } from '../../config/devAccount.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 
 // 상품 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductManagementPage() {
@@ -22,12 +24,17 @@ function ProductManagementPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
   const [selectedFarmId, setSelectedFarmId] = useState('')
   const [searchKeyword, setSearchKeyword] = useState('')
+  const [changingStatusId, setChangingStatusId] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
+    let ignore = false
+
     async function loadFilterData() {
       try {
         setLoading(true)
         setError('')
+        setFiltersReady(false)
 
         const sellerId = getLoginSellerId()
 
@@ -42,18 +49,24 @@ function ProductManagementPage() {
           getCategories(),
         ])
 
+        if (ignore) {
+          return
+        }
+
         setFarms(farmData)
         setCategories(categoryData)
 
         // 필터에 필요한 데이터를 모두 성공적으로 받았습니다.
         setFiltersReady(true)
       } catch (err) {
+        if (ignore) {
+          return
+        }
+
         console.error(err)
 
         setFiltersReady(false)
-        setError(
-            err.message || '필터 정보를 불러오지 못했습니다.'
-        )
+        setError(getApiErrorMessage(err, '필터 정보를 불러오지 못했습니다.'))
 
         // 상품 조회 Effect가 실행되지 않으므로 여기서 로딩을 끝냅니다.
         setLoading(false)
@@ -61,11 +74,17 @@ function ProductManagementPage() {
     }
 
     loadFilterData()
-  }, [])
+
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey])
 
   useEffect(() => {
     //농장, 카테고리 조회전에는 상품 조회x
     if(!filtersReady) {return}
+
+    let ignore = false
 
     async function loadProducts() {
       try {
@@ -85,7 +104,9 @@ function ProductManagementPage() {
               )
           )
 
-          setProducts(productLists.flat())
+          if (!ignore) {
+            setProducts(productLists.flat())
+          }
           return
         }
 
@@ -93,18 +114,26 @@ function ProductManagementPage() {
         const farmId = Number(selectedFarmId)
         const data = await getProducts(categoryId, farmId)
 
-        setProducts(data)
+        if (!ignore) {
+          setProducts(data)
+        }
       } catch (err) {
-        console.error(err)
-        setError(
-            err.message || '상품 목록을 불러오지 못했습니다.'
-        )
+        if (!ignore) {
+          console.error(err)
+          setError(getApiErrorMessage(err, '상품 목록을 불러오지 못했습니다.'))
+        }
       } finally {
-        setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
     loadProducts()
+
+    return () => {
+      ignore = true
+    }
   }, [
     filtersReady,
     selectedFarmId,
@@ -113,6 +142,15 @@ function ProductManagementPage() {
   ])
 
   async function handleChangeStatus(product) {
+    if (changingStatusId !== null) {
+      return
+    }
+
+    if (product.productStatus === 'PENDING') {
+      alert('승인 대기 중인 상품은 판매 상태를 변경할 수 없습니다.')
+      return
+    }
+
     const nextStatus = product.productStatus === 'HIDDEN'
         ? 'ON_SALE'
         : 'HIDDEN'
@@ -128,6 +166,8 @@ function ProductManagementPage() {
     }
 
     try {
+      setChangingStatusId(product.productId)
+
       const productData = {
         ...product,
         productStatus: nextStatus,
@@ -136,7 +176,7 @@ function ProductManagementPage() {
       const updatedProduct = await updateProduct(product.productId, productData)
 
       setProducts(
-          products.map((item) =>
+          (currentProducts) => currentProducts.map((item) =>
               item.productId === updatedProduct.productId
                   ? updatedProduct
                   : item
@@ -144,7 +184,9 @@ function ProductManagementPage() {
       )
     } catch (err) {
       console.error(err)
-      alert('상품 상태 변경에 실패했습니다.')
+      alert(getApiErrorMessage(err, '상품 상태 변경에 실패했습니다.'))
+    } finally {
+      setChangingStatusId(null)
     }
   }
 
@@ -168,20 +210,32 @@ function ProductManagementPage() {
     return '상태 미등록'
   }
 
-  const normalizedKeyword = searchKeyword.trim().toLowerCase()
+  const normalizedKeyword = searchKeyword.trim().toLowerCase().replace(/\s+/g, '')
 
   const filteredProducts = products.filter((product) => {
     const matchesStatus =
         statusFilter === 'ALL'
         || product.productStatus === statusFilter
 
-    const productName = (product.productName ?? '').toLowerCase()
+    const productName = (product.productName ?? '').toLowerCase().replace(/\s+/g, '')
 
     const matchesKeyword =
         productName.includes(normalizedKeyword)
 
     return matchesStatus && matchesKeyword
   })
+
+  const hasActiveFilters = selectedFarmId !== ''
+      || selectedCategoryId !== ''
+      || searchKeyword.trim() !== ''
+      || statusFilter !== 'ALL'
+
+  function resetFilters() {
+    setSelectedFarmId('')
+    setSelectedCategoryId('')
+    setSearchKeyword('')
+    setStatusFilter('ALL')
+  }
 
   return (
       <main className="seller-product-page">
@@ -206,6 +260,7 @@ function ProductManagementPage() {
             <select
                 value={selectedFarmId}
                 onChange={(event) => setSelectedFarmId(event.target.value)}
+                aria-label="농장 필터"
             >
               <option value="">전체 농장</option>
 
@@ -221,6 +276,7 @@ function ProductManagementPage() {
             <select
                 value={selectedCategoryId}
                 onChange={(event) => setSelectedCategoryId(event.target.value)}
+                aria-label="카테고리 필터"
             >
               <option value="">전체 카테고리</option>
 
@@ -238,46 +294,77 @@ function ProductManagementPage() {
                 value={searchKeyword}
                 onChange={(event) => setSearchKeyword(event.target.value)}
                 placeholder="상품명 검색"
+                aria-label="상품명 검색"
             />
 
-            <button
-                type="button"
-                onClick={() => setStatusFilter('ALL')}
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('ALL')}
+                  className={statusFilter === 'ALL' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'ALL'}
             >
               전체
             </button>
 
-            <button
-                type="button"
-                onClick={() => setStatusFilter('ON_SALE')}
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('ON_SALE')}
+                  className={statusFilter === 'ON_SALE' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'ON_SALE'}
             >
               판매 중
             </button>
 
-            <button
-                type="button"
-                onClick={() => setStatusFilter('HIDDEN')}
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('HIDDEN')}
+                  className={statusFilter === 'HIDDEN' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'HIDDEN'}
             >
               판매 중지
             </button>
 
-            <button
-                type="button"
-                onClick={() => setStatusFilter('SOLD_OUT')}
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('SOLD_OUT')}
+                  className={statusFilter === 'SOLD_OUT' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'SOLD_OUT'}
             >
               품절
             </button>
 
-            <button
-                type="button"
-                onClick={() => setStatusFilter('PENDING')}
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('PENDING')}
+                  className={statusFilter === 'PENDING' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'PENDING'}
             >
-              승인 대기
-            </button>
-          </div>
+                승인 대기
+              </button>
+
+              <button
+                  type="button"
+                  className="seller-product-filter-reset"
+                  onClick={resetFilters}
+                  disabled={!hasActiveFilters}
+              >
+                필터 초기화
+              </button>
+
+              <span className="seller-product-filter-count">
+                {filteredProducts.length}개 상품
+              </span>
+            </div>
           {loading && <p className="seller-product-message">상품을 불러오는 중입니다.</p>}
 
-          {error && <p className="seller-product-message error">{error}</p>}
+          {error && (
+              <div className="seller-product-message error" role="alert">
+                <span>{error}</span>
+                <button type="button" onClick={() => setReloadKey((value) => value + 1)}>
+                  다시 시도
+                </button>
+              </div>
+          )}
 
           {!loading && !error && filteredProducts.length === 0 && (
               <p className="seller-product-message">등록된 상품이 없습니다.</p>
@@ -299,8 +386,23 @@ function ProductManagementPage() {
                 {filteredProducts.map((product) => (
                     <tr key={product.productId}>
                       <td>
-                        <strong>{product.productName}</strong>
-                        <span>{product.origin || '원산지 미등록'}</span>
+                        <div className="seller-product-name-cell">
+                          <div className="seller-product-thumbnail">
+                            <CatalogImage
+                                src={product.productImageUrl}
+                                alt={product.productName}
+                                fallbackText="이미지 없음"
+                            />
+                          </div>
+
+                          <div className="seller-product-name-text">
+                            <strong>{product.productName}</strong>
+
+                            <span>
+        {product.origin || '원산지 미등록'}
+      </span>
+                          </div>
+                        </div>
                       </td>
 
                       <td>{product.price?.toLocaleString()}원</td>
@@ -324,10 +426,23 @@ function ProductManagementPage() {
                             수정
                           </Link>
 
-                          <button type="button"
-                          onClick={() => handleChangeStatus(product)}>
-                            {product.productStatus === 'HIDDEN' ? '판매재개' : '판매중지'}
-                          </button>
+                          {product.productStatus === 'PENDING' ? (
+                              <span className="seller-product-approval-note">
+                                승인 후 변경 가능
+                              </span>
+                          ) : (
+                              <button
+                                  type="button"
+                                  onClick={() => handleChangeStatus(product)}
+                                  disabled={changingStatusId !== null}
+                              >
+                                {changingStatusId === product.productId
+                                    ? '처리 중...'
+                                    : product.productStatus === 'HIDDEN'
+                                        ? '판매재개'
+                                        : '판매중지'}
+                              </button>
+                          )}
                         </div>
                       </td>
                     </tr>

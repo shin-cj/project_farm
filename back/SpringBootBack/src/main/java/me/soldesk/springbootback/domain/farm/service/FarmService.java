@@ -60,6 +60,7 @@ public class FarmService {
         Farm farm = new Farm();
 
         applyRequestToFarm(farm, request);
+        farm.setApprovalStatus("PENDING");
 
         Farm savedFarm = farmRepository.save(farm);
 
@@ -104,7 +105,6 @@ public class FarmService {
         farm.setFarmDetailAddress(request.getFarmDetailAddress());
         farm.setFarmDescription(request.getFarmDescription());
         farm.setFarmImageUrl(request.getFarmImageUrl());
-        farm.setApprovalStatus(request.getApprovalStatus());
     }
 
 
@@ -130,6 +130,13 @@ public class FarmService {
 
     //농장 등록, 수정 전에 유효성 검사 메소드
     private void validateFarmRequest(FarmRequest request) {
+
+        if (request == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 정보를 입력해주세요."
+            );
+        }
 
         //판매자 번호가 0이거나 비어 있을 때
         if (request.getSellerId() == null

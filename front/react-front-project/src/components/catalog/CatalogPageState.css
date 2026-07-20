@@ -1,0 +1,44 @@
+.catalog-page-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 360px;
+    padding: 32px 20px;
+}
+
+.catalog-page-state-card {
+    width: min(520px, 100%);
+    padding: 32px;
+    border: 1px solid #dce8d7;
+    border-radius: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 8px 24px rgba(36, 59, 47, 0.08);
+    text-align: center;
+}
+
+.catalog-page-state-card h1 {
+    margin: 0 0 12px;
+    color: #243b2f;
+    font-size: 24px;
+}
+
+.catalog-page-state-card p {
+    margin: 0;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+.catalog-page-state-card button {
+    margin-top: 20px;
+    padding: 10px 18px;
+    border: 0;
+    border-radius: 8px;
+    background-color: #3f7d20;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.catalog-page-state-card button:hover {
+    background-color: #326619;
+}

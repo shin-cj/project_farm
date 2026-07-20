@@ -1,0 +1,286 @@
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { getProduct } from '../../api/productApi.js'
+import AddCartButton from '../../components/cart/AddCartButton.jsx'
+import './ProductDetailPage.css'
+import { getFarm } from '../../api/farmApi.js'
+
+// 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
+function ProductDetailPage() {
+  const {productId} = useParams()
+  const navigate = useNavigate()
+  const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  const userid = loginUser?.userId;
+  const [product, setProduct] = useState(null)
+  const [farm, setFarm] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    async function loadProduct(){
+      try{
+        const data = await getProduct(productId)
+        setProduct(data)
+        if(data.farmId){
+          try{
+            const farmData = await getFarm(data.farmId)
+            setFarm(farmData)
+          }catch(farmError){
+            console.log(farmError)
+            setFarm(null)
+          }
+        }
+      }catch (err) {
+        setError(err.message || '상품을 불러오지 못했습니다.')
+      }finally{
+        setLoading(false)
+      }
+    }
+
+    loadProduct()
+  }, [productId])
+
+  if (loading) {
+    return (
+      <main className="product-detail-page">
+        <div className="product-detail-message">상품을 불러오는 중입니다.</div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="product-detail-page">
+        <div className="product-detail-message error">{error}</div>
+      </main>
+    )
+  }
+
+  if (!product) {
+
+    return (
+      <main className="product-detail-page">
+        <div className="product-detail-message">상품이 없습니다.</div>
+      </main>
+    )
+  }
+
+  const isPurchasable =
+      product.productStatus === 'ON_SALE'
+      && Number(product.stockQuantity) > 0
+
+  const unavailableMessage =
+      Number(product.stockQuantity) <= 0
+      || product.productStatus === 'SOLD_OUT'
+          ? '품절된 상품입니다.'
+          : product.productStatus === 'PENDING'
+              ? '승인 대기 중인 상품입니다.'
+              : product.productStatus === 'HIDDEN'
+                  ? '판매가 중지된 상품입니다.'
+                  : '현재 구매할 수 없는 상품입니다.'
+
+  function handleDirectOrder() {
+    const orderQuantity = Number(quantity)
+
+    if (!isPurchasable) {
+      alert(unavailableMessage)
+      return
+    }
+
+    if (!userid) {
+      alert('로그인이 필요한 기능입니다.')
+      navigate('/login')
+      return
+    }
+
+    if (orderQuantity < 1) {
+      alert('수량은 1개 이상 선택해주세요.')
+      return
+    }
+
+    if (orderQuantity > product.stockQuantity) {
+      alert('재고보다 많이 주문할 수 없습니다.')
+      return
+    }
+
+    navigate('/order', {
+      state: {
+        purchaseType: 'DIRECT',
+
+        buyerId: userid,
+
+        directProduct: {
+          productId: product.productId,
+          quantity: orderQuantity,
+        },
+
+        items: [
+          {
+            cart_item_id: `direct-${product.productId}`,
+            product_id: product.productId,
+            product_price: product.price,
+            productName: product.productName,
+            productImageUrl: product.productImageUrl,
+            farmName: farm?.farmName,
+            quantity: orderQuantity,
+          },
+        ],
+      },
+    })
+  }
+
+  return (
+    <main className="product-detail-page">
+      <section className="product-detail-card">
+        <div className="product-detail-image-box">
+          {product.productImageUrl ? (
+            <img src={product.productImageUrl} alt={product.productName} />
+          ) : (
+            <span>이미지 준비중</span>
+          )}
+        </div>
+
+        <div className="product-detail-info">
+          <div className="product-detail-top">
+            <span className="product-detail-status">
+              {product.productStatus || '판매 상태 미등록'}
+            </span>
+            <button
+              type="button"
+              className="product-detail-back-button"
+              onClick={() => navigate('/products')}
+            >
+              목록으로
+            </button>
+          </div>
+
+          <p className="product-detail-origin">
+            {product.origin || '원산지 미등록'}
+          </p>
+
+          <h1>{product.productName}</h1>
+
+          <p className="product-detail-description">
+            {product.description || '상품 설명이 없습니다.'}
+          </p>
+
+          <div className="product-detail-price-box">
+            <strong>{product.price?.toLocaleString()}원</strong>
+            <span>{product.unit || '단위 미등록'}</span>
+          </div>
+
+          <dl className="product-detail-meta">
+            <div>
+              <dt>재고</dt>
+              <dd>{product.stockQuantity}개</dd>
+            </div>
+
+            <div>
+              <dt>수확일</dt>
+              <dd>{product.harvestDate || '미등록'}</dd>
+            </div>
+
+            <div>
+              <dt>유통기한</dt>
+              <dd>{product.expirationDate || '미등록'}</dd>
+            </div>
+
+            <div>
+              <dt>상품 번호</dt>
+              <dd>{product.productId}</dd>
+            </div>
+          </dl>
+
+          <div className="product-detail-actions">
+            <AddCartButton
+                productId={product.productId}
+                userid={userid}
+                disabled={!isPurchasable}
+                className="product-detail-cart-button"
+            />
+            <button
+                type="button"
+                className="product-detail-order-link"
+                onClick={() => {
+                  setQuantity(1)
+                  setIsOrderModalOpen(true)
+                }}
+            >
+              바로 주문하기
+            </button>
+            {!isPurchasable && (
+                <p className="product-detail-unavailable">
+                  {unavailableMessage}
+                </p>
+            )}
+          </div>
+        </div>
+      </section>
+      {farm && (
+          <section className="product-detail-farm-card">
+            <p>생산 농장</p>
+            <h2>{farm.farmName}</h2>
+            <span>{farm.region}</span>
+
+            <p>{farm.farmAddress}</p>
+
+            {farm.farmDescription && (
+                <p>{farm.farmDescription}</p>
+            )}
+          </section>
+      )}
+      {isOrderModalOpen && (
+          <div className="product-order-modal-backdrop">
+            <div className="product-order-modal">
+              <h2>바로 주문하기</h2>
+
+              <p>상품명: {product.productName}</p>
+              <p>가격: {product.price.toLocaleString()}원</p>
+              <p>남은 재고: {product.stockQuantity}개</p>
+
+              <label>
+                수량
+                <input
+                    type="number"
+                    min="1"
+                    max={product.stockQuantity}
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                />
+              </label>
+
+              <p>
+                총 결제 금액:{" "}
+                {(product.price * Number(quantity || 1)).toLocaleString()}원
+              </p>
+
+              <div>
+                <div className="product-order-modal-buttons">
+                  <button
+                      type="button"
+                      className="product-order-submit"
+                      onClick={handleDirectOrder}
+                  >
+                    결제하기
+                  </button>
+
+                  <button
+                      type="button"
+                      className="product-order-close"
+                      onClick={() => setIsOrderModalOpen(false)}
+                  >
+                    닫기
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+      )}
+    </main>
+  )
+}
+
+export default ProductDetailPage

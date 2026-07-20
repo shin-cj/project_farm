@@ -4,58 +4,120 @@ import { getProduct } from '../../api/productApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
 import { getFarm } from '../../api/farmApi.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
+
+function getStoredLoginUser() {
+  try {
+    const storedUser = localStorage.getItem('loginUser')
+    return storedUser ? JSON.parse(storedUser) : null
+  } catch (error) {
+    console.error(error)
+    return null
+  }
+}
 
 // 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductDetailPage() {
   const {productId} = useParams()
   const navigate = useNavigate()
-  const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  const loginUser = getStoredLoginUser()
   const userid = loginUser?.userId;
   const [product, setProduct] = useState(null)
   const [farm, setFarm] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
+    if (!isOrderModalOpen) {
+      return undefined
+    }
+
+    function closeModalWithEscape(event) {
+      if (event.key === 'Escape') {
+        setIsOrderModalOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', closeModalWithEscape)
+
+    return () => {
+      window.removeEventListener('keydown', closeModalWithEscape)
+    }
+  }, [isOrderModalOpen])
+
+  useEffect(() => {
+    let ignore = false
+
     async function loadProduct(){
       try{
-        const data = await getProduct(productId)
+        setLoading(true)
+        setError('')
+
+        const data = await getProduct(productId, true)
+
+        if (ignore) {
+          return
+        }
+
         setProduct(data)
+        setFarm(null)
+
         if(data.farmId){
           try{
             const farmData = await getFarm(data.farmId)
-            setFarm(farmData)
+
+            if (!ignore) {
+              setFarm(farmData)
+            }
           }catch(farmError){
             console.log(farmError)
-            setFarm(null)
+
+            if (!ignore) {
+              setFarm(null)
+            }
           }
         }
       }catch (err) {
-        setError(err.message || '상품을 불러오지 못했습니다.')
+        if (!ignore) {
+          setError(getApiErrorMessage(err, '상품을 불러오지 못했습니다.'))
+        }
       }finally{
-        setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
     loadProduct()
-  }, [productId])
+
+    return () => {
+      ignore = true
+    }
+  }, [productId, reloadKey])
 
   if (loading) {
     return (
-      <main className="product-detail-page">
-        <div className="product-detail-message">상품을 불러오는 중입니다.</div>
-      </main>
+      <CatalogPageState
+          title="상품 정보 불러오는 중"
+          message="선택한 상품의 상세 정보를 확인하고 있습니다."
+      />
     )
   }
 
   if (error) {
     return (
-      <main className="product-detail-page">
-        <div className="product-detail-message error">{error}</div>
-      </main>
+      <CatalogPageState
+          title="상품 정보를 불러오지 못했습니다"
+          message={error}
+          actionLabel="다시 시도"
+          onAction={() => setReloadKey((value) => value + 1)}
+      />
     )
   }
 
@@ -136,11 +198,10 @@ function ProductDetailPage() {
     <main className="product-detail-page">
       <section className="product-detail-card">
         <div className="product-detail-image-box">
-          {product.productImageUrl ? (
-            <img src={product.productImageUrl} alt={product.productName} />
-          ) : (
-            <span>이미지 준비중</span>
-          )}
+          <CatalogImage
+              src={product.productImageUrl}
+              alt={product.productName}
+          />
         </div>
 
         <div className="product-detail-info">
@@ -208,6 +269,7 @@ function ProductDetailPage() {
                   setQuantity(1)
                   setIsOrderModalOpen(true)
                 }}
+                disabled={!isPurchasable}
             >
               바로 주문하기
             </button>
@@ -234,8 +296,13 @@ function ProductDetailPage() {
       )}
       {isOrderModalOpen && (
           <div className="product-order-modal-backdrop">
-            <div className="product-order-modal">
-              <h2>바로 주문하기</h2>
+            <div
+                className="product-order-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="product-order-modal-title"
+            >
+              <h2 id="product-order-modal-title">바로 주문하기</h2>
 
               <p>상품명: {product.productName}</p>
               <p>가격: {product.price.toLocaleString()}원</p>

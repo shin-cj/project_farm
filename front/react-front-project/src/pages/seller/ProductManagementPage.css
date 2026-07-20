@@ -72,6 +72,21 @@
     color: #be123c;
 }
 
+.seller-product-message.error span {
+    display: block;
+}
+
+.seller-product-message.error button {
+    margin-top: 14px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 7px;
+    background-color: #be123c;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .seller-product-table {
     width: 100%;
     border-collapse: collapse;
@@ -131,8 +146,13 @@
 }
 
 .seller-product-actions a:hover,
-.seller-product-actions button:hover {
+.seller-product-actions button:not(:disabled):hover {
     background-color: #f3f4f6;
+}
+
+.seller-product-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .seller-product-filter {
@@ -152,6 +172,73 @@
     font-size: 14px;
 }
 
-.seller-product-filter button:hover {
+.seller-product-filter button:not(:disabled):hover {
     background-color: #f3f4f6;
+}
+
+.seller-product-filter button.active {
+    border-color: #3f7d20;
+    background-color: #3f7d20;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.seller-product-filter button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.seller-product-filter-reset {
+    border-style: dashed !important;
+}
+
+.seller-product-filter-count {
+    align-self: center;
+    margin-left: auto;
+    color: #56704d;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.seller-product-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 240px;
+}
+
+.seller-product-thumbnail {
+    display: flex;
+    flex: 0 0 64px;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #eef4eb;
+}
+
+.seller-product-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.seller-product-thumbnail span {
+    padding: 4px;
+    color: #7c8d76 !important;
+    font-size: 10px !important;
+    text-align: center;
+}
+
+.seller-product-name-text {
+    min-width: 0;
+}
+
+.seller-product-approval-note {
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
 }

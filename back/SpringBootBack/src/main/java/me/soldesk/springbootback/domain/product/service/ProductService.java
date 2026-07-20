@@ -1,6 +1,7 @@
 package me.soldesk.springbootback.domain.product.service;
 
 import me.soldesk.springbootback.domain.category.repository.CategoryRepository;
+import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.product.dto.ProductRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductResponse;
@@ -36,13 +37,25 @@ public class ProductService {
     public List<ProductResponse> getProducts(
             Long categoryId,
             Long farmId,
-            String productStatus
+            String productStatus,
+            boolean publicOnly
     ) {
-        List<Product> products = productRepository.findProducts(
-                categoryId,
-                farmId,
-                productStatus
-        );
+        String normalizedProductStatus = productStatus == null
+                || productStatus.isBlank()
+                ? null
+                : productStatus.trim();
+
+        List<Product> products;
+
+        if (publicOnly) {
+            products = productRepository.findPublicProducts(categoryId, farmId);
+        } else {
+            products = productRepository.findProducts(
+                    categoryId,
+                    farmId,
+                    normalizedProductStatus
+            );
+        }
 
         List<ProductResponse> responses = new ArrayList<>();
 
@@ -54,7 +67,7 @@ public class ProductService {
     }
 
     //상품 상세 정보를 조회
-    public ProductResponse getProduct(Long productId) {
+    public ProductResponse getProduct(Long productId, boolean publicOnly) {
 
         Product product = productRepository
                 .findById(productId)
@@ -62,6 +75,10 @@ public class ProductService {
                         HttpStatus.NOT_FOUND,
                         "상품을 찾을 수 없습니다."
                 ));
+
+        if (publicOnly) {
+            validatePublicProduct(product);
+        }
 
         return toResponse(product);
     }
@@ -75,6 +92,9 @@ public class ProductService {
         Product product = new Product();
 
         applyRequestToProduct(product, request);
+
+        // 판매자가 상품 등록 단계에서 승인 상태를 직접 정할 수 없도록 고정합니다.
+        product.setProductStatus("PENDING");
 
         applyStockStatus(product);
 
@@ -96,7 +116,14 @@ public class ProductService {
                         "상품을 찾을 수 없습니다."
                 ));
 
+        String currentProductStatus = product.getProductStatus();
+
         applyRequestToProduct(product, request);
+
+        // 관리자 승인 전 상품은 판매자가 수정해도 승인 대기 상태를 유지합니다.
+        if ("PENDING".equals(currentProductStatus)) {
+            product.setProductStatus("PENDING");
+        }
 
         applyStockStatus(product);
 
@@ -132,6 +159,13 @@ public class ProductService {
     //상품 등록과 수정 전에 요청값을 검사
     private void validateProductRequest(ProductRequest request) {
 
+        if (request == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 정보를 입력해주세요."
+            );
+        }
+
         //농장 번호가 비어 있는 가
         if (request.getFarmId() == null) {
             throw new ResponseStatusException(
@@ -141,12 +175,17 @@ public class ProductService {
         }
 
         //선택한 농장이 db에 존재 하는 가
-        if (!farmRepository.existsById(request.getFarmId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "선택한 농장을 찾을 수 없습니다."
-            );
+        Farm farm = farmRepository.findById(request.getFarmId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "선택한 농장을 찾을 수 없습니다."
+                ));
 
+        if (!"APPROVED".equals(farm.getApprovalStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "승인 완료된 농장에만 상품을 등록하거나 수정할 수 있습니다."
+            );
         }
         // 카테고리 번호가 비어 있는지 확인
         if (request.getCategoryId() == null) {
@@ -224,6 +263,24 @@ public class ProductService {
                 && "ON_SALE".equals(product.getProductStatus())) {
 
             product.setProductStatus("SOLD_OUT");
+        }
+    }
+
+    private void validatePublicProduct(Product product) {
+        boolean publicProductStatus = "ON_SALE".equals(product.getProductStatus())
+                || "SOLD_OUT".equals(product.getProductStatus());
+
+        Farm farm = farmRepository.findById(product.getFarmId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품을 찾을 수 없습니다."
+                ));
+
+        if (!publicProductStatus || !"APPROVED".equals(farm.getApprovalStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "상품을 찾을 수 없습니다."
+            );
         }
     }
 
