@@ -7,10 +7,13 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+import me.soldesk.springbootback.domain.delivery.entity.Delivery;
+import me.soldesk.springbootback.domain.delivery.repository.DeliveryRepository;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
+import me.soldesk.springbootback.domain.payment.dto.PaymentCancelRequest;
 import me.soldesk.springbootback.domain.payment.dto.PaymentConfirmRequest;
 import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
@@ -30,6 +33,7 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
+    private final DeliveryRepository deliveryRepository;
 
     public PaymentService(
             RestClient.Builder restClientBuilder,
@@ -37,7 +41,8 @@ public class PaymentService {
             PaymentRepository paymentRepository,
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
-            ProductRepository productRepository) {
+            ProductRepository productRepository,
+            DeliveryRepository deliveryRepository) {
         this.restClient = restClientBuilder
                 .baseUrl("https://api.tosspayments.com")
                 .build();
@@ -46,6 +51,7 @@ public class PaymentService {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     @Transactional
@@ -131,6 +137,75 @@ public class PaymentService {
         updateOrderReceiverInfo(order, request);
         order.setOrderStatus("PAID");
         orderRepository.save(order);
+
+        return tossResponse;
+    }
+
+    @Transactional
+    public Map<String, Object> cancelPayment(Long orderId, PaymentCancelRequest request) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보가 없습니다."));
+
+        if (!"PAID".equals(order.getOrderStatus())) {
+            throw new IllegalArgumentException("결제 완료 주문만 취소할 수 있습니다.");
+        }
+
+        Delivery delivery = deliveryRepository.findByOrderId(orderId).orElse(null);
+
+        if (delivery != null && "SHIPPING".equals(delivery.getDeliveryStatus())) {
+            throw new IllegalArgumentException("배송 중인 상품은 취소할 수 없습니다.");
+        }
+
+        if (delivery != null && "DELIVERED".equals(delivery.getDeliveryStatus())) {
+            throw new IllegalArgumentException("배송 완료 상품은 하자 접수 후 환불 가능합니다.");
+        }
+
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보가 없습니다."));
+
+        if ("CANCELED".equals(payment.getPaymentStatus())) {
+            throw new IllegalArgumentException("이미 취소된 결제입니다.");
+        }
+
+        String cancelReason = "구매자 요청";
+        if (request != null && hasText(request.getCancelReason())) {
+            cancelReason = request.getCancelReason().trim();
+        }
+
+        String authorization = "Basic " + Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> tossResponse = restClient.post()
+                .uri("/v1/payments/{paymentKey}/cancel", payment.getPgPaymentId())
+                .header("Authorization", authorization)
+                .body(Map.of("cancelReason", cancelReason))
+                .retrieve()
+                .body(Map.class);
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+
+        for (OrderItem item : orderItems) {
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+
+            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+
+            if (product.getStockQuantity() > 0 && "SOLD_OUT".equals(product.getProductStatus())) {
+                product.setProductStatus("ON_SALE");
+            }
+
+            productRepository.save(product);
+        }
+
+        order.setOrderStatus("CANCELED");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        payment.setPaymentStatus("CANCELED");
+        payment.setRefundReason(cancelReason);
+        payment.setRefundedAt(LocalDateTime.now());
+        payment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
 
         return tossResponse;
     }

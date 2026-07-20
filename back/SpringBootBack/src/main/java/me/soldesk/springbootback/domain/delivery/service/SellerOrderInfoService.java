@@ -45,7 +45,7 @@ public class SellerOrderInfoService {
                 throw new IllegalArgumentException("해당 판매자의 농장이 아닙니다.");
             }
 
-            return sellerOrderInfoRepository.findByFarmId(farmId)
+            return sellerOrderInfoRepository.findByFarmIdOrderByOrderedAtDesc(farmId)
                     .stream()
                     .map(this::toResponse)
                     .toList();
@@ -55,7 +55,7 @@ public class SellerOrderInfoService {
             return List.of();
         }
 
-        return sellerOrderInfoRepository.findByFarmIdIn(sellerFarmIds)
+        return sellerOrderInfoRepository.findByFarmIdInOrderByOrderedAtDesc(sellerFarmIds)
                 .stream()
                 .map(this::toResponse)
                 .toList();
