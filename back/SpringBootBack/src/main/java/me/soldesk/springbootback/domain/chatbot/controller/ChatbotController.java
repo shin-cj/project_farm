@@ -4,14 +4,13 @@ import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.chatbot.dto.ChatbotRequest;
 import me.soldesk.springbootback.domain.chatbot.dto.ChatbotResponse;
 import me.soldesk.springbootback.domain.chatbot.dto.ChatbotSaveRequest;
+import me.soldesk.springbootback.domain.chatbot.dto.SavedRecipeResponse;
 import me.soldesk.springbootback.domain.chatbot.service.ChatbotService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -38,6 +37,14 @@ public class ChatbotController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/users/{userId}/recipes")
+    public ResponseEntity<List<SavedRecipeResponse>> getSavedRecipes(
+            @PathVariable Long userId
+    ){
+        return ResponseEntity.ok(
+                chatbotService.getSavedRecipes(userId)
+        );
+    }
 
 
 }

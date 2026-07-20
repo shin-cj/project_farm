@@ -1,7 +1,32 @@
-import { useState } from 'react'
+import { useEffect , useRef ,useState } from 'react'
 import chatbotApi from '../../api/chatbotApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ChatbotPage.css'
+
+
+function createConversation(){
+  return {
+    id: crypto.randomUUID(),
+    title: "새 대화",
+    createdAt: new Date().toISOString(),
+    chatItems: [],
+    recipeResult: null,
+    previousResponseId: null,
+  };
+}
+
+function loadConversations(key){
+  try{
+    const saved = JSON.parse(localStorage.getItem(key));
+    return Array.isArray(saved) && saved.length > 0 ? saved : [createConversation()];
+  }catch{
+    return [createConversation()];
+  }
+}
+
+function makeConversationTitle(question){
+  return question.length > 18 ? `${question.slice(0, 18)}...` : question;
+}
 
 function ProgressCard({status}){
   const steps = [
@@ -32,14 +57,60 @@ function ProgressCard({status}){
 }
 
 function ChatbotPage() {
-  const [chatItems, setChatItems] = useState([])
-  const [message, setMessage] = useState('')
-  const [recipeResult, setRecipeResult] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [previousResponseId, setPreviousResponseId] = useState(null)
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
+  const storageKey = `chatbotConversation-${userid ?? "guest"}`;
+  const [initialConversations] = useState(() => loadConversations(storageKey));
+  const firstConversation = initialConversations[0];
+  const [conversations, setConversations] = useState(initialConversations);
+  const [activeConversationId, setActiveConversationId] = useState(firstConversation.id);
+  const [chatItems, setChatItems] = useState(firstConversation.chatItems ?? [])
+  const [message, setMessage] = useState('')
+  const [recipeResult, setRecipeResult] = useState(firstConversation.recipeResult ?? null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [previousResponseId, setPreviousResponseId] = useState(firstConversation.previousResponseId ?? null)
+  const [isHistoryVisible, setIsHistoryVisible] = useState(true)
+  const chatScrollRef  = useRef(null);
+
+  useEffect(() => {
+    const chatArea = chatScrollRef.current
+
+    if(!chatArea){
+      return
+    }
+
+    chatArea.scrollTo({
+      top: chatArea.scrollHeight,
+      behavior: 'smooth'
+    })
+
+    }, [chatItems])
+
+  useEffect(() => {
+    setConversations(previous => previous.map(conversations =>
+    conversations.id === activeConversationId ? {
+      ...conversations,
+      chatItems,
+      recipeResult,
+      previousResponseId,
+    }
+    : conversations
+    ))
+  }, [
+      activeConversationId,
+      chatItems,
+      recipeResult,
+      previousResponseId,
+  ]);
+
+  useEffect(() => {
+    localStorage.setItem(
+        storageKey,
+        JSON.stringify(conversations)
+    );
+  }, [conversations, storageKey]);
+
 
   const handleSubmit = async () => {
     const question = message.trim()
@@ -48,6 +119,15 @@ function ChatbotPage() {
       alert('질문을 입력해주세요.')
       return
     }
+
+    setConversations(previous =>
+      previous.map(conversation =>
+      conversation.id === activeConversationId && conversation.title === "새 대화" ? {
+        ...conversation,
+        title: makeConversationTitle(question),
+        createdAt: new Date().toISOString(),
+      } : conversation
+      ))
 
     const id = Date.now()
 
@@ -86,7 +166,7 @@ function ChatbotPage() {
         ...item,
         status: 'complete',
         response: data,
-        reponseTime: getTime()
+        responseTime: getTime()
          }
         : item
         )
@@ -115,10 +195,55 @@ function ChatbotPage() {
     }
   }
 
+  const selectConversation = conversation => {
+    setActiveConversationId(conversation.id);
+    setChatItems(conversation.chatItems ?? []);
+    setRecipeResult(conversation.recipeResult ?? null);
+    setPreviousResponseId(conversation.previousResponseId ?? null);
+    setMessage('')
+    setError('')
+  };
+
+  const deleteConversation = id => {
+    if(!confirm("이 대화를 삭제할까요?")) return;
+
+    let remaining =
+        conversations.filter(conversation => conversation.id !== id);
+
+    if(remaining.length === 0){
+      remaining = [createConversation()];
+    }
+
+    setConversations(remaining);
+
+    if(activeConversationId === id){
+      selectConversation(remaining[0])
+    }
+  }
+
+  const handleMessageKeyDown = (e)  => {
+    if(e.nativeEvent.isComposing){
+      return
+    }
+
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault()
+      if(!loading && message.trim()){
+        handleSubmit()
+      }
+    }
+  }
+
   const startNewChat = () => {
-    setPreviousResponseId(null)
+    const conversation = createConversation();
+
+    setConversations(previous =>
+        [conversation, ...previous].slice(0, 30));
+
+    setActiveConversationId(conversation.id)
     setChatItems([])
     setRecipeResult(null)
+    setPreviousResponseId(null)
     setMessage('')
     setError('')
   }
@@ -152,28 +277,85 @@ function ChatbotPage() {
 
   return (
       <section className="chatbot-page">
-        <h1>AI 레시피 추천</h1>
-        <div className="recipe-workspace">
+        <div className="chatbot-page-heading">
+          <h1>AI 레시피 추천</h1>
+        </div>
+
+        <div className={
+          isHistoryVisible
+              ? "recipe-workspace"
+              : "recipe-workspace history-hidden"
+        }>
           {/*왼쪽영역*/}
-          <aside className="recipe-chat-panel">
+            <aside className={
+              isHistoryVisible
+                  ? "conversation-history"
+                  : "conversation-history is-collapsed"
+            }>
+              <div className="conversation-toolbar" role="toolbar" aria-label="이전 대화 도구">
+                <button
+                    type="button"
+                    onClick={() => setIsHistoryVisible(previous => !previous)}
+                    aria-label={isHistoryVisible ? '이전 대화 숨기기' : '이전 대화 보기'}
+                    title={isHistoryVisible ? '이전 대화 숨기기' : '이전 대화 보기'}
+                >
+                  <span aria-hidden="true">{isHistoryVisible ? '‹' : '›'}</span>
+                </button>
+
+                {isHistoryVisible && (
+                  <button
+                      type="button"
+                      onClick={startNewChat}
+                      disabled={loading}
+                      aria-label="새 대화 시작"
+                      title="새 대화 시작"
+                  >
+                    <span aria-hidden="true">+</span>
+                  </button>
+                )}
+              </div>
+
+              {isHistoryVisible && (
+                <>
+              <header>
+                <h2>이전 대화</h2>
+              </header>
+
+              <div className="conversation-list">
+                {conversations.map(conversation => (
+                    <div
+                        className={
+                        conversation.id === activeConversationId
+                            ? "conversation-item active"
+                            : "conversation-item"
+                        }
+                        key={conversation.id}>
+                      <button
+                          type="button"
+                          className="conversation-title"
+                          onClick={() => selectConversation(conversation)}>
+                        {conversation.title}
+                      </button>
+                      <button
+                          type="button"
+                          onClick={() => deleteConversation(conversation.id)}
+                          aria-label="대화 삭제">x</button>
+                    </div>
+                  ))}
+              </div>
+                </>
+              )}
+            </aside>
+            <aside className="recipe-chat-panel">
             <header className="chatbot-intro">
               <span className="bot-avatar">AI</span>
-              <div>
+              <div className="chatbot-intro-text">
                 <h2>레시피 챗봇</h2>
                 <p>보유한 재료와 예산에 맞는 레시피를 제안해드려요.</p>
               </div>
-
-              <button
-                type="button"
-                className="new-chat-button"
-                onClick={startNewChat}
-                disabled={loading}
-                title="새 대화 시작">
-                새 대화
-              </button>
             </header>
 
-            <div className="recipe-conversation">
+            <div className="recipe-conversation" ref={chatScrollRef}>
               {chatItems.map(item => (
                 <div className="chat-turn" key={item.id}>
                   <div className="user-row">
@@ -225,6 +407,7 @@ function ChatbotPage() {
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleMessageKeyDown}
                 placeholder="원하는 음식이나 예산을 입력 해주세요."
                 rows={2}
               />
