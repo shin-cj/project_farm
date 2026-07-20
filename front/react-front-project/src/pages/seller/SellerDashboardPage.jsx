@@ -125,19 +125,32 @@ function SellerDashboardPage() {
 // 매출 데이터를 SVG 그래프 좌표로 변환합니다.
   const hasSales = chartSalesData.some((item) => item.sales > 0)
 
-  const salesChartPoints = chartSalesData
+  const salesChartPointsList = chartSalesData
       .map((item, index) => {
-        const x = chartSalesData.length === 1
-            ? 50
-            : (index / (chartSalesData.length - 1)) * 100
+        const x = chartSalesData.length === 1 ? 50 : (index / (chartSalesData.length - 1)) * 100
 
-        const y = hasSales
-            ? 90 - (item.sales / maxSales) * 70
-            : 82
+        const y = hasSales ? 90 - (item.sales / maxSales) * 70 : 82
 
-        return `${x},${y}`
+        return {x,y}
       })
-      .join(' ')
+
+  const salesChartPath = salesChartPointsList.map((point,index,points)=>{
+    if(index===0){
+      return `M ${point.x} ${point.y}`
+    }
+
+    const previousPoint = points[index-1]
+    const controlX = (previousPoint.x + point.x) / 2
+
+    return `C ${controlX} ${previousPoint.y},${controlX} ${point.y},${point.x} ${point.y}`
+  }).join(' ')
+
+  const salesChartAreaPath = `
+  M 0 90
+  ${salesChartPath}
+  L 100 90
+  Z
+`
 
 // 판매 중·품절 외의 PENDING, HIDDEN 상품 개수입니다.
   const otherProductCount =
@@ -220,14 +233,14 @@ function SellerDashboardPage() {
                 <line x1="0" y1="70" x2="100" y2="70" />
                 <line x1="0" y1="90" x2="100" y2="90" />
 
-                <polygon
+                <path
                     className="seller-dashboard-chart-area"
-                    points={`0,90 ${salesChartPoints} 100,90`}
+                    d={salesChartAreaPath}
                 />
 
-                <polyline
+                <path
                     className="seller-dashboard-chart-line"
-                    points={salesChartPoints}
+                    d={salesChartPath}
                 />
               </svg>
             </div>
