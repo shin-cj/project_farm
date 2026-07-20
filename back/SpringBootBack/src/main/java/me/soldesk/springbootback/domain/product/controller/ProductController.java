@@ -2,6 +2,8 @@ package me.soldesk.springbootback.domain.product.controller;
 
 import me.soldesk.springbootback.domain.product.dto.ProductRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductResponse;
+import me.soldesk.springbootback.domain.product.dto.ProductStatusRequest;
+import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
 import me.soldesk.springbootback.domain.product.service.ProductService;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,5 +46,18 @@ public class ProductController {
     @PutMapping("/{productId}")
     public ProductResponse updateProduct(@PathVariable Long productId, @RequestBody ProductRequest request){
         return productService.updateProduct(productId, request);
+    }
+
+    @PatchMapping("/{productId}/status")
+    public ProductResponse updateStatus(
+            @PathVariable Long productId,
+            @RequestBody ProductStatusRequest request
+    ) {
+        return productService.updateStatus(productId, request);
+    }
+
+    @PatchMapping("/{productId}/stock")
+    public ProductResponse updateStock(@PathVariable Long productId, @RequestBody ProductStockRequest request){
+        return productService.updateStock(productId,request);
     }
 }

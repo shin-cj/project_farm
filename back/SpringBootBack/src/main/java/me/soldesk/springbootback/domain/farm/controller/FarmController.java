@@ -22,6 +22,12 @@ public class FarmController {
         return farmService.getFarms(sellerId);
     }
 
+    @GetMapping("/public/{farmId}")
+    public FarmResponse getPublicFarm(@PathVariable Long farmId){
+        return farmService.getPublicFarm(farmId);
+    }
+
+
     @GetMapping("/{farmId}")
     public FarmResponse getFarm(@PathVariable Long farmId){
         return farmService.getFarm(farmId);

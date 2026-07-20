@@ -182,3 +182,22 @@
     background-color: #f3f4f6;
     color: #6b7280;
 }
+
+.farm-management-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.farm-management-actions button:disabled {
+    border-color: #d1d5db;
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.farm-management-actions button:disabled:hover {
+    background-color: #f3f4f6;
+}
