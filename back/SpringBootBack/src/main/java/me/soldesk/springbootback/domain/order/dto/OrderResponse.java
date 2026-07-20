@@ -43,6 +43,8 @@ public class OrderResponse {
 
     private String deliveryStatus;
 
+    private Long deliveryId;
+
     private String courierName;
 
     private String trackingNumber;
