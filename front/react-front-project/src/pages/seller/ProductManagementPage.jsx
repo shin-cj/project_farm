@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { getProducts, updateProduct } from '../../api/productApi.js'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  getProducts,
+  updateProductStatus,
+  updateProductStock
+} from '../../api/productApi.js'
 import './ProductManagementPage.css'
 import { getFarms } from '../../api/farmApi.js'
 import { getCategories } from '../../api/categoryApi.js'
@@ -8,10 +12,13 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 
+
 // 상품 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductManagementPage() {
 
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedFarmId = searchParams.get('farmId') ?? ''
 
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -26,6 +33,8 @@ function ProductManagementPage() {
   const [searchKeyword, setSearchKeyword] = useState('')
   const [changingStatusId, setChangingStatusId] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
+  const [stockInputs, setStockInputs] = useState({})
+  const [updatingStockId, setUpdatingStockId] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -56,6 +65,13 @@ function ProductManagementPage() {
         setFarms(farmData)
         setCategories(categoryData)
 
+        const ownsRequestedFarm = farmData.some(
+            (farm) =>
+                String(farm.farmId) === requestedFarmId
+        )
+
+        setSelectedFarmId(ownsRequestedFarm ? requestedFarmId : '')
+
         // 필터에 필요한 데이터를 모두 성공적으로 받았습니다.
         setFiltersReady(true)
       } catch (err) {
@@ -78,7 +94,7 @@ function ProductManagementPage() {
     return () => {
       ignore = true
     }
-  }, [reloadKey])
+  }, [reloadKey, requestedFarmId])
 
   useEffect(() => {
     //농장, 카테고리 조회전에는 상품 조회x
@@ -168,12 +184,10 @@ function ProductManagementPage() {
     try {
       setChangingStatusId(product.productId)
 
-      const productData = {
-        ...product,
-        productStatus: nextStatus,
-      }
-
-      const updatedProduct = await updateProduct(product.productId, productData)
+      const updatedProduct = await updateProductStatus(
+          product.productId,
+          nextStatus
+      )
 
       setProducts(
           (currentProducts) => currentProducts.map((item) =>
@@ -187,6 +201,78 @@ function ProductManagementPage() {
       alert(getApiErrorMessage(err, '상품 상태 변경에 실패했습니다.'))
     } finally {
       setChangingStatusId(null)
+    }
+  }
+
+  function handleStockInputChange(productId, value){
+    setStockInputs((currentInputs) => ({
+      ...currentInputs, [productId]: value
+    }))
+  }
+
+  async function handleStockSave(product) {
+    if (updatingStockId !== null) {
+      return
+    }
+
+    const inputValue =
+        stockInputs[product.productId]
+        ?? String(product.stockQuantity)
+
+    if (inputValue.trim() === '') {
+      alert('재고 수량을 입력해주세요.')
+      return
+    }
+
+    const stockQuantity = Number(inputValue)
+
+    if (!Number.isInteger(stockQuantity)
+        || stockQuantity < 0) {
+
+      alert('재고는 0 이상의 정수로 입력해주세요.')
+      return
+    }
+
+    if (stockQuantity === Number(product.stockQuantity)) {
+      alert('변경된 재고 수량이 없습니다.')
+      return
+    }
+
+    try {
+      setUpdatingStockId(product.productId)
+
+      const updatedProduct =
+          await updateProductStock(
+              product.productId,
+              stockQuantity
+          )
+
+      setProducts((currentProducts) =>
+          currentProducts.map((currentProduct) =>
+              currentProduct.productId === updatedProduct.productId
+                  ? updatedProduct
+                  : currentProduct
+          )
+      )
+
+      setStockInputs((currentInputs) => ({
+        ...currentInputs,
+        [product.productId]:
+            String(updatedProduct.stockQuantity),
+      }))
+
+      alert('재고가 변경되었습니다.')
+    } catch (err) {
+      console.error(err)
+
+      alert(
+          getApiErrorMessage(
+              err,
+              '재고 변경에 실패했습니다.'
+          )
+      )
+    } finally {
+      setUpdatingStockId(null)
     }
   }
 
@@ -406,7 +492,39 @@ function ProductManagementPage() {
                       </td>
 
                       <td>{product.price?.toLocaleString()}원</td>
-                      <td>{product.stockQuantity}개</td>
+                      <td>
+                        <div className="seller-product-stock-control">
+                          <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={
+                                  stockInputs[product.productId]
+                                  ?? product.stockQuantity
+                              }
+                              onChange={(event) =>
+                                  handleStockInputChange(
+                                      product.productId,
+                                      event.target.value
+                                  )
+                              }
+                              aria-label={`${product.productName} 재고 수량`}
+                          />
+
+                          <button
+                              type="button"
+                              onClick={() => handleStockSave(product)}
+                              disabled={
+                                  updatingStockId !== null
+                                  || changingStatusId !== null
+                              }
+                          >
+                            {updatingStockId === product.productId
+                                ? '저장 중...'
+                                : '저장'}
+                          </button>
+                        </div>
+                      </td>
 
                       <td>
                   <span className="seller-product-status">

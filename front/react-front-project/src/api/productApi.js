@@ -50,3 +50,21 @@ export async function updateProduct(productId, productData){
   const response = await axios.put(`/api/products/${productId}`, productData)
   return response.data
 }
+
+// 상품의 판매 상태만 변경합니다.
+export async function updateProductStatus(productId, productStatus) {
+  const response = await axios.patch(
+      `/api/products/${productId}/status`,
+      { productStatus }
+  )
+
+  return response.data
+}
+
+//상품의 재고 수량 수정
+export async function updateProductStock(productId, stockQuantity){
+  const response = await axios.patch(`/api/products/${productId}/stock`, {
+    stockQuantity
+  })
+  return response.data
+}

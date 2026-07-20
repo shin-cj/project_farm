@@ -5,6 +5,8 @@ import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.product.dto.ProductRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductResponse;
+import me.soldesk.springbootback.domain.product.dto.ProductStatusRequest;
+import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import org.springframework.http.HttpStatus;
@@ -135,6 +137,87 @@ public class ProductService {
         return toResponse(savedProduct);
     }
 
+    //판매 상태만 변경
+    // 상품명이나 가격은 건드리지 않고 판매 상태만 변경합니다.
+    public ProductResponse updateStatus(
+            Long productId,
+            ProductStatusRequest request
+    ) {
+        if (request == null
+                || request.getProductStatus() == null
+                || request.getProductStatus().isBlank()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "변경할 상품 상태를 입력해주세요."
+            );
+        }
+
+        String nextStatus =
+                request.getProductStatus().trim().toUpperCase();
+
+        if (!"ON_SALE".equals(nextStatus)
+                && !"HIDDEN".equals(nextStatus)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 상태는 ON_SALE 또는 HIDDEN만 선택할 수 있습니다."
+            );
+        }
+
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품을 찾을 수 없습니다."
+                ));
+
+        if ("PENDING".equals(product.getProductStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "승인 대기 중인 상품은 판매 상태를 변경할 수 없습니다."
+            );
+        }
+
+        product.setProductStatus(nextStatus);
+
+        // 재고가 0인 상품을 판매 중으로 변경하면 품절로 처리합니다.
+        applyStockStatus(product);
+
+        product.setUpdatedAt(LocalDateTime.now());
+
+        Product savedProduct = productRepository.save(product);
+
+        return toResponse(savedProduct);
+    }
+
+    //상품의 재고 수량만 변경
+    public ProductResponse updateStock(Long productId, ProductStockRequest request){
+
+        if(request == null || request.getStockQuantity() == null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "변경 할 재고 수량을 입력해주세요.");
+        }
+
+        if(request.getStockQuantity() < 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고는 0개 이상 입력해주세요.");
+        }
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."
+                ));
+
+        product.setStockQuantity(request.getStockQuantity());
+
+        applyStockStatus(product);
+
+        product.setUpdatedAt(LocalDateTime.now());
+
+        Product savedProduct = productRepository.save(product);
+
+        return toResponse(savedProduct);
+    }
+
     //Product 엔티티를 ProductResponse DTO로 변환
     private ProductResponse toResponse(Product product) {
         ProductResponse response = new ProductResponse();
@@ -255,14 +338,27 @@ public class ProductService {
         product.setProductImageUrl(request.getProductImageUrl());
         product.setProductStatus(request.getProductStatus());
     }
-    // 재고가 없는 판매 중 상품을 자동으로 품절 상태로 변경
+    // 재고 수량에 따라 상품 판매 상태를 변경합니다.
     private void applyStockStatus(Product product) {
 
-        if (product.getStockQuantity() != null
-                && product.getStockQuantity() == 0
+        Integer stockQuantity =
+                product.getStockQuantity();
+
+        if (stockQuantity == null) {
+            return;
+        }
+
+        if (stockQuantity == 0
                 && "ON_SALE".equals(product.getProductStatus())) {
 
             product.setProductStatus("SOLD_OUT");
+            return;
+        }
+
+        if (stockQuantity > 0
+                && "SOLD_OUT".equals(product.getProductStatus())) {
+
+            product.setProductStatus("ON_SALE");
         }
     }
 

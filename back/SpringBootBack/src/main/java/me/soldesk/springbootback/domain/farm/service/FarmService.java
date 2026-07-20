@@ -52,6 +52,25 @@ public class FarmService {
         return toResponse(farm);
     }
 
+    //승인 완료 농장 한 건을 조회
+    public FarmResponse getPublicFarm(Long farmId){
+
+        Farm farm = farmRepository
+                .findById(farmId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "농장을 찾을 수 없습니다."
+                ));
+
+        if(!"APPROVED".equals(farm.getApprovalStatus())){
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "농장을 찾을 수 없습니다."
+            );
+        }
+        return toResponse(farm);
+    }
+
     //새로운 농장 생성
     public FarmResponse createFarm(FarmRequest request) {
 

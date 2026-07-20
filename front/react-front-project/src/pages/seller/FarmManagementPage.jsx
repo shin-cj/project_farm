@@ -160,7 +160,33 @@ function FarmManagementPage() {
                     <div className="farm-management-actions">
                       <button
                           type="button"
-                          onClick={() => navigate(`/seller/farms/${farm.farmId}/edit`)}
+                          onClick={() =>
+                              navigate(`/seller/products?farmId=${farm.farmId}`)
+                          }
+                      >
+                        등록 상품 보기
+                      </button>
+
+                      <button
+                          type="button"
+                          onClick={() =>
+                              navigate(`/seller/products/new?farmId=${farm.farmId}`)
+                          }
+                          disabled={farm.approvalStatus !== 'APPROVED'}
+                          title={
+                            farm.approvalStatus === 'APPROVED'
+                                ? '이 농장에 상품을 등록합니다.'
+                                : '승인 완료된 농장에만 상품을 등록할 수 있습니다.'
+                          }
+                      >
+                        상품 등록
+                      </button>
+
+                      <button
+                          type="button"
+                          onClick={() =>
+                              navigate(`/seller/farms/${farm.farmId}/edit`)
+                          }
                       >
                         농장 수정
                       </button>

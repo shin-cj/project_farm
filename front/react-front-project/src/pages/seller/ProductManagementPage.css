@@ -242,3 +242,31 @@
     font-weight: 600;
     white-space: nowrap;
 }
+
+.seller-product-stock-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.seller-product-stock-control input {
+    width: 72px;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+}
+
+.seller-product-stock-control button {
+    padding: 8px 10px;
+    border: 1px solid #3f7d20;
+    border-radius: 7px;
+    background-color: #ffffff;
+    color: #3f7d20;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.seller-product-stock-control button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}

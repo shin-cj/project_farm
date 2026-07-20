@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getProduct } from '../../api/productApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
-import { getFarm } from '../../api/farmApi.js'
+import { getPublicFarm } from '../../api/farmApi.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+
 
 function getStoredLoginUser() {
   try {
@@ -70,7 +71,7 @@ function ProductDetailPage() {
 
         if(data.farmId){
           try{
-            const farmData = await getFarm(data.farmId)
+            const farmData = await getPublicFarm(data.farmId)
 
             if (!ignore) {
               setFarm(farmData)
@@ -292,7 +293,16 @@ function ProductDetailPage() {
       {farm && (
           <section className="product-detail-farm-card">
             <p>생산 농장</p>
-            <h2>{farm.farmName}</h2>
+
+            <h2>
+              <Link
+                  to={`/farms/${farm.farmId}`}
+                  className="product-detail-farm-name-link"
+              >
+                {farm.farmName}
+              </Link>
+            </h2>
+
             <span>{farm.region}</span>
 
             <p>{farm.farmAddress}</p>
@@ -300,6 +310,12 @@ function ProductDetailPage() {
             {farm.farmDescription && (
                 <p>{farm.farmDescription}</p>
             )}
+            <Link
+                to={`/farms/${farm.farmId}`}
+                className="product-detail-farm-view-link"
+            >
+              농장 상세 보기
+            </Link>
           </section>
       )}
       {isOrderModalOpen && (

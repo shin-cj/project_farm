@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createProduct } from '../../api/productApi.js'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
 import { getFarms } from '../../api/farmApi.js'
@@ -10,8 +10,11 @@ import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 
 
+
 function ProductCreatePage() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
+    const requestedFarmId = searchParams.get('farmId') ?? ''
 
     const [categories, setCategories] = useState([])
     const [farms, setFarms] = useState([])
@@ -20,6 +23,22 @@ function ProductCreatePage() {
     const [formLoading, setFormLoading] = useState(true)
     const [formError, setFormError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
+
+    const [form, setForm] = useState({
+        farmId: '',
+        categoryId: '',
+        productName: '',
+        description: '',
+        price: '',
+        stockQuantity: '',
+        unit: '',
+        origin: '',
+        harvestDate: '',
+        expirationDate: '',
+        productImageUrl: '',
+        productStatus: 'PENDING',
+    })
+
 
     useEffect(() => {
         let ignore = false
@@ -46,11 +65,24 @@ function ProductCreatePage() {
                 if (!ignore) {
                     setCategories(categoryData)
                     setRegisteredFarmCount(farmData.length)
-                    setFarms(
-                        farmData.filter(
-                            (farm) => farm.approvalStatus === 'APPROVED'
-                        )
+
+                    const approvedFarms = farmData.filter(
+                        (farm) => farm.approvalStatus === 'APPROVED'
                     )
+
+                    setFarms(approvedFarms)
+
+                    const requestedFarm = approvedFarms.find(
+                        (farm) =>
+                            String(farm.farmId) === requestedFarmId
+                    )
+
+                    if (requestedFarm) {
+                        setForm((currentForm) => ({
+                            ...currentForm,
+                            farmId: String(requestedFarm.farmId),
+                        }))
+                    }
                 }
             } catch (error) {
                 if (!ignore) {
@@ -72,22 +104,8 @@ function ProductCreatePage() {
         return () => {
             ignore = true
         }
-    }, [reloadKey])
+    }, [reloadKey, requestedFarmId])
 
-    const [form, setForm] = useState({
-        farmId: '',
-        categoryId: '',
-        productName: '',
-        description: '',
-        price: '',
-        stockQuantity: '',
-        unit: '',
-        origin: '',
-        harvestDate: '',
-        expirationDate: '',
-        productImageUrl: '',
-        productStatus: 'PENDING',
-    })
 
     function handleChange(event) {
         const { name, value } = event.target
