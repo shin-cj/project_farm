@@ -7,17 +7,7 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import {getSellerSalesTrend} from "../../api/salesApi.js";
 import {getSellerOrders} from "../../api/deliveryApi.js";
 
-// 주문·매출 API가 완성되기 전까지 그래프 확인에 사용하는 임시 데이터입니다.
-// 실제 API가 연결되면 이 배열은 삭제합니다.
-const TEMP_SALES_DATA = [
-  { date: '7/8', sales: 320000 },
-  { date: '7/9', sales: 280000 },
-  { date: '7/10', sales: 410000 },
-  { date: '7/11', sales: 570000 },
-  { date: '7/12', sales: 460000 },
-  { date: '7/13', sales: 720000 },
-  { date: '7/14', sales: 890000 },
-]
+const SALES_DAY_OPTIONS = [7, 14, 30]
 
 // 판매자 대시보드 기능을 담당하는 페이지입니다.
 function SellerDashboardPage() {
@@ -32,6 +22,7 @@ function SellerDashboardPage() {
   // 최근 등록 상품 목록을 저장합니다.
   const [recentProducts, setRecentProducts] = useState([])
   const [salesData,setSalesData] = useState([])
+  const [salesDays, setSalesDays] = useState(7)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [sellerOrders,setSellerOrders] = useState([])
@@ -49,7 +40,7 @@ function SellerDashboardPage() {
           throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
         }
 
-        const salesResponse = await getSellerSalesTrend(sellerId,7)
+        const salesResponse = await getSellerSalesTrend(sellerId,salesDays)
         setSalesData(salesResponse.data)
 
         const ordersData = await getSellerOrders(sellerId)
@@ -93,7 +84,7 @@ function SellerDashboardPage() {
     }
 
     loadDashboard()
-  }, [])
+  }, [salesDays])
 
   if (loading) {
     return <p>판매자 대시보드를 불러오는 중입니다.</p>
@@ -103,18 +94,54 @@ function SellerDashboardPage() {
     return <p>{error}</p>
   }
 
-  const chartSalesData = salesData.length > 0 ? salesData : TEMP_SALES_DATA
+  const chartSalesData = salesData
+
+  const totalSales = chartSalesData.reduce(
+      (sum, item) => sum + (item.sales ?? 0),
+      0
+  )
+
+  const totalOrderCount = chartSalesData.reduce(
+      (sum, item) => sum + (item.orderCount ?? 0),
+      0
+  )
 
   const todaySalesData = chartSalesData[chartSalesData.length-1]
 
   const todaySales = todaySalesData?.sales ?? 0
 
-  const newOrderCount = sellerOrders.filter(
-      (order) => order.orderStatus === 'PAID' && order.deliveryStatus === 'READY'
+  const yesterdaySalesData = chartSalesData[chartSalesData.length - 2]
+
+  const yesterdaySales = yesterdaySalesData?.sales ?? 0
+
+  const salesChangeRate = yesterdaySales === 0
+      ? 0
+      : ((todaySales - yesterdaySales) / yesterdaySales) * 100
+
+  const salesChangeLabel = yesterdaySales === 0
+      ? '전일 매출 없음'
+      : salesChangeRate > 0
+          ? `전일 대비 +${salesChangeRate.toFixed(1)}%`
+          : `전일 대비 ${salesChangeRate.toFixed(1)}%`
+
+  const salesChangeType = yesterdaySales === 0
+      ? 'same'
+      : salesChangeRate > 0
+          ? 'up'
+          : salesChangeRate < 0
+              ? 'down'
+              : 'same'
+
+  const activeDeliveryOrders = sellerOrders.filter(
+      (order) => order.orderStatus !== 'CANCELED'
+  )
+
+  const readyOrderCount = activeDeliveryOrders.filter(
+      (order) => order.deliveryStatus === 'READY'
   ).length
 
-  const deliveryReadyCount = sellerOrders.filter(
-      (order) => order.deliveryStatus === 'READY'
+  const shippingOrderCount = activeDeliveryOrders.filter(
+      (order) => order.deliveryStatus === 'SHIPPING'
   ).length
 
 // 매출 중 가장 큰 값을 기준으로 그래프 높이를 계산합니다.
@@ -213,15 +240,30 @@ function SellerDashboardPage() {
           <article className="seller-dashboard-sales-chart">
             <div className="seller-dashboard-chart-header">
               <div>
-                <h2>최근 7일 매출 추이</h2>
-                <p>최근 7일 결제 완료 주문 기준입니다.</p>
+                <h2>최근 {salesDays}일 매출 추이</h2>
+                <p>최근 {salesDays}일 결제 완료 주문 기준입니다.</p>
               </div>
 
-              <strong>
-                {chartSalesData[
-                chartSalesData.length - 1
-                    ]?.sales.toLocaleString()}원
-              </strong>
+              <div className="seller-dashboard-chart-side">
+                <div className="seller-dashboard-chart-actions">
+                  {SALES_DAY_OPTIONS.map((days) => (
+                      <button
+                          key={days}
+                          type="button"
+                          className={salesDays === days ? "active" : ""}
+                          onClick={() => setSalesDays(days)}
+                      >
+                        {days}일
+                      </button>
+                  ))}
+                </div>
+
+                <div className="seller-dashboard-chart-total">
+                  <span>선택 기간 총 매출</span>
+                  <strong>{totalSales.toLocaleString()}원</strong>
+                  <small>주문 {totalOrderCount}건</small>
+                </div>
+              </div>
             </div>
 
             <div className="seller-dashboard-chart-body">
@@ -379,13 +421,13 @@ function SellerDashboardPage() {
             <h2>주문·배송 현황</h2>
 
             <div>
-              <span>신규 주문</span>
-              <strong>{newOrderCount}</strong>
+              <span>처리할 주문</span>
+              <strong>{readyOrderCount}</strong>
             </div>
 
             <div>
-              <span>배송 준비</span>
-              <strong>{deliveryReadyCount}</strong>
+              <span>배송 중</span>
+              <strong>{shippingOrderCount}</strong>
             </div>
 
             <div>
@@ -393,9 +435,12 @@ function SellerDashboardPage() {
               <strong>
                 {todaySales.toLocaleString()}원
               </strong>
+              <small className={`seller-dashboard-sales-change ${salesChangeType}`}>
+                {salesChangeLabel}
+              </small>
             </div>
 
-            <p>주문·배송 API 연동 후 실제 값이 표시됩니다.</p>
+            <p>주문배송관리의 처리할 주문 기준과 동일하게 표시됩니다.</p>
           </article>
         </section>
       </main>

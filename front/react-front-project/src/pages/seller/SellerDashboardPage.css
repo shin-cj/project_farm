@@ -173,6 +173,30 @@
 }
 
 .seller-dashboard-order > div {
+    flex-wrap: wrap;
+}
+
+.seller-dashboard-sales-change {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
+}
+
+.seller-dashboard-sales-change.up {
+    color: #216b3a;
+}
+
+.seller-dashboard-sales-change.down {
+    color: #dc2626;
+}
+
+.seller-dashboard-sales-change.same {
+    color: #6b7280;
+}
+
+.seller-dashboard-order > div {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -259,6 +283,56 @@
     margin-bottom: 20px;
 }
 
+.seller-dashboard-chart-side {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.seller-dashboard-chart-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.seller-dashboard-chart-actions button {
+    padding: 6px 10px;
+    border: 1px solid #dce8d7;
+    border-radius: 999px;
+    background-color: #ffffff;
+    color: #526357;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.seller-dashboard-chart-actions button.active {
+    border-color: #3f7d20;
+    background-color: #3f7d20;
+    color: #ffffff;
+}
+
+.seller-dashboard-chart-total {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 3px;
+    text-align: right;
+}
+
+.seller-dashboard-chart-total span,
+.seller-dashboard-chart-total small {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.seller-dashboard-chart-total strong {
+    color: #3f7d20;
+    font-size: 22px;
+    line-height: 1.1;
+}
+
 .seller-dashboard-chart-header h2 {
     margin: 0;
     color: #243b2f;
@@ -269,11 +343,6 @@
     margin: 7px 0 0;
     color: #9ca3af;
     font-size: 13px;
-}
-
-.seller-dashboard-chart-header > strong {
-    color: #3f7d20;
-    font-size: 22px;
 }
 
 /* 선 그래프가 그려지는 영역입니다. */
