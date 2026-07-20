@@ -108,6 +108,8 @@ public class SellerOrderInfoService {
                 .map(Farm::getFarmName)
                 .orElse("농장 정보 없음");
 
+        Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
+
         SellerOrderInfoResponse response = new SellerOrderInfoResponse();
         response.setOrderId(order.getOrderId());
         response.setOrderNumber(order.getOrderNumber());
@@ -126,6 +128,8 @@ public class SellerOrderInfoService {
         response.setDeliveryStatus(deliveryStatus);
         response.setCourierName(courierName);
         response.setTrackingNumber(trackingNumber);
+        response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
+        response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 
         return response;
     }

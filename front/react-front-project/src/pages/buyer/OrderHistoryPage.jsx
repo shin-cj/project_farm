@@ -220,6 +220,27 @@ function OrderHistoryPage() {
                     {cancelGuide}
                   </p>
                 )}
+                {order.orderStatus === "CANCELED" && (
+                    <div
+                        style={{
+                          marginTop: "14px",
+                          padding: "14px",
+                          borderRadius: "8px",
+                          background: "#fff1f2",
+                          border: "1px solid #fecdd3",
+                          color: "#991b1b",
+                          fontWeight: 700,
+                        }}
+                    >
+                      <p style={{ margin: "0 0 6px" }}>
+                        취소 사유: {order.refundReason || "사유 없음"}
+                      </p>
+                      <p style={{ margin: 0 }}>
+                        취소일: {formatDate(order.refundedAt)}
+                      </p>
+                    </div>
+                )}
+
               </div>
 
               <div style={{ display: "grid", alignContent: "center", gap: "10px" }}>
