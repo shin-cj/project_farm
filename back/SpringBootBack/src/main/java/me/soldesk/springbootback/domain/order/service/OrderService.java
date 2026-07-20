@@ -236,6 +236,8 @@ public class OrderService {
         response.setDeliveryStatus(deliveryOptional.map(Delivery::getDeliveryStatus).orElse("READY"));
         response.setCourierName(deliveryOptional.map(Delivery::getCourierName).orElse(null));
         response.setTrackingNumber(deliveryOptional.map(Delivery::getTrackingNumber).orElse(null));
+        response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
+        response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 
         return response;
     }

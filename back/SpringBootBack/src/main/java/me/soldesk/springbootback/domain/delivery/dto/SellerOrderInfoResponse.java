@@ -26,4 +26,6 @@ public class SellerOrderInfoResponse {
     private String deliveryStatus;
     private String courierName;
     private String trackingNumber;
+    private String refundReason;
+    private LocalDateTime refundedAt;
 }

@@ -68,4 +68,8 @@ public class OrderResponse {
     /** 주문 수정 일시 */
     private LocalDateTime updatedAt;
 
+    private String refundReason;
+
+    private LocalDateTime refundedAt;
+
 }

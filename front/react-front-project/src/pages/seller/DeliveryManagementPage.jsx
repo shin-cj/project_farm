@@ -132,7 +132,7 @@ function DeliveryManagementPage() {
       return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "DELIVERED");
     }
 
-    return orders.filter((order) => order.deliveryStatus !== "DELIVERED");
+    return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "READY");
   }
 
   function handleFarmChange(event) {
@@ -423,6 +423,7 @@ function DeliveryManagementPage() {
                     }}
                   >
                     취소된 주문
+
                   </span>
                 )}
                 <strong>주문번호: {order.orderId}</strong>
@@ -438,9 +439,16 @@ function DeliveryManagementPage() {
                 )}
                 <p style={{ margin: "6px 0 0" }}>주문자: {order.receiverName}</p>
                 <p style={{ margin: "6px 0 0" }}>전화번호: {order.receiverPhone}</p>
+                {order.orderStatus === "CANCELED" && (
+                    <p style={{ margin: "8px 0 0", color: "#dc2626", fontWeight: 800 }}>
+                      취소 사유: {order.refundReason || "사유 없음"}
+                    </p>
+                )}
               </button>
               );
             })}
+
+
           </div>
 
           {totalPages > 1 && (
