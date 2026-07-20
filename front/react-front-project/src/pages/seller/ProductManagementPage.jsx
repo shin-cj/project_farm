@@ -33,7 +33,7 @@ function ProductManagementPage() {
   const [searchKeyword, setSearchKeyword] = useState('')
   const [changingStatusId, setChangingStatusId] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
-  const [stockInputs, setStockInputs] = useState([])
+  const [stockInputs, setStockInputs] = useState({})
   const [updatingStockId, setUpdatingStockId] = useState(null)
 
   useEffect(() => {
