@@ -3,7 +3,25 @@ import { getFarms } from '../../api/farmApi.js'
 import {useNavigate} from "react-router-dom";
 import './FarmManagementPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 
+function getApprovalStatusText(status) {
+  if (status === 'PENDING') {
+    return '승인 대기'
+  }
+
+  if (status === 'APPROVED') {
+    return '승인 완료'
+  }
+
+  if (status === 'REJECTED') {
+    return '승인 거절'
+  }
+
+  return '상태 미확인'
+}
 
 // 농장 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function FarmManagementPage() {
@@ -12,8 +30,11 @@ function FarmManagementPage() {
   const [farms, setFarms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
+    let ignore = false
+
     async function loadFarms() {
       try {
         setLoading(true)
@@ -27,24 +48,46 @@ function FarmManagementPage() {
 
         const data = await getFarms(sellerId)
 
-        setFarms(data)
+        if (!ignore) {
+          setFarms(data)
+        }
       } catch (err) {
-        console.error(err)
-        setError(err.message || '농장 목록을 불러오지 못했습니다.')
+        if (!ignore) {
+          console.error(err)
+          setError(getApiErrorMessage(err, '농장 목록을 불러오지 못했습니다.'))
+        }
       } finally {
-        setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
     loadFarms()
-  }, [])
+
+    return () => {
+      ignore = true
+    }
+  }, [reloadKey])
 
   if (loading) {
-    return <p>농장 정보를 불러오는 중입니다.</p>
+    return (
+        <CatalogPageState
+            title="농장 목록 불러오는 중"
+            message="등록된 농장 정보를 확인하고 있습니다."
+        />
+    )
   }
 
   if (error) {
-    return <p>{error}</p>
+    return (
+        <CatalogPageState
+            title="농장 목록을 불러오지 못했습니다"
+            message={error}
+            actionLabel="다시 시도"
+            onAction={() => setReloadKey((value) => value + 1)}
+        />
+    )
   }
 
   return (
@@ -76,15 +119,28 @@ function FarmManagementPage() {
             <section className="farm-management-grid">
               {farms.map((farm) => (
                   <article className="farm-management-card" key={farm.farmId}>
+                    <div className="farm-management-image">
+                      <CatalogImage
+                          src={farm.farmImageUrl}
+                          alt={farm.farmName}
+                          fallbackText="농장 이미지 없음"
+                      />
+                    </div>
                     <div className="farm-management-card-header">
                       <div>
                         <p className="farm-management-region">{farm.region}</p>
                         <h2>{farm.farmName}</h2>
                       </div>
 
-                      <span className="farm-management-status">
-                      {farm.approvalStatus}
-                    </span>
+                      <span
+                          className={
+                            `farm-management-status ${
+                                farm.approvalStatus?.toLowerCase() ?? 'unknown'
+                            }`
+                          }
+                      >
+  {getApprovalStatusText(farm.approvalStatus)}
+</span>
                     </div>
 
                     <p className="farm-management-address">
@@ -104,7 +160,33 @@ function FarmManagementPage() {
                     <div className="farm-management-actions">
                       <button
                           type="button"
-                          onClick={() => navigate(`/seller/farms/${farm.farmId}/edit`)}
+                          onClick={() =>
+                              navigate(`/seller/products?farmId=${farm.farmId}`)
+                          }
+                      >
+                        등록 상품 보기
+                      </button>
+
+                      <button
+                          type="button"
+                          onClick={() =>
+                              navigate(`/seller/products/new?farmId=${farm.farmId}`)
+                          }
+                          disabled={farm.approvalStatus !== 'APPROVED'}
+                          title={
+                            farm.approvalStatus === 'APPROVED'
+                                ? '이 농장에 상품을 등록합니다.'
+                                : '승인 완료된 농장에만 상품을 등록할 수 있습니다.'
+                          }
+                      >
+                        상품 등록
+                      </button>
+
+                      <button
+                          type="button"
+                          onClick={() =>
+                              navigate(`/seller/farms/${farm.farmId}/edit`)
+                          }
                       >
                         농장 수정
                       </button>

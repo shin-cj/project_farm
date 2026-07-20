@@ -4,7 +4,8 @@ import axios from 'axios'
 export async function getProducts(
     categoryId,
     farmId = null,
-    productStatus = null
+    productStatus = null,
+    publicOnly = false
 ) {
   const params = {}
 
@@ -20,6 +21,10 @@ export async function getProducts(
     params.productStatus = productStatus
   }
 
+  if (publicOnly) {
+    params.publicOnly = true
+  }
+
   const response = await axios.get('/api/products', {
     params,
   })
@@ -28,8 +33,9 @@ export async function getProducts(
 }
 
 //상품 상세정보를 조회
-export async function getProduct(productId) {
-  const response = await axios.get(`/api/products/${productId}`)
+export async function getProduct(productId, publicOnly = false) {
+  const params = publicOnly ? { publicOnly: true } : {}
+  const response = await axios.get(`/api/products/${productId}`, { params })
   return response.data
 }
 
@@ -42,5 +48,23 @@ export async function createProduct(productData){
 //기존 상품을 수정
 export async function updateProduct(productId, productData){
   const response = await axios.put(`/api/products/${productId}`, productData)
+  return response.data
+}
+
+// 상품의 판매 상태만 변경합니다.
+export async function updateProductStatus(productId, productStatus) {
+  const response = await axios.patch(
+      `/api/products/${productId}/status`,
+      { productStatus }
+  )
+
+  return response.data
+}
+
+//상품의 재고 수량 수정
+export async function updateProductStock(productId, stockQuantity){
+  const response = await axios.patch(`/api/products/${productId}/stock`, {
+    stockQuantity
+  })
   return response.data
 }

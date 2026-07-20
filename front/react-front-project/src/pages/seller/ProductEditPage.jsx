@@ -5,6 +5,9 @@ import {getCategories} from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
 import {getFarms} from "../../api/farmApi.js";
 import { getLoginSellerId } from '../../config/devAccount.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 
 function ProductEditPage() {
     const {productId} = useParams()
@@ -20,6 +23,7 @@ function ProductEditPage() {
     const [submitting, setSubmitting] = useState(false)
 
     const [error, setError] = useState('')
+    const [reloadKey, setReloadKey] = useState(0)
 
     const [form, setForm] = useState({
         farmId: '',
@@ -33,11 +37,13 @@ function ProductEditPage() {
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
-        productStatus: 'ON_SALE',
+        productStatus: 'PENDING',
     })
 
     // 수정 페이지가 처음 열리거나 productId가 바뀌면 실행됩니다.
     useEffect(() => {
+        let ignore = false
+
         async function loadEditData() {
             try {
                 setLoading(true)
@@ -56,6 +62,10 @@ function ProductEditPage() {
                     getProduct(productId),
                 ])
 
+                if (ignore) {
+                    return
+                }
+
                 const ownsProduct = farmData.some(
                     (farm) => Number(farm.farmId) === Number(productData.farmId)
                 )
@@ -64,7 +74,19 @@ function ProductEditPage() {
                     throw new Error('수정 권한이 없는 상품입니다.')
                 }
 
-                setFarms(farmData)
+                const currentFarm = farmData.find(
+                    (farm) => Number(farm.farmId) === Number(productData.farmId)
+                )
+
+                if (currentFarm?.approvalStatus !== 'APPROVED') {
+                    throw new Error('승인 완료된 농장의 상품만 수정할 수 있습니다.')
+                }
+
+                setFarms(
+                    farmData.filter(
+                        (farm) => farm.approvalStatus === 'APPROVED'
+                    )
+                )
                 setCategories(categoryData)
 
                 // 백엔드에서 받아온 기존 상품 정보를 입력 칸에 넣습니다.
@@ -80,18 +102,26 @@ function ProductEditPage() {
                     harvestDate: productData.harvestDate ?? '',
                     expirationDate: productData.expirationDate ?? '',
                     productImageUrl: productData.productImageUrl ?? '',
-                    productStatus: productData.productStatus ?? 'ON_SALE',
+                    productStatus: productData.productStatus ?? 'PENDING',
                 })
             } catch (err) {
-                console.error(err)
-                setError(err.message || '상품 정보를 불러오지 못했습니다.')
+                if (!ignore) {
+                    console.error(err)
+                    setError(getApiErrorMessage(err, '상품 정보를 불러오지 못했습니다.'))
+                }
             } finally {
-                setLoading(false)
+                if (!ignore) {
+                    setLoading(false)
+                }
             }
         }
 
         loadEditData()
-    }, [productId])
+
+        return () => {
+            ignore = true
+        }
+    }, [productId, reloadKey])
 
     // 사용자가 입력 칸을 변경할 때 form의 해당 값만 변경합니다.
     function handleChange(event) {
@@ -106,6 +136,10 @@ function ProductEditPage() {
     // 상품 수정 버튼을 눌렀을 때 실행됩니다.
     async function handleSubmit(event) {
         event.preventDefault()
+
+        if (submitting) {
+            return
+        }
 
         // input에서 받은 값은 문자열이므로 숫자로 변환합니다.
         const farmId = Number(form.farmId)
@@ -167,18 +201,30 @@ function ProductEditPage() {
             navigate('/seller/products')
         } catch (err) {
             console.error(err)
-            alert('상품 수정에 실패했습니다.')
+            alert(getApiErrorMessage(err, '상품 수정에 실패했습니다.'))
         } finally {
             setSubmitting(false)
         }
     }
 
     if (loading) {
-        return <p>상품 정보를 불러오는 중입니다.</p>
+        return (
+            <CatalogPageState
+                title="상품 정보 불러오는 중"
+                message="수정할 상품 정보를 확인하고 있습니다."
+            />
+        )
     }
 
     if (error) {
-        return <p>{error}</p>
+        return (
+            <CatalogPageState
+                title="상품 정보를 불러오지 못했습니다"
+                message={error}
+                actionLabel="다시 시도"
+                onAction={() => setReloadKey((value) => value + 1)}
+            />
+        )
     }
 
     return (
@@ -195,7 +241,12 @@ function ProductEditPage() {
                 <form
                     onSubmit={handleSubmit}
                     className="product-create-form"
+                    aria-busy={submitting}
                 >
+                    <fieldset
+                        className="product-create-fields"
+                        disabled={submitting}
+                    >
                     <div className="product-create-row">
                         <div className="product-create-field">
                             <label>농장 번호</label>
@@ -204,6 +255,7 @@ function ProductEditPage() {
                                 name="farmId"
                                 value={form.farmId}
                                 onChange={handleChange}
+                                required
                             >
                                 <option value="">농장 선택</option>
 
@@ -223,6 +275,7 @@ function ProductEditPage() {
                                 name="categoryId"
                                 value={form.categoryId}
                                 onChange={handleChange}
+                                required
                             >
                                 <option value="">카테고리 선택</option>
 
@@ -245,6 +298,7 @@ function ProductEditPage() {
                             name="productName"
                             value={form.productName}
                             onChange={handleChange}
+                            required
                         />
                     </div>
 
@@ -267,6 +321,8 @@ function ProductEditPage() {
                                 name="price"
                                 value={form.price}
                                 onChange={handleChange}
+                                min="1"
+                                required
                             />
                         </div>
 
@@ -278,6 +334,8 @@ function ProductEditPage() {
                                 name="stockQuantity"
                                 value={form.stockQuantity}
                                 onChange={handleChange}
+                                min="0"
+                                required
                             />
                         </div>
 
@@ -289,6 +347,7 @@ function ProductEditPage() {
                                 value={form.unit}
                                 onChange={handleChange}
                                 placeholder="예: 5kg"
+                                required
                             />
                         </div>
                     </div>
@@ -336,27 +395,39 @@ function ProductEditPage() {
                             onChange={handleChange}
                         />
                     </div>
+                    {form.productImageUrl.trim() && (
+                        <div className="product-create-image-preview">
+                            <p>상품 이미지 미리보기</p>
 
+                            <CatalogImage
+                                src={form.productImageUrl}
+                                alt="수정할 상품 미리보기"
+                                fallbackText="이미지를 불러올 수 없습니다."
+                                fallbackClassName="product-create-image-fallback"
+                            />
+                        </div>
+                    )}
                     <div className="product-create-field">
                         <label>판매 상태</label>
 
-                        <select
+                        <input
                             name="productStatus"
                             value={form.productStatus}
-                            onChange={handleChange}
-                        >
-                            <option value="PENDING">승인 대기</option>
-                            <option value="ON_SALE">판매 중</option>
-                            <option value="SOLD_OUT">품절</option>
-                            <option value="HIDDEN">숨김</option>
-                        </select>
+                            readOnly
+                        />
+                        <small>
+                            승인 상태는 상품 관리 화면의 판매 상태 기능으로 변경합니다.
+                        </small>
                     </div>
+
+                    </fieldset>
 
                     <div className="product-create-actions">
                         <button
                             type="button"
                             className="product-create-cancel-button"
                             onClick={() => navigate('/seller/products')}
+                            disabled={submitting}
                         >
                             취소
                         </button>

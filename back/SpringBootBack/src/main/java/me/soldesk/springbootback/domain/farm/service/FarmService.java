@@ -52,6 +52,25 @@ public class FarmService {
         return toResponse(farm);
     }
 
+    //승인 완료 농장 한 건을 조회
+    public FarmResponse getPublicFarm(Long farmId){
+
+        Farm farm = farmRepository
+                .findById(farmId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "농장을 찾을 수 없습니다."
+                ));
+
+        if(!"APPROVED".equals(farm.getApprovalStatus())){
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "농장을 찾을 수 없습니다."
+            );
+        }
+        return toResponse(farm);
+    }
+
     //새로운 농장 생성
     public FarmResponse createFarm(FarmRequest request) {
 
@@ -60,6 +79,7 @@ public class FarmService {
         Farm farm = new Farm();
 
         applyRequestToFarm(farm, request);
+        farm.setApprovalStatus("PENDING");
 
         Farm savedFarm = farmRepository.save(farm);
 
@@ -104,7 +124,6 @@ public class FarmService {
         farm.setFarmDetailAddress(request.getFarmDetailAddress());
         farm.setFarmDescription(request.getFarmDescription());
         farm.setFarmImageUrl(request.getFarmImageUrl());
-        farm.setApprovalStatus(request.getApprovalStatus());
     }
 
 
@@ -130,6 +149,13 @@ public class FarmService {
 
     //농장 등록, 수정 전에 유효성 검사 메소드
     private void validateFarmRequest(FarmRequest request) {
+
+        if (request == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 정보를 입력해주세요."
+            );
+        }
 
         //판매자 번호가 0이거나 비어 있을 때
         if (request.getSellerId() == null

@@ -45,7 +45,7 @@ public class SellerOrderInfoService {
                 throw new IllegalArgumentException("해당 판매자의 농장이 아닙니다.");
             }
 
-            return sellerOrderInfoRepository.findByFarmId(farmId)
+            return sellerOrderInfoRepository.findByFarmIdOrderByOrderedAtDesc(farmId)
                     .stream()
                     .map(this::toResponse)
                     .toList();
@@ -55,7 +55,7 @@ public class SellerOrderInfoService {
             return List.of();
         }
 
-        return sellerOrderInfoRepository.findByFarmIdIn(sellerFarmIds)
+        return sellerOrderInfoRepository.findByFarmIdInOrderByOrderedAtDesc(sellerFarmIds)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -108,6 +108,8 @@ public class SellerOrderInfoService {
                 .map(Farm::getFarmName)
                 .orElse("농장 정보 없음");
 
+        Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
+
         SellerOrderInfoResponse response = new SellerOrderInfoResponse();
         response.setOrderId(order.getOrderId());
         response.setOrderNumber(order.getOrderNumber());
@@ -126,6 +128,8 @@ public class SellerOrderInfoService {
         response.setDeliveryStatus(deliveryStatus);
         response.setCourierName(courierName);
         response.setTrackingNumber(trackingNumber);
+        response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
+        response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 
         return response;
     }

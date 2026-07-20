@@ -2,12 +2,16 @@ package me.soldesk.springbootback.domain.order.service;
 
 import me.soldesk.springbootback.domain.cartitem.entity.CartItem;
 import me.soldesk.springbootback.domain.cartitem.repository.CartItemRepository;
+import me.soldesk.springbootback.domain.delivery.entity.Delivery;
+import me.soldesk.springbootback.domain.delivery.repository.DeliveryRepository;
 import me.soldesk.springbootback.domain.order.dto.OrderRequest;
 import me.soldesk.springbootback.domain.order.dto.OrderResponse;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
+import me.soldesk.springbootback.domain.payment.entity.Payment;
+import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -15,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -23,17 +28,23 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final PaymentRepository paymentRepository;
+    private final DeliveryRepository deliveryRepository;
 
     public OrderService(
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             CartItemRepository cartItemRepository,
-            ProductRepository productRepository
+            ProductRepository productRepository,
+            PaymentRepository paymentRepository,
+            DeliveryRepository deliveryRepository
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
+        this.paymentRepository = paymentRepository;
+        this.deliveryRepository = deliveryRepository;
     }
 
     @Transactional
@@ -177,6 +188,64 @@ public class OrderService {
         response.setOrderNumber(savedOrder.getOrderNumber());
         response.setOrderName(product.getProductName());
         response.setFinalPrice(finalPrice);
+
+        return response;
+    }
+
+    public List<OrderResponse> getOrdersByBuyerId(Long buyerId) {
+        return orderRepository.findByBuyerIdOrderByOrderedAtDesc(buyerId)
+                .stream()
+                .map(this::toOrderResponse)
+                .toList();
+    }
+
+    public List<OrderResponse> getAdminOrders() {
+        return orderRepository.findAllByOrderByOrderedAtDesc()
+                .stream()
+                .map(this::toOrderResponse)
+                .toList();
+    }
+
+    private OrderResponse toOrderResponse(Order order) {
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
+
+        String orderName = order.getOrderNumber();
+        if (!orderItems.isEmpty()) {
+            orderName = orderItems.get(0).getProductName();
+
+            if (orderItems.size() > 1) {
+                orderName = orderName + " 외 " + (orderItems.size() - 1) + "건";
+            }
+        }
+
+        Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
+        Optional<Delivery> deliveryOptional = deliveryRepository.findByOrderId(order.getOrderId());
+
+        OrderResponse response = new OrderResponse();
+        response.setOrderId(order.getOrderId());
+        response.setOrderNumber(order.getOrderNumber());
+        response.setOrderName(orderName);
+        response.setBuyerId(order.getBuyerId());
+        response.setFarmId(order.getFarmId());
+        response.setTotalProductPrice(order.getTotalProductPrice());
+        response.setDeliveryFee(order.getDeliveryFee());
+        response.setFinalPrice(order.getFinalPrice());
+        response.setOrderStatus(order.getOrderStatus());
+        response.setReceiverName(order.getReceiverName());
+        response.setReceiverPhone(order.getReceiverPhone());
+        response.setReceiverAddress(order.getReceiverAddress());
+        response.setReceiverDetailAddress(order.getReceiverDetailAddress());
+        response.setRequestMessage(order.getRequestMessage());
+        response.setOrderedAt(order.getOrderedAt());
+        response.setUpdatedAt(order.getUpdatedAt());
+        response.setPaymentStatus(paymentOptional.map(Payment::getPaymentStatus).orElse(null));
+        response.setPaymentMethod(paymentOptional.map(Payment::getPaymentMethod).orElse(null));
+        response.setDeliveryStatus(deliveryOptional.map(Delivery::getDeliveryStatus).orElse("READY"));
+        response.setDeliveryId(deliveryOptional.map(Delivery::getDeliveryId).orElse(null));
+        response.setCourierName(deliveryOptional.map(Delivery::getCourierName).orElse(null));
+        response.setTrackingNumber(deliveryOptional.map(Delivery::getTrackingNumber).orElse(null));
+        response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
+        response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 
         return response;
     }

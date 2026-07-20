@@ -8,6 +8,7 @@ import {
 
 const filterOptions = [
   { value: "ACTIVE", label: "처리할 주문" },
+  { value: "CANCELED", label: "취소 주문" },
   { value: "SHIPPING", label: "배송 중" },
   { value: "DELIVERED", label: "배송 완료" },
 ];
@@ -114,16 +115,24 @@ function DeliveryManagementPage() {
     return deliveryStatusLabel[status] || "배송 준비중";
   }
 
+  function isCanceledOrder(order) {
+    return order?.orderStatus === "CANCELED";
+  }
+
   function getVisibleOrders() {
+    if (deliveryFilter === "CANCELED") {
+      return orders.filter((order) => isCanceledOrder(order));
+    }
+
     if (deliveryFilter === "SHIPPING") {
-      return orders.filter((order) => order.deliveryStatus === "SHIPPING");
+      return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "SHIPPING");
     }
 
     if (deliveryFilter === "DELIVERED") {
-      return orders.filter((order) => order.deliveryStatus === "DELIVERED");
+      return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "DELIVERED");
     }
 
-    return orders.filter((order) => order.deliveryStatus !== "DELIVERED");
+    return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "READY");
   }
 
   function handleFarmChange(event) {
@@ -195,6 +204,19 @@ function DeliveryManagementPage() {
       return;
     }
 
+    if (isCanceledOrder(selectedOrder)) {
+
+
+      setError("취소된 주문은 배송 등록을 할 수 없습니다.");
+
+
+      return;
+
+
+    }
+
+
+
     if (selectedOrder.deliveryStatus !== "READY") {
       setError("이미 배송이 시작되었거나 완료된 주문은 다시 배송 등록할 수 없습니다.");
       return;
@@ -253,7 +275,7 @@ function DeliveryManagementPage() {
   const totalPages = Math.ceil(visibleOrders.length / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
   const currentOrders = visibleOrders.slice(startIndex, startIndex + ordersPerPage);
-  const isDeliveryLocked = selectedOrder && selectedOrder.deliveryStatus !== "READY";
+  const isDeliveryLocked = selectedOrder && (selectedOrder.deliveryStatus !== "READY" || isCanceledOrder(selectedOrder));
 
   return (
     <section className="page-card">
@@ -362,7 +384,10 @@ function DeliveryManagementPage() {
               </div>
             )}
 
-            {currentOrders.map((order) => (
+            {currentOrders.map((order) => {
+              const isCanceled = isCanceledOrder(order);
+
+              return (
               <button
                 key={order.orderId}
                 type="button"
@@ -370,13 +395,37 @@ function DeliveryManagementPage() {
                 style={{
                   width: "100%",
                   padding: "16px",
-                  border: selectedOrder?.orderId === order.orderId ? "2px solid #216b3a" : "1px solid #dce6dd",
+                  border: isCanceled
+                    ? "2px solid #dc2626"
+                    : selectedOrder?.orderId === order.orderId
+                      ? "2px solid #216b3a"
+                      : "1px solid #dce6dd",
                   borderRadius: "10px",
-                  background: selectedOrder?.orderId === order.orderId ? "#f2f8f3" : "#ffffff",
+                  background: isCanceled
+                    ? "#fff1f2"
+                    : selectedOrder?.orderId === order.orderId
+                      ? "#f2f8f3"
+                      : "#ffffff",
                   textAlign: "left",
                   cursor: "pointer",
                 }}
               >
+                {isCanceled && (
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      marginBottom: "10px",
+                      padding: "6px 10px",
+                      borderRadius: "999px",
+                      background: "#dc2626",
+                      color: "#ffffff",
+                      fontWeight: 900,
+                    }}
+                  >
+                    취소된 주문
+
+                  </span>
+                )}
                 <strong>주문번호: {order.orderId}</strong>
                 <p style={{ margin: "8px 0 0" }}>농장명: {order.farmName || "농장 정보 없음"}</p>
                 <p style={{ margin: "6px 0 0" }}>상품명: {order.orderName || "상품명 없음"}</p>
@@ -390,8 +439,16 @@ function DeliveryManagementPage() {
                 )}
                 <p style={{ margin: "6px 0 0" }}>주문자: {order.receiverName}</p>
                 <p style={{ margin: "6px 0 0" }}>전화번호: {order.receiverPhone}</p>
+                {order.orderStatus === "CANCELED" && (
+                    <p style={{ margin: "8px 0 0", color: "#dc2626", fontWeight: 800 }}>
+                      취소 사유: {order.refundReason || "사유 없음"}
+                    </p>
+                )}
               </button>
-            ))}
+              );
+            })}
+
+
           </div>
 
           {totalPages > 1 && (
@@ -493,7 +550,9 @@ function DeliveryManagementPage() {
               </p>
               <p>요청사항: {selectedOrder.requestMessage || "없음"}</p>
               {isDeliveryLocked && (
-                <p style={{ color: "#216b3a", fontWeight: 800 }}>이미 배송 등록된 주문입니다.</p>
+                <p style={{ color: isCanceledOrder(selectedOrder) ? "#dc2626" : "#216b3a", fontWeight: 800 }}>
+                  {isCanceledOrder(selectedOrder) ? "취소된 주문이라 배송 등록을 할 수 없습니다." : "이미 배송 등록된 주문입니다."}
+                </p>
               )}
             </div>
           ) : (
@@ -554,7 +613,7 @@ function DeliveryManagementPage() {
               cursor: isDeliveryLocked ? "not-allowed" : "pointer",
             }}
           >
-            {isDeliveryLocked ? getDeliveryStatusLabel(selectedOrder?.deliveryStatus) : "배송 등록"}
+            {isCanceledOrder(selectedOrder) ? "취소된 주문" : isDeliveryLocked ? getDeliveryStatusLabel(selectedOrder?.deliveryStatus) : "배송 등록"}
           </button>
         </form>
       </div>

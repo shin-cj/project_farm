@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { createFarm } from '../../api/farmApi.js'
 import './FarmCreatePage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 
 
 function FarmCreatePage() {
     const navigate = useNavigate()
     const loginSellerId = getLoginSellerId()
+    const [submitting, setSubmitting] = useState(false)
 
     const [form, setForm] = useState({
         sellerId: loginSellerId ?? '',
@@ -32,6 +35,10 @@ function FarmCreatePage() {
 
     async function handleSubmit(event) {
         event.preventDefault()
+
+        if (submitting) {
+            return
+        }
 
         const sellerId = Number(form.sellerId)
 
@@ -61,13 +68,16 @@ function FarmCreatePage() {
         }
 
         try {
+            setSubmitting(true)
             await createFarm(farmData)
 
             alert('농장이 등록되었습니다.')
             navigate('/seller/farms')
         } catch (err) {
             console.error(err)
-            alert('농장 등록에 실패했습니다.')
+            alert(getApiErrorMessage(err, '농장 등록에 실패했습니다.'))
+        } finally {
+            setSubmitting(false)
         }
     }
 
@@ -79,9 +89,16 @@ function FarmCreatePage() {
                 <p>상품을 판매하기 전에 농장 기본 정보를 먼저 등록합니다.</p>
             </section>
 
-            <form className="farm-create-form" onSubmit={handleSubmit}>
+            <form
+                className="farm-create-form"
+                onSubmit={handleSubmit}
+                aria-busy={submitting}
+            >
                 <div className="farm-create-card">
-                    <div className="farm-create-grid">
+                    <fieldset
+                        className="farm-create-grid"
+                        disabled={submitting}
+                    >
                         <label className="farm-create-field">
                             <span>판매자 번호</span>
 
@@ -99,6 +116,7 @@ function FarmCreatePage() {
                                 value={form.farmName}
                                 onChange={handleChange}
                                 placeholder="예: 진현농장"
+                                required
                             />
                         </label>
 
@@ -119,6 +137,7 @@ function FarmCreatePage() {
                                 value={form.region}
                                 onChange={handleChange}
                                 placeholder="예: 경기도 수원시"
+                                required
                             />
                         </label>
 
@@ -129,6 +148,7 @@ function FarmCreatePage() {
                                 value={form.farmAddress}
                                 onChange={handleChange}
                                 placeholder="기본 주소"
+                                required
                             />
                         </label>
 
@@ -162,19 +182,36 @@ function FarmCreatePage() {
                                 placeholder="이미지 URL"
                             />
                         </label>
-                    </div>
+                        {form.farmImageUrl.trim() && (
+                            <div className="farm-create-image-preview">
+                                <p>농장 대표 이미지 미리보기</p>
+
+                                <CatalogImage
+                                    src={form.farmImageUrl}
+                                    alt="등록할 농장 미리보기"
+                                    fallbackText="이미지를 불러올 수 없습니다."
+                                    fallbackClassName="farm-create-image-fallback"
+                                />
+                            </div>
+                        )}
+                    </fieldset>
 
                     <div className="farm-create-actions">
                         <button
                             type="button"
                             className="farm-create-cancel"
                             onClick={() => navigate('/seller/farms')}
+                            disabled={submitting}
                         >
                             취소
                         </button>
 
-                        <button type="submit" className="farm-create-submit">
-                            농장 등록
+                        <button
+                            type="submit"
+                            className="farm-create-submit"
+                            disabled={submitting}
+                        >
+                            {submitting ? '등록 중...' : '농장 등록'}
                         </button>
                     </div>
                 </div>

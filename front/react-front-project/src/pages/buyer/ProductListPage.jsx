@@ -1,7 +1,9 @@
 import {useEffect, useState} from 'react'
-import {Link} from 'react-router-dom'
+import {Link, useSearchParams } from 'react-router-dom'
 import {getCategories} from '../../api/categoryApi.js'
 import {getProducts} from '../../api/productApi.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 import './ProductListPage.css'
 
 function isSoldOutProduct(product) {
@@ -12,21 +14,54 @@ function isSoldOutProduct(product) {
 // 카테고리를 선택해 상품을 조회하는 구매자 상품 목록 화면입니다.
 function ProductListPage() {
     const [categories, setCategories] = useState([])
-    const [selectedCategoryId, setSelectedCategoryId] = useState(null)
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    const categoryIdFromUrl = Number(
+        searchParams.get('categoryId')
+    )
+
+    const selectedCategoryId =
+        Number.isInteger(categoryIdFromUrl)
+    && categoryIdFromUrl > 0 ? categoryIdFromUrl : null
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [categoryError, setCategoryError] = useState('')
+    const [categoryReloadKey, setCategoryReloadKey] = useState(0)
+    const [searchKeyword, setSearchKeyword] = useState('')
+    const [sortOption, setSortOption] = useState('LATEST')
 
     useEffect(() => {
+        let ignore = false
+
         async function loadCategories() {
-            const data = await getCategories()
-            setCategories(data)
+            try {
+                const data = await getCategories()
+
+                if (!ignore) {
+                    setCategories(data)
+                    setCategoryError('')
+                }
+            } catch (err) {
+                if (!ignore) {
+                    setCategoryError(getApiErrorMessage(
+                        err,
+                        '카테고리를 불러오지 못했습니다.'
+                    ))
+                }
+            }
         }
 
         loadCategories()
-    }, [])
+
+        return () => {
+            ignore = true
+        }
+    }, [categoryReloadKey])
 
     useEffect(() => {
+        let ignore = false
+
         async function loadProducts() {
             try {
                 setLoading(true)
@@ -35,7 +70,8 @@ function ProductListPage() {
                 const data = await getProducts(
                     selectedCategoryId,
                     null,
-                    null
+                    null,
+                    true
                 )
 
                 const visibleProducts = data
@@ -50,20 +86,71 @@ function ProductListPage() {
                         return Number(firstSoldOut) - Number(secondSoldOut)
                     })
 
-                setProducts(visibleProducts)
+                if (!ignore) {
+                    setProducts(visibleProducts)
+                }
             } catch (err) {
-                setError(err.message || '상품을 불러오지 못했습니다.')
+                if (!ignore) {
+                    setError(getApiErrorMessage(err, '상품을 불러오지 못했습니다.'))
+                }
             } finally {
-                setLoading(false)
+                if (!ignore) {
+                    setLoading(false)
+                }
             }
         }
 
         loadProducts()
+
+        return () => {
+            ignore = true
+        }
     }, [selectedCategoryId])
 
     function handleCategorySelect(categoryId) {
-        setSelectedCategoryId(categoryId)
+        if(categoryId === null){
+            setSearchParams({})
+            return
+        }
+
+        setSearchParams({
+            categoryId : String(categoryId),
+        })
     }
+
+    const normalizedKeyword =
+        searchKeyword.trim().toLowerCase().replace(/\s+/g, '')
+
+    const searchedProducts = products.filter((product) => {
+        const productName =
+            (product.productName ?? '').toLowerCase().replace(/\s+/g, '')
+        return productName.includes(normalizedKeyword)
+    })
+
+    const sortedProducts = [...searchedProducts].sort(
+        (firstProduct, secondProduct) => {
+            const soldOutOrder =
+                Number(isSoldOutProduct(firstProduct))
+            -Number(isSoldOutProduct(secondProduct))
+
+            if(soldOutOrder !==0){
+                return soldOutOrder
+            }
+
+            if(sortOption === 'PRICE_LOW'){
+                return Number(firstProduct.price)
+                -Number(secondProduct.price)
+            }
+
+            if(sortOption === 'PRICE_HIGH'){
+                return Number(secondProduct.price)
+                - Number(firstProduct.price)
+            }
+
+            return Number(secondProduct.productId)
+                - Number(firstProduct.productId)
+        }
+    )
 
     return (
         <main className="product-list-page">
@@ -93,6 +180,7 @@ function ProductListPage() {
                                 : 'product-category-button'
                         }
                         onClick={() => handleCategorySelect(null)}
+                        aria-pressed={selectedCategoryId === null}
                     >
                         전체 상품
                     </button>
@@ -107,11 +195,24 @@ function ProductListPage() {
                                     : 'product-category-button'
                             }
                             onClick={() => handleCategorySelect(category.categoryId)}
+                            aria-pressed={selectedCategoryId === category.categoryId}
                         >
                             {category.categoryName}
                         </button>
                     ))}
                 </div>
+
+                {categoryError && (
+                    <div className="product-list-message error" role="alert">
+                        <span>{categoryError}</span>
+                        <button
+                            type="button"
+                            onClick={() => setCategoryReloadKey((value) => value + 1)}
+                        >
+                            다시 시도
+                        </button>
+                    </div>
+                )}
             </section>
 
             <section className="product-list-section">
@@ -123,11 +224,33 @@ function ProductListPage() {
                         </p>
                     </div>
 
+                    <div className="product-list-tools">
+                        <select
+                            value={sortOption}
+                            onChange={(event) =>
+                                setSortOption(event.target.value)
+                            }
+                            className="product-sort-select"
+                            aria-label="상품 정렬 기준"
+                        >
+                            <option value="LATEST">최신순</option>
+                            <option value="PRICE_LOW">낮은 가격순</option>
+                            <option value="PRICE_HIGH">높은 가격순</option>
+                        </select>
+                        <input
+                            type="search"
+                            value={searchKeyword}
+                            onChange={(event) => setSearchKeyword(event.target.value)}
+                            placeholder="상품명을 검색하세요"
+                            className="product-search-input"
+                            aria-label="상품명 검색"
+                    />
                     <span className="product-count">
-            {products.length}개 상품
+            {searchedProducts.length}개 상품
           </span>
                 </div>
 
+                </div>
                 {loading && (
                     <div className="product-list-message">
                         상품을 불러오는 중입니다.
@@ -140,16 +263,16 @@ function ProductListPage() {
                     </div>
                 )}
 
-                {!loading && !error && products.length === 0 && (
+                {!loading && !error && searchedProducts.length === 0 && (
                     <div className="product-list-empty">
                         <h3>등록된 상품이 없습니다.</h3>
                         <p>다른 카테고리를 선택하거나 나중에 다시 확인해주세요.</p>
                     </div>
                 )}
 
-                {!loading && !error && products.length > 0 && (
+                {!loading && !error && searchedProducts.length > 0 && (
                     <div className="product-grid">
-                        {products.map((product) => (
+                        {sortedProducts.map((product) => (
                             <article
                                 key={product.productId}
                                 className={
@@ -164,14 +287,10 @@ function ProductListPage() {
       품절
     </span>
                                     )}
-                                    {product.productImageUrl ? (
-                                        <img
-                                            src={product.productImageUrl}
-                                            alt={product.productName}
-                                        />
-                                    ) : (
-                                        <span>이미지 준비중</span>
-                                    )}
+                                    <CatalogImage
+                                        src={product.productImageUrl}
+                                        alt={product.productName}
+                                    />
                                 </div>
 
                                 <div className="product-card-body">

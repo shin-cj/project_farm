@@ -41,4 +41,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("farmId") Long farmId,
             @Param("productStatus") String productStatus
     );
+
+    @Query("""
+    SELECT p
+    FROM Product p, Farm f
+    WHERE p.farmId = f.farmId
+      AND f.approvalStatus = 'APPROVED'
+      AND p.productStatus IN ('ON_SALE', 'SOLD_OUT')
+      AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+      AND (:farmId IS NULL OR p.farmId = :farmId)
+    """)
+    List<Product> findPublicProducts(
+            @Param("categoryId") Long categoryId,
+            @Param("farmId") Long farmId
+    );
 }

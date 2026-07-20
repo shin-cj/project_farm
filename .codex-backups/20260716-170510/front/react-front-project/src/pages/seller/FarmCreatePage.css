@@ -1,0 +1,118 @@
+.farm-create-page {
+    padding: 32px;
+    color: #1f2937;
+}
+
+.farm-create-header {
+    margin-bottom: 24px;
+}
+
+.farm-create-label {
+    margin: 0 0 8px;
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.farm-create-header h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+}
+
+.farm-create-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.farm-create-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.farm-create-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.farm-create-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.farm-create-field.wide {
+    grid-column: 1 / -1;
+}
+
+.farm-create-field span {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.farm-create-field input,
+.farm-create-field textarea {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.farm-create-field textarea {
+    resize: vertical;
+}
+
+.farm-create-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+}
+
+.farm-create-actions button {
+    border: 0;
+    border-radius: 6px;
+    padding: 11px 18px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.farm-create-cancel {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.farm-create-submit {
+    background-color: #16a34a;
+    color: #ffffff;
+}
+
+.farm-create-image-preview {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(420px, 100%);
+    padding: 14px;
+    border: 1px solid #dce8d7;
+    border-radius: 12px;
+    background-color: #f7faf5;
+}
+
+.farm-create-image-preview p {
+    margin: 0;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.farm-create-image-preview img {
+    width: 100%;
+    height: 240px;
+    border-radius: 10px;
+    background-color: #eef4eb;
+    object-fit: cover;
+}

@@ -138,3 +138,66 @@
 .farm-management-actions button:hover {
     background-color: #f0fdf4;
 }
+
+.farm-management-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 180px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #eef4eb;
+}
+
+.farm-management-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.farm-management-image span {
+    color: #7c8d76;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.farm-management-status.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.farm-management-status.approved {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.farm-management-status.rejected {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.farm-management-status.unknown {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.farm-management-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.farm-management-actions button:disabled {
+    border-color: #d1d5db;
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.farm-management-actions button:disabled:hover {
+    background-color: #f3f4f6;
+}
