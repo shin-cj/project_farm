@@ -10,6 +10,7 @@ import ProductDetailPage from '../pages/buyer/ProductDetailPage'
 import CartPage from '../pages/buyer/CartPage'
 import OrderPage from '../pages/buyer/OrderPage'
 import OrderHistoryPage from '../pages/buyer/OrderHistoryPage'
+import MyPage from '../pages/buyer/MyPage'
 import MarketPricePage from '../pages/buyer/MarketPricePage'
 import MarketPriceTestPage from '../pages/buyer/MarketPriceTestPage'
 import ChatbotPage from '../pages/buyer/ChatbotPage'
@@ -45,6 +46,7 @@ function AppRoutes() {
         <Route path="/market-prices" element={<MarketPricePage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/order" element={<OrderPage />} />
+        <Route path="/mypage" element={<MyPage />} />
         <Route path="/orders" element={<OrderHistoryPage />} />
         <Route path="/chatbot" element={<ChatbotPage />} />
         <Route path="/test/market-price" element={<MarketPriceTestPage />} />
