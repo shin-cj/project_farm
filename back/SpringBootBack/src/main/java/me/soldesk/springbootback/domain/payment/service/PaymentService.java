@@ -15,6 +15,8 @@ import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
 import me.soldesk.springbootback.domain.payment.dto.PaymentCancelRequest;
 import me.soldesk.springbootback.domain.payment.dto.PaymentConfirmRequest;
+import me.soldesk.springbootback.domain.payment.dto.PaymentRefundRejectRequest;
+import me.soldesk.springbootback.domain.payment.dto.PaymentRefundRequest;
 import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
@@ -230,5 +232,116 @@ public class PaymentService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    @Transactional
+    public Map<String,Object> requestRefund(Long orderId, PaymentRefundRequest request){
+        Order order = orderRepository.findById(orderId).orElseThrow(()->new IllegalArgumentException("주문 정보가 없습니다."));
+
+        if(!"PAID".equals(order.getOrderStatus())){
+            throw new IllegalArgumentException("결제 완료 주문만 환불 가능합니다.");
+        }
+
+        Delivery delivery = deliveryRepository.findByOrderId(orderId).orElseThrow(()->new IllegalArgumentException("배송 완료 후 환불 요청 가능합니다."));
+
+        if(!"DELIVERED".equals(delivery.getDeliveryStatus())){
+            throw new IllegalArgumentException("배송 완료 상품만 환불 요청 가능합니다.");
+        }
+
+        Payment payment = paymentRepository.findByOrderId(orderId).orElseThrow(()->new IllegalArgumentException("결제 정보가 없습니다."));
+
+        String refundReason = "하자 접수";
+        if(request != null && hasText(request.getRefundReason())){
+            refundReason = request.getRefundReason().trim();
+        }
+
+        order.setOrderStatus("REFUND_REQUESTED");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        payment.setPaymentStatus("REFUND_REQUESTED");
+        payment.setRefundReason(refundReason);
+        payment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
+        return Map.of("orderId",order.getOrderId(),
+                        "orderStatus",order.getOrderStatus(),
+                        "paymentStatus",payment.getPaymentStatus(),
+                        "refundReason",refundReason);
+    }
+
+    @Transactional
+    public Map<String, Object> approveRefund(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보가 없습니다."));
+
+        if (!"REFUND_REQUESTED".equals(order.getOrderStatus())) {
+            throw new IllegalArgumentException("환불 요청 상태의 주문만 승인할 수 있습니다.");
+        }
+
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보가 없습니다."));
+
+        String refundReason = payment.getRefundReason();
+        if (!hasText(refundReason)) {
+            refundReason = "관리자 환불 승인";
+        }
+
+        String authorization = "Basic " + Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> tossResponse = restClient.post()
+                .uri("/v1/payments/{paymentKey}/cancel", payment.getPgPaymentId())
+                .header("Authorization", authorization)
+                .body(Map.of("cancelReason", refundReason))
+                .retrieve()
+                .body(Map.class);
+
+        order.setOrderStatus("REFUNDED");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        payment.setPaymentStatus("REFUNDED");
+        payment.setRefundReason(refundReason);
+        payment.setRefundedAt(LocalDateTime.now());
+        payment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
+        return tossResponse;
+    }
+
+    @Transactional
+    public Map<String, Object> rejectRefund(Long orderId, PaymentRefundRejectRequest request) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보가 없습니다."));
+
+        if (!"REFUND_REQUESTED".equals(order.getOrderStatus())) {
+            throw new IllegalArgumentException("환불 요청 상태의 주문만 반려할 수 있습니다.");
+        }
+
+        Payment payment = paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보가 없습니다."));
+
+        String rejectReason = "환불 기준에 맞지 않습니다.";
+        if (request != null && hasText(request.getRejectReason())) {
+            rejectReason = request.getRejectReason().trim();
+        }
+
+        order.setOrderStatus("PAID");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        payment.setPaymentStatus("DONE");
+        payment.setRefundReason(rejectReason);
+        payment.setRefundedAt(null);
+        payment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+
+        return Map.of(
+                "orderId", order.getOrderId(),
+                "orderStatus", order.getOrderStatus(),
+                "paymentStatus", payment.getPaymentStatus(),
+                "rejectReason", rejectReason
+        );
     }
 }

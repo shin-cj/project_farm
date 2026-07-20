@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
-import { cancelPayment } from "../../api/paymentApi.js";
+import { cancelPayment, requestRefund } from "../../api/paymentApi.js";
 
 function getLoginUser() {
   try {
@@ -48,6 +48,14 @@ const deliveryStatusLabel = {
 function getCancelGuide(order) {
   if (order.orderStatus === "CANCELED") {
     return "이미 취소된 주문입니다.";
+  }
+
+  if (order.orderStatus === "REFUND_REQUESTED") {
+    return "환불 요청 처리 중인 주문입니다.";
+  }
+
+  if (order.orderStatus === "REFUNDED") {
+    return "환불 완료된 주문입니다.";
   }
 
   if (order.orderStatus !== "PAID") {
@@ -131,6 +139,26 @@ function OrderHistoryPage() {
     }
   }
 
+  async function handleRequestRefund(order) {
+    if (order.orderStatus !== "PAID" || order.deliveryStatus !== "DELIVERED") {
+      alert("배송 완료 상품만 환불 요청할 수 있습니다.");
+      return;
+    }
+
+    const refundReason = window.prompt("환불 사유를 입력해주세요.", "상품 하자");
+    if (refundReason === null) {
+      return;
+    }
+
+    try {
+      await requestRefund(order.orderId, refundReason || "상품 하자");
+      alert("환불 요청이 접수되었습니다.");
+      await fetchOrders();
+    } catch (error) {
+      alert(error.message || "환불 요청에 실패했습니다.");
+    }
+  }
+
   const totalPages = Math.ceil(orders.length / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
   const currentOrders = orders.slice(startIndex, startIndex + ordersPerPage);
@@ -172,6 +200,7 @@ function OrderHistoryPage() {
         {currentOrders.map((order) => {
           const cancelGuide = getCancelGuide(order);
           const canCancel = !cancelGuide;
+          const canRequestRefund = order.orderStatus === "PAID" && order.deliveryStatus === "DELIVERED";
 
           return (
             <article
@@ -220,27 +249,29 @@ function OrderHistoryPage() {
                     {cancelGuide}
                   </p>
                 )}
-                {order.orderStatus === "CANCELED" && (
-                    <div
-                        style={{
-                          marginTop: "14px",
-                          padding: "14px",
-                          borderRadius: "8px",
-                          background: "#fff1f2",
-                          border: "1px solid #fecdd3",
-                          color: "#991b1b",
-                          fontWeight: 700,
-                        }}
-                    >
-                      <p style={{ margin: "0 0 6px" }}>
-                        취소 사유: {order.refundReason || "사유 없음"}
-                      </p>
-                      <p style={{ margin: 0 }}>
-                        취소일: {formatDate(order.refundedAt)}
-                      </p>
-                    </div>
-                )}
 
+                {(order.orderStatus === "CANCELED" || order.orderStatus === "REFUND_REQUESTED" || order.orderStatus === "REFUNDED") && (
+                  <div
+                    style={{
+                      marginTop: "14px",
+                      padding: "14px",
+                      borderRadius: "8px",
+                      background: "#fff1f2",
+                      border: "1px solid #fecdd3",
+                      color: "#991b1b",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <p style={{ margin: "0 0 6px" }}>
+                      사유: {order.refundReason || "사유 없음"}
+                    </p>
+                    {order.refundedAt && (
+                      <p style={{ margin: 0 }}>
+                        처리일: {formatDate(order.refundedAt)}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "grid", alignContent: "center", gap: "10px" }}>
@@ -279,6 +310,24 @@ function OrderHistoryPage() {
                 >
                   {cancelingOrderId === order.orderId ? "취소 처리 중..." : "주문 취소"}
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleRequestRefund(order)}
+                  disabled={!canRequestRefund}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    border: "none",
+                    borderRadius: "8px",
+                    background: canRequestRefund ? "#92400e" : "#d1d5db",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    cursor: canRequestRefund ? "pointer" : "not-allowed",
+                  }}
+                >
+                  환불 요청
+                </button>
               </div>
             </article>
           );
@@ -286,14 +335,7 @@ function OrderHistoryPage() {
       </div>
 
       {totalPages > 1 && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "8px",
-            marginTop: "24px",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "24px" }}>
           {Array.from({ length: totalPages }, (_, index) => {
             const pageNumber = index + 1;
             const isActive = currentPage === pageNumber;
