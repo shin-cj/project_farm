@@ -35,6 +35,7 @@ function SellerDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [sellerOrders,setSellerOrders] = useState([])
+  const [hoveredSalesPoint, setHoveredSalesPoint] = useState(null)
 
   useEffect(() => {
     async function loadDashboard() {
@@ -125,7 +126,7 @@ function SellerDashboardPage() {
 // 매출 데이터를 SVG 그래프 좌표로 변환합니다.
   const hasSales = chartSalesData.some((item) => item.sales > 0)
 
-  const salesChartPointsList = chartSalesData
+  const salesChartPointList = chartSalesData
       .map((item, index) => {
         const x = chartSalesData.length === 1 ? 50 : (index / (chartSalesData.length - 1)) * 100
 
@@ -134,7 +135,7 @@ function SellerDashboardPage() {
         return {x,y}
       })
 
-  const salesChartPath = salesChartPointsList.map((point,index,points)=>{
+  const salesChartPath = salesChartPointList.map((point,index,points)=>{
     if(index===0){
       return `M ${point.x} ${point.y}`
     }
@@ -145,12 +146,14 @@ function SellerDashboardPage() {
     return `C ${controlX} ${previousPoint.y},${controlX} ${point.y},${point.x} ${point.y}`
   }).join(' ')
 
-  const salesChartAreaPath = `
-  M 0 90
-  ${salesChartPath}
-  L 100 90
-  Z
-`
+  const salesChartAreaPath = salesChartPointList.length === 0
+      ? ''
+      : `
+        M ${salesChartPointList[0].x} 90
+        ${salesChartPath}
+        L ${salesChartPointList[salesChartPointList.length - 1].x} 90
+        Z
+      `
 
 // 판매 중·품절 외의 PENDING, HIDDEN 상품 개수입니다.
   const otherProductCount =
@@ -243,6 +246,46 @@ function SellerDashboardPage() {
                     d={salesChartPath}
                 />
               </svg>
+
+              {salesChartPointList.map((point,index) => {
+                const item = chartSalesData[index]
+
+                return (
+                    <button
+                        key={item.date}
+                        type="button"
+                        className="seller-dashboard-chart-point"
+                        style={{
+                          left: `${point.x}%`,
+                          top: `${point.y}%`,
+                        }}
+                        aria-label={`${item.date} 매출 ${item.sales.toLocaleString()}원`}
+                        onMouseEnter={() => setHoveredSalesPoint({ ...item, ...point })}
+                        onMouseLeave={() => setHoveredSalesPoint(null)}
+                        onFocus={() => setHoveredSalesPoint({ ...item, ...point })}
+                        onBlur={() => setHoveredSalesPoint(null)}
+                    />
+                )
+              })}
+
+              {hoveredSalesPoint && (
+                  <div
+                      className="seller-dashboard-chart-tooltip"
+                      style={{
+                        left: `${hoveredSalesPoint.x}%`,
+                        top: `${hoveredSalesPoint.y}%`,
+                      }}
+                  >
+                    <strong>{hoveredSalesPoint.date}</strong>
+                    <span>매출: {hoveredSalesPoint.sales.toLocaleString()}원</span>
+                    <span>주문 수: {hoveredSalesPoint.orderCount}건</span>
+                    <span>
+                      상품: {hoveredSalesPoint.soldProducts?.length
+                        ? hoveredSalesPoint.soldProducts.join(', ')
+                        : '판매 상품 없음'}
+                    </span>
+                  </div>
+              )}
             </div>
 
             <div className="seller-dashboard-chart-dates">
