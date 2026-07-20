@@ -294,6 +294,9 @@ function ProductListPage() {
                                 </div>
 
                                 <div className="product-card-body">
+                                    <p className="product-farm-name">
+                                        {product.farmName || '농장 정보 없음'}
+                                    </p>
                                     <p className="product-origin">
                                         {product.origin || '원산지 미등록'}
                                     </p>

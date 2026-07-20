@@ -16,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -59,10 +61,23 @@ public class ProductService {
             );
         }
 
+        Map<Long, String> farmNameById = farmRepository.findAllById(
+                products.stream()
+                        .map(Product::getFarmId)
+                        .distinct()
+                        .toList()
+        ).stream().collect(Collectors.toMap(
+                Farm::getFarmId,
+                Farm::getFarmName
+        ));
+
         List<ProductResponse> responses = new ArrayList<>();
 
         for (Product product : products) {
-            responses.add(toResponse(product));
+            responses.add(toResponse(
+                    product,
+                    farmNameById.get(product.getFarmId())
+            ));
         }
 
         return responses;
@@ -220,9 +235,23 @@ public class ProductService {
 
     //Product 엔티티를 ProductResponse DTO로 변환
     private ProductResponse toResponse(Product product) {
+
+        String farmName = farmRepository.findById(product.getFarmId())
+                .map(Farm::getFarmName)
+                .orElse("농장 정보 없음");
+
+        return toResponse(product, farmName);
+    }
+
+    private ProductResponse toResponse(Product product, String farmName) {
+
         ProductResponse response = new ProductResponse();
+
         response.setProductId(product.getProductId());
         response.setFarmId(product.getFarmId());
+        response.setFarmName(
+                farmName == null ? "농장 정보 없음" : farmName
+        );
         response.setCategoryId(product.getCategoryId());
         response.setProductName(product.getProductName());
         response.setDescription(product.getDescription());
@@ -236,6 +265,7 @@ public class ProductService {
         response.setProductStatus(product.getProductStatus());
         response.setCreatedAt(product.getCreatedAt());
         response.setUpdatedAt(product.getUpdatedAt());
+
         return response;
     }
 
