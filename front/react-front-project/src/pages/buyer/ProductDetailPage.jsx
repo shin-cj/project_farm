@@ -135,6 +135,13 @@ function ProductDetailPage() {
       product.productStatus === 'ON_SALE'
       && Number(product.stockQuantity) > 0
 
+  const numericQuantity = Number(quantity)
+
+  const isValidQuantity =
+      Number.isInteger(numericQuantity)
+  && numericQuantity >= 1
+  && numericQuantity <= Number(product.stockQuantity)
+
   const unavailableMessage =
       Number(product.stockQuantity) <= 0
       || product.productStatus === 'SOLD_OUT'
@@ -144,6 +151,19 @@ function ProductDetailPage() {
               : product.productStatus === 'HIDDEN'
                   ? '판매가 중지된 상품입니다.'
                   : '현재 구매할 수 없는 상품입니다.'
+
+  function handleDecreaseQuantity(){
+    const currentQuantity = Number(quantity) || 1
+
+    setQuantity(Math.max(1, currentQuantity - 1))
+  }
+
+  function handleIncreaseQuantity() {
+    const currentQuantity = Number(quantity) || 1
+    const stockQuantity = Number(product.stockQuantity)
+
+    setQuantity(Math.min(stockQuantity, currentQuantity + 1))
+  }
 
   function handleDirectOrder() {
     const orderQuantity = Number(quantity)
@@ -158,9 +178,8 @@ function ProductDetailPage() {
       navigate('/login')
       return
     }
-
-    if (orderQuantity < 1) {
-      alert('수량은 1개 이상 선택해주세요.')
+    if (!Number.isInteger(orderQuantity) || orderQuantity < 1) {
+      alert('수량은 1개 이상의 정수로 입력해주세요.')
       return
     }
 
@@ -264,22 +283,58 @@ function ProductDetailPage() {
             </div>
           </dl>
 
+          <div className="product-detail-quantity">
+            <span>구매 수량</span>
+
+            <div className="product-detail-quantity-control">
+              <button
+                  type="button"
+                  onClick={handleDecreaseQuantity}
+                  disabled={numericQuantity <= 1}
+                  aria-label="수량 줄이기"
+              >
+                −
+              </button>
+
+              <input
+                  type="number"
+                  min="1"
+                  max={product.stockQuantity}
+                  value={quantity}
+                  onChange={(event) => setQuantity(event.target.value)}
+                  aria-label="구매 수량"
+              />
+
+              <button
+                  type="button"
+                  onClick={handleIncreaseQuantity}
+                  disabled={numericQuantity >= Number(product.stockQuantity)}
+                  aria-label="수량 늘리기"
+              >
+                +
+              </button>
+            </div>
+
+            <strong>
+              총 {(product.price * (numericQuantity || 0)).toLocaleString()}원
+            </strong>
+          </div>
+
           <div className="product-detail-actions">
             <AddCartButton
                 productId={product.productId}
                 userid={userid}
-                disabled={!isPurchasable}
+                quantity={numericQuantity}
+                disabled={!isPurchasable || !isValidQuantity}
                 className="product-detail-cart-button"
             />
             <button
                 type="button"
                 className="product-detail-order-link"
                 onClick={() => {
-                  setQuantity(1)
                   setIsOrderModalOpen(true)
                 }}
-                disabled={!isPurchasable}
-            >
+                disabled={!isPurchasable || !isValidQuantity}            >
               바로 주문하기
             </button>
             {!isPurchasable && (
