@@ -1,8 +1,257 @@
-import PagePlaceholder from '../../components/common/PagePlaceholder'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import orderApi from "../../api/orderApi.js";
+import { cancelPayment } from "../../api/paymentApi.js";
 
-// 주문 내역 기능을 담당하는 페이지 컴포넌트입니다.
-function OrderHistoryPage() {
-  return <PagePlaceholder title="주문 내역" description="농가별 주문, 결제, 배송 상태를 확인하는 화면입니다." />
+function getLoginUser() {
+  try {
+    const storedUser = localStorage.getItem("loginUser");
+    return storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    localStorage.removeItem("loginUser");
+    return null;
+  }
 }
 
-export default OrderHistoryPage
+function formatPrice(value) {
+  return `${Number(value || 0).toLocaleString()}원`;
+}
+
+function formatDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Date(value).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+const orderStatusLabel = {
+  PAYMENT_WAIT: "결제 대기",
+  PAID: "결제 완료",
+  CANCELED: "주문 취소",
+  REFUND_REQUESTED: "환불 요청",
+  REFUNDED: "환불 완료",
+};
+
+const deliveryStatusLabel = {
+  READY: "배송 준비중",
+  SHIPPING: "배송 중",
+  DELIVERED: "배송 완료",
+};
+
+function getCancelGuide(order) {
+  if (order.orderStatus === "CANCELED") {
+    return "이미 취소된 주문입니다.";
+  }
+
+  if (order.orderStatus !== "PAID") {
+    return "결제 완료 주문만 취소할 수 있습니다.";
+  }
+
+  if (order.deliveryStatus === "SHIPPING") {
+    return "배송 중인 상품은 취소할 수 없습니다.";
+  }
+
+  if (order.deliveryStatus === "DELIVERED") {
+    return "배송 완료 상품은 하자 접수 후 환불 가능합니다.";
+  }
+
+  return "";
+}
+
+function OrderHistoryPage() {
+  const navigate = useNavigate();
+  const loginUser = getLoginUser();
+  const buyerId = loginUser?.userId;
+
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [cancelingOrderId, setCancelingOrderId] = useState(null);
+
+  async function fetchOrders() {
+    if (!buyerId) {
+      setError("로그인 후 주문 내역을 확인할 수 있습니다.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+      const response = await orderApi.getOrdersByBuyer(buyerId);
+      setOrders(response.data);
+    } catch {
+      setError("주문 내역을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchOrders();
+  }, [buyerId]);
+
+  async function handleCancelOrder(order) {
+    const cancelGuide = getCancelGuide(order);
+
+    if (cancelGuide) {
+      alert(cancelGuide);
+      return;
+    }
+
+    const cancelReason = window.prompt("취소 사유를 입력해주세요.", "구매자 요청");
+    if (cancelReason === null) {
+      return;
+    }
+
+    try {
+      setCancelingOrderId(order.orderId);
+      await cancelPayment(order.orderId, cancelReason || "구매자 요청");
+      alert("주문 취소가 완료되었습니다.");
+      await fetchOrders();
+    } catch (error) {
+      alert(error.message || "주문 취소에 실패했습니다.");
+    } finally {
+      setCancelingOrderId(null);
+    }
+  }
+
+  return (
+    <section style={{ maxWidth: "1120px", margin: "0 auto", padding: "42px 20px 70px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: "16px", marginBottom: "24px" }}>
+        <div>
+          <p style={{ margin: "0 0 8px", color: "#4f8c60", fontWeight: 800 }}>My Page</p>
+          <h1 style={{ margin: 0, fontSize: "32px", color: "#1f2f24" }}>주문 내역</h1>
+        </div>
+        <button
+          type="button"
+          onClick={fetchOrders}
+          style={{
+            padding: "11px 16px",
+            border: "1px solid #b9d5c0",
+            borderRadius: "8px",
+            background: "#ffffff",
+            color: "#2f6f42",
+            fontWeight: 800,
+            cursor: "pointer",
+          }}
+        >
+          새로고침
+        </button>
+      </div>
+
+      {loading && <p style={{ color: "#5f6f64" }}>주문 내역을 불러오는 중입니다.</p>}
+      {error && <p style={{ color: "crimson", fontWeight: 700 }}>{error}</p>}
+
+      {!loading && !error && orders.length === 0 && (
+        <div style={{ padding: "34px", border: "1px solid #dce6dd", borderRadius: "10px", background: "#fbfdfb" }}>
+          아직 주문 내역이 없습니다.
+        </div>
+      )}
+
+      <div style={{ display: "grid", gap: "16px" }}>
+        {orders.map((order) => {
+          const cancelGuide = getCancelGuide(order);
+          const canCancel = !cancelGuide;
+
+          return (
+            <article
+              key={order.orderId}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 220px",
+                gap: "20px",
+                padding: "22px",
+                border: "1px solid #dce6dd",
+                borderRadius: "10px",
+                background: "#ffffff",
+                boxShadow: "0 8px 22px rgba(31, 47, 36, 0.06)",
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
+                  <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#e5f4ea", color: "#216b3a", fontWeight: 800 }}>
+                    {orderStatusLabel[order.orderStatus] || order.orderStatus}
+                  </span>
+                  <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontWeight: 800 }}>
+                    {deliveryStatusLabel[order.deliveryStatus] || "배송 준비중"}
+                  </span>
+                </div>
+
+                <h2 style={{ margin: "0 0 10px", fontSize: "22px", color: "#1f2f24" }}>
+                  {order.orderName || "주문 상품"}
+                </h2>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px 20px", color: "#3f4f44", lineHeight: 1.7 }}>
+                  <span>주문번호: {order.orderNumber}</span>
+                  <span>주문일: {formatDate(order.orderedAt)}</span>
+                  <span>결제수단: {order.paymentMethod || "결제 정보 없음"}</span>
+                  <span>결제금액: {formatPrice(order.finalPrice)}</span>
+                  <span>받는 사람: {order.receiverName}</span>
+                  <span>전화번호: {order.receiverPhone}</span>
+                  <span style={{ gridColumn: "1 / -1" }}>
+                    배송지: {[order.receiverAddress, order.receiverDetailAddress].filter(Boolean).join(" ")}
+                  </span>
+                  {order.courierName && <span>택배사: {order.courierName}</span>}
+                  {order.trackingNumber && <span>송장번호: {order.trackingNumber}</span>}
+                </div>
+
+                {cancelGuide && (
+                  <p style={{ margin: "14px 0 0", color: "#a16207", fontWeight: 700 }}>
+                    {cancelGuide}
+                  </p>
+                )}
+              </div>
+
+              <div style={{ display: "grid", alignContent: "center", gap: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/deliverypage?orderId=${order.orderId}`)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    border: "1px solid #4f8c60",
+                    borderRadius: "8px",
+                    background: "#ffffff",
+                    color: "#2f6f42",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  배송 조회
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleCancelOrder(order)}
+                  disabled={!canCancel || cancelingOrderId === order.orderId}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    border: "none",
+                    borderRadius: "8px",
+                    background: canCancel ? "#b91c1c" : "#d1d5db",
+                    color: "#ffffff",
+                    fontWeight: 800,
+                    cursor: canCancel ? "pointer" : "not-allowed",
+                  }}
+                >
+                  {cancelingOrderId === order.orderId ? "취소 처리 중..." : "주문 취소"}
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export default OrderHistoryPage;

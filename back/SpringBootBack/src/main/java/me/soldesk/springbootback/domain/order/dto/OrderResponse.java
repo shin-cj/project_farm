@@ -37,6 +37,16 @@ public class OrderResponse {
     /** 주문 처리 상태 */
     private String orderStatus;
 
+    private String paymentStatus;
+
+    private String paymentMethod;
+
+    private String deliveryStatus;
+
+    private String courierName;
+
+    private String trackingNumber;
+
     /** 수령인 이름 */
     private String receiverName;
 
