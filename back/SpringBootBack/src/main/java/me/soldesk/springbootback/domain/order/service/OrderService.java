@@ -199,6 +199,13 @@ public class OrderService {
                 .toList();
     }
 
+    public List<OrderResponse> getAdminOrders() {
+        return orderRepository.findAllByOrderByOrderedAtDesc()
+                .stream()
+                .map(this::toOrderResponse)
+                .toList();
+    }
+
     private OrderResponse toOrderResponse(Order order) {
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
 
@@ -234,6 +241,7 @@ public class OrderService {
         response.setPaymentStatus(paymentOptional.map(Payment::getPaymentStatus).orElse(null));
         response.setPaymentMethod(paymentOptional.map(Payment::getPaymentMethod).orElse(null));
         response.setDeliveryStatus(deliveryOptional.map(Delivery::getDeliveryStatus).orElse("READY"));
+        response.setDeliveryId(deliveryOptional.map(Delivery::getDeliveryId).orElse(null));
         response.setCourierName(deliveryOptional.map(Delivery::getCourierName).orElse(null));
         response.setTrackingNumber(deliveryOptional.map(Delivery::getTrackingNumber).orElse(null));
         response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));

@@ -32,6 +32,11 @@ public class OrderController {
         return orderService.createOrderFromProduct(request);
     }
 
+    @GetMapping("/admin")
+    public List<OrderResponse> getAdminOrders() {
+        return orderService.getAdminOrders();
+    }
+
     @GetMapping
     public List<OrderResponse> getOrders(@RequestParam Long buyerId) {
         return orderService.getOrdersByBuyerId(buyerId);
