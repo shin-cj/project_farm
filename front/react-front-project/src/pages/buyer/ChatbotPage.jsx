@@ -166,7 +166,7 @@ function ChatbotPage() {
         ...item,
         status: 'complete',
         response: data,
-        reponseTime: getTime()
+        responseTime: getTime()
          }
         : item
         )

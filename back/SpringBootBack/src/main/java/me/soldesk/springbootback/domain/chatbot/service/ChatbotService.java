@@ -1,10 +1,7 @@
 package me.soldesk.springbootback.domain.chatbot.service;
 
 import lombok.RequiredArgsConstructor;
-import me.soldesk.springbootback.domain.chatbot.dto.ChatbotRequest;
-import me.soldesk.springbootback.domain.chatbot.dto.ChatbotResponse;
-import me.soldesk.springbootback.domain.chatbot.dto.ChatbotSaveRequest;
-import me.soldesk.springbootback.domain.chatbot.dto.RecommendedProductResponse;
+import me.soldesk.springbootback.domain.chatbot.dto.*;
 import me.soldesk.springbootback.domain.chatbot.entity.Chatbot;
 import me.soldesk.springbootback.domain.chatbot.repository.ChatbotRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
@@ -12,6 +9,7 @@ import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.external.openai.OpenAiRecipeClient;
 import me.soldesk.springbootback.external.openai.dto.OpenAiRecipeResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -138,6 +136,30 @@ public class ChatbotService {
         response.setCreatedAt(savedChatbot.getCreatedAt());
 
         return response;
+    }
+
+    private SavedRecipeResponse toSavedRecipeResponse(Chatbot chatbot){
+        SavedRecipeResponse response = new SavedRecipeResponse();
+
+        response.setChatbotId(chatbot.getChatbotId());
+        response.setUserId(chatbot.getUserId());
+        response.setQuestion(chatbot.getObj1());
+        response.setRecipeTitle(chatbot.getRecipeTitle());
+        response.setRecipe(chatbot.getRecipe());
+        response.setRemark(chatbot.getRemark());
+        response.setCreatedAt(chatbot.getCreatedAt());
+
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<SavedRecipeResponse>getSavedRecipes(Long userId){
+
+        return chatbotRepository.findSavedRecipesByUserId(userId)
+                .stream()
+                .map(this::toSavedRecipeResponse)
+                .toList();
+
     }
 
 
