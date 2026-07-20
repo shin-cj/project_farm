@@ -36,7 +36,8 @@ public class PaymentService {
             @Value("${tosspayments.secret-key}") String secretKey,
             PaymentRepository paymentRepository,
             OrderRepository orderRepository,
-            OrderItemRepository orderItemRepository, ProductRepository productRepository) {
+            OrderItemRepository orderItemRepository,
+            ProductRepository productRepository) {
         this.restClient = restClientBuilder
                 .baseUrl("https://api.tosspayments.com")
                 .build();
@@ -49,34 +50,30 @@ public class PaymentService {
 
     @Transactional
     public Map<String, Object> confirmPayment(PaymentConfirmRequest request) {
+        if (request.getOrderId() == null || request.getOrderId().isBlank()) {
+            throw new IllegalArgumentException("주문번호가 없습니다.");
+        }
 
-            if (request.getOrderId() == null || request.getOrderId().isBlank()) {
-                throw new IllegalArgumentException("주문번호가 없습니다.");
-            }
+        if (request.getPaymentKey() == null || request.getPaymentKey().isBlank()) {
+            throw new IllegalArgumentException("결제 키가 없습니다.");
+        }
 
-            if (request.getPaymentKey() == null || request.getPaymentKey().isBlank()) {
-                throw new IllegalArgumentException("결제 키가 없습니다.");
-            }
+        if (request.getAmount() == null || request.getAmount() <= 0) {
+            throw new IllegalArgumentException("결제 금액이 올바르지 않습니다.");
+        }
 
-            if (request.getAmount() == null || request.getAmount() <= 0) {
-                throw new IllegalArgumentException("결제 금액이 올바르지 않습니다.");
-            }
+        Order order = orderRepository.findByOrderNumber(request.getOrderId())
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보를 찾을 수 없습니다."));
 
-            Order order = orderRepository.findByOrderNumber(request.getOrderId())
-                    .orElseThrow(() ->
-                            new IllegalArgumentException("주문 정보를 찾을 수 없습니다.")
-                    );
+        if (!order.getFinalPrice().equals(request.getAmount())) {
+            throw new IllegalArgumentException("주문 금액과 결제 금액이 일치하지 않습니다.");
+        }
 
-            if (!order.getFinalPrice().equals(request.getAmount())) {
-                throw new IllegalArgumentException("주문 금액과 결제 금액이 일치하지 않습니다.");
-            }
+        if (!"PAYMENT_WAIT".equals(order.getOrderStatus())) {
+            throw new IllegalArgumentException("이미 결제했거나 결제할 수 없는 주문입니다.");
+        }
 
-            if (!"PAYMENT_WAIT".equals(order.getOrderStatus())) {
-                throw new IllegalArgumentException("이미 결제되었거나 결제할 수 없는 주문입니다.");
-            }
-
-        List<OrderItem> orderItems =
-                orderItemRepository.findByOrderId(order.getOrderId());
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
 
         if (orderItems.isEmpty()) {
             throw new IllegalArgumentException("주문 상품 정보가 없습니다.");
@@ -86,20 +83,16 @@ public class PaymentService {
 
         for (OrderItem item : orderItems) {
             Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() ->
-                            new IllegalArgumentException("상품 정보가 없습니다.")
-                    );
+                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
 
             if (product.getStockQuantity() < item.getQuantity()) {
-                throw new IllegalArgumentException(
-                        product.getProductName() + " 상품의 재고가 부족합니다."
-                );
+                throw new IllegalArgumentException(product.getProductName() + " 상품의 재고가 부족합니다.");
             }
 
             orderedProducts.add(product);
         }
 
-            String authorization = "Basic " + Base64.getEncoder()
+        String authorization = "Basic " + Base64.getEncoder()
                 .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
 
         Map<String, Object> tossResponse = restClient.post()
@@ -117,36 +110,50 @@ public class PaymentService {
             OrderItem item = orderItems.get(i);
             Product product = orderedProducts.get(i);
 
-            product.setStockQuantity(
-                    product.getStockQuantity() - item.getQuantity()
-            );
+            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
 
-            //결제 후 재고 0이면 품절 처리하는거 추가했습니다 - 진현
-            if (product.getStockQuantity() == 0
-                    && "ON_SALE".equals(product.getProductStatus())) {
-
+            if (product.getStockQuantity() == 0 && "ON_SALE".equals(product.getProductStatus())) {
                 product.setProductStatus("SOLD_OUT");
             }
 
             productRepository.save(product);
         }
 
-        // Toss 승인 성공 후 DB에 결제 정보 저장
         Payment payment = new Payment();
-
         payment.setOrderId(order.getOrderId());
         payment.setPaymentAmount(request.getAmount());
         payment.setPgPaymentId(request.getPaymentKey());
-        // Toss 응답에서 결제 상태와 결제 수단 추출
         payment.setPaymentStatus(String.valueOf(tossResponse.get("status")));
         payment.setPaymentMethod(String.valueOf(tossResponse.get("method")));
         payment.setPaidAt(LocalDateTime.now());
-
         paymentRepository.save(payment);
 
+        updateOrderReceiverInfo(order, request);
         order.setOrderStatus("PAID");
         orderRepository.save(order);
 
         return tossResponse;
+    }
+
+    private void updateOrderReceiverInfo(Order order, PaymentConfirmRequest request) {
+        if (hasText(request.getReceiverName())) {
+            order.setReceiverName(request.getReceiverName().trim());
+        }
+
+        if (hasText(request.getReceiverPhone())) {
+            order.setReceiverPhone(request.getReceiverPhone().trim());
+        }
+
+        if (hasText(request.getReceiverAddress())) {
+            order.setReceiverAddress(request.getReceiverAddress().trim());
+        }
+
+        if (request.getReceiverDetailAddress() != null) {
+            order.setReceiverDetailAddress(request.getReceiverDetailAddress().trim());
+        }
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 }
