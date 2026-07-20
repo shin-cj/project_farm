@@ -13,6 +13,7 @@ function isPurchasableCartItem(item){
 function CartPage() {
   const [cartItems, setCartItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [quantityInputs, setQuantityInputs] = useState({});
@@ -54,6 +55,39 @@ function CartPage() {
       alert("장바구니 상품 삭제에 실패했습니다.");
     }
   };
+
+  const handleDeleteSelected = async () => {
+    if(selectedItems.length === 0){
+      alert("삭제할 상품을 선택해주세요.")
+      return
+    }
+
+    if(!confirm(`선택한 ${selectedItems.length}개 상품을 삭제 할까요?`)){
+      return
+    }
+
+    try {
+      await Promise.all(
+          selectedItems.map(item => cartApi.deleteCartItem(item.cart_item_id))
+      )
+
+      await loadCartItems()
+
+      setSelectedIds([])
+      setSelectedItem(null)
+      setQuantityInputs({})
+
+      alert("선택한 상품을 삭제했습니다.")
+    }catch (e){
+      console.error(e)
+
+      await loadCartItems()
+
+      alert("선택 상품 삭제 중 문제가 발생했습니다.")
+    }
+  }
+
+
 
   const handleDeleteAll = async () => {
     if (cartItems.length === 0) {
@@ -265,14 +299,6 @@ function CartPage() {
       <section className="cart-page">
         <div className="cart-header">
           <h1>장바구니</h1>
-          <div className="cart-header-actions">
-            <button type="button" onClick={handleBuyAll}>
-              상품 전체 구매
-            </button>
-            <button type="button" className="danger" onClick={handleDeleteAll}>
-              상품 전체 삭제
-            </button>
-          </div>
         </div>
 
         {loading ? (

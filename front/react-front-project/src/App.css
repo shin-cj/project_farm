@@ -745,7 +745,7 @@ a { color: inherit; text-decoration: none; }
   -moz-appearance: textfield;
 }
 
-.cart-card.unavailable {
+.cart-item-row.unavailable {
   border-color: #d1d5db;
   background-color: #f3f4f6;
   opacity: 0.78;
@@ -758,7 +758,7 @@ a { color: inherit; text-decoration: none; }
   font-weight: 800;
 }
 
-.cart-card-side input:disabled {
+.cart-item-row .cart-quantity input:disabled {
   background-color: #e5e7eb;
   color: #6b7280;
   cursor: not-allowed;

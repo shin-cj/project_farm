@@ -25,4 +25,7 @@ public class ChatbotRequest {
     /** 기타 참고사항 */
     private String remark;
 
+    /** 대화 기억용 필드*/
+    private String previousResponseId;
+
 }

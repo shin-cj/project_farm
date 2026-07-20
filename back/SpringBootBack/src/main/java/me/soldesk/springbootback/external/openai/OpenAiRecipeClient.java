@@ -3,10 +3,13 @@ package me.soldesk.springbootback.external.openai;
 import me.soldesk.springbootback.external.openai.dto.OpenAiRecipeResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import tools.jackson.databind.ObjectMapper;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,12 +18,16 @@ public class OpenAiRecipeClient {
     private final RestClient restClient;
     private final String model;
     private final ObjectMapper objectMapper;
+    private final String instructions;
+
 
     //오픈 ai호출 하기 위한 함수
     public OpenAiRecipeClient(
             @Value("${openai.api-key}") String apikey,
             @Value("${openai.model}") String model,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            @Value("classpath:prompts/recipe-chatbot-prompt.txt")
+            Resource promptResource
     ){
         this.restClient = RestClient.builder()
                 .baseUrl("https://api.openai.com/v1")
@@ -30,74 +37,43 @@ public class OpenAiRecipeClient {
 
         this.model = model;
         this.objectMapper = objectMapper;
+
+        try{
+            this.instructions =
+                    promptResource.getContentAsString(StandardCharsets.UTF_8);
+        }catch (Exception e){
+            throw new IllegalArgumentException("레시피 챗봇 프롬포트 파일을 읽지 못했습니다.",e);
+        }
     }
 
     //사용자에게 입력 받은 질문으로 ai 프롬포트를 뽑아내고 json 형태로 반환 받는 함수
-    public OpenAiRecipeResponse crateRecipe(String userMessage) {
+    public OpenAiRecipeResponse crateRecipe(String userMessage, String previousResponseId) {
+        Map<String,Object> body = new HashMap<>();
+
+        body.put("model",model);
+        body.put("instructions", instructions);
+        body.put("input",userMessage);
+        body.put("store",true);
+
+        if(previousResponseId != null && !previousResponseId.isBlank()){
+            body.put("previous_response_id",previousResponseId);
+        }
+
         Map<String, Object> response = restClient.post()
                 .uri("/responses")
-                .body(Map.of(
-                        "model",model,
-                        "instructions",
-                        """
-                                너는 농산물 쇼핑몰의 레시피 추천 챗봇이다.
-                                
-                                사용자의 입력에 현실에 존재하지 않는 재료, 먹을 수 없는 물건, 판타지 생물, 위험한 물질이 포함되어 있으면 레시피를 추천하지 마라.
-                                
-                                예:
-                                붉은 용의 꼬리, 페가수스의 뿔, 유니콘 고기, 독극물, 플라스틱, 금속, 약품
-                                
-                                이 경우 반드시 아래 JSON 형식으로만 응답해라.
-                                
-                                {
-                                  "success": false,
-                                  "message": "질문을 다시 입력해주세요!",
-                                  "recipeTitle": null,
-                                  "ingredients": [],
-                                  "searchIngredients": [],
-                                  "recipe": null,
-                                  "remark": "존재하지 않거나 먹을 수 없는 재료는 레시피로 추천할 수 없습니다."
-                                }
-                                
-                                정상적인 식재료 요청이면 success를 true로 응답해라.
-                                
-                                사용자의 입력을 보고 만들 수 있는 레시피를 하나 추천해라.
-                                
-                                반드시 아래 JSON 형식으로만 응답해라.
-                                설명 문장, 마크다운, 코드 블록 없이 JSON만 응답해라.
-                                
-                                ingredients는 화면에 보여줄 전체 재료명이다.
-                                searchIngredients는 DB 상품 검색에 사용할 핵심 농산물 이름만 넣어라.
-                                searchIngredients에는 수량, 단위, 손질 상태, 부위명, 설명을 넣지 마라.
-                                searchIngredients에는 우리 쇼핑몰에서 판매할 수 있는 농산물/채소/과일/식재료 이름만 넣어라.
-                                
-                                예:
-                                "양파 1개" -> "양파"
-                                "대파 1대" -> "대파"
-                                "다진 마늘 1큰술" -> "마늘"
-                                "돼지고기 앞다리살 300g" -> "돼지고기"
-                                
-                                {
-                                  "success":true,
-                                  "message":"추천 가능한 레시피입니다.",
-                                  "recipeTitle": "레시피 제목",
-                                  "ingredients": ["재료1", "재료2", "재료3", "재료4", "재료5..."],
-                                  "searchIngredients": ["재료1", "재료2", "재료3", "재료4", "재료5..."],
-                                  "recipe": "조리 순서",
-                                  "remark": "참고 사항"
-                                }
-                                
-
-                                """,
-                        "input",userMessage
-                ))
+                .body(body)
                 .retrieve()
                 .body(new ParameterizedTypeReference<Map<String, Object>>() {});
 
         String text = extractText(response);
 
         try {
-            return objectMapper.readValue(text, OpenAiRecipeResponse.class);
+            OpenAiRecipeResponse result =
+                    objectMapper.readValue(text, OpenAiRecipeResponse.class);
+
+            result.setResponseId((String) response.get("id"));
+
+            return result;
         }catch (Exception e){
             throw new IllegalStateException("OpenAi 레시피 응답을 JSON으로 변환하지 못했습니다. 응답:"+text,e);
         }
