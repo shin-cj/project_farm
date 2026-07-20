@@ -80,7 +80,7 @@ function AppHeader() {
         {loginUser ? (
           <>
             <span style={{ fontWeight: 700 }}>{loginUser.name}님</span>
-            {isBuyer && <NavLink to="/orders">마이페이지</NavLink>}
+            {isBuyer && <NavLink to="/mypage">마이페이지</NavLink>}
             <button type="button" onClick={handleLogout}>
               로그아웃
             </button>

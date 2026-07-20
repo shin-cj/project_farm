@@ -78,6 +78,9 @@ function OrderHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelingOrderId, setCancelingOrderId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ordersPerPage = 3;
 
   async function fetchOrders() {
     if (!buyerId) {
@@ -91,6 +94,7 @@ function OrderHistoryPage() {
       setError("");
       const response = await orderApi.getOrdersByBuyer(buyerId);
       setOrders(response.data);
+      setCurrentPage(1);
     } catch {
       setError("주문 내역을 불러오지 못했습니다.");
     } finally {
@@ -127,6 +131,10 @@ function OrderHistoryPage() {
     }
   }
 
+  const totalPages = Math.ceil(orders.length / ordersPerPage);
+  const startIndex = (currentPage - 1) * ordersPerPage;
+  const currentOrders = orders.slice(startIndex, startIndex + ordersPerPage);
+
   return (
     <section style={{ maxWidth: "1120px", margin: "0 auto", padding: "42px 20px 70px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", gap: "16px", marginBottom: "24px" }}>
@@ -161,7 +169,7 @@ function OrderHistoryPage() {
       )}
 
       <div style={{ display: "grid", gap: "16px" }}>
-        {orders.map((order) => {
+        {currentOrders.map((order) => {
           const cancelGuide = getCancelGuide(order);
           const canCancel = !cancelGuide;
 
@@ -255,6 +263,42 @@ function OrderHistoryPage() {
           );
         })}
       </div>
+
+      {totalPages > 1 && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "8px",
+            marginTop: "24px",
+          }}
+        >
+          {Array.from({ length: totalPages }, (_, index) => {
+            const pageNumber = index + 1;
+            const isActive = currentPage === pageNumber;
+
+            return (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setCurrentPage(pageNumber)}
+                style={{
+                  minWidth: "38px",
+                  height: "38px",
+                  border: isActive ? "1px solid #216b3a" : "1px solid #dce6dd",
+                  borderRadius: "8px",
+                  background: isActive ? "#216b3a" : "#ffffff",
+                  color: isActive ? "#ffffff" : "#405348",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
