@@ -65,6 +65,10 @@ function getCancelGuide(order) {
   return "";
 }
 
+function canViewDelivery(order) {
+  return order.orderStatus !== "CANCELED";
+}
+
 function OrderHistoryPage() {
   const navigate = useNavigate();
   const loginUser = getLoginUser();
@@ -214,18 +218,19 @@ function OrderHistoryPage() {
                 <button
                   type="button"
                   onClick={() => navigate(`/deliverypage?orderId=${order.orderId}`)}
+                  disabled={!canViewDelivery(order)}
                   style={{
                     width: "100%",
                     padding: "12px 14px",
-                    border: "1px solid #4f8c60",
+                    border: canViewDelivery(order) ? "1px solid #4f8c60" : "1px solid #d1d5db",
                     borderRadius: "8px",
-                    background: "#ffffff",
-                    color: "#2f6f42",
+                    background: canViewDelivery(order) ? "#ffffff" : "#f3f4f6",
+                    color: canViewDelivery(order) ? "#2f6f42" : "#9ca3af",
                     fontWeight: 800,
-                    cursor: "pointer",
+                    cursor: canViewDelivery(order) ? "pointer" : "not-allowed",
                   }}
                 >
-                  배송 조회
+                  {canViewDelivery(order) ? "배송 조회" : "배송 조회 불가"}
                 </button>
 
                 <button
