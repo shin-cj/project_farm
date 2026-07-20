@@ -1,4 +1,26 @@
-// payment 기능의 백엔드 주소가 확정되면 이 객체에 조회·등록·수정·삭제 함수를 추가합니다.
-const paymentApi = {}
+const API_BASE_URL = "http://localhost:8080";
 
-export default paymentApi
+export async function cancelPayment(orderId, cancelReason = "구매자 요청") {
+  const response = await fetch(`${API_BASE_URL}/api/payments/${orderId}/cancel`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      cancelReason,
+    }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "결제 취소에 실패했습니다.");
+  }
+
+  return response.json();
+}
+
+const paymentApi = {
+  cancelPayment,
+};
+
+export default paymentApi;

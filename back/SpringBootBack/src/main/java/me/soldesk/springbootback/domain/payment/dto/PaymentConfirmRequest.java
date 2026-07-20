@@ -7,10 +7,11 @@ import lombok.Setter;
 @Setter
 public class PaymentConfirmRequest {
 
-    // 성공하면 돌려받는 결제 키
     private String paymentKey;
-    // 결제 요청 때 사용한 주문 번호
     private String orderId;
-    // 금액
     private Long amount;
+    private String receiverName;
+    private String receiverPhone;
+    private String receiverAddress;
+    private String receiverDetailAddress;
 }
