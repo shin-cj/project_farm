@@ -3,6 +3,7 @@ import { SE_CODES,CATEGORY_CODES,ITEM_CODES,
     VARIETY_CODES,DISTRICT_CODES,MARKET_CODES,GRADE_CODES } from './categoryData';
 import axios from "axios";
 import './PriceSearchPage.css'
+import CustomGraphTable from './CustomGraphTable.jsx';
 
 function MarketPriceTestPage() {
 
@@ -221,6 +222,22 @@ function MarketPriceTestPage() {
             {apiState.isLoading && <div>데이터를 불러오는 중입니다...</div>}
 
             {!apiState.isLoading && apiState.data && apiState.data.totalCount > 0 ? (
+                <>
+                <CustomGraphTable
+                    data={apiState.data.dailyAvgList}
+                    xKey="date"
+                    yKey="todayAvgPrice"
+                    height="250px"
+                    renderTooltip={(item) => (
+                        <>
+                            <strong>{item.date} 시세</strong>
+                            <div>당일가: {item.todayAvgPrice?.toLocaleString()}원</div>
+                            <div>전일가: {item.prevAvgPrice ? `${item.prevAvgPrice.toLocaleString()}원` : '-'}</div>
+                            <div>
+                                등락률: <b style={{ color: item.changeRate > 0 ? 'red' : 'blue' }}>{item.changeRate}%</b>
+                            </div>
+                        </>
+                    )}/>
                 <div className="result-table-container">
                     <table className="result-table">
                         <thead>
@@ -250,6 +267,7 @@ function MarketPriceTestPage() {
                         </tbody>
                     </table>
                 </div>
+                </>
             ) : (
                 !apiState.isLoading && <div className="no-result-text">조회된 시세 데이터가 없습니다. 필터를 변경하여 다시 검색해 주세요.</div>
             )}
