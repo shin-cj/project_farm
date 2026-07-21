@@ -1,6 +1,8 @@
 package me.soldesk.springbootback.domain.report.service;
 
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.report.dto.ReportReplyRequest;
+import me.soldesk.springbootback.domain.report.dto.ReportRequest;
 import me.soldesk.springbootback.domain.report.dto.ReportResponse;
 import me.soldesk.springbootback.domain.report.dto.ReportStatusRequest;
 import me.soldesk.springbootback.domain.report.entity.Report;
@@ -69,6 +71,42 @@ public class ReportService {
         }
     }
 
+    @Transactional
+    public ReportResponse createReport(ReportRequest request){
+
+        if(request.getProductId() == null){
+           throw new IllegalArgumentException("신고할 상품 정보가 없습니다.");
+       }
+
+       if(request.getReporterId() == null){
+           throw new IllegalArgumentException("로그인이 필요한 기능입니다.");
+       }
+
+       if(request.getReportedUserId() == null){
+           throw new IllegalArgumentException("신고 대상 판매자 정보가 없습니다.");
+       }
+
+       if(request.getReporterId().equals(request.getReportedUserId())){
+           throw new IllegalArgumentException("자신을 신고할 수 없습니다.");
+       }
+       if(request.getReportReason() == null || request.getReportReason().isBlank()){
+           throw new IllegalArgumentException("신고 사유를 입력해주세요.");
+       }
+
+       Report report = new Report();
+
+       report.setProductId((request.getProductId()));
+       report.setReporterId(request.getReporterId());
+       report.setReportedUserId(request.getReportedUserId());
+       report.setReportType("PRODUCT");
+       report.setReportReason(request.getReportReason().trim());
+       report.setReportStatus("PENDING");
+
+       Report savedReport = reportRepository.save(report);
+
+       return toResponse(savedReport);
+    }
+
 
     private ReportResponse toResponse(Report report){
         ReportResponse response = new ReportResponse();
@@ -84,5 +122,19 @@ public class ReportService {
 
         return response;
 
+    }
+
+    @Transactional
+    public ReportResponse replyToReport(Long reportId, ReportReplyRequest request){
+
+        if(request.getAdminReply() == null || request.getAdminReply().isBlank()){
+            throw new IllegalArgumentException("답변 내용을 입력해주세요.");
+        }
+
+        if(request.getRepliedBy() == null){
+            throw new IllegalArgumentException("관리자 정보가 없습니다.");
+        }
+
+        Report report = 
     }
 }

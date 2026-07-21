@@ -72,6 +72,7 @@
 
 .report-toolbar select:focus-visible,
 .report-status-select:focus-visible,
+.report-status-confirm-button:focus-visible,
 .report-reason-button:focus-visible,
 .report-modal-close:focus-visible {
   outline: 3px solid rgba(45, 126, 75, 0.2);
@@ -214,6 +215,48 @@
 .report-status-select:disabled {
   cursor: wait;
   opacity: 0.65;
+}
+
+.report-status-confirm-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #24653a;
+  border-radius: 6px;
+  background: #2d7e4b;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 120ms ease,
+    box-shadow 140ms ease;
+}
+
+.report-status-confirm-button:hover:not(:disabled) {
+  border-color: #1e5a32;
+  background: #24653a;
+  box-shadow: 0 4px 12px rgba(36, 101, 58, 0.2);
+}
+
+.report-status-confirm-button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.report-status-confirm-button:disabled {
+  border-color: #cbd6ce;
+  background: #e5ebe7;
+  color: #849087;
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 .report-status-pending {
@@ -459,6 +502,10 @@
   }
 
   .report-modal-footer .report-status-select {
+    width: 100%;
+  }
+
+  .report-modal-footer .report-status-confirm-button {
     width: 100%;
   }
 }

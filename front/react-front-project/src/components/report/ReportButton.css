@@ -1,0 +1,259 @@
+.report-open-button {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid #c65a4d;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #9f3f35;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 120ms ease;
+}
+
+.report-open-button:hover {
+  border-color: #a8483d;
+  background: #fff5f3;
+  color: #87342c;
+}
+
+.report-open-button:active {
+  transform: translateY(1px);
+}
+
+.report-open-button:focus-visible,
+.report-submit-modal button:focus-visible,
+.report-submit-modal select:focus-visible,
+.report-submit-modal textarea:focus-visible {
+  outline: 3px solid rgba(45, 126, 75, 0.2);
+  outline-offset: 2px;
+}
+
+/* 현재 JSX의 bbackdrop 오타와 수정 후 backdrop 이름을 모두 지원합니다. */
+.report-submit-backdrop,
+.report-submit-bbackdrop {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(24, 33, 27, 0.56);
+  animation: report-submit-backdrop-in 160ms ease-out;
+}
+
+.report-submit-modal {
+  width: min(500px, 100%);
+  max-height: min(86vh, 720px);
+  overflow: hidden;
+  border: 1px solid #d8e1da;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #27372d;
+  box-shadow: 0 24px 70px rgba(20, 35, 25, 0.28);
+  animation: report-submit-modal-in 180ms ease-out;
+}
+
+.report-submit-modal > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-bottom: 1px solid #e3e9e4;
+}
+
+.report-submit-modal > header h2 {
+  margin: 0;
+  color: #203329;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+
+.report-submit-modal > header button {
+  display: inline-grid;
+  flex: 0 0 34px;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid #d5ded7;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #65736a;
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.report-submit-modal > header button:hover:not(:disabled) {
+  background: #f1f5f2;
+  color: #283b2f;
+}
+
+.report-submit-modal > form {
+  display: grid;
+  gap: 12px;
+  max-height: calc(86vh - 76px);
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.report-submit-modal form > p:first-child {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border: 1px solid #dfe7e1;
+  border-radius: 6px;
+  background: #f6f9f7;
+  color: #405147;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.report-submit-modal label {
+  color: #3d4d43;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.report-submit-modal select,
+.report-submit-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd7ce;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #24352a;
+  font: inherit;
+}
+
+.report-submit-modal select {
+  min-height: 42px;
+  padding: 0 38px 0 12px;
+  cursor: pointer;
+}
+
+.report-submit-modal textarea {
+  min-height: 150px;
+  padding: 13px 14px;
+  line-height: 1.65;
+  resize: vertical;
+}
+
+.report-submit-modal textarea::placeholder {
+  color: #8a968e;
+}
+
+.report-submit-modal form > span {
+  justify-self: end;
+  color: #7a877f;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-submit-error {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid #efc2bd;
+  border-radius: 6px;
+  background: #fff4f2;
+  color: #a13f34;
+  font-size: 0.86rem;
+}
+
+.report-submit-modal form > footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid #e5eae6;
+}
+
+.report-submit-modal form > footer button {
+  min-width: 92px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 140ms ease, transform 120ms ease;
+}
+
+.report-submit-modal form > footer button:first-child {
+  border: 1px solid #ccd6cf;
+  background: #ffffff;
+  color: #536158;
+}
+
+.report-submit-modal form > footer button:last-child {
+  border: 1px solid #286d40;
+  background: #2d7e4b;
+  color: #ffffff;
+}
+
+.report-submit-modal form > footer button:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.report-submit-modal form > footer button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.report-submit-modal button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@keyframes report-submit-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes report-submit-modal-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .report-open-button {
+    width: 100%;
+  }
+
+  .report-submit-backdrop,
+  .report-submit-bbackdrop {
+    align-items: end;
+    padding: 12px;
+  }
+
+  .report-submit-modal {
+    max-height: 92vh;
+  }
+
+  .report-submit-modal form > footer {
+    flex-direction: column-reverse;
+  }
+
+  .report-submit-modal form > footer button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-submit-backdrop,
+  .report-submit-bbackdrop,
+  .report-submit-modal {
+    animation: none;
+  }
+}

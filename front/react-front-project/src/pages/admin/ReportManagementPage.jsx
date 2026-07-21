@@ -31,7 +31,10 @@ function ReportManagementPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
   const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [error, setError] = useState("");
+
+
 
   async function loadReports(status) {
     try {
@@ -83,6 +86,7 @@ function ReportManagementPage() {
     function handleKeyDown(event) {
       if (event.key === "Escape") {
         setSelectedReport(null);
+        setSelectedStatus("")
       }
     }
 
@@ -103,12 +107,18 @@ function ReportManagementPage() {
     await loadReports(nextStatus);
   }
 
-  async function handleStatusChange(reportId, nextStatus) {
+  async function handleStatusConfirm() {
+    if(!selectedReport || !selectedStatus) {
+      return
+    }
+
+    const reportId = selectedReport.reportId
+
     try {
       setUpdatingId(reportId);
       setError("");
 
-      const response = await reportApi.updateAdminReportStatus(reportId, nextStatus);
+      const response = await reportApi.updateAdminReportStatus(reportId, selectedStatus);
       const updatedReport = response.data;
 
       setReports((currentReports) =>
@@ -119,9 +129,10 @@ function ReportManagementPage() {
           ),
       );
 
-      setSelectedReport((currentReport) =>
-        currentReport?.reportId === reportId ? updatedReport : currentReport,
-      );
+      setSelectedReport(updatedReport)
+      setSelectedStatus(updatedReport.reportStatus)
+
+      alert("신고 처리 상태가 변경되었습니다.")
     } catch (requestError) {
       console.error(requestError);
       setError("신고 상태를 변경하지 못했습니다.");
@@ -129,9 +140,15 @@ function ReportManagementPage() {
       setUpdatingId(null);
     }
   }
+  function openDetail(report){
+    setSelectedReport(report)
+    setSelectedStatus(report.reportStatus)
+  }
+
 
   function closeDetail() {
     setSelectedReport(null);
+    setSelectedStatus("")
   }
 
   return (
@@ -195,7 +212,7 @@ function ReportManagementPage() {
                   <button
                     type="button"
                     className="report-reason-button"
-                    onClick={() => setSelectedReport(report)}
+                    onClick={() => openDetail(report)}
                     title={report.reportReason}
                   >
                     {report.reportReason}
@@ -203,19 +220,9 @@ function ReportManagementPage() {
                 </td>
                 <td className="report-date-cell">{formatDate(report.createdAt)}</td>
                 <td>
-                  <select
-                    className={`report-status-select report-status-${report.reportStatus?.toLowerCase()}`}
-                    value={report.reportStatus}
-                    disabled={updatingId === report.reportId}
-                    onChange={(event) =>
-                      handleStatusChange(report.reportId, event.target.value)
-                    }
-                  >
-                    <option value="PENDING">{statusLabels.PENDING}</option>
-                    <option value="REVIEWING">{statusLabels.REVIEWING}</option>
-                    <option value="RESOLVED">{statusLabels.RESOLVED}</option>
-                    <option value="REJECTED">{statusLabels.REJECTED}</option>
-                  </select>
+                  <span className={`report-status-badgge report-status-${report.reportStatus?.toLowerCase()}`}>
+                    {statusLabels[report.reportStatus] || report.reportStatus}
+                  </span>
                 </td>
               </>
             )}
@@ -295,11 +302,11 @@ function ReportManagementPage() {
               <label htmlFor="report-modal-status">처리 상태 변경</label>
               <select
                 id="report-modal-status"
-                className={`report-status-select report-status-${selectedReport.reportStatus?.toLowerCase()}`}
-                value={selectedReport.reportStatus}
+                className={`report-status-select report-status-${selectedStatus?.toLowerCase()}`}
+                value={selectedStatus}
                 disabled={updatingId === selectedReport.reportId}
                 onChange={(event) =>
-                  handleStatusChange(selectedReport.reportId, event.target.value)
+                  setSelectedStatus(event.target.value)
                 }
               >
                 <option value="PENDING">{statusLabels.PENDING}</option>
@@ -307,6 +314,19 @@ function ReportManagementPage() {
                 <option value="RESOLVED">{statusLabels.RESOLVED}</option>
                 <option value="REJECTED">{statusLabels.REJECTED}</option>
               </select>
+              <button
+                  type="button"
+                  className="report-status-confirm-button"
+                  onClick={handleStatusConfirm}
+                  disabled={
+                  updatingId === selectedReport.reportId ||
+                      selectedStatus === selectedReport.reportStatus
+                  }
+              >
+                {updatingId === selectedReport.reportId
+                    ? "변경 중..."
+                    : "변경 완료"}
+              </button>
             </footer>
           </section>
         </div>

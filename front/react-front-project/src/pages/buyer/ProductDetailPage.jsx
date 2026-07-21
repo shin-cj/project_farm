@@ -7,6 +7,7 @@ import { getPublicFarm } from '../../api/farmApi.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import ReportButton from "../../components/report/ReportButton.jsx";
 
 
 function getStoredLoginUser() {
@@ -337,6 +338,15 @@ function ProductDetailPage() {
                 disabled={!isPurchasable || !isValidQuantity}            >
               바로 주문하기
             </button>
+
+            <ReportButton
+              productId={product.productId}
+              reporterId={userid}
+              reportedUserId={farm?.sellerId}
+              reportType="PRODUCT"
+              targetLabel={product.productName}
+              />
+
             {!isPurchasable && (
                 <p className="product-detail-unavailable">
                   {unavailableMessage}
