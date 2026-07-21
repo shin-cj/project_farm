@@ -119,20 +119,24 @@ function DeliveryManagementPage() {
     return order?.orderStatus === "CANCELED";
   }
 
+  function isClosedOrder(order) {
+    return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order?.orderStatus);
+  }
+
   function getVisibleOrders() {
     if (deliveryFilter === "CANCELED") {
-      return orders.filter((order) => isCanceledOrder(order));
+      return orders.filter((order) => isClosedOrder(order));
     }
 
     if (deliveryFilter === "SHIPPING") {
-      return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "SHIPPING");
+      return orders.filter((order) => !isClosedOrder(order) && order.deliveryStatus === "SHIPPING");
     }
 
     if (deliveryFilter === "DELIVERED") {
-      return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "DELIVERED");
+      return orders.filter((order) => !isClosedOrder(order) && order.deliveryStatus === "DELIVERED");
     }
 
-    return orders.filter((order) => !isCanceledOrder(order) && order.deliveryStatus === "READY");
+    return orders.filter((order) => !isClosedOrder(order) && order.deliveryStatus === "READY");
   }
 
   function handleFarmChange(event) {
@@ -204,10 +208,10 @@ function DeliveryManagementPage() {
       return;
     }
 
-    if (isCanceledOrder(selectedOrder)) {
+    if (isClosedOrder(selectedOrder)) {
 
 
-      setError("취소된 주문은 배송 등록을 할 수 없습니다.");
+      setError("취소 또는 환불 처리 중인 주문은 배송 등록을 할 수 없습니다.");
 
 
       return;
@@ -275,7 +279,7 @@ function DeliveryManagementPage() {
   const totalPages = Math.ceil(visibleOrders.length / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
   const currentOrders = visibleOrders.slice(startIndex, startIndex + ordersPerPage);
-  const isDeliveryLocked = selectedOrder && (selectedOrder.deliveryStatus !== "READY" || isCanceledOrder(selectedOrder));
+  const isDeliveryLocked = selectedOrder && (selectedOrder.deliveryStatus !== "READY" || isClosedOrder(selectedOrder));
 
   return (
     <section className="page-card">
@@ -385,7 +389,7 @@ function DeliveryManagementPage() {
             )}
 
             {currentOrders.map((order) => {
-              const isCanceled = isCanceledOrder(order);
+              const isCanceled = isClosedOrder(order);
 
               return (
               <button
@@ -422,7 +426,11 @@ function DeliveryManagementPage() {
                       fontWeight: 900,
                     }}
                   >
-                    취소된 주문
+                    {order.orderStatus === "REFUND_REQUESTED"
+                      ? "환불 요청 주문"
+                      : order.orderStatus === "REFUNDED"
+                        ? "환불 완료 주문"
+                        : "취소된 주문"}
 
                   </span>
                 )}
@@ -439,9 +447,9 @@ function DeliveryManagementPage() {
                 )}
                 <p style={{ margin: "6px 0 0" }}>주문자: {order.receiverName}</p>
                 <p style={{ margin: "6px 0 0" }}>전화번호: {order.receiverPhone}</p>
-                {order.orderStatus === "CANCELED" && (
+                {isClosedOrder(order) && (
                     <p style={{ margin: "8px 0 0", color: "#dc2626", fontWeight: 800 }}>
-                      취소 사유: {order.refundReason || "사유 없음"}
+                      사유: {order.refundReason || "사유 없음"}
                     </p>
                 )}
               </button>
@@ -549,9 +557,9 @@ function DeliveryManagementPage() {
                 주소: {selectedOrder.receiverAddress} {selectedOrder.receiverDetailAddress}
               </p>
               <p>요청사항: {selectedOrder.requestMessage || "없음"}</p>
-              {isDeliveryLocked && (
-                <p style={{ color: isCanceledOrder(selectedOrder) ? "#dc2626" : "#216b3a", fontWeight: 800 }}>
-                  {isCanceledOrder(selectedOrder) ? "취소된 주문이라 배송 등록을 할 수 없습니다." : "이미 배송 등록된 주문입니다."}
+                  {isDeliveryLocked && (
+                <p style={{ color: isClosedOrder(selectedOrder) ? "#dc2626" : "#216b3a", fontWeight: 800 }}>
+                  {isClosedOrder(selectedOrder) ? "취소 또는 환불 처리 중인 주문이라 배송 등록을 할 수 없습니다." : "이미 배송 등록된 주문입니다."}
                 </p>
               )}
             </div>
@@ -613,7 +621,7 @@ function DeliveryManagementPage() {
               cursor: isDeliveryLocked ? "not-allowed" : "pointer",
             }}
           >
-            {isCanceledOrder(selectedOrder) ? "취소된 주문" : isDeliveryLocked ? getDeliveryStatusLabel(selectedOrder?.deliveryStatus) : "배송 등록"}
+            {isClosedOrder(selectedOrder) ? "처리 불가 주문" : isDeliveryLocked ? getDeliveryStatusLabel(selectedOrder?.deliveryStatus) : "배송 등록"}
           </button>
         </form>
       </div>
