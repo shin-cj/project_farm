@@ -33,6 +33,8 @@ function ProductEditPage() {
         price: '',
         stockQuantity: '',
         unit: '',
+        saleType: 'RETAIL',
+        minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
         expirationDate: '',
@@ -98,6 +100,10 @@ function ProductEditPage() {
                     price: productData.price ?? '',
                     stockQuantity: productData.stockQuantity ?? '',
                     unit: productData.unit ?? '',
+                    saleType: productData.saleType ?? 'RETAIL',
+                    minOrderQuantity: String(
+                        productData.minOrderQuantity ?? 1
+                    ),
                     origin: productData.origin ?? '',
                     harvestDate: productData.harvestDate ?? '',
                     expirationDate: productData.expirationDate ?? '',
@@ -127,10 +133,20 @@ function ProductEditPage() {
     function handleChange(event) {
         const {name, value} = event.target
 
-        setForm({
-            ...form,
+        if (name === 'saleType') {
+            setForm((currentForm) => ({
+                ...currentForm,
+                saleType: value,
+                minOrderQuantity:
+                    value === 'RETAIL' ? '1' : '2',
+            }))
+            return
+        }
+
+        setForm((currentForm) => ({
+            ...currentForm,
             [name]: value,
-        })
+        }))
     }
 
     // 상품 수정 버튼을 눌렀을 때 실행됩니다.
@@ -146,6 +162,8 @@ function ProductEditPage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const minOrderQuantity =
+            Number(form.minOrderQuantity)
 
         // 입력값 검사
         if (!Number.isFinite(farmId) || farmId <= 0) {
@@ -178,6 +196,30 @@ function ProductEditPage() {
             return
         }
 
+        if (form.saleType !== 'RETAIL'
+            && form.saleType !== 'WHOLESALE') {
+            alert('판매 방식을 선택해주세요.')
+            return
+        }
+
+        if (!Number.isInteger(minOrderQuantity)
+            || minOrderQuantity < 1) {
+            alert('최소 주문 수량은 1개 이상 입력해주세요.')
+            return
+        }
+
+        if (form.saleType === 'RETAIL'
+            && minOrderQuantity !== 1) {
+            alert('소매 상품의 최소 주문 수량은 1개입니다.')
+            return
+        }
+
+        if (form.saleType === 'WHOLESALE'
+            && minOrderQuantity < 2) {
+            alert('도매 상품의 최소 주문 수량은 2개 이상입니다.')
+            return
+        }
+
         // 백엔드 ProductRequest에 맞춰 전송할 객체를 만듭니다.
         const productData = {
             ...form,
@@ -185,6 +227,7 @@ function ProductEditPage() {
             categoryId,
             price,
             stockQuantity,
+            minOrderQuantity,
 
             // 날짜를 지웠다면 빈 문자열 대신 null을 보냅니다.
             harvestDate: form.harvestDate || null,
@@ -351,6 +394,43 @@ function ProductEditPage() {
                             />
                         </div>
                     </div>
+
+                        <div className="product-create-row">
+                            <div className="product-create-field">
+                                <label>판매 방식</label>
+
+                                <select
+                                    name="saleType"
+                                    value={form.saleType}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="RETAIL">소매</option>
+                                    <option value="WHOLESALE">도매</option>
+                                </select>
+                            </div>
+
+                            <div className="product-create-field">
+                                <label>최소 주문 수량</label>
+
+                                <input
+                                    type="number"
+                                    name="minOrderQuantity"
+                                    value={form.minOrderQuantity}
+                                    onChange={handleChange}
+                                    min={form.saleType === 'RETAIL' ? 1 : 2}
+                                    step="1"
+                                    disabled={form.saleType === 'RETAIL'}
+                                    required
+                                />
+
+                                <small>
+                                    {form.saleType === 'RETAIL'
+                                        ? '소매 상품은 1개부터 주문할 수 있습니다.'
+                                        : '도매 상품의 최소 주문 수량을 입력해주세요.'}
+                                </small>
+                            </div>
+                        </div>
 
                     <div className="product-create-row">
                         <div className="product-create-field">
