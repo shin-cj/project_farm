@@ -44,7 +44,7 @@
     color: #6b7280;
 }
 
-.seller-dashboard-header > div:last-child {
+.seller-dashboard-header > div:last-child:not(:first-child) {
     display: flex;
     gap: 10px;
 }
@@ -233,6 +233,60 @@
     font-weight: 800;
 }
 
+.seller-dashboard-order > .seller-daily-goal-panel {
+    display: block;
+    padding: 18px;
+    border: 1px solid #dfe8d9;
+    border-radius: 14px;
+    background:
+        linear-gradient(135deg, rgba(63, 125, 32, 0.1), rgba(255, 255, 255, 0.96) 46%),
+        #ffffff;
+}
+
+.seller-daily-goal-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.seller-daily-goal-title span {
+    display: block;
+    margin-bottom: 6px;
+    color: #3f7d20;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.seller-daily-goal-title h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.seller-daily-goal-title > strong {
+    color: #216b3a;
+    font-size: 32px;
+    line-height: 1;
+}
+
+.seller-daily-goal-mini {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.seller-daily-goal-mini span {
+    padding: 6px 9px;
+    border-radius: 999px;
+    background-color: #f1f6ef;
+    color: #3f4f43;
+    font-size: 12px;
+    font-weight: 800;
+}
+
 .seller-dashboard-content {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
@@ -380,7 +434,7 @@
         grid-template-columns: 1fr;
     }
 
-    .seller-dashboard-header > div:last-child {
+    .seller-dashboard-header > div:last-child:not(:first-child) {
         width: 100%;
     }
 

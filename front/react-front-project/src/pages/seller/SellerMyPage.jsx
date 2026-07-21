@@ -171,56 +171,6 @@ function SellerMyPage() {
         </article>
       </section>
 
-      <section className="seller-daily-goal-card">
-        <div className="seller-daily-goal-main">
-          <div>
-            <p>Today Goal</p>
-            <h2>오늘 판매 목표</h2>
-            <span>오늘 적립된 포인트 기준으로 목표 달성률을 보여줍니다.</span>
-          </div>
-
-          <strong>{Math.round(Number(dailyGoal.achievementRate || 0))}%</strong>
-        </div>
-
-        <div className="seller-daily-goal-progress">
-          <span style={{ width: `${goalRate}%` }} />
-        </div>
-
-        <div className="seller-daily-goal-info">
-          <div>
-            <span>오늘 적립</span>
-            <strong>{formatPoint(dailyGoal.todayPoint)}</strong>
-          </div>
-          <div>
-            <span>목표 포인트</span>
-            <strong>{formatPoint(dailyGoal.targetPoint)}</strong>
-          </div>
-          <div>
-            <span>남은 포인트</span>
-            <strong>{formatPoint(dailyGoal.remainingPoint)}</strong>
-          </div>
-        </div>
-
-        <form className="seller-daily-goal-form" onSubmit={handleSaveDailyGoal}>
-          <label>
-            <span>목표 수정</span>
-            <input
-              type="number"
-              min="1"
-              value={targetPointInput}
-              onChange={(event) => setTargetPointInput(event.target.value)}
-              placeholder="예: 30000"
-            />
-          </label>
-
-          <button type="submit" disabled={goalSaving}>
-            {goalSaving ? "저장 중" : "저장"}
-          </button>
-        </form>
-
-        {goalMessage && <p className="seller-daily-goal-message">{goalMessage}</p>}
-      </section>
-
       <section className="seller-dashboard-content">
         <article className="seller-dashboard-recent">
           <div>
@@ -268,6 +218,45 @@ function SellerMyPage() {
         </article>
 
         <article className="seller-dashboard-order">
+          <div className="seller-daily-goal-panel">
+            <div className="seller-daily-goal-title">
+              <div>
+                <span>Today Goal</span>
+                <h2>오늘 판매 목표</h2>
+              </div>
+              <strong>{Math.round(Number(dailyGoal.achievementRate || 0))}%</strong>
+            </div>
+
+            <div className="seller-daily-goal-progress">
+              <span style={{ width: `${goalRate}%` }} />
+            </div>
+
+            <div className="seller-daily-goal-mini">
+              <span>오늘 {formatPoint(dailyGoal.todayPoint)}</span>
+              <span>목표 {formatPoint(dailyGoal.targetPoint)}</span>
+              <span>남음 {formatPoint(dailyGoal.remainingPoint)}</span>
+            </div>
+
+            <form className="seller-daily-goal-form" onSubmit={handleSaveDailyGoal}>
+              <label>
+                <span>목표 수정</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={targetPointInput}
+                  onChange={(event) => setTargetPointInput(event.target.value)}
+                  placeholder="예: 30000"
+                />
+              </label>
+
+              <button type="submit" disabled={goalSaving}>
+                {goalSaving ? "저장 중" : "저장"}
+              </button>
+            </form>
+
+            {goalMessage && <p className="seller-daily-goal-message">{goalMessage}</p>}
+          </div>
+
           <h2>빠른 이동</h2>
 
           <div>
