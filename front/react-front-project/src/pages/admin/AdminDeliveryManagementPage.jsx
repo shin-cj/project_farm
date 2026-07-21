@@ -93,8 +93,8 @@ function AdminDeliveryManagementPage() {
       return;
     }
 
-    if (order.orderStatus === "CANCELED" || order.orderStatus === "REFUNDED") {
-      setError("취소 또는 환불 완료 주문은 배송 상태를 변경할 수 없습니다.");
+    if (["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus)) {
+      setError("취소 또는 환불 처리 중인 주문은 배송 상태를 변경할 수 없습니다.");
       return;
     }
 
@@ -219,7 +219,7 @@ function AdminDeliveryManagementPage() {
           const isCanceled = order.orderStatus === "CANCELED";
           const isRefundRequested = order.orderStatus === "REFUND_REQUESTED";
           const isRefunded = order.orderStatus === "REFUNDED";
-          const canChangeDelivery = !isCanceled && !isRefunded && order.deliveryId;
+          const canChangeDelivery = !isCanceled && !isRefundRequested && !isRefunded && order.deliveryId;
 
           return (
             <article

@@ -74,7 +74,7 @@ function getCancelGuide(order) {
 }
 
 function canViewDelivery(order) {
-  return order.orderStatus !== "CANCELED";
+  return !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
 }
 
 function OrderHistoryPage() {
