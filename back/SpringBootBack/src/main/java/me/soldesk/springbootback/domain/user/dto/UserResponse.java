@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 public class UserResponse {
 
+    /** 화면에 보여주거나 localStorage에 저장해도 되는 회원 정보만 담습니다. */
+
     /** 회원 고유 번호 */
     private Long userId;
 
@@ -19,9 +21,6 @@ public class UserResponse {
 
     /** 로그인에 사용하는 이메일 */
     private String email;
-
-    /** 암호화되어 저장되는 비밀번호 */
-    private String passwordHash;
 
     /** 회원 이름 */
     private String name;
