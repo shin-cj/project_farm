@@ -1,6 +1,10 @@
 import {useEffect, useState} from 'react'
 import {useNavigate, useParams} from 'react-router-dom'
-import {getProduct, updateProduct} from '../../api/productApi.js'
+import {
+    getProduct,
+    updateProduct,
+    uploadProductImage,
+} from '../../api/productApi.js'
 import {getCategories} from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
 import {getFarms} from "../../api/farmApi.js";
@@ -21,6 +25,8 @@ function ProductEditPage() {
     const [loading, setLoading] = useState(true)
 
     const [submitting, setSubmitting] = useState(false)
+    const [selectedImageFile, setSelectedImageFile] = useState(null)
+    const [newImagePreviewUrl, setNewImagePreviewUrl] = useState('')
 
     const [error, setError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
@@ -33,12 +39,17 @@ function ProductEditPage() {
         price: '',
         stockQuantity: '',
         unit: '',
+        minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
         productStatus: 'PENDING',
     })
+
+    const selectedFarm = farms.find(
+        (farm) => String(farm.farmId) === String(form.farmId)
+    )
 
     // 수정 페이지가 처음 열리거나 productId가 바뀌면 실행됩니다.
     useEffect(() => {
@@ -98,6 +109,9 @@ function ProductEditPage() {
                     price: productData.price ?? '',
                     stockQuantity: productData.stockQuantity ?? '',
                     unit: productData.unit ?? '',
+                    minOrderQuantity: String(
+                        productData.minOrderQuantity ?? 1
+                    ),
                     origin: productData.origin ?? '',
                     harvestDate: productData.harvestDate ?? '',
                     expirationDate: productData.expirationDate ?? '',
@@ -123,14 +137,71 @@ function ProductEditPage() {
         }
     }, [productId, reloadKey])
 
+    useEffect(() => {
+        return () => {
+            if (newImagePreviewUrl) {
+                URL.revokeObjectURL(newImagePreviewUrl)
+            }
+        }
+    }, [newImagePreviewUrl])
+
+    function handleImageChange(event) {
+        const imageFile = event.target.files?.[0] ?? null
+
+        if (!imageFile) {
+            setSelectedImageFile(null)
+            setNewImagePreviewUrl('')
+            return
+        }
+
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ]
+
+        if (!allowedTypes.includes(imageFile.type)) {
+            alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setNewImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        if (imageFile.size > 5 * 1024 * 1024) {
+            alert('상품 이미지는 5MB 이하만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setNewImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        setSelectedImageFile(imageFile)
+        setNewImagePreviewUrl(URL.createObjectURL(imageFile))
+    }
+
     // 사용자가 입력 칸을 변경할 때 form의 해당 값만 변경합니다.
     function handleChange(event) {
         const {name, value} = event.target
 
-        setForm({
-            ...form,
+        if (name === 'farmId') {
+            const nextFarm = farms.find(
+                (farm) => String(farm.farmId) === value
+            )
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                farmId: value,
+                minOrderQuantity:
+                    nextFarm?.saleType === 'WHOLESALE' ? '2' : '1',
+            }))
+            return
+        }
+
+        setForm((currentForm) => ({
+            ...currentForm,
             [name]: value,
-        })
+        }))
     }
 
     // 상품 수정 버튼을 눌렀을 때 실행됩니다.
@@ -146,10 +217,17 @@ function ProductEditPage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const minOrderQuantity =
+            Number(form.minOrderQuantity)
 
         // 입력값 검사
         if (!Number.isFinite(farmId) || farmId <= 0) {
             alert('농장 번호를 올바르게 입력해주세요.')
+            return
+        }
+
+        if (!selectedFarm) {
+            alert('선택한 농장 정보를 확인할 수 없습니다.')
             return
         }
 
@@ -178,6 +256,24 @@ function ProductEditPage() {
             return
         }
 
+        if (!Number.isInteger(minOrderQuantity)
+            || minOrderQuantity < 1) {
+            alert('최소 주문 수량은 1개 이상 입력해주세요.')
+            return
+        }
+
+        if (selectedFarm.saleType === 'RETAIL'
+            && minOrderQuantity !== 1) {
+            alert('소매 농장의 상품은 1개부터 주문할 수 있습니다.')
+            return
+        }
+
+        if (selectedFarm.saleType === 'WHOLESALE'
+            && minOrderQuantity < 2) {
+            alert('도매 농장의 상품은 최소 주문 수량이 2개 이상이어야 합니다.')
+            return
+        }
+
         // 백엔드 ProductRequest에 맞춰 전송할 객체를 만듭니다.
         const productData = {
             ...form,
@@ -185,6 +281,7 @@ function ProductEditPage() {
             categoryId,
             price,
             stockQuantity,
+            minOrderQuantity,
 
             // 날짜를 지웠다면 빈 문자열 대신 null을 보냅니다.
             harvestDate: form.harvestDate || null,
@@ -194,8 +291,20 @@ function ProductEditPage() {
         try {
             setSubmitting(true)
 
+            let productImageUrl = form.productImageUrl
+
+            if (selectedImageFile) {
+                const uploadResult =
+                    await uploadProductImage(selectedImageFile)
+
+                productImageUrl = uploadResult.imageUrl
+            }
+
             // PUT /api/products/{productId} 요청을 보냅니다.
-            await updateProduct(productId, productData)
+            await updateProduct(productId, {
+                ...productData,
+                productImageUrl,
+            })
 
             alert('상품 정보가 수정되었습니다.')
             navigate('/seller/products')
@@ -261,7 +370,11 @@ function ProductEditPage() {
 
                                 {farms.map((farm) => (
                                     <option key={farm.farmId} value={farm.farmId}>
-                                        {farm.farmName}
+                                        {farm.farmName} · {
+                                            farm.saleType === 'WHOLESALE'
+                                                ? '도매'
+                                                : '소매'
+                                        }
                                     </option>
                                 ))}
                             </select>
@@ -352,6 +465,46 @@ function ProductEditPage() {
                         </div>
                     </div>
 
+                        <div className="product-create-row">
+                            <div className="product-create-field">
+                                <label>판매 방식</label>
+
+                                <input
+                                    value={
+                                        selectedFarm?.saleType === 'WHOLESALE'
+                                            ? '도매'
+                                            : selectedFarm ? '소매' : '농장을 먼저 선택해주세요.'
+                                    }
+                                    readOnly
+                                />
+                                <small>판매 방식은 선택한 농장을 따릅니다.</small>
+                            </div>
+
+                            <div className="product-create-field">
+                                <label>최소 주문 수량</label>
+
+                                <input
+                                    type="number"
+                                    name="minOrderQuantity"
+                                    value={form.minOrderQuantity}
+                                    onChange={handleChange}
+                                    min={selectedFarm?.saleType === 'WHOLESALE' ? 2 : 1}
+                                    step="1"
+                                    disabled={
+                                        !selectedFarm
+                                        || selectedFarm.saleType !== 'WHOLESALE'
+                                    }
+                                    required
+                                />
+
+                                <small>
+                                    {selectedFarm?.saleType === 'WHOLESALE'
+                                        ? '도매 농장의 최소 주문 수량을 입력해주세요.'
+                                        : '소매 농장의 상품은 1개부터 주문할 수 있습니다.'}
+                                </small>
+                            </div>
+                        </div>
+
                     <div className="product-create-row">
                         <div className="product-create-field">
                             <label>원산지</label>
@@ -387,20 +540,24 @@ function ProductEditPage() {
                     </div>
 
                     <div className="product-create-field">
-                        <label>상품 이미지 주소</label>
+                        <label>상품 이미지 변경</label>
 
                         <input
-                            name="productImageUrl"
-                            value={form.productImageUrl}
-                            onChange={handleChange}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleImageChange}
                         />
+
+                        <small>
+                            새 이미지를 선택하지 않으면 기존 이미지가 유지됩니다.
+                        </small>
                     </div>
-                    {form.productImageUrl.trim() && (
+                    {(newImagePreviewUrl || form.productImageUrl.trim()) && (
                         <div className="product-create-image-preview">
                             <p>상품 이미지 미리보기</p>
 
                             <CatalogImage
-                                src={form.productImageUrl}
+                                src={newImagePreviewUrl || form.productImageUrl}
                                 alt="수정할 상품 미리보기"
                                 fallbackText="이미지를 불러올 수 없습니다."
                                 fallbackClassName="product-create-image-fallback"

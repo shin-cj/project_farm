@@ -32,6 +32,9 @@ public class ProductRequest {
     /** 판매 단위 */
     private String unit;
 
+    /** 최소 주문 수량 */
+    private Integer minOrderQuantity;
+
     /** 원산지 */
     private String origin;
 

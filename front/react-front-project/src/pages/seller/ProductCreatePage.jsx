@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createProduct } from '../../api/productApi.js'
+import { createProduct, uploadProductImage } from '../../api/productApi.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
@@ -20,6 +20,8 @@ function ProductCreatePage() {
     const [farms, setFarms] = useState([])
     const [registeredFarmCount, setRegisteredFarmCount] = useState(0)
     const [submitting, setSubmitting] = useState(false)
+    const [selectedImageFile, setSelectedImageFile] = useState(null)
+    const [imagePreviewUrl, setImagePreviewUrl] = useState('')
     const [formLoading, setFormLoading] = useState(true)
     const [formError, setFormError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
@@ -32,12 +34,17 @@ function ProductCreatePage() {
         price: '',
         stockQuantity: '',
         unit: '',
+        minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
         productStatus: 'PENDING',
     })
+
+    const selectedFarm = farms.find(
+        (farm) => String(farm.farmId) === String(form.farmId)
+    )
 
 
     useEffect(() => {
@@ -81,6 +88,10 @@ function ProductCreatePage() {
                         setForm((currentForm) => ({
                             ...currentForm,
                             farmId: String(requestedFarm.farmId),
+                            minOrderQuantity:
+                                requestedFarm.saleType === 'WHOLESALE'
+                                    ? '2'
+                                    : '1',
                         }))
                     }
                 }
@@ -106,14 +117,70 @@ function ProductCreatePage() {
         }
     }, [reloadKey, requestedFarmId])
 
+    useEffect(() => {
+        return () => {
+            if (imagePreviewUrl) {
+                URL.revokeObjectURL(imagePreviewUrl)
+            }
+        }
+    }, [imagePreviewUrl])
+
+    function handleImageChange(event) {
+        const imageFile = event.target.files?.[0] ?? null
+
+        if (!imageFile) {
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            return
+        }
+
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ]
+
+        if (!allowedTypes.includes(imageFile.type)) {
+            alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        if (imageFile.size > 5 * 1024 * 1024) {
+            alert('상품 이미지는 5MB 이하만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        setSelectedImageFile(imageFile)
+        setImagePreviewUrl(URL.createObjectURL(imageFile))
+    }
 
     function handleChange(event) {
-        const { name, value } = event.target
+        const {name, value} = event.target
 
-        setForm({
-            ...form,
+        if (name === 'farmId') {
+            const nextFarm = farms.find(
+                (farm) => String(farm.farmId) === value
+            )
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                farmId: value,
+                minOrderQuantity:
+                    nextFarm?.saleType === 'WHOLESALE' ? '2' : '1',
+            }))
+            return
+        }
+
+        setForm((currentForm) => ({
+            ...currentForm,
             [name]: value,
-        })
+        }))
     }
 
     async function handleSubmit(event) {
@@ -132,9 +199,15 @@ function ProductCreatePage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const minOrderQuantity = Number(form.minOrderQuantity)
 
         if (!Number.isFinite(farmId) || farmId <= 0) {
             alert('농장 번호를 올바르게 입력해주세요.')
+            return
+        }
+
+        if (!selectedFarm) {
+            alert('선택한 농장 정보를 확인할 수 없습니다.')
             return
         }
 
@@ -163,17 +236,49 @@ function ProductCreatePage() {
             return
         }
 
+        if (!Number.isInteger(minOrderQuantity)
+            || minOrderQuantity < 1) {
+            alert('최소 주문 수량은 1개 이상 입력해주세요.')
+            return
+        }
+
+        if (selectedFarm.saleType === 'RETAIL'
+            && minOrderQuantity !== 1) {
+            alert('소매 농장의 상품은 1개부터 주문할 수 있습니다.')
+            return
+        }
+
+        if (selectedFarm.saleType === 'WHOLESALE'
+            && minOrderQuantity < 2) {
+            alert('도매 농장의 상품은 최소 주문 수량이 2개 이상이어야 합니다.')
+            return
+        }
+
         const productData = {
             ...form,
             farmId: farmId,
             categoryId: categoryId,
             price: price,
             stockQuantity: stockQuantity,
+            minOrderQuantity: minOrderQuantity,
         }
 
         try {
             setSubmitting(true)
-            await createProduct(productData)
+
+            let productImageUrl = ''
+
+            if (selectedImageFile) {
+                const uploadResult =
+                    await uploadProductImage(selectedImageFile)
+
+                productImageUrl = uploadResult.imageUrl
+            }
+
+            await createProduct({
+                ...productData,
+                productImageUrl,
+            })
 
             alert('상품이 등록되었습니다.')
             navigate('/seller/products')
@@ -279,7 +384,11 @@ function ProductCreatePage() {
                                         key={farm.farmId}
                                         value={farm.farmId}
                                     >
-                                        {farm.farmName} - {farm.region}
+                                        {farm.farmName} - {farm.region} · {
+                                            farm.saleType === 'WHOLESALE'
+                                                ? '도매'
+                                                : '소매'
+                                        }
                                     </option>
                                 ))}
                             </select>
@@ -362,6 +471,45 @@ function ProductCreatePage() {
                             />
                         </div>
                     </div>
+                        <div className="product-create-row">
+                            <div className="product-create-field">
+                                <label>판매 방식</label>
+
+                                <input
+                                    value={
+                                        selectedFarm?.saleType === 'WHOLESALE'
+                                            ? '도매'
+                                            : selectedFarm ? '소매' : '농장을 먼저 선택해주세요.'
+                                    }
+                                    readOnly
+                                />
+                                <small>판매 방식은 선택한 농장을 따릅니다.</small>
+                            </div>
+
+                            <div className="product-create-field">
+                                <label>최소 주문 수량</label>
+
+                                <input
+                                    type="number"
+                                    name="minOrderQuantity"
+                                    value={form.minOrderQuantity}
+                                    onChange={handleChange}
+                                    min={selectedFarm?.saleType === 'WHOLESALE' ? 2 : 1}
+                                    step="1"
+                                    disabled={
+                                        !selectedFarm
+                                        || selectedFarm.saleType !== 'WHOLESALE'
+                                    }
+                                    required
+                                />
+
+                                <small>
+                                    {selectedFarm?.saleType === 'WHOLESALE'
+                                        ? '도매 농장의 최소 주문 수량을 입력해주세요.'
+                                        : '소매 농장의 상품은 1개부터 주문할 수 있습니다.'}
+                                </small>
+                            </div>
+                        </div>
 
                     <div className="product-create-row">
                         <div className="product-create-field">
@@ -395,22 +543,26 @@ function ProductCreatePage() {
                         </div>
                     </div>
 
-                    <div className="product-create-field">
-                        <label>이미지 주소</label>
-                        <input
-                            name="productImageUrl"
-                            value={form.productImageUrl}
-                            onChange={handleChange}
-                            placeholder="/uploads/product.jpg"
-                        />
-                    </div>
+                        <div className="product-create-field">
+                            <label>상품 이미지</label>
 
-                    {form.productImageUrl.trim() && (
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={handleImageChange}
+                            />
+
+                            <small>
+                                JPG, JPEG, PNG, WEBP 형식의 5MB 이하 이미지를 선택해주세요.
+                            </small>
+                        </div>
+
+                        {imagePreviewUrl && (
                     <div className="product-create-image-preview">
                         <p>상품 이미지 미리보기</p>
 
                         <CatalogImage
-                            src={form.productImageUrl}
+                            src={imagePreviewUrl}
                             alt="등록할 상품 미리보기"
                             fallbackText="이미지를 불러올 수 없습니다."
                             fallbackClassName="product-create-image-fallback"

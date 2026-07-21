@@ -1,11 +1,11 @@
 package me.soldesk.springbootback.domain.product.controller;
 
-import me.soldesk.springbootback.domain.product.dto.ProductRequest;
-import me.soldesk.springbootback.domain.product.dto.ProductResponse;
-import me.soldesk.springbootback.domain.product.dto.ProductStatusRequest;
-import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
+import me.soldesk.springbootback.domain.product.dto.*;
+import me.soldesk.springbootback.domain.product.service.ProductImageService;
 import me.soldesk.springbootback.domain.product.service.ProductService;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -14,9 +14,11 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductImageService productImageService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, ProductImageService productImageService) {
         this.productService = productService;
+        this.productImageService = productImageService;
     }
 
     @GetMapping
@@ -28,6 +30,31 @@ public class ProductController {
 
     ) {
         return productService.getProducts(categoryId, farmId, productStatus, publicOnly);
+    }
+
+    /** 구매자 상품 목록을 검색, 정렬, 페이지 조건에 맞춰 조회합니다. */
+    @GetMapping("/public-page")
+    public ProductPageResponse getPublicProductPage(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "RETAIL") String saleType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "LATEST") String sortOption,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size
+    ) {
+        return productService.getPublicProductPage(
+                categoryId,
+                saleType,
+                keyword,
+                sortOption,
+                page,
+                size
+        );
+    }
+
+    @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ProductImageUploadResponse uploadProductImage(@RequestPart("image")MultipartFile image){
+        return productImageService.uploadImage(image);
     }
 
     @PostMapping

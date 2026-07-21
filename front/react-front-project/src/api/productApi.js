@@ -32,10 +32,55 @@ export async function getProducts(
   return response.data
 }
 
+// 구매자 상품 목록을 판매 방식, 검색, 정렬, 페이지 조건으로 조회합니다.
+export async function getPublicProductPage({
+  categoryId = null,
+  saleType = 'RETAIL',
+  keyword = '',
+  sortOption = 'LATEST',
+  page = 0,
+  size = 12,
+}) {
+  const params = {
+    saleType,
+    sortOption,
+    page,
+    size,
+  }
+
+  if (categoryId !== null) {
+    params.categoryId = categoryId
+  }
+
+  if (keyword.trim()) {
+    params.keyword = keyword.trim()
+  }
+
+  const response = await axios.get('/api/products/public-page', {
+    params,
+  })
+
+  return response.data
+}
+
 //상품 상세정보를 조회
 export async function getProduct(productId, publicOnly = false) {
   const params = publicOnly ? { publicOnly: true } : {}
   const response = await axios.get(`/api/products/${productId}`, { params })
+  return response.data
+}
+
+// 상품 이미지 파일을 업로드합니다.
+export async function uploadProductImage(imageFile) {
+  const formData = new FormData()
+
+  formData.append('image', imageFile)
+
+  const response = await axios.post(
+      '/api/products/image',
+      formData
+  )
+
   return response.data
 }
 

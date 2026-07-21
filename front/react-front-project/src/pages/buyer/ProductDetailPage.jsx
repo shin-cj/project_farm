@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getProduct } from '../../api/productApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
@@ -20,10 +20,24 @@ function getStoredLoginUser() {
   }
 }
 
+function getMinimumOrderQuantity(product) {
+  if (product?.saleType !== 'WHOLESALE') {
+    return 1
+  }
+
+  const minimumOrderQuantity = Number(product.minOrderQuantity)
+
+  return Number.isInteger(minimumOrderQuantity)
+      && minimumOrderQuantity >= 2
+      ? minimumOrderQuantity
+      : 2
+}
+
 // 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductDetailPage() {
   const {productId} = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const loginUser = getStoredLoginUser()
   const userid = loginUser?.userId;
   const [product, setProduct] = useState(null)
@@ -69,6 +83,7 @@ function ProductDetailPage() {
 
         setProduct(data)
         setFarm(null)
+        setQuantity(getMinimumOrderQuantity(data))
 
         if(data.farmId){
           try{
@@ -132,21 +147,24 @@ function ProductDetailPage() {
     )
   }
 
+  const minimumOrderQuantity = getMinimumOrderQuantity(product)
+  const stockQuantity = Number(product.stockQuantity)
+
   const isPurchasable =
       product.productStatus === 'ON_SALE'
-      && Number(product.stockQuantity) > 0
+      && stockQuantity >= minimumOrderQuantity
 
   const numericQuantity = Number(quantity)
 
   const isValidQuantity =
       Number.isInteger(numericQuantity)
-  && numericQuantity >= 1
-  && numericQuantity <= Number(product.stockQuantity)
+      && numericQuantity >= minimumOrderQuantity
+      && numericQuantity <= stockQuantity
 
   const unavailableMessage =
-      Number(product.stockQuantity) <= 0
+      stockQuantity < minimumOrderQuantity
       || product.productStatus === 'SOLD_OUT'
-          ? '품절된 상품입니다.'
+          ? '최소 주문 수량을 충족할 재고가 없는 상품입니다.'
           : product.productStatus === 'PENDING'
               ? '승인 대기 중인 상품입니다.'
               : product.productStatus === 'HIDDEN'
@@ -154,15 +172,13 @@ function ProductDetailPage() {
                   : '현재 구매할 수 없는 상품입니다.'
 
   function handleDecreaseQuantity(){
-    const currentQuantity = Number(quantity) || 1
+    const currentQuantity = Number(quantity) || minimumOrderQuantity
 
-    setQuantity(Math.max(1, currentQuantity - 1))
+    setQuantity(Math.max(minimumOrderQuantity, currentQuantity - 1))
   }
 
   function handleIncreaseQuantity() {
-    const currentQuantity = Number(quantity) || 1
-    const stockQuantity = Number(product.stockQuantity)
-
+    const currentQuantity = Number(quantity) || minimumOrderQuantity
     setQuantity(Math.min(stockQuantity, currentQuantity + 1))
   }
 
@@ -179,8 +195,9 @@ function ProductDetailPage() {
       navigate('/login')
       return
     }
-    if (!Number.isInteger(orderQuantity) || orderQuantity < 1) {
-      alert('수량은 1개 이상의 정수로 입력해주세요.')
+    if (!Number.isInteger(orderQuantity)
+        || orderQuantity < minimumOrderQuantity) {
+      alert(`최소 주문 수량은 ${minimumOrderQuantity}개입니다.`)
       return
     }
 
@@ -211,6 +228,8 @@ function ProductDetailPage() {
             origin: product.origin,
             unit: product.unit,
             productStatus: product.productStatus,
+            saleType: product.saleType,
+            minOrderQuantity: minimumOrderQuantity,
             farmId: product.farmId,
             farmName: farm?.farmName,
             farmAddress: farm?.farmAddress,
@@ -222,6 +241,13 @@ function ProductDetailPage() {
       },
     })
   }
+
+  const requestedListPath = location.state?.from
+  const productListPath =
+      typeof requestedListPath === 'string'
+      && requestedListPath.startsWith('/products')
+          ? requestedListPath
+          : '/products'
 
   return (
     <main className="product-detail-page">
@@ -241,7 +267,7 @@ function ProductDetailPage() {
             <button
               type="button"
               className="product-detail-back-button"
-              onClick={() => navigate('/products')}
+              onClick={() => navigate(productListPath)}
             >
               목록으로
             </button>
@@ -282,16 +308,28 @@ function ProductDetailPage() {
               <dt>상품 번호</dt>
               <dd>{product.productId}</dd>
             </div>
+
+            <div>
+              <dt>판매 방식</dt>
+              <dd>
+                {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
+              </dd>
+            </div>
+
+            <div>
+              <dt>최소 주문</dt>
+              <dd>{minimumOrderQuantity}개</dd>
+            </div>
           </dl>
 
           <div className="product-detail-quantity">
-            <span>구매 수량</span>
+            <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
 
             <div className="product-detail-quantity-control">
               <button
                   type="button"
                   onClick={handleDecreaseQuantity}
-                  disabled={numericQuantity <= 1}
+                  disabled={numericQuantity <= minimumOrderQuantity}
                   aria-label="수량 줄이기"
               >
                 −
@@ -299,7 +337,7 @@ function ProductDetailPage() {
 
               <input
                   type="number"
-                  min="1"
+                  min={minimumOrderQuantity}
                   max={product.stockQuantity}
                   value={quantity}
                   onChange={(event) => setQuantity(event.target.value)}
@@ -396,12 +434,16 @@ function ProductDetailPage() {
               <p>상품명: {product.productName}</p>
               <p>가격: {product.price.toLocaleString()}원</p>
               <p>남은 재고: {product.stockQuantity}개</p>
+              <p>
+                판매 방식: {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
+              </p>
+              <p>최소 주문 수량: {minimumOrderQuantity}개</p>
 
               <label>
                 수량
                 <input
                     type="number"
-                    min="1"
+                    min={minimumOrderQuantity}
                     max={product.stockQuantity}
                     value={quantity}
                     onChange={(event) => setQuantity(event.target.value)}

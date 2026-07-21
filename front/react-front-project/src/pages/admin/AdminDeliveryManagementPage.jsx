@@ -1,20 +1,10 @@
 import { useEffect, useState } from "react";
 import { getAdminOrders, updateAdminDeliveryStatus } from "../../api/deliveryApi";
 import { approveRefund, rejectRefund } from "../../api/paymentApi.js";
-
-const orderStatusLabel = {
-  PAYMENT_WAIT: "결제 대기",
-  PAID: "결제 완료",
-  CANCELED: "주문 취소",
-  REFUND_REQUESTED: "환불 요청",
-  REFUNDED: "환불 완료",
-};
-
-const deliveryStatusLabel = {
-  READY: "배송 준비중",
-  SHIPPING: "배송 중",
-  DELIVERED: "배송 완료",
-};
+import {
+  DELIVERY_STATUS_LABEL,
+  ORDER_STATUS_LABEL,
+} from "../../constants/statusLabels.js";
 
 const filterOptions = [
   { value: "ALL", label: "전체" },
@@ -93,8 +83,8 @@ function AdminDeliveryManagementPage() {
       return;
     }
 
-    if (order.orderStatus === "CANCELED" || order.orderStatus === "REFUNDED") {
-      setError("취소 또는 환불 완료 주문은 배송 상태를 변경할 수 없습니다.");
+    if (["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus)) {
+      setError("취소 또는 환불 처리 중인 주문은 배송 상태를 변경할 수 없습니다.");
       return;
     }
 
@@ -219,7 +209,7 @@ function AdminDeliveryManagementPage() {
           const isCanceled = order.orderStatus === "CANCELED";
           const isRefundRequested = order.orderStatus === "REFUND_REQUESTED";
           const isRefunded = order.orderStatus === "REFUNDED";
-          const canChangeDelivery = !isCanceled && !isRefunded && order.deliveryId;
+          const canChangeDelivery = !isCanceled && !isRefundRequested && !isRefunded && order.deliveryId;
 
           return (
             <article
@@ -248,7 +238,7 @@ function AdminDeliveryManagementPage() {
                       fontWeight: 900,
                     }}
                   >
-                    {orderStatusLabel[order.orderStatus]}
+                    {ORDER_STATUS_LABEL[order.orderStatus]}
                   </span>
                 )}
                 <strong style={{ display: "block", color: "#213328", fontSize: "1.05rem" }}>
@@ -268,7 +258,7 @@ function AdminDeliveryManagementPage() {
               <div>
                 <span style={{ display: "block", color: "#68756d", fontWeight: 700 }}>결제 / 환불 정보</span>
                 <strong style={{ display: "block", marginTop: "6px", color: isCanceled || isRefunded ? "#dc2626" : isRefundRequested ? "#92400e" : "#213328" }}>
-                  {orderStatusLabel[order.orderStatus] || order.orderStatus}
+                  {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
                 </strong>
                 <span style={{ display: "block", marginTop: "6px", color: "#68756d" }}>
                   결제수단: {order.paymentMethod || "결제 전"}
@@ -317,7 +307,7 @@ function AdminDeliveryManagementPage() {
                     fontWeight: 800,
                   }}
                 >
-                  {isCanceled || isRefunded ? "배송 변경 불가" : deliveryStatusLabel[order.deliveryStatus] || "배송 준비중"}
+                  {isCanceled || isRefunded ? "배송 변경 불가" : DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
                 </span>
 
                 <span style={{ display: "block", color: "#68756d" }}>

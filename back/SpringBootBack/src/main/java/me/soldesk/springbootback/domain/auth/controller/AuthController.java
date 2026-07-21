@@ -3,7 +3,7 @@ package me.soldesk.springbootback.domain.auth.controller;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.auth.service.AuthService;
 import me.soldesk.springbootback.domain.user.dto.UserRequest;
-import me.soldesk.springbootback.domain.user.entity.User;
+import me.soldesk.springbootback.domain.user.dto.UserResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -19,7 +19,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserRequest request) {
         try{
-            User user = authService.login(request);
+            // User 엔티티를 그대로 반환하지 않고, 비밀번호가 빠진 응답 DTO를 반환합니다.
+            UserResponse user = authService.loginResponse(request);
             return ResponseEntity.ok(user);
         }catch (IllegalArgumentException e){
             return ResponseEntity.badRequest().body(e.getMessage());

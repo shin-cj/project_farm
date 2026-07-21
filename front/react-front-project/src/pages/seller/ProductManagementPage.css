@@ -162,6 +162,23 @@
     flex-wrap: wrap;
 }
 
+.seller-product-filter select,
+.seller-product-filter input {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #374151;
+    font-size: 14px;
+}
+
+.seller-product-filter select:focus,
+.seller-product-filter input:focus {
+    outline: none;
+    border-color: #3f7d20;
+    box-shadow: 0 0 0 3px rgba(63, 125, 32, 0.12);
+}
+
 .seller-product-filter button {
     border: 1px solid #d1d5db;
     background-color: #ffffff;
@@ -269,4 +286,35 @@
 .seller-product-stock-control button:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+}
+
+.seller-product-sale-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 70px;
+}
+
+.seller-product-sale-type {
+    display: inline-flex;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-weight: 800;
+}
+
+.seller-product-sale-type.retail {
+    background-color: #eef6e8;
+    color: #3f7d20 !important;
+}
+
+.seller-product-sale-type.wholesale {
+    background-color: #0d663a;
+    color: #ffffff !important;
+}
+
+.seller-product-sale-info small {
+    color: #6b7280;
+    font-size: 12px;
+    white-space: nowrap;
 }
