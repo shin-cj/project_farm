@@ -33,6 +33,9 @@ function ReportManagementPage() {
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [error, setError] = useState("");
+  const [adminReply, setAdminReply] = useState("");
+  const [replyingId, setReplyingId] = useState(null);
+
 
 
 
@@ -140,16 +143,71 @@ function ReportManagementPage() {
       setUpdatingId(null);
     }
   }
+
+  async function handleReplySunbmit(){
+    const trimmedReply = adminReply.trim()
+
+    if (!trimmedReply){
+      setError("답변 내용을 입력해주세요.")
+      return
+    }
+
+    const storedUser = localStorage.getItem("loginUser")
+    const loginUser = storedUser ? JSON.parse(storedUser) : null
+    const adminId = loginUser?.userId
+
+    if(!adminId){
+      setError("관리자 로그인 정보가 없습니다.")
+      return
+    }
+
+    try {
+      setReplyingId(selectedReport.reportId)
+      setError("")
+
+      const response = await reportApi.replyAdminReport(
+          selectedReport.reportId,
+          trimmedReply,
+          adminId
+      )
+
+      const updatedReport = response.data
+
+      setReports((currentReports) =>
+      currentReports.map((report) =>
+      report.reportId === updatedReport.reportId ? updatedReport : report
+        )
+      )
+
+      setSelectedReport(updatedReport)
+      setAdminReply(updatedReport.adminReply || "")
+
+      alert("관리자 답변이 등록되었습니다.")
+    }catch (e){
+      console.error(e)
+
+      setError(
+          e.response?.data?.message || "답변을 등록하지 못했습니다."
+      )
+    }finally {
+      setReplyingId(null)
+    }
+  }
+
   function openDetail(report){
     setSelectedReport(report)
     setSelectedStatus(report.reportStatus)
+    setAdminReply(report.adminReply || "")
   }
 
 
   function closeDetail() {
     setSelectedReport(null);
     setSelectedStatus("")
+    setAdminReply("")
   }
+
+
 
   return (
     <section className="page-card report-management-page">
@@ -296,6 +354,47 @@ function ReportManagementPage() {
                 <h3>신고 내용</h3>
                 <p>{selectedReport.reportReason}</p>
               </div>
+
+
+            <div className="report-admin-reply">
+              <label htmlFor="admin-reply">
+                관리자 답변
+              </label>
+
+              <textarea
+                id="admin=reply"
+                value={adminReply}
+                onChange={(e) => setAdminReply(e.target.value)}
+                placeholder="신고자에게 전달한 답변을 입력해주세요."
+                rows={5}
+                maxLength={1000}
+              />
+
+              <div className="report-admin-reply-footer">
+                <span>{adminReply.length}/1000</span>
+
+                <button
+                  type="button"
+                  onClick={handleReplySunbmit}
+                  disabled={
+                  replyingId === selectedReport.reportId ||
+                      !adminReply.trim()
+                  }>
+                  {replyingId === selectedReport.reportId
+                  ? "등록 중..."
+                  : selectedReport.adminReply
+                  ? "답변 수정"
+                  : "답변 등록"}
+                </button>
+              </div>
+
+              {selectedReport.repliedAt && (
+                  <p>
+                    마지막 답변 일시 : {" "}
+                    {formatDate(selectedReport.repliedAt)}
+                  </p>
+              )}
+            </div>
             </div>
 
             <footer className="report-modal-footer">

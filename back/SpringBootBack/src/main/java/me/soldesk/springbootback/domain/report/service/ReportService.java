@@ -10,6 +10,7 @@ import me.soldesk.springbootback.domain.report.repository.ReportRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -119,6 +120,9 @@ public class ReportService {
         response.setReportReason(report.getReportReason());
         response.setReportStatus(report.getReportStatus());
         response.setCreatedAt(report.getCreatedAt());
+        response.setAdminReply(report.getAdminReply());
+        response.setRepliedAt(report.getRepliedAt());
+        response.setRepliedBy(report.getRepliedBy());
 
         return response;
 
@@ -135,6 +139,14 @@ public class ReportService {
             throw new IllegalArgumentException("관리자 정보가 없습니다.");
         }
 
-        Report report = 
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("신고 정보를 찾을 수 없습니다."));
+
+        report.setAdminReply(request.getAdminReply().trim());
+        report.setRepliedBy(request.getRepliedBy());
+        report.setRepliedAt(LocalDateTime.now());
+
+        return toResponse(report);
     }
 }

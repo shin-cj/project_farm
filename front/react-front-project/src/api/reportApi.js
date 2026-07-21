@@ -20,6 +20,13 @@ const reportApi = {
             {reportStatus: reportStatus})
     },
 
+    replyAdminReport(reportId, adminReply, repliedBy){
+        return httpClient.patch(
+            `/admin/reports/${reportId}/reply`,{adminReply, repliedBy,
+            }
+        )
+    },
+
 
 
 }
