@@ -44,4 +44,5 @@ public class QnaResponse {
     /** 답변 작성 일시 */
     private LocalDateTime answeredAt;
 
+
 }
