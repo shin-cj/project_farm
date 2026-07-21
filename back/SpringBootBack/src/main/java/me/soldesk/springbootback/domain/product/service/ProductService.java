@@ -65,14 +65,14 @@ public class ProductService {
             );
         }
 
-        Map<Long, String> farmNameById = farmRepository.findAllById(
+        Map<Long, Farm> farmById = farmRepository.findAllById(
                 products.stream()
                         .map(Product::getFarmId)
                         .distinct()
                         .toList()
         ).stream().collect(Collectors.toMap(
                 Farm::getFarmId,
-                Farm::getFarmName
+                farm -> farm
         ));
 
         List<ProductResponse> responses = new ArrayList<>();
@@ -80,7 +80,7 @@ public class ProductService {
         for (Product product : products) {
             responses.add(toResponse(
                     product,
-                    farmNameById.get(product.getFarmId())
+                    farmById.get(product.getFarmId())
             ));
         }
 
@@ -168,14 +168,14 @@ public class ProductService {
 
         List<Product> products = productPage.getContent();
 
-        Map<Long, String> farmNameById = farmRepository.findAllById(
+        Map<Long, Farm> farmById = farmRepository.findAllById(
                 products.stream()
                         .map(Product::getFarmId)
                         .distinct()
                         .toList()
         ).stream().collect(Collectors.toMap(
                 Farm::getFarmId,
-                Farm::getFarmName
+                farm -> farm
         ));
 
         List<ProductResponse> responses = new ArrayList<>();
@@ -183,7 +183,7 @@ public class ProductService {
         for (Product product : products) {
             responses.add(toResponse(
                     product,
-                    farmNameById.get(product.getFarmId())
+                    farmById.get(product.getFarmId())
             ));
         }
 
@@ -352,21 +352,20 @@ public class ProductService {
     //Product 엔티티를 ProductResponse DTO로 변환
     private ProductResponse toResponse(Product product) {
 
-        String farmName = farmRepository.findById(product.getFarmId())
-                .map(Farm::getFarmName)
-                .orElse("농장 정보 없음");
+        Farm farm = farmRepository.findById(product.getFarmId())
+                .orElse(null);
 
-        return toResponse(product, farmName);
+        return toResponse(product, farm);
     }
 
-    private ProductResponse toResponse(Product product, String farmName) {
+    private ProductResponse toResponse(Product product, Farm farm) {
 
         ProductResponse response = new ProductResponse();
 
         response.setProductId(product.getProductId());
         response.setFarmId(product.getFarmId());
         response.setFarmName(
-                farmName == null ? "농장 정보 없음" : farmName
+                farm == null ? "농장 정보 없음" : farm.getFarmName()
         );
         response.setCategoryId(product.getCategoryId());
         response.setProductName(product.getProductName());
@@ -374,7 +373,9 @@ public class ProductService {
         response.setPrice(product.getPrice());
         response.setStockQuantity(product.getStockQuantity());
         response.setUnit(product.getUnit());
-        response.setSaleType(product.getSaleType());
+        response.setSaleType(
+                farm == null ? "RETAIL" : farm.getSaleType()
+        );
         response.setMinOrderQuantity(product.getMinOrderQuantity());
         response.setOrigin(product.getOrigin());
         response.setHarvestDate(product.getHarvestDate());
@@ -473,25 +474,14 @@ public class ProductService {
             );
         }
 
-        // 판매 구분이 비어 있는지 확인합니다.
-        if (request.getSaleType() == null
-                || request.getSaleType().isBlank()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "판매 구분을 선택해주세요."
-            );
-        }
+        // 상품의 판매 방식은 선택한 농장의 판매 방식을 사용합니다.
+        String saleType = farm.getSaleType();
 
-        // 소문자나 앞뒤 공백이 들어와도 검사할 수 있도록 값을 정리합니다.
-        String saleType =
-                request.getSaleType().trim().toUpperCase();
-
-        // 판매 구분은 소매 또는 도매만 허용합니다.
         if (!"RETAIL".equals(saleType)
                 && !"WHOLESALE".equals(saleType)) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "판매 구분은 RETAIL 또는 WHOLESALE만 가능합니다."
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "농장의 판매 방식 정보가 올바르지 않습니다."
             );
         }
 
@@ -532,7 +522,6 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStockQuantity(request.getStockQuantity());
         product.setUnit(request.getUnit());
-        product.setSaleType(request.getSaleType().trim().toUpperCase());
         product.setMinOrderQuantity(request.getMinOrderQuantity());
         product.setOrigin(request.getOrigin());
         product.setHarvestDate(request.getHarvestDate());

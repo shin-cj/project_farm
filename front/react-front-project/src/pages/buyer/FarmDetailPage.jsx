@@ -126,6 +126,14 @@ function FarmDetailPage() {
                         </Link>
                     </div>
 
+                    <span className={`farm-detail-sale-type ${
+                        farm.saleType === 'WHOLESALE' ? 'wholesale' : 'retail'
+                    }`}>
+                        {farm.saleType === 'WHOLESALE'
+                            ? '도매 대량구매 농장'
+                            : '소매 장보기 농장'}
+                    </span>
+
                     <p className="farm-detail-address">
                         {farm.farmAddress}
                         {farm.farmDetailAddress

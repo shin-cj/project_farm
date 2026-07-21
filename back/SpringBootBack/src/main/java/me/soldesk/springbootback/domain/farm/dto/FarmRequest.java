@@ -34,6 +34,9 @@ public class FarmRequest {
     /** 농장 대표 이미지 주소 */
     private String farmImageUrl;
 
+    /** 농장의 판매 방식: RETAIL=소매, WHOLESALE=도매 */
+    private String saleType;
+
     /** 농장 승인 상태 */
     private String approvalStatus;
 

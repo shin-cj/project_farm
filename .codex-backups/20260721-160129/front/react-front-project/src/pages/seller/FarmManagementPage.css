@@ -1,0 +1,203 @@
+.farm-management-page {
+    padding: 32px;
+    color: #1f2937;
+}
+
+.farm-management-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.farm-management-label {
+    margin: 0 0 8px;
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.farm-management-header h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+}
+
+.farm-management-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.farm-management-create-button {
+    border: 0;
+    border-radius: 6px;
+    background-color: #16a34a;
+    color: #ffffff;
+    padding: 11px 16px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.farm-management-empty {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 32px;
+}
+
+.farm-management-empty p {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.farm-management-empty span {
+    color: #6b7280;
+}
+
+.farm-management-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.farm-management-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 22px;
+}
+
+.farm-management-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.farm-management-region {
+    margin: 0 0 6px;
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.farm-management-card h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.farm-management-status {
+    border-radius: 999px;
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.farm-management-address {
+    margin: 0 0 12px;
+    color: #374151;
+    font-weight: 700;
+}
+
+.farm-management-description {
+    margin: 0;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+.farm-management-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.farm-management-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.farm-management-actions button {
+    border: 1px solid #16a34a;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #15803d;
+    padding: 9px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.farm-management-actions button:hover {
+    background-color: #f0fdf4;
+}
+
+.farm-management-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 180px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #eef4eb;
+}
+
+.farm-management-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.farm-management-image span {
+    color: #7c8d76;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.farm-management-status.pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.farm-management-status.approved {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.farm-management-status.rejected {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.farm-management-status.unknown {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.farm-management-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.farm-management-actions button:disabled {
+    border-color: #d1d5db;
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.farm-management-actions button:disabled:hover {
+    background-color: #f3f4f6;
+}

@@ -25,7 +25,7 @@ FROM dual;
    column_status가 OK이면 정상이다.
    ========================================================= */
 WITH expected_columns AS (
-    SELECT 'PRODUCTS' AS table_name,
+    SELECT 'FARMS' AS table_name,
            'SALE_TYPE' AS column_name,
            'VARCHAR2' AS expected_type,
            20 AS expected_size,
@@ -88,13 +88,15 @@ ORDER BY e.table_name, e.column_name;
 
 
 /* 필수 컬럼의 기본값도 눈으로 확인한다.
-   SALE_TYPE은 'RETAIL', MIN_ORDER_QUANTITY는 1이어야 한다. */
+   FARMS.SALE_TYPE은 'RETAIL', PRODUCTS.MIN_ORDER_QUANTITY는 1이어야 한다. */
 SELECT table_name,
        column_name,
        data_default
 FROM user_tab_columns
-WHERE (table_name = 'PRODUCTS'
-       AND column_name IN ('SALE_TYPE', 'MIN_ORDER_QUANTITY'))
+WHERE (table_name = 'FARMS'
+       AND column_name = 'SALE_TYPE')
+   OR (table_name = 'PRODUCTS'
+       AND column_name = 'MIN_ORDER_QUANTITY')
    OR (table_name = 'REPORTS'
        AND column_name = 'PRODUCT_ID')
 ORDER BY table_name, column_name;
@@ -105,8 +107,8 @@ ORDER BY table_name, column_name;
    constraint_status가 OK이고 status가 ENABLED이면 정상이다.
    ========================================================= */
 WITH expected_constraints AS (
-    SELECT 'PRODUCTS' AS table_name,
-           'CK_PRODUCTS_SALE_TYPE' AS constraint_name,
+    SELECT 'FARMS' AS table_name,
+           'CK_FARMS_SALE_TYPE' AS constraint_name,
            'C' AS expected_type
     FROM dual
     UNION ALL
@@ -441,19 +443,22 @@ ORDER BY o.order_id;
 SELECT 'WHOLESALE_MINIMUM_NOT_GREATER_THAN_ONE' AS check_name,
        COUNT(*) AS violation_count
 FROM products
-WHERE sale_type = 'WHOLESALE'
+JOIN farms ON farms.farm_id = products.farm_id
+WHERE farms.sale_type = 'WHOLESALE'
   AND min_order_quantity <= 1
 UNION ALL
 SELECT 'WHOLESALE_CART_BELOW_MINIMUM', COUNT(*)
 FROM cart_items ci
 JOIN products p ON p.product_id = ci.product_id
-WHERE p.sale_type = 'WHOLESALE'
+JOIN farms f ON f.farm_id = p.farm_id
+WHERE f.sale_type = 'WHOLESALE'
   AND ci.quantity < p.min_order_quantity
 UNION ALL
 SELECT 'WHOLESALE_ORDER_BELOW_MINIMUM', COUNT(*)
 FROM order_items oi
 JOIN products p ON p.product_id = oi.product_id
-WHERE p.sale_type = 'WHOLESALE'
+JOIN farms f ON f.farm_id = p.farm_id
+WHERE f.sale_type = 'WHOLESALE'
   AND oi.quantity < p.min_order_quantity
 UNION ALL
 SELECT 'ON_SALE_MINIMUM_EXCEEDS_STOCK', COUNT(*)
@@ -481,8 +486,8 @@ SELECT 'PRODUCTS', product_status, COUNT(*)
 FROM products
 GROUP BY product_status
 UNION ALL
-SELECT 'PRODUCT_SALE_TYPE', sale_type, COUNT(*)
-FROM products
+SELECT 'FARM_SALE_TYPE', sale_type, COUNT(*)
+FROM farms
 GROUP BY sale_type
 UNION ALL
 SELECT 'ORDERS', order_status, COUNT(*)
@@ -662,7 +667,7 @@ SELECT p.product_id,
        p.product_name,
        p.product_status,
        p.stock_quantity,
-       p.sale_type,
+       f.sale_type,
        p.min_order_quantity,
        f.farm_id,
        f.farm_name,

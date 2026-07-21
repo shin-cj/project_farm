@@ -23,6 +23,7 @@ function FarmEditPage() {
         farmDetailAddress: '',
         farmDescription: '',
         farmImageUrl: '',
+        saleType: 'RETAIL',
         approvalStatus: 'PENDING',
     })
 
@@ -67,6 +68,7 @@ function FarmEditPage() {
                     farmDetailAddress: data.farmDetailAddress ?? '',
                     farmDescription: data.farmDescription ?? '',
                     farmImageUrl: data.farmImageUrl ?? '',
+                    saleType: data.saleType ?? 'RETAIL',
                     approvalStatus: data.approvalStatus ?? 'PENDING',
                 })
             } catch (err) {
@@ -123,6 +125,12 @@ function FarmEditPage() {
 
         if (!form.farmAddress.trim()) {
             alert('농장 주소를 입력해주세요.')
+            return
+        }
+
+        if (form.saleType !== 'RETAIL'
+            && form.saleType !== 'WHOLESALE') {
+            alert('농장 판매 방식을 선택해주세요.')
             return
         }
 
@@ -201,6 +209,25 @@ function FarmEditPage() {
                                 onChange={handleChange}
                                 required
                             />
+                        </label>
+
+                        <label className="farm-create-field">
+                            <span>판매 방식</span>
+                            <select
+                                name="saleType"
+                                value={form.saleType}
+                                onChange={handleChange}
+                                disabled={form.approvalStatus === 'APPROVED'}
+                                required
+                            >
+                                <option value="RETAIL">소매 상점</option>
+                                <option value="WHOLESALE">도매 상점</option>
+                            </select>
+                            <small>
+                                {form.approvalStatus === 'APPROVED'
+                                    ? '승인 완료된 농장의 판매 방식은 변경할 수 없습니다.'
+                                    : '승인 전까지 판매 방식을 변경할 수 있습니다.'}
+                            </small>
                         </label>
 
                         <label className="farm-create-field">

@@ -143,6 +143,12 @@ function FarmManagementPage() {
 </span>
                     </div>
 
+                    <span className={`farm-management-sale-type ${
+                      farm.saleType === 'WHOLESALE' ? 'wholesale' : 'retail'
+                    }`}>
+                      {farm.saleType === 'WHOLESALE' ? '도매 상점' : '소매 상점'}
+                    </span>
+
                     <p className="farm-management-address">
                       {farm.farmAddress}
                       {farm.farmDetailAddress && ` ${farm.farmDetailAddress}`}
