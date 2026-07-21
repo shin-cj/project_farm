@@ -5,6 +5,7 @@ import {
   getSellerOrders,
   registerSellerDelivery,
 } from "../../api/deliveryApi.js";
+import { DELIVERY_STATUS_LABEL } from "../../constants/statusLabels.js";
 
 const filterOptions = [
   { value: "ACTIVE", label: "처리할 주문" },
@@ -12,12 +13,6 @@ const filterOptions = [
   { value: "SHIPPING", label: "배송 중" },
   { value: "DELIVERED", label: "배송 완료" },
 ];
-
-const deliveryStatusLabel = {
-  READY: "배송 준비중",
-  SHIPPING: "배송 중",
-  DELIVERED: "배송 완료",
-};
 
 function getLoginUser() {
   try {
@@ -112,7 +107,7 @@ function DeliveryManagementPage() {
   }
 
   function getDeliveryStatusLabel(status) {
-    return deliveryStatusLabel[status] || "배송 준비중";
+    return DELIVERY_STATUS_LABEL[status] || "배송 준비중";
   }
 
   function isCanceledOrder(order) {
