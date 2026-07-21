@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -11,7 +11,7 @@ function LoginPage() {
     event.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:8080/api/auth/login", {
+      const response = await axios.post("/api/auth/login", {
         email,
         passwordHash,
       });

@@ -3,6 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getFarm, updateFarm } from '../../api/farmApi.js'
 import './FarmCreatePage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
 
 function FarmEditPage() {
     const navigate = useNavigate()
@@ -20,14 +23,19 @@ function FarmEditPage() {
         farmDetailAddress: '',
         farmDescription: '',
         farmImageUrl: '',
+        saleType: 'RETAIL',
         approvalStatus: 'PENDING',
     })
 
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+    const [reloadKey, setReloadKey] = useState(0)
 
     // 수정 페이지가 처음 열리거나 farmId가 바뀌면 실행됩니다.
     useEffect(() => {
+        let ignore = false
+
         async function loadFarm() {
             try {
                 setLoading(true)
@@ -41,6 +49,10 @@ function FarmEditPage() {
 
                 // 백엔드에 농장 한 개를 요청합니다.
                 const data = await getFarm(farmId)
+
+                if (ignore) {
+                    return
+                }
 
                 if (Number(data.sellerId) !== sellerId) {
                     throw new Error('수정 권한이 없는 농장입니다.')
@@ -56,20 +68,27 @@ function FarmEditPage() {
                     farmDetailAddress: data.farmDetailAddress ?? '',
                     farmDescription: data.farmDescription ?? '',
                     farmImageUrl: data.farmImageUrl ?? '',
+                    saleType: data.saleType ?? 'RETAIL',
                     approvalStatus: data.approvalStatus ?? 'PENDING',
                 })
             } catch (err) {
-                console.error(err)
-                setError(
-                    err.message || '농장 정보를 불러오지 못했습니다.'
-                )
+                if (!ignore) {
+                    console.error(err)
+                    setError(getApiErrorMessage(err, '농장 정보를 불러오지 못했습니다.'))
+                }
             } finally {
-                setLoading(false)
+                if (!ignore) {
+                    setLoading(false)
+                }
             }
         }
 
         loadFarm()
-    }, [farmId])
+
+        return () => {
+            ignore = true
+        }
+    }, [farmId, reloadKey])
 
     function handleChange(event) {
         const { name, value } = event.target
@@ -82,6 +101,10 @@ function FarmEditPage() {
 
     async function handleSubmit(event) {
         event.preventDefault()
+
+        if (submitting) {
+            return
+        }
 
         const sellerId = getLoginSellerId()
 
@@ -105,12 +128,19 @@ function FarmEditPage() {
             return
         }
 
+        if (form.saleType !== 'RETAIL'
+            && form.saleType !== 'WHOLESALE') {
+            alert('농장 판매 방식을 선택해주세요.')
+            return
+        }
+
         const farmData = {
             ...form,
             sellerId,
         }
 
         try {
+            setSubmitting(true)
             // PUT /api/farms/{farmId} 요청을 보냅니다.
             await updateFarm(farmId, farmData)
 
@@ -118,16 +148,30 @@ function FarmEditPage() {
             navigate('/seller/farms')
         } catch (err) {
             console.error(err)
-            alert('농장 수정에 실패했습니다.')
+            alert(getApiErrorMessage(err, '농장 수정에 실패했습니다.'))
+        } finally {
+            setSubmitting(false)
         }
     }
 
     if (loading) {
-        return <p>농장 정보를 불러오는 중입니다.</p>
+        return (
+            <CatalogPageState
+                title="농장 정보 불러오는 중"
+                message="수정할 농장 정보를 확인하고 있습니다."
+            />
+        )
     }
 
     if (error) {
-        return <p>{error}</p>
+        return (
+            <CatalogPageState
+                title="농장 정보를 불러오지 못했습니다"
+                message={error}
+                actionLabel="다시 시도"
+                onAction={() => setReloadKey((value) => value + 1)}
+            />
+        )
     }
 
     return (
@@ -138,9 +182,16 @@ function FarmEditPage() {
                 <p>등록된 농장 정보를 변경할 수 있습니다.</p>
             </section>
 
-            <form className="farm-create-form" onSubmit={handleSubmit}>
+            <form
+                className="farm-create-form"
+                onSubmit={handleSubmit}
+                aria-busy={submitting}
+            >
                 <div className="farm-create-card">
-                    <div className="farm-create-grid">
+                    <fieldset
+                        className="farm-create-grid"
+                        disabled={submitting}
+                    >
                         <label className="farm-create-field">
                             <span>판매자 번호</span>
                             <input
@@ -156,7 +207,27 @@ function FarmEditPage() {
                                 name="farmName"
                                 value={form.farmName}
                                 onChange={handleChange}
+                                required
                             />
+                        </label>
+
+                        <label className="farm-create-field">
+                            <span>판매 방식</span>
+                            <select
+                                name="saleType"
+                                value={form.saleType}
+                                onChange={handleChange}
+                                disabled={form.approvalStatus === 'APPROVED'}
+                                required
+                            >
+                                <option value="RETAIL">소매 상점</option>
+                                <option value="WHOLESALE">도매 상점</option>
+                            </select>
+                            <small>
+                                {form.approvalStatus === 'APPROVED'
+                                    ? '승인 완료된 농장의 판매 방식은 변경할 수 없습니다.'
+                                    : '승인 전까지 판매 방식을 변경할 수 있습니다.'}
+                            </small>
                         </label>
 
                         <label className="farm-create-field">
@@ -174,6 +245,7 @@ function FarmEditPage() {
                                 name="region"
                                 value={form.region}
                                 onChange={handleChange}
+                                required
                             />
                         </label>
 
@@ -183,6 +255,7 @@ function FarmEditPage() {
                                 name="farmAddress"
                                 value={form.farmAddress}
                                 onChange={handleChange}
+                                required
                             />
                         </label>
 
@@ -213,13 +286,26 @@ function FarmEditPage() {
                                 onChange={handleChange}
                             />
                         </label>
-                    </div>
+                        {form.farmImageUrl.trim() && (
+                            <div className="farm-create-image-preview">
+                                <p>농장 대표 이미지 미리보기</p>
+
+                                <CatalogImage
+                                    src={form.farmImageUrl}
+                                    alt="수정할 농장 미리보기"
+                                    fallbackText="이미지를 불러올 수 없습니다."
+                                    fallbackClassName="farm-create-image-fallback"
+                                />
+                            </div>
+                        )}
+                    </fieldset>
 
                     <div className="farm-create-actions">
                         <button
                             type="button"
                             className="farm-create-cancel"
                             onClick={() => navigate('/seller/farms')}
+                            disabled={submitting}
                         >
                             취소
                         </button>
@@ -227,8 +313,9 @@ function FarmEditPage() {
                         <button
                             type="submit"
                             className="farm-create-submit"
+                            disabled={submitting}
                         >
-                            수정 저장
+                            {submitting ? '수정 중...' : '수정 저장'}
                         </button>
                     </div>
                 </div>

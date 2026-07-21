@@ -30,6 +30,8 @@ public class Report {
     @Column(name = "report_id", nullable = false)
     private Long reportId;
 
+    @Column(name = "product_id")
+    private Long productId;
     /** 신고한 회원 번호 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "reporter_id", nullable = false)

@@ -49,6 +49,14 @@ function SellerLayout() {
             </NavLink>
 
             <NavLink
+                to="/seller/mypage"
+                className={getMenuClass}
+            >
+              <span>◉</span>
+              마이페이지
+            </NavLink>
+
+            <NavLink
                 to="/seller/farms"
                 className={getMenuClass}
             >

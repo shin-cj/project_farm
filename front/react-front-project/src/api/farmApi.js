@@ -15,6 +15,20 @@ export async function getFarm(farmId) {
     return response.data
 }
 
+//승인 완료 농장 목록 조회
+export async function getPublicFarms(){
+    const response = await axios.get('/api/farms/public')
+
+    return response.data
+}
+
+//승인 완료 농장 한 건 조회
+export async function getPublicFarm(farmId){
+    const response = await axios.get(`/api/farms/public/${farmId}`)
+
+    return response.data
+}
+
 export async function createFarm(farmData) {
     const response = await axios.post('/api/farms', farmData)
 

@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 public class ReportResponse {
 
+    private Long productId;
+
     /** 신고 고유 번호 */
     private Long reportId;
 

@@ -12,11 +12,15 @@ export function SuccessPage() {
     const orderId = searchParams.get("orderId");
     const amount = searchParams.get("amount");
     const orderName = searchParams.get("orderName") || "농산물 주문";
+    const receiverName = searchParams.get("receiverName") || "";
+    const receiverPhone = searchParams.get("receiverPhone") || "";
+    const receiverAddress = searchParams.get("receiverAddress") || "";
+    const receiverDetailAddress = searchParams.get("receiverDetailAddress") || "";
     const cartItemIds = (searchParams.get("cartItemIds") || "")
         .split(",")
         .filter(id => id !== "")
         .map(Number)
-        .filter(Number.isFinite) //혹시 잘못된 문자열이 섞여 있어도 NaN이 삭제 API로 넘어가는 것을 막아주는 방어 코드.
+        .filter(Number.isFinite);
 
     const formattedAmount = Number(amount || 0).toLocaleString("ko-KR");
 
@@ -33,7 +37,11 @@ export function SuccessPage() {
                 body: JSON.stringify({
                     paymentKey,
                     orderId,
-                    amount: Number(amount)
+                    amount: Number(amount),
+                    receiverName,
+                    receiverPhone,
+                    receiverAddress,
+                    receiverDetailAddress
                 })
             });
 
@@ -43,21 +51,19 @@ export function SuccessPage() {
 
             setIsConfirmed(true);
 
-            try{
-                if(cartItemIds.length > 0){
+            try {
+                if (cartItemIds.length > 0) {
                     await Promise.all(cartItemIds.map(cartItemId =>
-                     cartApi.deleteCartItem(cartItemId)
-                    )
-                    )
+                        cartApi.deleteCartItem(cartItemId)
+                    ));
                 }
-            }catch (e){
-                console.error("장바구니 삭제 실패 : " , e)
-
-                setErrorMessage("결제는 완료되었지만 장바구니 상품을 정리하지 못했습니다.")
+            } catch (error) {
+                console.error("장바구니 삭제 실패:", error);
+                setErrorMessage("결제는 완료되었지만 장바구니 상품을 정리하지 못했습니다.");
             }
         } catch (error) {
             console.error(error);
-            setErrorMessage("결제 승인 중 문제가 발생했습니다. 주문 정보를 확인한 뒤 다시 시도해주세요.");
+            setErrorMessage("결제 승인 중 문제가 발생했습니다. 주문 정보를 확인하고 다시 시도해주세요.");
         } finally {
             setIsLoading(false);
         }
@@ -167,6 +173,12 @@ export function SuccessPage() {
                         <span style={{ color: "#68756d", fontWeight: 700 }}>주문 번호</span>
                         <strong style={{ color: "#213328", textAlign: "right", wordBreak: "break-word" }}>{orderId}</strong>
                     </div>
+                    <div style={rowStyle}>
+                        <span style={{ color: "#68756d", fontWeight: 700 }}>배송지</span>
+                        <strong style={{ color: "#213328", textAlign: "right" }}>
+                            {receiverAddress} {receiverDetailAddress}
+                        </strong>
+                    </div>
                     <div style={{ ...rowStyle, borderBottom: 0 }}>
                         <span style={{ color: "#68756d", fontWeight: 700 }}>결제 키</span>
                         <strong style={{ color: "#213328", textAlign: "right", wordBreak: "break-word" }}>{paymentKey}</strong>
@@ -195,8 +207,8 @@ export function SuccessPage() {
                 }}>
                     {isConfirmed ? (
                         <>
-                            <Link className="btn primary" style={buttonStyle} to="/">
-                                마이페이지로
+                            <Link className="btn primary" style={buttonStyle} to="/orders">
+                                주문내역으로
                             </Link>
                             <Link className="btn" style={buttonStyle} to="/">
                                 홈으로
@@ -213,8 +225,8 @@ export function SuccessPage() {
                             >
                                 {isLoading ? "승인 중..." : "결제 승인하기"}
                             </button>
-                            <Link className="btn" style={buttonStyle} to="/sandbox">
-                                다시 결제하기
+                            <Link className="btn" style={buttonStyle} to="/cart">
+                                장바구니로
                             </Link>
                         </>
                     )}

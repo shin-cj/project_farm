@@ -1,61 +1,139 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getProduct } from '../../api/productApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ProductDetailPage.css'
-import { getFarm } from '../../api/farmApi.js'
+import { getPublicFarm } from '../../api/farmApi.js'
+import CatalogImage from '../../components/catalog/CatalogImage.jsx'
+import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
+import { getApiErrorMessage } from '../../utils/apiError.js'
+
+
+function getStoredLoginUser() {
+  try {
+    const storedUser = localStorage.getItem('loginUser')
+    return storedUser ? JSON.parse(storedUser) : null
+  } catch (error) {
+    console.error(error)
+    return null
+  }
+}
+
+function getMinimumOrderQuantity(product) {
+  if (product?.saleType !== 'WHOLESALE') {
+    return 1
+  }
+
+  const minimumOrderQuantity = Number(product.minOrderQuantity)
+
+  return Number.isInteger(minimumOrderQuantity)
+      && minimumOrderQuantity >= 2
+      ? minimumOrderQuantity
+      : 2
+}
 
 // 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductDetailPage() {
   const {productId} = useParams()
   const navigate = useNavigate()
-  const loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  const location = useLocation()
+  const loginUser = getStoredLoginUser()
   const userid = loginUser?.userId;
   const [product, setProduct] = useState(null)
   const [farm, setFarm] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
 
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
+    if (!isOrderModalOpen) {
+      return undefined
+    }
+
+    function closeModalWithEscape(event) {
+      if (event.key === 'Escape') {
+        setIsOrderModalOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', closeModalWithEscape)
+
+    return () => {
+      window.removeEventListener('keydown', closeModalWithEscape)
+    }
+  }, [isOrderModalOpen])
+
+  useEffect(() => {
+    let ignore = false
+
     async function loadProduct(){
       try{
-        const data = await getProduct(productId)
+        setLoading(true)
+        setError('')
+
+        const data = await getProduct(productId, true)
+
+        if (ignore) {
+          return
+        }
+
         setProduct(data)
+        setFarm(null)
+        setQuantity(getMinimumOrderQuantity(data))
+
         if(data.farmId){
           try{
-            const farmData = await getFarm(data.farmId)
-            setFarm(farmData)
+            const farmData = await getPublicFarm(data.farmId)
+
+            if (!ignore) {
+              setFarm(farmData)
+            }
           }catch(farmError){
             console.log(farmError)
-            setFarm(null)
+
+            if (!ignore) {
+              setFarm(null)
+            }
           }
         }
       }catch (err) {
-        setError(err.message || '상품을 불러오지 못했습니다.')
+        if (!ignore) {
+          setError(getApiErrorMessage(err, '상품을 불러오지 못했습니다.'))
+        }
       }finally{
-        setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
     loadProduct()
-  }, [productId])
+
+    return () => {
+      ignore = true
+    }
+  }, [productId, reloadKey])
 
   if (loading) {
     return (
-      <main className="product-detail-page">
-        <div className="product-detail-message">상품을 불러오는 중입니다.</div>
-      </main>
+      <CatalogPageState
+          title="상품 정보 불러오는 중"
+          message="선택한 상품의 상세 정보를 확인하고 있습니다."
+      />
     )
   }
 
   if (error) {
     return (
-      <main className="product-detail-page">
-        <div className="product-detail-message error">{error}</div>
-      </main>
+      <CatalogPageState
+          title="상품 정보를 불러오지 못했습니다"
+          message={error}
+          actionLabel="다시 시도"
+          onAction={() => setReloadKey((value) => value + 1)}
+      />
     )
   }
 
@@ -68,19 +146,40 @@ function ProductDetailPage() {
     )
   }
 
+  const minimumOrderQuantity = getMinimumOrderQuantity(product)
+  const stockQuantity = Number(product.stockQuantity)
+
   const isPurchasable =
       product.productStatus === 'ON_SALE'
-      && Number(product.stockQuantity) > 0
+      && stockQuantity >= minimumOrderQuantity
+
+  const numericQuantity = Number(quantity)
+
+  const isValidQuantity =
+      Number.isInteger(numericQuantity)
+      && numericQuantity >= minimumOrderQuantity
+      && numericQuantity <= stockQuantity
 
   const unavailableMessage =
-      Number(product.stockQuantity) <= 0
+      stockQuantity < minimumOrderQuantity
       || product.productStatus === 'SOLD_OUT'
-          ? '품절된 상품입니다.'
+          ? '최소 주문 수량을 충족할 재고가 없는 상품입니다.'
           : product.productStatus === 'PENDING'
               ? '승인 대기 중인 상품입니다.'
               : product.productStatus === 'HIDDEN'
                   ? '판매가 중지된 상품입니다.'
                   : '현재 구매할 수 없는 상품입니다.'
+
+  function handleDecreaseQuantity(){
+    const currentQuantity = Number(quantity) || minimumOrderQuantity
+
+    setQuantity(Math.max(minimumOrderQuantity, currentQuantity - 1))
+  }
+
+  function handleIncreaseQuantity() {
+    const currentQuantity = Number(quantity) || minimumOrderQuantity
+    setQuantity(Math.min(stockQuantity, currentQuantity + 1))
+  }
 
   function handleDirectOrder() {
     const orderQuantity = Number(quantity)
@@ -95,9 +194,9 @@ function ProductDetailPage() {
       navigate('/login')
       return
     }
-
-    if (orderQuantity < 1) {
-      alert('수량은 1개 이상 선택해주세요.')
+    if (!Number.isInteger(orderQuantity)
+        || orderQuantity < minimumOrderQuantity) {
+      alert(`최소 주문 수량은 ${minimumOrderQuantity}개입니다.`)
       return
     }
 
@@ -124,7 +223,17 @@ function ProductDetailPage() {
             product_price: product.price,
             productName: product.productName,
             productImageUrl: product.productImageUrl,
+            productDescription: product.description,
+            origin: product.origin,
+            unit: product.unit,
+            productStatus: product.productStatus,
+            saleType: product.saleType,
+            minOrderQuantity: minimumOrderQuantity,
+            farmId: product.farmId,
             farmName: farm?.farmName,
+            farmAddress: farm?.farmAddress,
+            farmDetailAddress: farm?.farmDetailAddress,
+            farmRegion: farm?.region,
             quantity: orderQuantity,
           },
         ],
@@ -132,15 +241,21 @@ function ProductDetailPage() {
     })
   }
 
+  const requestedListPath = location.state?.from
+  const productListPath =
+      typeof requestedListPath === 'string'
+      && requestedListPath.startsWith('/products')
+          ? requestedListPath
+          : '/products'
+
   return (
     <main className="product-detail-page">
       <section className="product-detail-card">
         <div className="product-detail-image-box">
-          {product.productImageUrl ? (
-            <img src={product.productImageUrl} alt={product.productName} />
-          ) : (
-            <span>이미지 준비중</span>
-          )}
+          <CatalogImage
+              src={product.productImageUrl}
+              alt={product.productName}
+          />
         </div>
 
         <div className="product-detail-info">
@@ -151,7 +266,7 @@ function ProductDetailPage() {
             <button
               type="button"
               className="product-detail-back-button"
-              onClick={() => navigate('/products')}
+              onClick={() => navigate(productListPath)}
             >
               목록으로
             </button>
@@ -192,23 +307,72 @@ function ProductDetailPage() {
               <dt>상품 번호</dt>
               <dd>{product.productId}</dd>
             </div>
+
+            <div>
+              <dt>판매 방식</dt>
+              <dd>
+                {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
+              </dd>
+            </div>
+
+            <div>
+              <dt>최소 주문</dt>
+              <dd>{minimumOrderQuantity}개</dd>
+            </div>
           </dl>
+
+          <div className="product-detail-quantity">
+            <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
+
+            <div className="product-detail-quantity-control">
+              <button
+                  type="button"
+                  onClick={handleDecreaseQuantity}
+                  disabled={numericQuantity <= minimumOrderQuantity}
+                  aria-label="수량 줄이기"
+              >
+                −
+              </button>
+
+              <input
+                  type="number"
+                  min={minimumOrderQuantity}
+                  max={product.stockQuantity}
+                  value={quantity}
+                  onChange={(event) => setQuantity(event.target.value)}
+                  aria-label="구매 수량"
+              />
+
+              <button
+                  type="button"
+                  onClick={handleIncreaseQuantity}
+                  disabled={numericQuantity >= Number(product.stockQuantity)}
+                  aria-label="수량 늘리기"
+              >
+                +
+              </button>
+            </div>
+
+            <strong>
+              총 {(product.price * (numericQuantity || 0)).toLocaleString()}원
+            </strong>
+          </div>
 
           <div className="product-detail-actions">
             <AddCartButton
                 productId={product.productId}
                 userid={userid}
-                disabled={!isPurchasable}
+                quantity={numericQuantity}
+                disabled={!isPurchasable || !isValidQuantity}
                 className="product-detail-cart-button"
             />
             <button
                 type="button"
                 className="product-detail-order-link"
                 onClick={() => {
-                  setQuantity(1)
                   setIsOrderModalOpen(true)
                 }}
-            >
+                disabled={!isPurchasable || !isValidQuantity}            >
               바로 주문하기
             </button>
             {!isPurchasable && (
@@ -222,7 +386,16 @@ function ProductDetailPage() {
       {farm && (
           <section className="product-detail-farm-card">
             <p>생산 농장</p>
-            <h2>{farm.farmName}</h2>
+
+            <h2>
+              <Link
+                  to={`/farms/${farm.farmId}`}
+                  className="product-detail-farm-name-link"
+              >
+                {farm.farmName}
+              </Link>
+            </h2>
+
             <span>{farm.region}</span>
 
             <p>{farm.farmAddress}</p>
@@ -230,22 +403,37 @@ function ProductDetailPage() {
             {farm.farmDescription && (
                 <p>{farm.farmDescription}</p>
             )}
+            <Link
+                to={`/farms/${farm.farmId}`}
+                className="product-detail-farm-view-link"
+            >
+              농장 상세 보기
+            </Link>
           </section>
       )}
       {isOrderModalOpen && (
           <div className="product-order-modal-backdrop">
-            <div className="product-order-modal">
-              <h2>바로 주문하기</h2>
+            <div
+                className="product-order-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="product-order-modal-title"
+            >
+              <h2 id="product-order-modal-title">바로 주문하기</h2>
 
               <p>상품명: {product.productName}</p>
               <p>가격: {product.price.toLocaleString()}원</p>
               <p>남은 재고: {product.stockQuantity}개</p>
+              <p>
+                판매 방식: {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
+              </p>
+              <p>최소 주문 수량: {minimumOrderQuantity}개</p>
 
               <label>
                 수량
                 <input
                     type="number"
-                    min="1"
+                    min={minimumOrderQuantity}
                     max={product.stockQuantity}
                     value={quantity}
                     onChange={(event) => setQuantity(event.target.value)}

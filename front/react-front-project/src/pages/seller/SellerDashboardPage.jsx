@@ -4,18 +4,10 @@ import { getFarms } from '../../api/farmApi.js'
 import { getProducts } from '../../api/productApi.js'
 import './SellerDashboardPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
+import {getSellerSalesTrend} from "../../api/salesApi.js";
+import {getSellerOrders} from "../../api/deliveryApi.js";
 
-// 주문·매출 API가 완성되기 전까지 그래프 확인에 사용하는 임시 데이터입니다.
-// 실제 API가 연결되면 이 배열은 삭제합니다.
-const TEMP_SALES_DATA = [
-  { date: '7/8', sales: 320000 },
-  { date: '7/9', sales: 280000 },
-  { date: '7/10', sales: 410000 },
-  { date: '7/11', sales: 570000 },
-  { date: '7/12', sales: 460000 },
-  { date: '7/13', sales: 720000 },
-  { date: '7/14', sales: 890000 },
-]
+const SALES_DAY_OPTIONS = [7, 14, 30]
 
 // 판매자 대시보드 기능을 담당하는 페이지입니다.
 function SellerDashboardPage() {
@@ -29,16 +21,12 @@ function SellerDashboardPage() {
 
   // 최근 등록 상품 목록을 저장합니다.
   const [recentProducts, setRecentProducts] = useState([])
-
+  const [salesData,setSalesData] = useState([])
+  const [salesDays, setSalesDays] = useState(7)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  // 주문·배송·매출 담당 기능이 연결되기 전까지 사용할 틀입니다.
-  const orderSummary = {
-    newOrderCount: null,
-    deliveryReadyCount: null,
-    todaySales: null,
-  }
+  const [sellerOrders,setSellerOrders] = useState([])
+  const [hoveredSalesPoint, setHoveredSalesPoint] = useState(null)
 
   useEffect(() => {
     async function loadDashboard() {
@@ -51,6 +39,12 @@ function SellerDashboardPage() {
         if (sellerId === null) {
           throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
         }
+
+        const salesResponse = await getSellerSalesTrend(sellerId,salesDays)
+        setSalesData(salesResponse.data)
+
+        const ordersData = await getSellerOrders(sellerId)
+        setSellerOrders(ordersData)
 
         // 1. 로그인한 판매자가 등록한 농장을 조회합니다.
         const farmData = await getFarms(sellerId)
@@ -90,7 +84,7 @@ function SellerDashboardPage() {
     }
 
     loadDashboard()
-  }, [])
+  }, [salesDays])
 
   if (loading) {
     return <p>판매자 대시보드를 불러오는 중입니다.</p>
@@ -99,21 +93,104 @@ function SellerDashboardPage() {
   if (error) {
     return <p>{error}</p>
   }
+
+  const chartSalesData = salesData
+
+  const totalSales = chartSalesData.reduce(
+      (sum, item) => sum + (item.sales ?? 0),
+      0
+  )
+
+  const totalOrderCount = chartSalesData.reduce(
+      (sum, item) => sum + (item.orderCount ?? 0),
+      0
+  )
+
+  const todaySalesData = chartSalesData[chartSalesData.length-1]
+
+  const todaySales = todaySalesData?.sales ?? 0
+
+  const yesterdaySalesData = chartSalesData[chartSalesData.length - 2]
+
+  const yesterdaySales = yesterdaySalesData?.sales ?? 0
+
+  const salesChangeRate = yesterdaySales === 0
+      ? 0
+      : ((todaySales - yesterdaySales) / yesterdaySales) * 100
+
+  const salesChangeLabel = yesterdaySales === 0
+      ? '전일 매출 없음'
+      : salesChangeRate > 0
+          ? `전일 대비 +${salesChangeRate.toFixed(1)}%`
+          : `전일 대비 ${salesChangeRate.toFixed(1)}%`
+
+  const salesChangeType = yesterdaySales === 0
+      ? 'same'
+      : salesChangeRate > 0
+          ? 'up'
+          : salesChangeRate < 0
+              ? 'down'
+              : 'same'
+
+  const activeDeliveryOrders = sellerOrders.filter(
+      (order) => order.orderStatus !== 'CANCELED'
+  )
+
+  const readyOrderCount = activeDeliveryOrders.filter(
+      (order) => order.deliveryStatus === 'READY'
+  ).length
+
+  const shippingOrderCount = activeDeliveryOrders.filter(
+      (order) => order.deliveryStatus === 'SHIPPING'
+  ).length
+
 // 매출 중 가장 큰 값을 기준으로 그래프 높이를 계산합니다.
   const maxSales = Math.max(
-      ...TEMP_SALES_DATA.map((item) => item.sales),
+      ...chartSalesData.map((item) => item.sales),
       1
   )
 
 // 매출 데이터를 SVG 그래프 좌표로 변환합니다.
-  const salesChartPoints = TEMP_SALES_DATA
-      .map((item, index) => {
-        const x = (index / (TEMP_SALES_DATA.length - 1)) * 100
-        const y = 90 - (item.sales / maxSales) * 70
+  const hasSales = chartSalesData.some((item) => item.sales > 0)
 
-        return `${x},${y}`
+  const salesChartPointList = chartSalesData
+      .map((item, index) => {
+        const x = chartSalesData.length === 1 ? 50 : (index / (chartSalesData.length - 1)) * 100
+
+        const y = hasSales ? 90 - (item.sales / maxSales) * 70 : 90
+
+        return {x,y}
       })
-      .join(' ')
+
+  const salesChartPath = salesChartPointList.map((point,index,points)=>{
+    if(index===0){
+      return `M ${point.x} ${point.y}`
+    }
+
+    const previousPoint = points[index-1]
+    const controlX = (previousPoint.x + point.x) / 2
+
+    return `C ${controlX} ${previousPoint.y},${controlX} ${point.y},${point.x} ${point.y}`
+  }).join(' ')
+
+  const salesChartCurvePath = salesChartPointList.slice(1).map((point,index,points)=>{
+    const previousPoint = index === 0
+        ? salesChartPointList[0]
+        : points[index - 1]
+    const controlX = (previousPoint.x + point.x) / 2
+
+    return `C ${controlX} ${previousPoint.y},${controlX} ${point.y},${point.x} ${point.y}`
+  }).join(' ')
+
+  const salesChartAreaPath = salesChartPointList.length === 0
+      ? ''
+      : `
+        M ${salesChartPointList[0].x} 100
+        L ${salesChartPointList[0].x} ${salesChartPointList[0].y}
+        ${salesChartCurvePath}
+        L ${salesChartPointList[salesChartPointList.length - 1].x} 100
+        Z
+      `
 
 // 판매 중·품절 외의 PENDING, HIDDEN 상품 개수입니다.
   const otherProductCount =
@@ -173,15 +250,30 @@ function SellerDashboardPage() {
           <article className="seller-dashboard-sales-chart">
             <div className="seller-dashboard-chart-header">
               <div>
-                <h2>최근 7일 매출 추이</h2>
-                <p>주문 API 연결 전 임시 매출 데이터입니다.</p>
+                <h2>최근 {salesDays}일 매출 추이</h2>
+                <p>최근 {salesDays}일 결제 완료 주문 기준입니다.</p>
               </div>
 
-              <strong>
-                {TEMP_SALES_DATA[
-                TEMP_SALES_DATA.length - 1
-                    ].sales.toLocaleString()}원
-              </strong>
+              <div className="seller-dashboard-chart-side">
+                <div className="seller-dashboard-chart-actions">
+                  {SALES_DAY_OPTIONS.map((days) => (
+                      <button
+                          key={days}
+                          type="button"
+                          className={salesDays === days ? "active" : ""}
+                          onClick={() => setSalesDays(days)}
+                      >
+                        {days}일
+                      </button>
+                  ))}
+                </div>
+
+                <div className="seller-dashboard-chart-total">
+                  <span>선택 기간 총 매출</span>
+                  <strong>{totalSales.toLocaleString()}원</strong>
+                  <small>주문 {totalOrderCount}건</small>
+                </div>
+              </div>
             </div>
 
             <div className="seller-dashboard-chart-body">
@@ -191,28 +283,65 @@ function SellerDashboardPage() {
                   role="img"
                   aria-label="최근 7일 매출 그래프"
               >
-                {/* 그래프 배경선 */}
                 <line x1="0" y1="20" x2="100" y2="20" />
                 <line x1="0" y1="45" x2="100" y2="45" />
                 <line x1="0" y1="70" x2="100" y2="70" />
                 <line x1="0" y1="90" x2="100" y2="90" />
 
-                {/* 선 아래의 연한 초록색 영역 */}
-                <polygon
+                <path
                     className="seller-dashboard-chart-area"
-                    points={`0,90 ${salesChartPoints} 100,90`}
+                    d={salesChartAreaPath}
                 />
 
-                {/* 실제 매출 선 */}
-                <polyline
+                <path
                     className="seller-dashboard-chart-line"
-                    points={salesChartPoints}
+                    d={salesChartPath}
                 />
               </svg>
+
+              {salesChartPointList.map((point,index) => {
+                const item = chartSalesData[index]
+
+                return (
+                    <button
+                        key={item.date}
+                        type="button"
+                        className="seller-dashboard-chart-point"
+                        style={{
+                          left: `${point.x}%`,
+                          top: `${point.y}%`,
+                        }}
+                        aria-label={`${item.date} 매출 ${item.sales.toLocaleString()}원`}
+                        onMouseEnter={() => setHoveredSalesPoint({ ...item, ...point })}
+                        onMouseLeave={() => setHoveredSalesPoint(null)}
+                        onFocus={() => setHoveredSalesPoint({ ...item, ...point })}
+                        onBlur={() => setHoveredSalesPoint(null)}
+                    />
+                )
+              })}
+
+              {hoveredSalesPoint && (
+                  <div
+                      className="seller-dashboard-chart-tooltip"
+                      style={{
+                        left: `${hoveredSalesPoint.x}%`,
+                        top: `${hoveredSalesPoint.y}%`,
+                      }}
+                  >
+                    <strong>{hoveredSalesPoint.date}</strong>
+                    <span>매출: {hoveredSalesPoint.sales.toLocaleString()}원</span>
+                    <span>주문 수: {hoveredSalesPoint.orderCount}건</span>
+                    <span>
+                      상품: {hoveredSalesPoint.soldProducts?.length
+                        ? hoveredSalesPoint.soldProducts.join(', ')
+                        : '판매 상품 없음'}
+                    </span>
+                  </div>
+              )}
             </div>
 
             <div className="seller-dashboard-chart-dates">
-              {TEMP_SALES_DATA.map((item) => (
+              {chartSalesData.map((item) => (
                   <span key={item.date}>{item.date}</span>
               ))}
             </div>
@@ -302,25 +431,26 @@ function SellerDashboardPage() {
             <h2>주문·배송 현황</h2>
 
             <div>
-              <span>신규 주문</span>
-              <strong>{orderSummary.newOrderCount ?? '-'}</strong>
+              <span>처리할 주문</span>
+              <strong>{readyOrderCount}</strong>
             </div>
 
             <div>
-              <span>배송 준비</span>
-              <strong>{orderSummary.deliveryReadyCount ?? '-'}</strong>
+              <span>배송 중</span>
+              <strong>{shippingOrderCount}</strong>
             </div>
 
             <div>
               <span>오늘 매출</span>
               <strong>
-                {orderSummary.todaySales === null
-                    ? '-'
-                    : `${orderSummary.todaySales.toLocaleString()}원`}
+                {todaySales.toLocaleString()}원
               </strong>
+              <small className={`seller-dashboard-sales-change ${salesChangeType}`}>
+                {salesChangeLabel}
+              </small>
             </div>
 
-            <p>주문·배송 API 연동 후 실제 값이 표시됩니다.</p>
+            <p>주문배송관리의 처리할 주문 기준과 동일하게 표시됩니다.</p>
           </article>
         </section>
       </main>

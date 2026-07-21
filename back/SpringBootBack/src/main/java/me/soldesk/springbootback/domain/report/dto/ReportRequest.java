@@ -10,6 +10,7 @@ import lombok.Setter;
 @Setter
 public class ReportRequest {
 
+    private Long productId;
     /** 신고한 회원 번호 */
     private Long reporterId;
 

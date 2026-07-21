@@ -1,6 +1,6 @@
-// 관리자 배송 목록 조회
+﻿// 관리자 배송 목록 조회
 export async function getAdminDeliveries() {
-  const response = await fetch("http://localhost:8080/api/admin/deliveries")
+  const response = await fetch("/api/admin/deliveries")
 
   if (!response.ok) {
     throw new Error("관리자 배송 목록을 불러오지 못했습니다.")
@@ -11,7 +11,7 @@ export async function getAdminDeliveries() {
 
 // 관리자 배송 상태 변경
 export async function updateAdminDeliveryStatus(deliveryId, deliveryStatus) {
-  const response = await fetch(`http://localhost:8080/api/admin/deliveries/${deliveryId}/status`, {
+  const response = await fetch(`/api/admin/deliveries/${deliveryId}/status`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -26,7 +26,7 @@ export async function updateAdminDeliveryStatus(deliveryId, deliveryStatus) {
   return response.json()
 }
 
-const BASE_URL = "http://localhost:8080/api/deliveries"
+const BASE_URL = "/api/deliveries"
 
 export async function getDeliveryByOrderId(orderId) {
   const response = await fetch(`${BASE_URL}?orderId=${orderId}`)
@@ -39,7 +39,7 @@ export async function getDeliveryByOrderId(orderId) {
 }
 
 export async function registerSellerDelivery(deliveryData) {
-  const response = await fetch("http://localhost:8080/api/seller/deliveries", {
+  const response = await fetch("/api/seller/deliveries", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -61,7 +61,7 @@ export async function getSellerOrders(sellerId, farmId) {
     params.set("farmId", String(farmId))
   }
 
-  const response = await fetch(`http://localhost:8080/api/seller/orders?${params.toString()}`)
+  const response = await fetch(`/api/seller/orders?${params.toString()}`)
 
   if (!response.ok) {
     throw new Error("판매자 주문 목록을 불러오지 못했습니다.")
@@ -72,10 +72,19 @@ export async function getSellerOrders(sellerId, farmId) {
 
 export async function getSellerOrderInfo(orderId, sellerId) {
   const params = new URLSearchParams({ sellerId: String(sellerId) })
-  const response = await fetch(`http://localhost:8080/api/seller/orders/${orderId}?${params.toString()}`)
+  const response = await fetch(`/api/seller/orders/${orderId}?${params.toString()}`)
 
   if (!response.ok) {
     throw new Error("주문 정보를 불러오지 못했습니다.")
+  }
+
+  return response.json()
+}
+export async function getAdminOrders() {
+  const response = await fetch("/api/orders/admin")
+
+  if (!response.ok) {
+    throw new Error("관리자 주문 목록을 불러오지 못했습니다.")
   }
 
   return response.json()

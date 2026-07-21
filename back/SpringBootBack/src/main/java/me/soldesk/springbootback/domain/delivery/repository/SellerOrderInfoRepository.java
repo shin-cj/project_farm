@@ -8,9 +8,9 @@ import java.util.Optional;
 
 public interface SellerOrderInfoRepository extends JpaRepository<Order, Long> {
 
-    List<Order> findByFarmIdIn(List<Long> farmIds);
+    List<Order> findByFarmIdInOrderByOrderedAtDesc(List<Long> farmIds);
 
-    List<Order> findByFarmId(Long farmId);
+    List<Order> findByFarmIdOrderByOrderedAtDesc(Long farmId);
 
     Optional<Order> findByOrderIdAndFarmIdIn(Long orderId, List<Long> farmIds);
 }
