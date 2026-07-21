@@ -4,12 +4,16 @@ import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.order.repository.OrderRepository;
+import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
+import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
+import me.soldesk.springbootback.domain.sales.dto.SellerSalesStatisticsResponse;
 import me.soldesk.springbootback.domain.sales.dto.SellerSalesTrendResponse;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,10 +24,12 @@ public class SellerSalesService {
 
     private final FarmRepository farmRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
 
-    public SellerSalesService(FarmRepository farmRepository,OrderRepository orderRepository){
+    public SellerSalesService(FarmRepository farmRepository,OrderRepository orderRepository, OrderItemRepository orderItemRepository){
         this.farmRepository = farmRepository;
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     public List<SellerSalesTrendResponse> getSalesTrend(Long sellerId,int days){
@@ -67,6 +73,12 @@ public class SellerSalesService {
             }
             dailySales.sales += order.getFinalPrice();
             dailySales.orderCount +=1;
+
+            List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
+
+            for(OrderItem orderItem : orderItems){
+                dailySales.soldProduct.add(orderItem.getProductName());
+            }
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd");
@@ -76,7 +88,8 @@ public class SellerSalesService {
                 .map(entry -> new SellerSalesTrendResponse(
                         entry.getKey().format(formatter),
                         entry.getValue().sales,
-                        entry.getValue().orderCount
+                        entry.getValue().orderCount,
+                        entry.getValue().soldProduct
                 ))
                 .toList();
     }
@@ -93,7 +106,7 @@ public class SellerSalesService {
         return java.util.stream.IntStream.rangeClosed(1,days)
                 .mapToObj(index -> today.minusDays(days-index))
                 .map(date -> new SellerSalesTrendResponse(
-                        date.format(formatter), 0L, 0L
+                        date.format(formatter), 0L, 0L,List.of()
                 ))
                 .toList();
     }
@@ -101,6 +114,53 @@ public class SellerSalesService {
     private static class DailySales {
         private Long sales = 0L;
         private Long orderCount = 0L;
+        private List<String> soldProduct = new ArrayList<>();
+    }
+
+    public SellerSalesStatisticsResponse getSalesStatistics(Long sellerId,int days){
+        List<Long> farmIds = farmRepository.findBySellerId(sellerId)
+                .stream()
+                .map(Farm::getFarmId)
+                .toList();
+
+        if (farmIds.isEmpty()){
+            return new SellerSalesStatisticsResponse(0L,0L,0L,0L);
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate startDate = today.minusDays(days-1);
+
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = today.plusDays(1).atStartOfDay();
+
+        List<Order> orders = orderRepository.findByFarmIdInAndOrderedAtBetweenOrderByOrderedAtAsc(
+                farmIds,
+                startDateTime,
+                endDateTime
+        );
+
+        Long totalSales = orders.stream()
+                .filter(this::isSalesOrder)
+                .mapToLong(Order::getFinalPrice)
+                .sum();
+
+        Long totalOrderCount = orders.stream()
+                .filter(this::isSalesOrder)
+                .count();
+
+        Long averageOrderAmount = totalOrderCount == 0 ? 0L : totalSales / totalOrderCount;
+
+        Long canceledOrRefundedOrderCount = orders.stream()
+                .filter(order ->
+                        "CANCELED".equals(order.getOrderStatus())||"REFUNDED".equals(order.getOrderStatus()))
+                .count();
+
+        return new SellerSalesStatisticsResponse(
+                totalSales,
+                totalOrderCount,
+                averageOrderAmount,
+                canceledOrRefundedOrderCount
+        );
     }
 
 

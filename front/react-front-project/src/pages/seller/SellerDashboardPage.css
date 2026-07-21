@@ -173,6 +173,30 @@
 }
 
 .seller-dashboard-order > div {
+    flex-wrap: wrap;
+}
+
+.seller-dashboard-sales-change {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
+}
+
+.seller-dashboard-sales-change.up {
+    color: #216b3a;
+}
+
+.seller-dashboard-sales-change.down {
+    color: #dc2626;
+}
+
+.seller-dashboard-sales-change.same {
+    color: #6b7280;
+}
+
+.seller-dashboard-order > div {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -259,6 +283,56 @@
     margin-bottom: 20px;
 }
 
+.seller-dashboard-chart-side {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.seller-dashboard-chart-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.seller-dashboard-chart-actions button {
+    padding: 6px 10px;
+    border: 1px solid #dce8d7;
+    border-radius: 999px;
+    background-color: #ffffff;
+    color: #526357;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.seller-dashboard-chart-actions button.active {
+    border-color: #3f7d20;
+    background-color: #3f7d20;
+    color: #ffffff;
+}
+
+.seller-dashboard-chart-total {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 3px;
+    text-align: right;
+}
+
+.seller-dashboard-chart-total span,
+.seller-dashboard-chart-total small {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.seller-dashboard-chart-total strong {
+    color: #3f7d20;
+    font-size: 22px;
+    line-height: 1.1;
+}
+
 .seller-dashboard-chart-header h2 {
     margin: 0;
     color: #243b2f;
@@ -271,13 +345,9 @@
     font-size: 13px;
 }
 
-.seller-dashboard-chart-header > strong {
-    color: #3f7d20;
-    font-size: 22px;
-}
-
 /* 선 그래프가 그려지는 영역입니다. */
 .seller-dashboard-chart-body {
+    position: relative;
     width: 100%;
     height: 220px;
 }
@@ -294,6 +364,51 @@
     stroke: #e5ebe2;
     stroke-width: 1;
     vector-effect: non-scaling-stroke;
+}
+
+.seller-dashboard-chart-point {
+    position: absolute;
+    z-index: 1;
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border: 2px solid #3f7d20;
+    border-radius: 50%;
+    fill: #ffffff;
+    background-color: #ffffff;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+}
+
+.seller-dashboard-chart-point:hover,
+.seller-dashboard-chart-point:focus-visible {
+    background-color: #3f7d20;
+    outline: none;
+}
+
+.seller-dashboard-chart-tooltip {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    min-width: 160px;
+    max-width: 240px;
+    padding: 10px 12px;
+    border: 1px solid #dce8d7;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 24px rgba(36, 59, 47, 0.14);
+    color: #526357;
+    font-size: 13px;
+    line-height: 1.45;
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 12px));
+}
+
+.seller-dashboard-chart-tooltip strong {
+    margin-bottom: 4px;
+    color: #243b2f;
+    font-size: 14px;
 }
 
 /* 매출 선 아래쪽의 연한 초록색 영역입니다. */
