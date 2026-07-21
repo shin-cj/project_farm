@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
 import { cancelPayment, requestRefund } from "../../api/paymentApi.js";
 import {
@@ -69,6 +69,7 @@ function canViewDelivery(order) {
 
 function OrderHistoryPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const loginUser = getLoginUser();
   const buyerId = loginUser?.userId;
 
@@ -77,8 +78,24 @@ function OrderHistoryPage() {
   const [error, setError] = useState("");
   const [cancelingOrderId, setCancelingOrderId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderFilter, setOrderFilter] = useState("ALL");
 
   const ordersPerPage = 3;
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const type = params.get("type");
+
+    if (type === "delivery") {
+      setOrderFilter("DELIVERY");
+    } else if (type === "cancel") {
+      setOrderFilter("CANCEL");
+    } else {
+      setOrderFilter("ALL");
+    }
+
+    setCurrentPage(1);
+  }, [location.search]);
 
   async function fetchOrders() {
     if (!buyerId) {
@@ -149,9 +166,21 @@ function OrderHistoryPage() {
     }
   }
 
-  const totalPages = Math.ceil(orders.length / ordersPerPage);
+  const filteredOrders = orders.filter((order) => {
+    if (orderFilter === "DELIVERY") {
+      return !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+    }
+
+    if (orderFilter === "CANCEL") {
+      return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+    }
+
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
-  const currentOrders = orders.slice(startIndex, startIndex + ordersPerPage);
+  const currentOrders = filteredOrders.slice(startIndex, startIndex + ordersPerPage);
 
   return (
     <section style={{ maxWidth: "1120px", margin: "0 auto", padding: "42px 20px 70px" }}>
@@ -180,9 +209,40 @@ function OrderHistoryPage() {
       {loading && <p style={{ color: "#5f6f64" }}>주문 내역을 불러오는 중입니다.</p>}
       {error && <p style={{ color: "crimson", fontWeight: 700 }}>{error}</p>}
 
-      {!loading && !error && orders.length === 0 && (
+      {!loading && !error && orders.length > 0 && (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "18px" }}>
+          {[
+            { value: "ALL", label: "전체 주문", path: "/orders" },
+            { value: "DELIVERY", label: "배송 주문", path: "/orders?type=delivery" },
+            { value: "CANCEL", label: "취소/환불", path: "/orders?type=cancel" },
+          ].map((option) => {
+            const isActive = orderFilter === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => navigate(option.path)}
+                style={{
+                  padding: "10px 14px",
+                  border: isActive ? "1px solid #216b3a" : "1px solid #dce6dd",
+                  borderRadius: "999px",
+                  background: isActive ? "#216b3a" : "#ffffff",
+                  color: isActive ? "#ffffff" : "#405348",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {!loading && !error && filteredOrders.length === 0 && (
         <div style={{ padding: "34px", border: "1px solid #dce6dd", borderRadius: "10px", background: "#fbfdfb" }}>
-          아직 주문 내역이 없습니다.
+          표시할 주문 내역이 없습니다.
         </div>
       )}
 
