@@ -41,27 +41,27 @@ function MyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function fetchOrders() {
-      if (!buyerId) {
-        setError("로그인 후 마이페이지를 확인할 수 있습니다.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError("");
-        const response = await orderApi.getOrdersByBuyer(buyerId);
-        setOrders(response.data);
-      } catch (error) {
-        console.error(error);
-        setError("주문 요약 정보를 불러오지 못했습니다.");
-      } finally {
-        setLoading(false);
-      }
+  async function fetchOrders() {
+    if (!buyerId) {
+      setError("로그인 후 마이페이지를 확인할 수 있습니다.");
+      setLoading(false);
+      return;
     }
 
+    try {
+      setLoading(true);
+      setError("");
+      const response = await orderApi.getOrdersByBuyer(buyerId);
+      setOrders(response.data);
+    } catch (error) {
+      console.error(error);
+      setError("주문 요약 정보를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
     fetchOrders();
   }, [buyerId]);
 
@@ -74,7 +74,7 @@ function MyPage() {
   const readyOrders = activeOrders.filter((order) => order.deliveryStatus === "READY");
   const shippingOrders = activeOrders.filter((order) => order.deliveryStatus === "SHIPPING");
   const deliveredOrders = activeOrders.filter((order) => order.deliveryStatus === "DELIVERED");
-  const recentOrders = orders.slice(0, 2);
+  const recentOrders = orders.slice(0, 3);
 
   const summaryCardStyle = {
     padding: "22px",
@@ -82,18 +82,6 @@ function MyPage() {
     borderRadius: "12px",
     background: "#ffffff",
     boxShadow: "0 8px 22px rgba(31, 47, 36, 0.06)",
-  };
-
-  const summaryButtonStyle = {
-    width: "100%",
-    marginTop: "18px",
-    padding: "11px 14px",
-    border: "1px solid #4f8c60",
-    borderRadius: "8px",
-    background: "#ffffff",
-    color: "#2f6f42",
-    fontWeight: 800,
-    cursor: "pointer",
   };
 
   return (
@@ -126,9 +114,6 @@ function MyPage() {
               <p style={{ margin: "12px 0 0", color: "#526357" }}>
                 최근 주문 {recentOrders.length}건을 확인할 수 있습니다.
               </p>
-              <button type="button" onClick={() => navigate("/orders")} style={summaryButtonStyle}>
-                주문 내역 보기
-              </button>
             </article>
 
             <article style={summaryCardStyle}>
@@ -147,9 +132,6 @@ function MyPage() {
                   <strong>{deliveredOrders.length}건</strong>
                 </p>
               </div>
-              <button type="button" onClick={() => navigate("/orders")} style={summaryButtonStyle}>
-                배송 확인하기
-              </button>
             </article>
 
             <article style={summaryCardStyle}>
@@ -168,9 +150,6 @@ function MyPage() {
                   <strong>{refundedOrders.length}건</strong>
                 </p>
               </div>
-              <button type="button" onClick={() => navigate("/orders")} style={summaryButtonStyle}>
-                취소/환불 내역 보기
-              </button>
             </article>
           </div>
 
@@ -213,12 +192,14 @@ function MyPage() {
                     key={order.orderId}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "minmax(0, 1.4fr) minmax(220px, 1fr) 130px",
+                      gridTemplateColumns: "minmax(0, 1.35fr) minmax(220px, 1fr) 130px",
                       alignItems: "center",
                       gap: "16px",
                       padding: "18px 20px",
                       borderTop: index === 0 ? "none" : "1px solid #edf1eb",
+                      cursor: "pointer",
                     }}
+                    onClick={() => navigate("/orders")}
                   >
                     <div>
                       <strong

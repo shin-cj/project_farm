@@ -97,6 +97,142 @@
     font-size: 28px;
 }
 
+.seller-daily-goal-card {
+    width: 100%;
+    max-width: 1600px;
+    box-sizing: border-box;
+    margin: 0 auto 24px;
+    padding: 24px;
+    border: 1px solid #dfe8d9;
+    border-radius: 16px;
+    background:
+        linear-gradient(135deg, rgba(63, 125, 32, 0.1), rgba(255, 255, 255, 0.95) 42%),
+        #ffffff;
+    box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
+}
+
+.seller-daily-goal-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.seller-daily-goal-main p {
+    margin: 0 0 8px;
+    color: #3f7d20;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.seller-daily-goal-main h2 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.seller-daily-goal-main span {
+    display: block;
+    margin-top: 8px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.seller-daily-goal-main > strong {
+    color: #216b3a;
+    font-size: 42px;
+    line-height: 1;
+}
+
+.seller-daily-goal-progress {
+    height: 14px;
+    margin: 22px 0 18px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: #e7eee4;
+}
+
+.seller-daily-goal-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #3f7d20, #86b86f);
+    transition: width 0.25s ease;
+}
+
+.seller-daily-goal-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.seller-daily-goal-info div {
+    padding: 14px;
+    border-radius: 12px;
+    background-color: rgba(248, 250, 247, 0.9);
+}
+
+.seller-daily-goal-info span,
+.seller-daily-goal-form span {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.seller-daily-goal-info strong {
+    color: #243b2f;
+    font-size: 20px;
+}
+
+.seller-daily-goal-form {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.seller-daily-goal-form label {
+    flex: 1;
+}
+
+.seller-daily-goal-form input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid #dce6dd;
+    border-radius: 10px;
+    color: #243b2f;
+    font: inherit;
+    font-weight: 700;
+}
+
+.seller-daily-goal-form button {
+    min-width: 88px;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 10px;
+    background-color: #3f7d20;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.seller-daily-goal-form button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.seller-daily-goal-message {
+    margin: 12px 0 0;
+    color: #3f7d20;
+    font-size: 13px;
+    font-weight: 800;
+}
+
 .seller-dashboard-content {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);

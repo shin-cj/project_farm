@@ -21,6 +21,7 @@ import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.sellerpoint.service.SellerPointService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,7 @@ public class PaymentService {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final DeliveryRepository deliveryRepository;
+    private final SellerPointService sellerPointService;
 
     public PaymentService(
             RestClient.Builder restClientBuilder,
@@ -44,7 +46,8 @@ public class PaymentService {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             ProductRepository productRepository,
-            DeliveryRepository deliveryRepository) {
+            DeliveryRepository deliveryRepository,
+            SellerPointService sellerPointService) {
         this.restClient = restClientBuilder
                 .baseUrl("https://api.tosspayments.com")
                 .build();
@@ -54,6 +57,7 @@ public class PaymentService {
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.deliveryRepository = deliveryRepository;
+        this.sellerPointService = sellerPointService;
     }
 
     @Transactional
@@ -139,6 +143,7 @@ public class PaymentService {
         updateOrderReceiverInfo(order, request);
         order.setOrderStatus("PAID");
         orderRepository.save(order);
+        sellerPointService.earnPoint(order);
 
         return tossResponse;
     }
@@ -208,6 +213,7 @@ public class PaymentService {
         payment.setRefundedAt(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
+        sellerPointService.markCanceled(orderId);
 
         return tossResponse;
     }
@@ -306,6 +312,7 @@ public class PaymentService {
         payment.setRefundedAt(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
+        sellerPointService.markRefunded(orderId);
 
         return tossResponse;
     }

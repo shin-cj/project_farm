@@ -17,3 +17,26 @@ export function getSellerSalesStatistics(sellerId,days=30){
         }
     });
 }
+
+export function getSellerPointSummary(sellerId) {
+    return httpClient.get("/seller/points/summary", {
+        params: {
+            sellerId
+        }
+    });
+}
+
+export function getSellerDailyGoal(sellerId) {
+    return httpClient.get("/seller/points/daily-goal", {
+        params: {
+            sellerId
+        }
+    });
+}
+
+export function updateSellerDailyGoal(sellerId, targetPoint) {
+    return httpClient.put("/seller/points/daily-goal", {
+        sellerId,
+        targetPoint
+    });
+}
