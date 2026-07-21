@@ -157,7 +157,7 @@ function SellerDashboardPage() {
       .map((item, index) => {
         const x = chartSalesData.length === 1 ? 50 : (index / (chartSalesData.length - 1)) * 100
 
-        const y = hasSales ? 90 - (item.sales / maxSales) * 70 : 82
+        const y = hasSales ? 90 - (item.sales / maxSales) * 70 : 90
 
         return {x,y}
       })
@@ -173,12 +173,22 @@ function SellerDashboardPage() {
     return `C ${controlX} ${previousPoint.y},${controlX} ${point.y},${point.x} ${point.y}`
   }).join(' ')
 
+  const salesChartCurvePath = salesChartPointList.slice(1).map((point,index,points)=>{
+    const previousPoint = index === 0
+        ? salesChartPointList[0]
+        : points[index - 1]
+    const controlX = (previousPoint.x + point.x) / 2
+
+    return `C ${controlX} ${previousPoint.y},${controlX} ${point.y},${point.x} ${point.y}`
+  }).join(' ')
+
   const salesChartAreaPath = salesChartPointList.length === 0
       ? ''
       : `
-        M ${salesChartPointList[0].x} 90
-        ${salesChartPath}
-        L ${salesChartPointList[salesChartPointList.length - 1].x} 90
+        M ${salesChartPointList[0].x} 100
+        L ${salesChartPointList[0].x} ${salesChartPointList[0].y}
+        ${salesChartCurvePath}
+        L ${salesChartPointList[salesChartPointList.length - 1].x} 100
         Z
       `
 
