@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 
 function QnaTable() {
@@ -9,7 +9,7 @@ function QnaTable() {
     // QnA 목록 불러오기
     const fetchQnas = useCallback(async () => {
         try {
-            const response = await axios.get('http://localhost:8080/api/qna/all');
+            const response = await axios.get('/api/qna/all');
             setQnas(response.data);
         } catch (error) {
             console.error("QnA 목록을 불러오지 못했습니다.", error);
@@ -42,7 +42,7 @@ function QnaTable() {
         const currentTime = new Date().toISOString(); // 현재 실시간 시각
 
         try {
-            await axios.put(`http://localhost:8080/api/qna/${qnaId}/answer`, {
+            await axios.put(`/api/qna/${qnaId}/answer`, {
                 answerContent: content,
                 adminId: 1
             });

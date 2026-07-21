@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -16,7 +16,7 @@ function QnaEditPage() {
 
     // 3. 페이지 로드 시 기존 글 데이터 불러오기
     useEffect(() => {
-        axios.get(`http://localhost:8080/api/qna/detail/${qnaId}`)
+        axios.get(`/api/qna/detail/${qnaId}`)
             .then(res => {
                 setQna({
                     title: res.data.questionTitle,
@@ -34,7 +34,7 @@ function QnaEditPage() {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:8080/api/qna/${qnaId}`, {
+            await axios.put(`/api/qna/${qnaId}`, {
                 questionTitle: qna.title,
                 questionContent: qna.content,
                 isSecret: qna.isSecret

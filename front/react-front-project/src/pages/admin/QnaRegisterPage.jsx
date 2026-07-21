@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -22,7 +22,7 @@ function QnaRegisterPage() {
         }
 
         try {
-            await axios.post('http://localhost:8080/api/qna', {
+            await axios.post('/api/qna', {
                 productId: productId,
                 buyerId: 1, // 추후 로그인 시스템과 연동 필요
                 questionTitle: qna.title,

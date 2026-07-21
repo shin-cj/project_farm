@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import "./SignupPage.css";
@@ -41,7 +41,7 @@ function SignupPage() {
     try {
       setSubmitting(true);
 
-      const response = await axios.post("http://localhost:8080/api/users/signup", {
+      const response = await axios.post("/api/users/signup", {
         email: formData.email.trim(),
         passwordHash: formData.passwordHash,
         name: formData.name.trim(),

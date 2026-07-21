@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import './QnaForm.css';
@@ -32,7 +32,7 @@ function QnaFormPage() {
     const loadInitialData = useCallback(async () => {
         // 1. 상품 목록 불러오기
         try {
-            const res = await axios.get('http://localhost:8080/api/products');
+            const res = await axios.get('/api/products');
             if (res.data && res.data.length > 0) {
                 setProducts(res.data);
             } else {
@@ -46,7 +46,7 @@ function QnaFormPage() {
         // 2. 수정 모드인 경우 기존 QnA 상세 정보 불러오기
         if (id) {
             try {
-                const res = await axios.get(`http://localhost:8080/api/qna/detail/${id}`);
+                const res = await axios.get(`/api/qna/detail/${id}`);
                 setQna(res.data);
             } catch (err) {
                 console.error("문의 데이터 로드 에러:", err);
@@ -79,10 +79,10 @@ function QnaFormPage() {
 
         try {
             if (id) {
-                await axios.put(`http://localhost:8080/api/qna/${id}`, qna);
+                await axios.put(`/api/qna/${id}`, qna);
                 alert("수정 완료!");
             } else {
-                await axios.post(`http://localhost:8080/api/qna/create`, qna);
+                await axios.post(`/api/qna/create`, qna);
                 alert("작성 완료!");
             }
 
