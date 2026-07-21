@@ -8,3 +8,12 @@ export function getSellerSalesTrend(sellerId,days = 7){
         }
     });
 }
+
+export function getSellerSalesStatistics(sellerId,days=30){
+    return httpClient.get("/seller/sales/statistics",{
+        params : {
+            sellerId,
+            days
+        }
+    });
+}
