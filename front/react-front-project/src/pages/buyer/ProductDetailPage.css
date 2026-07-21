@@ -276,3 +276,148 @@
   background: #eef4ef;
   color: #2f4f38;
 }
+
+/* 상품을 생산한 농장 정보를 보여주는 영역입니다. */
+.product-detail-farm-card {
+  max-width: 1100px;
+  margin: 20px auto 0;
+  padding: 24px 28px;
+  border: 1px solid #dce6dd;
+  border-left: 5px solid #3f7d20;
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+/* '생산 농장'이라는 작은 안내 문구입니다. */
+.product-detail-farm-card > p:first-child {
+  margin: 0 0 8px;
+  color: #3f7d20;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 농장 이름입니다. */
+.product-detail-farm-card h2 {
+  margin: 0;
+  color: #243b2f;
+  font-size: 24px;
+}
+
+/* 지역 정보입니다. */
+.product-detail-farm-card span {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: #eef6e8;
+  color: #3f7d20;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 주소와 농장 소개 문구입니다. */
+.product-detail-farm-card p {
+  margin: 14px 0 0;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+@media (max-width: 800px) {
+  .product-detail-farm-card {
+    padding: 20px;
+  }
+}
+
+.product-detail-cart-button:disabled,
+.product-detail-order-link:disabled {
+  border-color: #d1d5db;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.product-detail-unavailable {
+  margin: 12px 0 0;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 농장 이름 상세 링크입니다. */
+.product-detail-farm-name-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-detail-farm-name-link:hover {
+  color: #3f7d20;
+  text-decoration: underline;
+}
+
+/* 농장 상세 페이지로 이동하는 버튼 형태의 링크입니다. */
+.product-detail-farm-view-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+  padding: 10px 16px;
+  border: 1px solid #3f7d20;
+  border-radius: 8px;
+  color: #3f7d20;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.product-detail-farm-view-link:hover {
+  background-color: #3f7d20;
+  color: #ffffff;
+}
+
+.product-detail-quantity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #f7faf5;
+}
+
+.product-detail-quantity > span {
+  font-weight: 700;
+}
+
+.product-detail-quantity > strong {
+  margin-left: auto;
+  color: #2f6f25;
+  font-size: 18px;
+}
+
+.product-detail-quantity-control {
+  display: flex;
+  align-items: center;
+}
+
+.product-detail-quantity-control button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d7dfd2;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.product-detail-quantity-control input {
+  width: 58px;
+  height: 36px;
+  border: solid #d7dfd2;
+  border-width: 1px 0;
+  text-align: center;
+}
+
+.product-detail-quantity-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}

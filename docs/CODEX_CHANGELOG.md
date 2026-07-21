@@ -58,3 +58,62 @@
 
 1. 백업 폴더 안의 동일한 경로 파일을 `C:\project_farm` 아래에 덮어쓴다.
 2. 이 기록 파일까지 되돌리려면 `docs/CODEX_CHANGELOG.md`를 삭제한다.
+
+## 2026-07-14 - 로그인 회원 번호와 판매자 농장·상품 기능 연결
+
+### 요청 및 승인 내용
+
+- 회원가입·로그인 기능에서 `localStorage`에 저장한 `loginUser.userId`를 진현 담당 판매자 화면과 연결
+- 보안 인증, JWT, 역할 번호, 백엔드 및 DB는 변경하지 않음
+- 사용자가 반복 수정 대신 Codex가 직접 수정하도록 승인함
+
+### 백업 위치
+
+- `C:\project_farm\.codex-backups\20260714-175551`
+
+### 수정 파일과 파일별 변경 내용
+
+- `front/react-front-project/src/config/devAccount.js`
+  - 고정 판매자 번호를 제거하고 로그인 회원의 `userId`를 숫자로 반환하는 `getLoginSellerId()` 함수 추가
+  - 로그인 정보가 없거나 올바르지 않으면 `null`을 반환하도록 처리
+- `front/react-front-project/src/pages/seller/FarmManagementPage.jsx`
+  - 로그인 판매자 번호로 해당 판매자의 농장만 조회
+- `front/react-front-project/src/pages/seller/FarmCreatePage.jsx`
+  - 농장 등록 요청의 `sellerId`에 로그인 회원 번호를 사용하고 입력칸은 읽기 전용으로 유지
+- `front/react-front-project/src/pages/seller/FarmEditPage.jsx`
+  - 로그인 회원 번호로 농장 소유자를 확인하고 수정 요청에도 같은 번호를 사용
+- `front/react-front-project/src/pages/seller/ProductManagementPage.jsx`
+  - 로그인 판매자의 농장 목록만 불러오고 그 농장들에 속한 상품만 관리 목록에 표시
+- `front/react-front-project/src/pages/seller/ProductCreatePage.jsx`
+  - 상품 등록 시 로그인 판매자의 농장만 선택 상자에 표시
+- `front/react-front-project/src/pages/seller/ProductEditPage.jsx`
+  - 로그인 판매자의 농장만 불러오고 수정 대상 상품이 해당 농장 중 하나에 속하는지 확인
+- `front/react-front-project/src/pages/seller/SellerDashboardPage.jsx`
+  - 로그인 판매자의 농장·상품만 사용해 대시보드 요약 수치를 계산
+
+### 수정 이유와 영향 범위
+
+- 기존 판매자 화면은 임시 판매자 번호 또는 전체 농장 조회를 사용해 로그인한 회원과 데이터가 연결되지 않았음
+- 로그인 정보가 없을 때 `getFarms(null)`이 실행되어 전체 농장을 조회하지 않도록 차단함
+- 판매자 화면의 조회·등록·수정 대상이 로그인한 회원 번호를 기준으로 통일됨
+- 백엔드 Java 코드, API 주소, Oracle DB, SQL, 역할 번호 및 보안 인증에는 영향 없음
+
+### 실행한 검증과 결과
+
+- 수정한 8개 파일만 대상으로 ESLint 실행: 성공
+- `npm.cmd run build` 실행: 성공, Vite 8.1.3에서 138개 모듈 변환 완료
+- 판매자 화면과 설정 파일에서 `DEV_SELLER_ID` 검색: 남은 참조 없음
+- 최초 일반 권한 빌드는 실행 환경의 `spawn EPERM`으로 실패하여 승인된 외부 실행으로 다시 검증함
+
+### 검증하지 못한 사항
+
+- 실제 브라우저에서 판매자 계정으로 로그인한 뒤 농장·상품 조회·등록·수정까지 수행하는 통합 테스트는 실행하지 않음
+- 프로젝트 전체 ESLint는 이번 수정과 관계없는 기존 파일의 오류 9개로 실패함
+  - `AppHeader.jsx`, `AdminDeliveryManagementPage.jsx`, `CartPage.jsx`, `DeliveryStatusPage.jsx`, `DeliveryManagementPage.jsx`
+- 실제 DB 데이터가 로그인 회원 번호와 연결되어 있는지는 변경하거나 검증하지 않음
+
+### 원상복구 방법
+
+1. `C:\project_farm\.codex-backups\20260714-175551` 안의 파일을 동일한 상대 경로로 `C:\project_farm`에 복사한다.
+2. `docs/CODEX_CHANGELOG.md`는 백업 폴더의 `docs\CODEX_CHANGELOG.md`로 되돌린다.
+3. Git 상태를 변경하는 명령과 DB 변경 SQL은 실행하지 않았다.

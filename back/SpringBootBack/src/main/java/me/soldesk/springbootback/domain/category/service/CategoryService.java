@@ -18,7 +18,8 @@ public class CategoryService {
     }
 
     public List<CategoryResponse> getCategories() {
-        List<Category> categories = categoryRepository.findAll();
+        List<Category> categories = categoryRepository
+                .findAllByOrderByDisplayOrderAscCategoryIdAsc();
         List<CategoryResponse> responses = new ArrayList<>();
 
         for (Category category : categories) {

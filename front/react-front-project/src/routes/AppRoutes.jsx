@@ -10,6 +10,7 @@ import ProductDetailPage from '../pages/buyer/ProductDetailPage'
 import CartPage from '../pages/buyer/CartPage'
 import OrderPage from '../pages/buyer/OrderPage'
 import OrderHistoryPage from '../pages/buyer/OrderHistoryPage'
+import MyPage from '../pages/buyer/MyPage'
 import MarketPricePage from '../pages/buyer/MarketPricePage'
 import MarketPriceTestPage from '../pages/buyer/MarketPriceTestPage'
 import ChatbotPage from '../pages/buyer/ChatbotPage'
@@ -18,7 +19,6 @@ import FarmManagementPage from '../pages/seller/FarmManagementPage'
 import ProductManagementPage from '../pages/seller/ProductManagementPage'
 import ProductCreatePage from '../pages/seller/ProductCreatePage'
 import SellerOrderPage from '../pages/seller/SellerOrderPage'
-import DeliveryManagementPage from '../pages/seller/DeliveryManagementPage'
 import SalesStatisticsPage from '../pages/seller/SalesStatisticsPage'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import UserManagementPage from '../pages/admin/UserManagementPage'
@@ -33,6 +33,7 @@ import DeliveryStatusPage from "../pages/buyer/DeliveryStatusPage.jsx";
 import ProductEditPage from "../pages/seller/ProductEditPage.jsx";
 import FarmCreatePage from '../pages/seller/FarmCreatePage'
 import FarmEditPage from '../pages/seller/FarmEditPage'
+import FarmDetailPage from '../pages/buyer/FarmDetailPage'
 // URL과 실제 페이지 컴포넌트를 한곳에서 연결합니다.
 function AppRoutes() {
   return (
@@ -43,9 +44,11 @@ function AppRoutes() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/products" element={<ProductListPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/farms/:farmId" element={<FarmDetailPage />} />
         <Route path="/market-prices" element={<MarketPricePage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/order" element={<OrderPage />} />
+        <Route path="/mypage" element={<MyPage />} />
         <Route path="/orders" element={<OrderHistoryPage />} />
         <Route path="/chatbot" element={<ChatbotPage />} />
         <Route path="/test/market-price" element={<MarketPriceTestPage />} />
@@ -58,7 +61,7 @@ function AppRoutes() {
         <Route path="products" element={<ProductManagementPage />} />
         <Route path="products/new" element={<ProductCreatePage />} />
         <Route path="orders" element={<SellerOrderPage />} />
-        <Route path="deliveries" element={<DeliveryManagementPage />} />
+        <Route path="deliveries" element={<Navigate to="/seller/orders" replace />} />
         <Route path="products/:productId/edit" element={<ProductEditPage />} />
         <Route path="statistics" element={<SalesStatisticsPage />} />
         <Route path="farms/new" element={<FarmCreatePage />} />
