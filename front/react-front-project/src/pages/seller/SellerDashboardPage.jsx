@@ -4,6 +4,8 @@ import { getFarms } from '../../api/farmApi.js'
 import { getProducts } from '../../api/productApi.js'
 import './SellerDashboardPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
+import {getSellerSalesTrend} from "../../api/salesApi.js";
+import {getSellerOrders} from "../../api/deliveryApi.js";
 
 // 주문·매출 API가 완성되기 전까지 그래프 확인에 사용하는 임시 데이터입니다.
 // 실제 API가 연결되면 이 배열은 삭제합니다.
@@ -29,16 +31,10 @@ function SellerDashboardPage() {
 
   // 최근 등록 상품 목록을 저장합니다.
   const [recentProducts, setRecentProducts] = useState([])
-
+  const [salesData,setSalesData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  // 주문·배송·매출 담당 기능이 연결되기 전까지 사용할 틀입니다.
-  const orderSummary = {
-    newOrderCount: null,
-    deliveryReadyCount: null,
-    todaySales: null,
-  }
+  const [sellerOrders,setSellerOrders] = useState([])
 
   useEffect(() => {
     async function loadDashboard() {
@@ -51,6 +47,12 @@ function SellerDashboardPage() {
         if (sellerId === null) {
           throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
         }
+
+        const salesResponse = await getSellerSalesTrend(sellerId,7)
+        setSalesData(salesResponse.data)
+
+        const ordersData = await getSellerOrders(sellerId)
+        setSellerOrders(ordersData)
 
         // 1. 로그인한 판매자가 등록한 농장을 조회합니다.
         const farmData = await getFarms(sellerId)
@@ -99,17 +101,39 @@ function SellerDashboardPage() {
   if (error) {
     return <p>{error}</p>
   }
+
+  const chartSalesData = salesData.length > 0 ? salesData : TEMP_SALES_DATA
+
+  const todaySalesData = chartSalesData[chartSalesData.length-1]
+
+  const todaySales = todaySalesData?.sales ?? 0
+
+  const newOrderCount = sellerOrders.filter(
+      (order) => order.orderStatus === 'PAID' && order.deliveryStatus === 'READY'
+  ).length
+
+  const deliveryReadyCount = sellerOrders.filter(
+      (order) => order.deliveryStatus === 'READY'
+  ).length
+
 // 매출 중 가장 큰 값을 기준으로 그래프 높이를 계산합니다.
   const maxSales = Math.max(
-      ...TEMP_SALES_DATA.map((item) => item.sales),
+      ...chartSalesData.map((item) => item.sales),
       1
   )
 
 // 매출 데이터를 SVG 그래프 좌표로 변환합니다.
-  const salesChartPoints = TEMP_SALES_DATA
+  const hasSales = chartSalesData.some((item) => item.sales > 0)
+
+  const salesChartPoints = chartSalesData
       .map((item, index) => {
-        const x = (index / (TEMP_SALES_DATA.length - 1)) * 100
-        const y = 90 - (item.sales / maxSales) * 70
+        const x = chartSalesData.length === 1
+            ? 50
+            : (index / (chartSalesData.length - 1)) * 100
+
+        const y = hasSales
+            ? 90 - (item.sales / maxSales) * 70
+            : 82
 
         return `${x},${y}`
       })
@@ -174,13 +198,13 @@ function SellerDashboardPage() {
             <div className="seller-dashboard-chart-header">
               <div>
                 <h2>최근 7일 매출 추이</h2>
-                <p>주문 API 연결 전 임시 매출 데이터입니다.</p>
+                <p>최근 7일 결제 완료 주문 기준입니다.</p>
               </div>
 
               <strong>
-                {TEMP_SALES_DATA[
-                TEMP_SALES_DATA.length - 1
-                    ].sales.toLocaleString()}원
+                {chartSalesData[
+                chartSalesData.length - 1
+                    ]?.sales.toLocaleString()}원
               </strong>
             </div>
 
@@ -191,19 +215,16 @@ function SellerDashboardPage() {
                   role="img"
                   aria-label="최근 7일 매출 그래프"
               >
-                {/* 그래프 배경선 */}
                 <line x1="0" y1="20" x2="100" y2="20" />
                 <line x1="0" y1="45" x2="100" y2="45" />
                 <line x1="0" y1="70" x2="100" y2="70" />
                 <line x1="0" y1="90" x2="100" y2="90" />
 
-                {/* 선 아래의 연한 초록색 영역 */}
                 <polygon
                     className="seller-dashboard-chart-area"
                     points={`0,90 ${salesChartPoints} 100,90`}
                 />
 
-                {/* 실제 매출 선 */}
                 <polyline
                     className="seller-dashboard-chart-line"
                     points={salesChartPoints}
@@ -212,7 +233,7 @@ function SellerDashboardPage() {
             </div>
 
             <div className="seller-dashboard-chart-dates">
-              {TEMP_SALES_DATA.map((item) => (
+              {chartSalesData.map((item) => (
                   <span key={item.date}>{item.date}</span>
               ))}
             </div>
@@ -303,20 +324,18 @@ function SellerDashboardPage() {
 
             <div>
               <span>신규 주문</span>
-              <strong>{orderSummary.newOrderCount ?? '-'}</strong>
+              <strong>{newOrderCount}</strong>
             </div>
 
             <div>
               <span>배송 준비</span>
-              <strong>{orderSummary.deliveryReadyCount ?? '-'}</strong>
+              <strong>{deliveryReadyCount}</strong>
             </div>
 
             <div>
               <span>오늘 매출</span>
               <strong>
-                {orderSummary.todaySales === null
-                    ? '-'
-                    : `${orderSummary.todaySales.toLocaleString()}원`}
+                {todaySales.toLocaleString()}원
               </strong>
             </div>
 

@@ -288,3 +288,10 @@
     border-color: #3f7d20;
     box-shadow: 0 0 0 3px rgba(63, 125, 32, 0.12);
 }
+
+.product-farm-name {
+    margin: 0 0 6px;
+    color: #3f7d20;
+    font-size: 14px;
+    font-weight: 700;
+}

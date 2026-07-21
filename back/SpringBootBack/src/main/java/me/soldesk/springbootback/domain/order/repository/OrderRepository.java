@@ -3,6 +3,7 @@ package me.soldesk.springbootback.domain.order.repository;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,4 +15,10 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
     List<Order> findByBuyerIdOrderByOrderedAtDesc(Long buyerId);
 
     List<Order> findAllByOrderByOrderedAtDesc();
+
+    List<Order> findByFarmIdInAndOrderedAtBetweenOrderByOrderedAtAsc(
+            List<Long> farmIds,
+            LocalDateTime startDate,
+            LocalDateTime endDate
+    );
 }

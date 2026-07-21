@@ -57,4 +57,7 @@ public class ProductResponse {
     /** 상품 수정 일시 */
     private LocalDateTime updatedAt;
 
+    //상품을 판매하는 농장 이름
+    private String farmName;
+
 }
