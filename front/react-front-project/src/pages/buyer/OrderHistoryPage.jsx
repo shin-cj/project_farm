@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
 import { cancelPayment, requestRefund } from "../../api/paymentApi.js";
+import {
+  DELIVERY_STATUS_LABEL,
+  ORDER_STATUS_LABEL,
+} from "../../constants/statusLabels.js";
 
 function getLoginUser() {
   try {
@@ -30,20 +34,6 @@ function formatDate(value) {
     minute: "2-digit",
   });
 }
-
-const orderStatusLabel = {
-  PAYMENT_WAIT: "결제 대기",
-  PAID: "결제 완료",
-  CANCELED: "주문 취소",
-  REFUND_REQUESTED: "환불 요청",
-  REFUNDED: "환불 완료",
-};
-
-const deliveryStatusLabel = {
-  READY: "배송 준비중",
-  SHIPPING: "배송 중",
-  DELIVERED: "배송 완료",
-};
 
 function getCancelGuide(order) {
   if (order.orderStatus === "CANCELED") {
@@ -74,7 +64,7 @@ function getCancelGuide(order) {
 }
 
 function canViewDelivery(order) {
-  return order.orderStatus !== "CANCELED";
+  return !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
 }
 
 function OrderHistoryPage() {
@@ -219,10 +209,10 @@ function OrderHistoryPage() {
               <div>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
                   <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#e5f4ea", color: "#216b3a", fontWeight: 800 }}>
-                    {orderStatusLabel[order.orderStatus] || order.orderStatus}
+                    {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
                   </span>
                   <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontWeight: 800 }}>
-                    {deliveryStatusLabel[order.deliveryStatus] || "배송 준비중"}
+                    {DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
                   </span>
                 </div>
 

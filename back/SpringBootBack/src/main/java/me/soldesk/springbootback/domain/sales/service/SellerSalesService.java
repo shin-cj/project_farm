@@ -6,17 +6,17 @@ import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
+import me.soldesk.springbootback.domain.sales.dto.SellerFarmSalesResponse;
 import me.soldesk.springbootback.domain.sales.dto.SellerSalesStatisticsResponse;
 import me.soldesk.springbootback.domain.sales.dto.SellerSalesTrendResponse;
+import me.soldesk.springbootback.domain.sales.dto.SellerTimeSlotSalesResponse;
+import me.soldesk.springbootback.domain.sales.dto.SellerTopProductResponse;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Service
@@ -117,6 +117,22 @@ public class SellerSalesService {
         private List<String> soldProduct = new ArrayList<>();
     }
 
+    private static class ProductSales{
+        private Long quantity = 0L;
+        private Long sales = 0L;
+    }
+
+    private static class FarmSales {
+        private String farmName;
+        private Long sales = 0L;
+        private Long orderCount = 0L;
+    }
+
+    private static class TimeSlotSales {
+        private Long sales = 0L;
+        private Long orderCount = 0L;
+    }
+
     public SellerSalesStatisticsResponse getSalesStatistics(Long sellerId,int days){
         List<Long> farmIds = farmRepository.findBySellerId(sellerId)
                 .stream()
@@ -124,7 +140,7 @@ public class SellerSalesService {
                 .toList();
 
         if (farmIds.isEmpty()){
-            return new SellerSalesStatisticsResponse(0L,0L,0L,0L);
+            return new SellerSalesStatisticsResponse(0L,0L,0L,0L,List.of(),List.of(), createEmptyTimeSlotSales());
         }
 
         LocalDate today = LocalDate.now();
@@ -148,6 +164,64 @@ public class SellerSalesService {
                 .filter(this::isSalesOrder)
                 .count();
 
+        Map<String,ProductSales> productSalesMap = new HashMap<>();
+
+        orders.stream().filter(this::isSalesOrder)
+                .forEach(order->{
+                    List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
+
+                    for(OrderItem orderItem : orderItems){
+                        ProductSales productSales = productSalesMap.computeIfAbsent(
+                                orderItem.getProductName(),
+                                key -> new ProductSales()
+                        );
+
+                        productSales.quantity +=orderItem.getQuantity();
+                        productSales.sales += orderItem.getItemTotalPrice();
+                    }
+                });
+
+        List<SellerTopProductResponse> topProduct = productSalesMap.entrySet()
+                .stream()
+                .map(entry->new SellerTopProductResponse(
+                        entry.getKey(),
+                        entry.getValue().quantity,
+                        entry.getValue().sales
+                )).sorted((a,b)->Long.compare(b.getSales(), a.getSales()))
+                .limit(5)
+                .toList();
+
+        Map<Long,FarmSales> farmSalesMap = new HashMap<>();
+
+        orders.stream()
+                .filter(this::isSalesOrder)
+                .forEach(order->{
+                    FarmSales farmSales = farmSalesMap.computeIfAbsent(
+                            order.getFarmId(),
+                            farmId -> {
+                                FarmSales newFarmSales = new FarmSales();
+                                newFarmSales.farmName = farmRepository.findById(farmId)
+                                        .map(Farm::getFarmName)
+                                        .orElse("농장 정보 없음");
+                                return newFarmSales;
+                            }
+                    );
+
+                    farmSales.sales += order.getFinalPrice();
+                    farmSales.orderCount += 1;
+                });
+
+        List<SellerFarmSalesResponse> farmSales = farmSalesMap.entrySet()
+                .stream()
+                .map(entry->new SellerFarmSalesResponse(
+                        entry.getKey(),
+                        entry.getValue().farmName,
+                        entry.getValue().sales,
+                        entry.getValue().orderCount
+                ))
+                .sorted((a,b)->Long.compare(b.getSales(),a.getSales()))
+                .toList();
+
         Long averageOrderAmount = totalOrderCount == 0 ? 0L : totalSales / totalOrderCount;
 
         Long canceledOrRefundedOrderCount = orders.stream()
@@ -155,12 +229,70 @@ public class SellerSalesService {
                         "CANCELED".equals(order.getOrderStatus())||"REFUNDED".equals(order.getOrderStatus()))
                 .count();
 
+        List<SellerTimeSlotSalesResponse> timeSlotSales = createTimeSlotSales(orders);
+
         return new SellerSalesStatisticsResponse(
                 totalSales,
                 totalOrderCount,
                 averageOrderAmount,
-                canceledOrRefundedOrderCount
+                canceledOrRefundedOrderCount,
+                topProduct,
+                farmSales,
+                timeSlotSales
         );
+    }
+
+    private List<SellerTimeSlotSalesResponse> createTimeSlotSales(List<Order> orders) {
+        Map<String, TimeSlotSales> timeSlotSalesMap = new LinkedHashMap<>();
+
+        timeSlotSalesMap.put("오전", new TimeSlotSales());
+        timeSlotSalesMap.put("오후", new TimeSlotSales());
+        timeSlotSalesMap.put("저녁", new TimeSlotSales());
+        timeSlotSalesMap.put("밤", new TimeSlotSales());
+
+        orders.stream()
+                .filter(this::isSalesOrder)
+                .forEach(order -> {
+                    String timeSlotLabel = getTimeSlotLabel(order.getOrderedAt().getHour());
+                    TimeSlotSales timeSlotSales = timeSlotSalesMap.get(timeSlotLabel);
+
+                    timeSlotSales.orderCount += 1;
+                    timeSlotSales.sales += order.getFinalPrice();
+                });
+
+        return timeSlotSalesMap.entrySet()
+                .stream()
+                .map(entry -> new SellerTimeSlotSalesResponse(
+                        entry.getKey(),
+                        entry.getValue().orderCount,
+                        entry.getValue().sales
+                ))
+                .toList();
+    }
+
+    private List<SellerTimeSlotSalesResponse> createEmptyTimeSlotSales() {
+        return List.of(
+                new SellerTimeSlotSalesResponse("오전", 0L, 0L),
+                new SellerTimeSlotSalesResponse("오후", 0L, 0L),
+                new SellerTimeSlotSalesResponse("저녁", 0L, 0L),
+                new SellerTimeSlotSalesResponse("밤", 0L, 0L)
+        );
+    }
+
+    private String getTimeSlotLabel(int hour) {
+        if (hour >= 6 && hour < 12) {
+            return "오전";
+        }
+
+        if (hour >= 12 && hour < 18) {
+            return "오후";
+        }
+
+        if (hour >= 18 && hour < 22) {
+            return "저녁";
+        }
+
+        return "밤";
     }
 
 

@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "";
 
 export async function cancelPayment(orderId, cancelReason = "구매자 요청") {
   const response = await fetch(`${API_BASE_URL}/api/payments/${orderId}/cancel`, {

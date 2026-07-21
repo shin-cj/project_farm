@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.user.dto.UserRequest;
+import me.soldesk.springbootback.domain.user.dto.UserResponse;
 import me.soldesk.springbootback.domain.user.entity.User;
 import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,26 @@ public class AuthService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
         return user;
+    }
+
+    public UserResponse loginResponse(UserRequest request) {
+        User user = login(request);
+
+        // 로그인 성공 후 프론트엔드에 보낼 정보만 담습니다.
+        // passwordHash는 DB 비교용으로만 사용하고 응답에는 포함하지 않습니다.
+        UserResponse response = new UserResponse();
+        response.setUserId(user.getUserId());
+        response.setRoleId(user.getRoleId());
+        response.setEmail(user.getEmail());
+        response.setName(user.getName());
+        response.setPhone(user.getPhone());
+        response.setStatus(user.getStatus());
+        response.setAddress(user.getAddress());
+        response.setDetailAddress(user.getDetailAddress());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
+
+        return response;
     }
 
     public String updateAccount(String name) {
