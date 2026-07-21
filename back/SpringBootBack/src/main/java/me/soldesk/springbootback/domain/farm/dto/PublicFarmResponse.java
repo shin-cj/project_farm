@@ -31,4 +31,7 @@ public class PublicFarmResponse {
 
     /** 농장 대표 이미지 주소 */
     private String farmImageUrl;
+
+    /** 구매자에게 공개할 농장의 판매 방식 */
+    private String saleType;
 }

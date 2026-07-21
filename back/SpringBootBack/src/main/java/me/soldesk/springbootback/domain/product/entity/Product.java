@@ -68,10 +68,6 @@ public class Product {
     @Column(name = "unit", nullable = false)
     private String unit;
 
-    /** 판매 구분: RETAIL(소매), WHOLESALE(도매) */
-    @Column(name = "sale_type", nullable = false)
-    private String saleType = "RETAIL";
-
     /** 한 번 주문할 때 필요한 최소 주문 수량 */
     @Column(name = "min_order_quantity", nullable = false)
     private Integer minOrderQuantity = 1;

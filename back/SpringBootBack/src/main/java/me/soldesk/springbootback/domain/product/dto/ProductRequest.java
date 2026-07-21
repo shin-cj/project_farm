@@ -32,9 +32,6 @@ public class ProductRequest {
     /** 판매 단위 */
     private String unit;
 
-    /** 판매 구분: RETAIL(소매), WHOLESALE(도매) */
-    private String saleType;
-
     /** 최소 주문 수량 */
     private Integer minOrderQuantity;
 

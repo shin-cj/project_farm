@@ -39,7 +39,6 @@ function ProductEditPage() {
         price: '',
         stockQuantity: '',
         unit: '',
-        saleType: 'RETAIL',
         minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
@@ -47,6 +46,10 @@ function ProductEditPage() {
         productImageUrl: '',
         productStatus: 'PENDING',
     })
+
+    const selectedFarm = farms.find(
+        (farm) => String(farm.farmId) === String(form.farmId)
+    )
 
     // 수정 페이지가 처음 열리거나 productId가 바뀌면 실행됩니다.
     useEffect(() => {
@@ -106,7 +109,6 @@ function ProductEditPage() {
                     price: productData.price ?? '',
                     stockQuantity: productData.stockQuantity ?? '',
                     unit: productData.unit ?? '',
-                    saleType: productData.saleType ?? 'RETAIL',
                     minOrderQuantity: String(
                         productData.minOrderQuantity ?? 1
                     ),
@@ -182,12 +184,16 @@ function ProductEditPage() {
     function handleChange(event) {
         const {name, value} = event.target
 
-        if (name === 'saleType') {
+        if (name === 'farmId') {
+            const nextFarm = farms.find(
+                (farm) => String(farm.farmId) === value
+            )
+
             setForm((currentForm) => ({
                 ...currentForm,
-                saleType: value,
+                farmId: value,
                 minOrderQuantity:
-                    value === 'RETAIL' ? '1' : '2',
+                    nextFarm?.saleType === 'WHOLESALE' ? '2' : '1',
             }))
             return
         }
@@ -220,6 +226,11 @@ function ProductEditPage() {
             return
         }
 
+        if (!selectedFarm) {
+            alert('선택한 농장 정보를 확인할 수 없습니다.')
+            return
+        }
+
         if (!Number.isFinite(categoryId) || categoryId <= 0) {
             alert('카테고리를 선택해주세요.')
             return
@@ -245,27 +256,21 @@ function ProductEditPage() {
             return
         }
 
-        if (form.saleType !== 'RETAIL'
-            && form.saleType !== 'WHOLESALE') {
-            alert('판매 방식을 선택해주세요.')
-            return
-        }
-
         if (!Number.isInteger(minOrderQuantity)
             || minOrderQuantity < 1) {
             alert('최소 주문 수량은 1개 이상 입력해주세요.')
             return
         }
 
-        if (form.saleType === 'RETAIL'
+        if (selectedFarm.saleType === 'RETAIL'
             && minOrderQuantity !== 1) {
-            alert('소매 상품의 최소 주문 수량은 1개입니다.')
+            alert('소매 농장의 상품은 1개부터 주문할 수 있습니다.')
             return
         }
 
-        if (form.saleType === 'WHOLESALE'
+        if (selectedFarm.saleType === 'WHOLESALE'
             && minOrderQuantity < 2) {
-            alert('도매 상품의 최소 주문 수량은 2개 이상입니다.')
+            alert('도매 농장의 상품은 최소 주문 수량이 2개 이상이어야 합니다.')
             return
         }
 
@@ -365,7 +370,11 @@ function ProductEditPage() {
 
                                 {farms.map((farm) => (
                                     <option key={farm.farmId} value={farm.farmId}>
-                                        {farm.farmName}
+                                        {farm.farmName} · {
+                                            farm.saleType === 'WHOLESALE'
+                                                ? '도매'
+                                                : '소매'
+                                        }
                                     </option>
                                 ))}
                             </select>
@@ -460,15 +469,15 @@ function ProductEditPage() {
                             <div className="product-create-field">
                                 <label>판매 방식</label>
 
-                                <select
-                                    name="saleType"
-                                    value={form.saleType}
-                                    onChange={handleChange}
-                                    required
-                                >
-                                    <option value="RETAIL">소매</option>
-                                    <option value="WHOLESALE">도매</option>
-                                </select>
+                                <input
+                                    value={
+                                        selectedFarm?.saleType === 'WHOLESALE'
+                                            ? '도매'
+                                            : selectedFarm ? '소매' : '농장을 먼저 선택해주세요.'
+                                    }
+                                    readOnly
+                                />
+                                <small>판매 방식은 선택한 농장을 따릅니다.</small>
                             </div>
 
                             <div className="product-create-field">
@@ -479,16 +488,19 @@ function ProductEditPage() {
                                     name="minOrderQuantity"
                                     value={form.minOrderQuantity}
                                     onChange={handleChange}
-                                    min={form.saleType === 'RETAIL' ? 1 : 2}
+                                    min={selectedFarm?.saleType === 'WHOLESALE' ? 2 : 1}
                                     step="1"
-                                    disabled={form.saleType === 'RETAIL'}
+                                    disabled={
+                                        !selectedFarm
+                                        || selectedFarm.saleType !== 'WHOLESALE'
+                                    }
                                     required
                                 />
 
                                 <small>
-                                    {form.saleType === 'RETAIL'
-                                        ? '소매 상품은 1개부터 주문할 수 있습니다.'
-                                        : '도매 상품의 최소 주문 수량을 입력해주세요.'}
+                                    {selectedFarm?.saleType === 'WHOLESALE'
+                                        ? '도매 농장의 최소 주문 수량을 입력해주세요.'
+                                        : '소매 농장의 상품은 1개부터 주문할 수 있습니다.'}
                                 </small>
                             </div>
                         </div>

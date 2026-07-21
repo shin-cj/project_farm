@@ -71,7 +71,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               AND f.approvalStatus = 'APPROVED'
               AND p.productStatus IN ('ON_SALE', 'SOLD_OUT')
               AND (:categoryId IS NULL OR p.categoryId = :categoryId)
-              AND p.saleType = :saleType
+              AND f.saleType = :saleType
               AND (
                     :keyword IS NULL
                     OR LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))
@@ -85,7 +85,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               AND f.approvalStatus = 'APPROVED'
               AND p.productStatus IN ('ON_SALE', 'SOLD_OUT')
               AND (:categoryId IS NULL OR p.categoryId = :categoryId)
-              AND p.saleType = :saleType
+              AND f.saleType = :saleType
               AND (
                     :keyword IS NULL
                     OR LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))

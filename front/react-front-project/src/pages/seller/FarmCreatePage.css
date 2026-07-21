@@ -42,7 +42,8 @@
 }
 
 .farm-create-grid:disabled input,
-.farm-create-grid:disabled textarea {
+.farm-create-grid:disabled textarea,
+.farm-create-grid:disabled select {
     background-color: #f3f4f6;
     cursor: wait;
 }
@@ -63,12 +64,19 @@
 }
 
 .farm-create-field input,
-.farm-create-field textarea {
+.farm-create-field textarea,
+.farm-create-field select {
     border: 1px solid #d1d5db;
     border-radius: 6px;
     padding: 11px 12px;
     font-size: 14px;
     font-family: inherit;
+}
+
+.farm-create-field small {
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .farm-create-field textarea {

@@ -75,6 +75,8 @@ CREATE TABLE farms (
     farm_detail_address VARCHAR2(255),        -- 농장 상세 주소
     farm_description CLOB,                    -- 농장 소개글
     farm_image_url VARCHAR2(500),             -- 농장 대표 이미지 주소
+    sale_type VARCHAR2(20) DEFAULT 'RETAIL' NOT NULL,
+                                               -- 판매 방식: RETAIL, WHOLESALE
     approval_status VARCHAR2(20) DEFAULT 'PENDING' NOT NULL,
                                                -- 승인 상태: PENDING, APPROVED, REJECTED
     created_at DATE DEFAULT SYSDATE NOT NULL, -- 생성 일시
@@ -82,13 +84,15 @@ CREATE TABLE farms (
 
     CONSTRAINT pk_farms PRIMARY KEY (farm_id),
     CONSTRAINT fk_farms_seller
-        FOREIGN KEY (seller_id) REFERENCES users(user_id)
+        FOREIGN KEY (seller_id) REFERENCES users(user_id),
+    CONSTRAINT ck_farms_sale_type
+        CHECK (sale_type IN ('RETAIL', 'WHOLESALE'))
 );
 
 
 /* =========================================================
    5. 상품 테이블: products
-   농장이 판매하는 농산물과 도매/소매 조건을 관리한다.
+   농장이 판매하는 농산물과 최소 주문 조건을 관리한다.
    ========================================================= */
 CREATE TABLE products (
     product_id NUMBER NOT NULL,               -- 상품 고유 번호
@@ -99,8 +103,6 @@ CREATE TABLE products (
     price NUMBER(12) NOT NULL,                -- 판매 단위당 가격
     stock_quantity NUMBER DEFAULT 0 NOT NULL, -- 현재 재고 수량
     unit VARCHAR2(30) NOT NULL,               -- 판매 단위: kg, 박스, 개 등
-    sale_type VARCHAR2(20) DEFAULT 'RETAIL' NOT NULL,
-                                               -- 판매 구분: RETAIL, WHOLESALE
     min_order_quantity NUMBER(10) DEFAULT 1 NOT NULL,
                                                -- 최소 주문 수량
     origin VARCHAR2(100),                     -- 원산지
@@ -117,8 +119,6 @@ CREATE TABLE products (
         FOREIGN KEY (farm_id) REFERENCES farms(farm_id),
     CONSTRAINT fk_products_category
         FOREIGN KEY (category_id) REFERENCES categories(category_id),
-    CONSTRAINT ck_products_sale_type
-        CHECK (sale_type IN ('RETAIL', 'WHOLESALE')),
     CONSTRAINT ck_products_min_order_qty
         CHECK (min_order_quantity >= 1)
 );

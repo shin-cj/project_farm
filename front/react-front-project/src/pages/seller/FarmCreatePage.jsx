@@ -21,6 +21,7 @@ function FarmCreatePage() {
         farmDetailAddress: '',
         farmDescription: '',
         farmImageUrl: '',
+        saleType: 'RETAIL',
         approvalStatus: 'PENDING',
     })
 
@@ -59,6 +60,12 @@ function FarmCreatePage() {
 
         if (!form.farmAddress.trim()) {
             alert('농장 주소를 입력해주세요.')
+            return
+        }
+
+        if (form.saleType !== 'RETAIL'
+            && form.saleType !== 'WHOLESALE') {
+            alert('농장 판매 방식을 선택해주세요.')
             return
         }
 
@@ -118,6 +125,22 @@ function FarmCreatePage() {
                                 placeholder="예: 진현농장"
                                 required
                             />
+                        </label>
+
+                        <label className="farm-create-field">
+                            <span>판매 방식</span>
+                            <select
+                                name="saleType"
+                                value={form.saleType}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="RETAIL">소매 상점</option>
+                                <option value="WHOLESALE">도매 상점</option>
+                            </select>
+                            <small>
+                                등록 후 승인된 농장의 판매 방식은 변경할 수 없습니다.
+                            </small>
                         </label>
 
                         <label className="farm-create-field">
