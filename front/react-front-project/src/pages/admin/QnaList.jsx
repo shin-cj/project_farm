@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
@@ -14,8 +14,8 @@ function QnaListPage() {
     const fetchQnas = useCallback(async () => {
         try {
             const url = targetProductId
-                ? `http://localhost:8080/api/qna/product/${targetProductId}`
-                : `http://localhost:8080/api/qna/list`;
+                ? `/api/qna/product/${targetProductId}`
+                : `/api/qna/list`;
 
             const response = await axios.get(url);
             setQnaList(response.data);
@@ -35,7 +35,7 @@ function QnaListPage() {
     const handleDelete = async (qnaId) => {
         if (window.confirm("정말 이 문의를 삭제하시겠습니까?")) {
             try {
-                await axios.delete(`http://localhost:8080/api/qna/${qnaId}`);
+                await axios.delete(`/api/qna/${qnaId}`);
                 alert("삭제 완료되었습니다.");
                 await fetchQnas();
             } catch (error) {
@@ -61,7 +61,7 @@ function QnaListPage() {
         const currentTime = new Date().toISOString(); // 현재 시각 생성
 
         try {
-            await axios.put(`http://localhost:8080/api/qna/${qnaId}/answer`, {
+            await axios.put(`/api/qna/${qnaId}/answer`, {
                 answerContent: content,
                 adminId: 1
             });
