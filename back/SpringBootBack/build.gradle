@@ -19,17 +19,25 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    // 스프링부트 표준웹 스타터(mvc 포함되어 있음)
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // jackson-databind 강제 주입
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
     // Entity와 Repository에서 JPA를 사용하기 위한 의존성
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     // DTO 입력값 검증을 위한 의존성
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     // Oracle Database 연결용 JDBC 드라이버
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
+
+    // 개발 편의 도구 (롬복 및 리로드)
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    // 테스트 검사용 도구들 (운영 서버엔 안 들어가니 신경 꺼도 됨)
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testCompileOnly 'org.projectlombok:lombok'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testAnnotationProcessor 'org.projectlombok:lombok'
