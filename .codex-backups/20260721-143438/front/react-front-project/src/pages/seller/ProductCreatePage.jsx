@@ -135,16 +135,12 @@ function ProductCreatePage() {
 
         if (!allowedTypes.includes(imageFile.type)) {
             alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
-            setSelectedImageFile(null)
-            setImagePreviewUrl('')
             event.target.value = ''
             return
         }
 
         if (imageFile.size > 5 * 1024 * 1024) {
             alert('상품 이미지는 5MB 이하만 선택할 수 있습니다.')
-            setSelectedImageFile(null)
-            setImagePreviewUrl('')
             event.target.value = ''
             return
         }

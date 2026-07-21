@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.farm.service;
 
 import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
+import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
 import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,21 @@ public class FarmService {
         return responses;
     }
 
+    //구매자에게 공개할 승인 완료 농장 목록 조회
+    public List<PublicFarmResponse> getPublicFarms(){
+
+        List<Farm> farms = farmRepository.findByApprovalStatusOrderByFarmIdDesc("APPROVED");
+
+        List<PublicFarmResponse> responses = new ArrayList<>();
+
+        for(Farm farm : farms){
+            responses.add(toPublicResponse(farm));
+        }
+
+        return responses;
+    }
+
+
     //farmId로 농장 한개 조회
     public FarmResponse getFarm(Long farmId) {
         Farm farm = farmRepository
@@ -53,7 +69,7 @@ public class FarmService {
     }
 
     //승인 완료 농장 한 건을 조회
-    public FarmResponse getPublicFarm(Long farmId){
+    public PublicFarmResponse getPublicFarm(Long farmId){
 
         Farm farm = farmRepository
                 .findById(farmId)
@@ -68,7 +84,7 @@ public class FarmService {
                     "농장을 찾을 수 없습니다."
             );
         }
-        return toResponse(farm);
+        return toPublicResponse(farm);
     }
 
     //새로운 농장 생성
@@ -124,6 +140,21 @@ public class FarmService {
         farm.setFarmDetailAddress(request.getFarmDetailAddress());
         farm.setFarmDescription(request.getFarmDescription());
         farm.setFarmImageUrl(request.getFarmImageUrl());
+    }
+
+    private PublicFarmResponse toPublicResponse(Farm farm){
+
+        PublicFarmResponse response = new PublicFarmResponse();
+
+        response.setFarmId(farm.getFarmId());
+        response.setFarmName(farm.getFarmName());
+        response.setRegion(farm.getRegion());
+        response.setFarmAddress(farm.getFarmAddress());
+        response.setFarmDetailAddress(farm.getFarmDetailAddress());
+        response.setFarmDescription(farm.getFarmDescription());
+        response.setFarmImageUrl(farm.getFarmImageUrl());
+
+        return response;
     }
 
 
