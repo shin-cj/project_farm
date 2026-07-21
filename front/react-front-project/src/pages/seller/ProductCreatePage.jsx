@@ -32,6 +32,8 @@ function ProductCreatePage() {
         price: '',
         stockQuantity: '',
         unit: '',
+        saleType: 'RETAIL',
+        minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
         expirationDate: '',
@@ -108,12 +110,21 @@ function ProductCreatePage() {
 
 
     function handleChange(event) {
-        const { name, value } = event.target
+        const {name, value} = event.target
 
-        setForm({
-            ...form,
+        if (name === 'saleType') {
+            setForm((currentForm) => ({
+                ...currentForm,
+                saleType: value,
+                minOrderQuantity: value === 'RETAIL' ? '1' : '2',
+            }))
+            return
+        }
+
+        setForm((currentForm) => ({
+            ...currentForm,
             [name]: value,
-        })
+        }))
     }
 
     async function handleSubmit(event) {
@@ -132,6 +143,7 @@ function ProductCreatePage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const minOrderQuantity = Number(form.minOrderQuantity)
 
         if (!Number.isFinite(farmId) || farmId <= 0) {
             alert('농장 번호를 올바르게 입력해주세요.')
@@ -163,12 +175,37 @@ function ProductCreatePage() {
             return
         }
 
+        if (form.saleType !== 'RETAIL'
+            && form.saleType !== 'WHOLESALE') {
+            alert('판매 방식을 선택해주세요.')
+            return
+        }
+
+        if (!Number.isInteger(minOrderQuantity)
+            || minOrderQuantity < 1) {
+            alert('최소 주문 수량은 1개 이상 입력해주세요.')
+            return
+        }
+
+        if (form.saleType === 'RETAIL'
+            && minOrderQuantity !== 1) {
+            alert('소매 상품의 최소 주문 수량은 1개입니다.')
+            return
+        }
+
+        if (form.saleType === 'WHOLESALE'
+            && minOrderQuantity < 2) {
+            alert('도매 상품의 최소 주문 수량은 2개 이상입니다.')
+            return
+        }
+
         const productData = {
             ...form,
             farmId: farmId,
             categoryId: categoryId,
             price: price,
             stockQuantity: stockQuantity,
+            minOrderQuantity: minOrderQuantity,
         }
 
         try {
@@ -362,6 +399,42 @@ function ProductCreatePage() {
                             />
                         </div>
                     </div>
+                        <div className="product-create-row">
+                            <div className="product-create-field">
+                                <label>판매 방식</label>
+
+                                <select
+                                    name="saleType"
+                                    value={form.saleType}
+                                    onChange={handleChange}
+                                    required
+                                >
+                                    <option value="RETAIL">소매</option>
+                                    <option value="WHOLESALE">도매</option>
+                                </select>
+                            </div>
+
+                            <div className="product-create-field">
+                                <label>최소 주문 수량</label>
+
+                                <input
+                                    type="number"
+                                    name="minOrderQuantity"
+                                    value={form.minOrderQuantity}
+                                    onChange={handleChange}
+                                    min={form.saleType === 'RETAIL' ? 1 : 2}
+                                    step="1"
+                                    disabled={form.saleType === 'RETAIL'}
+                                    required
+                                />
+
+                                <small>
+                                    {form.saleType === 'RETAIL'
+                                        ? '소매 상품은 1개부터 주문할 수 있습니다.'
+                                        : '도매 상품의 최소 주문 수량을 입력해주세요.'}
+                                </small>
+                            </div>
+                        </div>
 
                     <div className="product-create-row">
                         <div className="product-create-field">

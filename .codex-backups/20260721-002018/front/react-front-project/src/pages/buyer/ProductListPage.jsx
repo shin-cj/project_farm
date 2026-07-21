@@ -38,35 +38,17 @@ function ProductListPage() {
             ? categoryIdFromUrl
             : null
 
-    const saleTypeFilter =
-        searchParams.get('saleType') === 'WHOLESALE'
-            ? 'WHOLESALE'
-            : 'RETAIL'
-
-    const appliedKeyword = searchParams.get('keyword')?.trim() ?? ''
-
-    const requestedSortOption = searchParams.get('sort')
-    const sortOption = ['LATEST', 'PRICE_LOW', 'PRICE_HIGH']
-        .includes(requestedSortOption)
-        ? requestedSortOption
-        : 'LATEST'
-
-    const requestedPage = Number(searchParams.get('page'))
-    const currentPage =
-        Number.isInteger(requestedPage) && requestedPage >= 1
-            ? requestedPage - 1
-            : 0
-
-    const requestedPageSize = Number(searchParams.get('size'))
-    const pageSize = [12, 24, 48].includes(requestedPageSize)
-        ? requestedPageSize
-        : 12
-
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [categoryError, setCategoryError] = useState('')
     const [categoryReloadKey, setCategoryReloadKey] = useState(0)
+    const [searchKeyword, setSearchKeyword] = useState('')
+    const [appliedKeyword, setAppliedKeyword] = useState('')
+    const [saleTypeFilter, setSaleTypeFilter] = useState('RETAIL')
+    const [sortOption, setSortOption] = useState('LATEST')
+    const [currentPage, setCurrentPage] = useState(0)
+    const [pageSize, setPageSize] = useState(12)
     const [totalElements, setTotalElements] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
     const [firstPage, setFirstPage] = useState(true)
@@ -149,69 +131,38 @@ function ProductListPage() {
         pageSize,
     ])
 
-    function updateProductSearchParams(changes) {
-        setSearchParams((currentParams) => {
-            const nextParams = new URLSearchParams(currentParams)
-
-            Object.entries(changes).forEach(([key, value]) => {
-                if (value === null || value === '') {
-                    nextParams.delete(key)
-                } else {
-                    nextParams.set(key, String(value))
-                }
-            })
-
-            return nextParams
-        })
-    }
-
     function handleCategorySelect(categoryId) {
-        updateProductSearchParams({
-            categoryId,
-            page: null,
+        setCurrentPage(0)
+
+        if (categoryId === null) {
+            setSearchParams({})
+            return
+        }
+
+        setSearchParams({
+            categoryId: String(categoryId),
         })
     }
 
     function handleSaleTypeSelect(saleType) {
-        updateProductSearchParams({
-            saleType: saleType === 'RETAIL' ? null : saleType,
-            page: null,
-        })
+        setSaleTypeFilter(saleType)
+        setCurrentPage(0)
     }
 
     function handleSearchSubmit(event) {
         event.preventDefault()
-        const formData = new FormData(event.currentTarget)
-        const keyword = String(formData.get('keyword') ?? '').trim()
-
-        updateProductSearchParams({
-            keyword: keyword || null,
-            page: null,
-        })
+        setAppliedKeyword(searchKeyword.trim())
+        setCurrentPage(0)
     }
 
     function handleSortChange(event) {
-        const nextSortOption = event.target.value
-
-        updateProductSearchParams({
-            sort: nextSortOption === 'LATEST' ? null : nextSortOption,
-            page: null,
-        })
+        setSortOption(event.target.value)
+        setCurrentPage(0)
     }
 
     function handlePageSizeChange(event) {
-        const nextPageSize = Number(event.target.value)
-
-        updateProductSearchParams({
-            size: nextPageSize === 12 ? null : nextPageSize,
-            page: null,
-        })
-    }
-
-    function handlePageSelect(pageNumber) {
-        updateProductSearchParams({
-            page: pageNumber === 0 ? null : pageNumber + 1,
-        })
+        setPageSize(Number(event.target.value))
+        setCurrentPage(0)
     }
 
     const visiblePageNumbers = getVisiblePageNumbers(
@@ -220,35 +171,9 @@ function ProductListPage() {
     )
 
     const wholesaleMode = saleTypeFilter === 'WHOLESALE'
-    const productListSearch = searchParams.toString()
-    const productListPath = productListSearch
-        ? `/products?${productListSearch}`
-        : '/products'
 
     return (
         <main className="product-list-page">
-            <section
-                className={
-                    wholesaleMode
-                        ? 'product-list-hero wholesale'
-                        : 'product-list-hero retail'
-                }
-            >
-                <p className="product-list-badge">
-                    {wholesaleMode ? 'AgroLink Wholesale' : 'AgroLink Market'}
-                </p>
-                <h1>
-                    {wholesaleMode
-                        ? '사업자를 위한 농산물 대량구매'
-                        : '우리 집 식탁을 위한 신선한 농산물'}
-                </h1>
-                <p>
-                    {wholesaleMode
-                        ? '최소 주문 수량과 재고를 확인하고 필요한 상품을 박스 또는 대량 단위로 살펴보세요.'
-                        : '농부가 직접 등록한 상품을 확인하고 필요한 만큼 합리적으로 구매해보세요.'}
-                </p>
-            </section>
-
             <section
                 className="product-mode-switch"
                 aria-label="구매 방식 선택"
@@ -280,6 +205,28 @@ function ProductListPage() {
                     <strong>도매 대량구매</strong>
                     <span>사업자를 위한 넉넉한 단위 구매</span>
                 </button>
+            </section>
+
+            <section
+                className={
+                    wholesaleMode
+                        ? 'product-list-hero wholesale'
+                        : 'product-list-hero retail'
+                }
+            >
+                <p className="product-list-badge">
+                    {wholesaleMode ? 'AgroLink Wholesale' : 'AgroLink Market'}
+                </p>
+                <h1>
+                    {wholesaleMode
+                        ? '사업자를 위한 농산물 대량구매'
+                        : '우리 집 식탁을 위한 신선한 농산물'}
+                </h1>
+                <p>
+                    {wholesaleMode
+                        ? '최소 주문 수량과 재고를 확인하고 필요한 상품을 박스 또는 대량 단위로 살펴보세요.'
+                        : '농부가 직접 등록한 상품을 확인하고 필요한 만큼 합리적으로 구매해보세요.'}
+                </p>
             </section>
 
             <section className="product-list-section">
@@ -378,10 +325,9 @@ function ProductListPage() {
                         onSubmit={handleSearchSubmit}
                     >
                         <input
-                            key={appliedKeyword}
                             type="search"
-                            name="keyword"
-                            defaultValue={appliedKeyword}
+                            value={searchKeyword}
+                            onChange={(event) => setSearchKeyword(event.target.value)}
                             placeholder="상품명을 검색하세요"
                             className="product-search-input"
                             aria-label="상품명 검색"
@@ -463,7 +409,6 @@ function ProductListPage() {
 
                                     <Link
                                         to={`/products/${product.productId}`}
-                                        state={{from: productListPath}}
                                         className="product-name"
                                     >
                                         {product.productName}
@@ -508,7 +453,7 @@ function ProductListPage() {
                         <button
                             type="button"
                             className="product-page-button direction"
-                            onClick={() => handlePageSelect(currentPage - 1)}
+                            onClick={() => setCurrentPage((page) => page - 1)}
                             disabled={firstPage}
                         >
                             이전
@@ -523,7 +468,7 @@ function ProductListPage() {
                                         ? 'product-page-button active'
                                         : 'product-page-button'
                                 }
-                                onClick={() => handlePageSelect(pageNumber)}
+                                onClick={() => setCurrentPage(pageNumber)}
                                 aria-current={
                                     currentPage === pageNumber ? 'page' : undefined
                                 }
@@ -535,7 +480,7 @@ function ProductListPage() {
                         <button
                             type="button"
                             className="product-page-button direction"
-                            onClick={() => handlePageSelect(currentPage + 1)}
+                            onClick={() => setCurrentPage((page) => page + 1)}
                             disabled={lastPage}
                         >
                             다음

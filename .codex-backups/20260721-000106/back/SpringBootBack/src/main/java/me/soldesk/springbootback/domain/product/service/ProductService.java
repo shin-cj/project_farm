@@ -4,15 +4,11 @@ import me.soldesk.springbootback.domain.category.repository.CategoryRepository;
 import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.product.dto.ProductRequest;
-import me.soldesk.springbootback.domain.product.dto.ProductPageResponse;
 import me.soldesk.springbootback.domain.product.dto.ProductResponse;
 import me.soldesk.springbootback.domain.product.dto.ProductStatusRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -85,118 +81,6 @@ public class ProductService {
         }
 
         return responses;
-    }
-
-    /**
-     * 구매자에게 공개할 상품을 판매 방식, 검색어, 정렬, 페이지 조건으로 조회합니다.
-     * 기존 상품 관리 목록 API와 분리하여 판매자 화면의 응답 형식은 바꾸지 않습니다.
-     */
-    public ProductPageResponse getPublicProductPage(
-            Long categoryId,
-            String saleType,
-            String keyword,
-            String sortOption,
-            int page,
-            int size
-    ) {
-        if (page < 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "페이지 번호는 0 이상이어야 합니다."
-            );
-        }
-
-        if (size != 12 && size != 24 && size != 48) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "페이지 표시 개수는 12, 24, 48 중 하나여야 합니다."
-            );
-        }
-
-        String normalizedSaleType = saleType == null || saleType.isBlank()
-                ? "RETAIL"
-                : saleType.trim().toUpperCase();
-
-        if (!"RETAIL".equals(normalizedSaleType)
-                && !"WHOLESALE".equals(normalizedSaleType)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "판매 구분은 RETAIL 또는 WHOLESALE만 가능합니다."
-            );
-        }
-
-        String normalizedSortOption = sortOption == null || sortOption.isBlank()
-                ? "LATEST"
-                : sortOption.trim().toUpperCase();
-
-        Sort sort;
-
-        if ("LATEST".equals(normalizedSortOption)) {
-            sort = Sort.by(
-                    Sort.Order.asc("productStatus"),
-                    Sort.Order.desc("productId")
-            );
-        } else if ("PRICE_LOW".equals(normalizedSortOption)) {
-            sort = Sort.by(
-                    Sort.Order.asc("productStatus"),
-                    Sort.Order.asc("price"),
-                    Sort.Order.desc("productId")
-            );
-        } else if ("PRICE_HIGH".equals(normalizedSortOption)) {
-            sort = Sort.by(
-                    Sort.Order.asc("productStatus"),
-                    Sort.Order.desc("price"),
-                    Sort.Order.desc("productId")
-            );
-        } else {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "정렬 기준은 LATEST, PRICE_LOW, PRICE_HIGH 중 하나여야 합니다."
-            );
-        }
-
-        String normalizedKeyword = keyword == null || keyword.isBlank()
-                ? null
-                : keyword.trim().toLowerCase().replaceAll("\\s+", "");
-
-        Page<Product> productPage = productRepository.findPublicProductPage(
-                categoryId,
-                normalizedSaleType,
-                normalizedKeyword,
-                PageRequest.of(page, size, sort)
-        );
-
-        List<Product> products = productPage.getContent();
-
-        Map<Long, String> farmNameById = farmRepository.findAllById(
-                products.stream()
-                        .map(Product::getFarmId)
-                        .distinct()
-                        .toList()
-        ).stream().collect(Collectors.toMap(
-                Farm::getFarmId,
-                Farm::getFarmName
-        ));
-
-        List<ProductResponse> responses = new ArrayList<>();
-
-        for (Product product : products) {
-            responses.add(toResponse(
-                    product,
-                    farmNameById.get(product.getFarmId())
-            ));
-        }
-
-        ProductPageResponse response = new ProductPageResponse();
-        response.setProducts(responses);
-        response.setCurrentPage(productPage.getNumber());
-        response.setPageSize(productPage.getSize());
-        response.setTotalElements(productPage.getTotalElements());
-        response.setTotalPages(productPage.getTotalPages());
-        response.setFirst(productPage.isFirst());
-        response.setLast(productPage.isLast());
-
-        return response;
     }
 
     //상품 상세 정보를 조회

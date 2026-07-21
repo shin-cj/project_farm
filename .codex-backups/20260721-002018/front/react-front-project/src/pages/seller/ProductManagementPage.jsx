@@ -26,7 +26,6 @@ function ProductManagementPage() {
   //농장과 카테고리 조회가 끝났는지 저장
   const [filtersReady, setFiltersReady] = useState(false)
   const [statusFilter, setStatusFilter] = useState('ALL')
-  const [saleTypeFilter, setSaleTypeFilter] = useState('ALL')
   const [farms, setFarms] = useState([])
   const [categories, setCategories] = useState([])
   const [selectedCategoryId, setSelectedCategoryId] = useState('')
@@ -309,26 +308,19 @@ function ProductManagementPage() {
     const matchesKeyword =
         productName.includes(normalizedKeyword)
 
-    const productSaleType = product.saleType ?? 'RETAIL'
-    const matchesSaleType =
-        saleTypeFilter === 'ALL'
-        || productSaleType === saleTypeFilter
-
-    return matchesStatus && matchesKeyword && matchesSaleType
+    return matchesStatus && matchesKeyword
   })
 
   const hasActiveFilters = selectedFarmId !== ''
       || selectedCategoryId !== ''
       || searchKeyword.trim() !== ''
       || statusFilter !== 'ALL'
-      || saleTypeFilter !== 'ALL'
 
   function resetFilters() {
     setSelectedFarmId('')
     setSelectedCategoryId('')
     setSearchKeyword('')
     setStatusFilter('ALL')
-    setSaleTypeFilter('ALL')
   }
 
   return (
@@ -382,15 +374,6 @@ function ProductManagementPage() {
                     {category.categoryName}
                   </option>
               ))}
-            </select>
-            <select
-                value={saleTypeFilter}
-                onChange={(event) => setSaleTypeFilter(event.target.value)}
-                aria-label="판매 방식 필터"
-            >
-              <option value="ALL">전체 판매 방식</option>
-              <option value="RETAIL">소매</option>
-              <option value="WHOLESALE">도매</option>
             </select>
             <input
                 type="text"
@@ -478,7 +461,6 @@ function ProductManagementPage() {
                 <thead>
                 <tr>
                   <th>상품명</th>
-                  <th>판매 방식</th>
                   <th>가격</th>
                   <th>재고</th>
                   <th>상태</th>
@@ -506,23 +488,6 @@ function ProductManagementPage() {
         {product.origin || '원산지 미등록'}
       </span>
                           </div>
-                        </div>
-                      </td>
-
-                      <td>
-                        <div className="seller-product-sale-info">
-                          <span
-                              className={
-                                product.saleType === 'WHOLESALE'
-                                    ? 'seller-product-sale-type wholesale'
-                                    : 'seller-product-sale-type retail'
-                              }
-                          >
-                            {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
-                          </span>
-                          <small>
-                            최소 {product.minOrderQuantity ?? 1}개
-                          </small>
                         </div>
                       </td>
 
