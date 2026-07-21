@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.marketprice.dto.DailyAvgPriceDto;
 import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchRequest;
 import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchResponse;
 import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchResult;
@@ -19,7 +20,10 @@ import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -103,7 +107,7 @@ public class MarketPriceService {
         addQueryParam(builder,"cond%5Bvrty_cd%3A%3AEQ%5D", request.getVrtyCd());//품종코드
         addQueryParam(builder,"cond%5Bgrd_cd%3A%3AEQ%5D", request.getGrdCd());//등급코드
 
-        return executeSearchAndConvert(builder);
+        return sameLabel(builder,request);
     }
 
 
@@ -111,6 +115,57 @@ public class MarketPriceService {
     //===========================================
     //코드 길이 줄이기용 공용 메서드
     //===========================================
+
+    // 평균과 등락률 계산하는 메서드
+    private List<DailyAvgPriceDto> avgForDate(List<MarketPriceSearchResponse> list){
+        //조건에 맞는 당일 평균 금액
+        Map<String, Double> dateAvgMap = list.stream()
+                .collect(Collectors.groupingBy(
+                        MarketPriceSearchResponse::getExmnYmd,
+                        Collectors.averagingDouble(item -> Double.parseDouble(item.getExmnDdPrc()))
+                ));
+
+        //오름차순 정렬
+        List<String> sortedDates = dateAvgMap.keySet().stream()
+                .sorted()
+                .collect(Collectors.toList());
+
+        //빈 리스트 객체
+        List<DailyAvgPriceDto> dailyList = new ArrayList<>();
+
+        // 각 날짜마다 평균값 계산 후 등락률 계산하는 반복문
+        for(int i = 0; i<sortedDates.size(); i++){
+            String todayDate = sortedDates.get(i);
+
+            long todayAvg = Math.round(dateAvgMap.get(todayDate));
+
+            Long prevAvg = null;
+            Double changeRate = 0.0;
+
+            if(i>0){
+                String prevDate = sortedDates.get(i-1);
+
+                prevAvg = Math.round(dateAvgMap.get(prevDate));
+
+                if(prevAvg > 0){
+                    double rate = ((double) (todayAvg - prevAvg) / prevAvg) * 100;
+
+                    changeRate = Math.round(rate * 100) / 100.0;
+                }
+            }
+
+            DailyAvgPriceDto dailyAvgPriceDto = DailyAvgPriceDto.builder()
+                    .date(todayDate)
+                    .todayAvgPrice(todayAvg)
+                    .prevAvgPrice(prevAvg)
+                    .changeRate(changeRate)
+                    .build();
+
+            dailyList.add(dailyAvgPriceDto);
+
+        }
+        return dailyList;
+    }
 
     private Object searchJsonApi(URI uri) {
             return restClient
@@ -199,8 +254,40 @@ public class MarketPriceService {
                 new TypeReference<>() {}
         );
 
-        return new MarketPriceSearchResult(totalCount, list);
+        List<DailyAvgPriceDto> dailyList = avgForDate(list);
+
+        return new MarketPriceSearchResult(totalCount, dailyList, list);
     }
 
+    private MarketPriceSearchResult sameLabel(UriComponentsBuilder builder, MarketPriceSearchRequest request) throws Exception {
+        String grdCd = request.getGrdCd();
+
+        if (grdCd != null && grdCd.contains("-")) {
+            // "13-16"을 ["13", "16"]으로 쪼갭니다.
+            String[] codes = grdCd.split("-");
+
+            // 13번 데이터 먼저 호출
+            builder.queryParam("cond%5Bgrd_cd%3A%3AEQ%5D", codes[0]);
+            MarketPriceSearchResult result1 = executeSearchAndConvert(builder);
+
+            // 16번 데이터 호출을 위해 기존 grd_cd 파라미터를 교체해서 다시 호출
+            builder.replaceQueryParam("cond%5Bgrd_cd%3A%3AEQ%5D", codes[1]);
+            MarketPriceSearchResult result2 = executeSearchAndConvert(builder);
+
+            // 두 결과를 하나로 예쁘게 합치기
+            int totalCount = result1.getTotalCount() + result2.getTotalCount();
+            List<MarketPriceSearchResponse> combinedList = new ArrayList<>();
+            combinedList.addAll(result1.getList());
+            combinedList.addAll(result2.getList());
+
+            List<DailyAvgPriceDto> combinedDailyList = avgForDate(combinedList);
+
+            return new MarketPriceSearchResult(totalCount, combinedDailyList, combinedList);
+        } else {
+            // 하이픈이 없는 일반 등급("04" 등)이나 "전체"일 때는 원래대로 한 번만 호출
+            addQueryParam(builder,"cond%5Bgrd_cd%3A%3AEQ%5D", grdCd);
+            return executeSearchAndConvert(builder);
+        }
+    }
 
 }
