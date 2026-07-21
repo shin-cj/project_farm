@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.farm.controller;
 
 import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
+import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
 import me.soldesk.springbootback.domain.farm.service.FarmService;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,8 +23,13 @@ public class FarmController {
         return farmService.getFarms(sellerId);
     }
 
+    @GetMapping("/public")
+    public List<PublicFarmResponse> getPublicFarms(){
+        return farmService.getPublicFarms();
+    }
+
     @GetMapping("/public/{farmId}")
-    public FarmResponse getPublicFarm(@PathVariable Long farmId){
+    public PublicFarmResponse  getPublicFarm(@PathVariable Long farmId){
         return farmService.getPublicFarm(farmId);
     }
 

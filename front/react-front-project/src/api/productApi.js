@@ -70,6 +70,20 @@ export async function getProduct(productId, publicOnly = false) {
   return response.data
 }
 
+// 상품 이미지 파일을 업로드합니다.
+export async function uploadProductImage(imageFile) {
+  const formData = new FormData()
+
+  formData.append('image', imageFile)
+
+  const response = await axios.post(
+      '/api/products/image',
+      formData
+  )
+
+  return response.data
+}
+
 //새로운 상품을 등록
 export async function createProduct(productData){
   const response = await axios.post('/api/products', productData)
