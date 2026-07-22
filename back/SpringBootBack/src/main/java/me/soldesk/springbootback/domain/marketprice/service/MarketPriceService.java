@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class MarketPriceService {
 
     private final RestClient.Builder restClientBuilder;
-
     private final ObjectMapper objectMapper;
 
     private RestClient restClient;
@@ -105,7 +104,7 @@ public class MarketPriceService {
         addQueryParam(builder,"cond%5Bctgry_cd%3A%3AEQ%5D", request.getCtgryCd());//부류코드
         addQueryParam(builder,"cond%5Bitem_cd%3A%3AEQ%5D", request.getItemCd());//품목코드
         addQueryParam(builder,"cond%5Bvrty_cd%3A%3AEQ%5D", request.getVrtyCd());//품종코드
-        addQueryParam(builder,"cond%5Bgrd_cd%3A%3AEQ%5D", request.getGrdCd());//등급코드
+        //addQueryParam(builder,"cond%5Bgrd_cd%3A%3AEQ%5D", request.getGrdCd());//등급코드
 
         return sameLabel(builder,request);
     }
@@ -123,14 +122,27 @@ public class MarketPriceService {
                 .collect(Collectors.groupingBy(
                         MarketPriceSearchResponse::getExmnYmd,
                         Collectors.averagingDouble(item -> {
-                            String priceStr = StringUtils.hasText(item.getExmnDdCnvsPrc()) ? item.getExmnDdCnvsPrc() : item.getExmnDdPrc();
-                            return Double.parseDouble(priceStr);
+                            String cnvsPrc = item.getExmnDdCnvsPrc();
+                            String ddPrc = item.getExmnDdPrc();
+
+                            String priceStr = (StringUtils.hasText(cnvsPrc))
+                                    ? cnvsPrc
+                                    : ddPrc;
+                            if (!StringUtils.hasText(priceStr)) {
+                                return 0.0; // 가격 데이터가 없는 경우 0 처리
+                            }
+
+                            try {
+                                return Double.parseDouble(priceStr.trim());
+                            } catch (NumberFormatException e) {
+                                return 0.0;
+                            }
                         })
                 ));
         //오름차순 정렬
         List<String> sortedDates = dateAvgMap.keySet().stream()
                 .sorted()
-                .collect(Collectors.toList());
+                .toList();
 
         //빈 리스트 객체
         List<DailyAvgPriceDto> dailyList = new ArrayList<>();
@@ -142,7 +154,7 @@ public class MarketPriceService {
             long todayAvg = Math.round(dateAvgMap.get(todayDate));
 
             Long prevAvg = null;
-            Double changeRate = 0.0;
+            double changeRate = 0.0;
 
             if(i>0){
                 String prevDate = sortedDates.get(i-1);
@@ -223,15 +235,6 @@ public class MarketPriceService {
 
     }
 
-    private JsonNode checkNoContentError(JsonNode root) {
-        int totalCount = root.path("response").path("body").path("totalCount").asInt();
-        JsonNode itemArray = root.path("response").path("body").path("items").path("item");
-
-        if (totalCount == 0 || itemArray.isEmpty()) {
-            throw new RuntimeException("요청하신 조건에 부합하는 시세 데이터가 존재하지 않습니다.");
-        }
-        return itemArray;
-    }
 
     private void addQueryParam(UriComponentsBuilder builder, String name, String value) {
         if (StringUtils.hasText(value)) {
@@ -313,8 +316,10 @@ public class MarketPriceService {
 
             return new MarketPriceSearchResult(totalCount, combinedDailyList, combinedList);
         } else {
-            // 하이픈이 없는 일반 등급("04" 등)이나 "전체"일 때는 원래대로 한 번만 호출
-            addQueryParam(builder,"cond%5Bgrd_cd%3A%3AEQ%5D", grdCd);
+            if (StringUtils.hasText(grdCd)) {
+                // 하이픈이 없는 일반 등급("04" 등)이나 "전체"일 때는 원래대로 한 번만 호출
+                addQueryParam(builder, "cond%5Bgrd_cd%3A%3AEQ%5D", grdCd);
+            }
             return executeSearchAndConvert(builder);
         }
     }

@@ -1,26 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SE_CODES,CATEGORY_CODES,ITEM_CODES,
     VARIETY_CODES,DISTRICT_CODES,MARKET_CODES,GRADE_CODES } from './categoryData';
 import axios from "axios";
 import './PriceSearchPage.css'
 import CustomGraphTable from '../../components/common/CustomGraphTable.jsx';
 
+const getSggCodeFromAddress = (userAdd, sggCodes) => {
+    if(!userAdd || !sggCodes) return '';
+
+    const matched = sggCodes.find(sgg => sgg.value !== '' && userAdd.includes(sgg.label));
+    return matched ? String(matched.value) : '';
+}
+
 function MarketPriceTestPage() {
 
     const today = new Date().toLocaleString('sv-SE').substring(0, 10);
 
-
     const [searchParams, setSearchParams] = useState({
         exmnYmdGte: `${today}`, //조회 시작일
         exmnYmdLte: `${today}`, //조회 종료일
-        seCd: '02',       // 구분
-        ctgryCd: '100', // 부류 (기본값: 식량작물)
-        itemCd: '111',  // 품목 (기본값: 쌀)
+        seCd: '01',       // 구분
+        ctgryCd: '200', // 부류 (기본값: 채소류)
+        itemCd: '245',  // 품목 (기본값: 양파)
         vrtyCd: '',     // 품종
         grdCd: '',       // 등급
         sggCd: '',      // 지역(시군구)
-        mrktCd: ''     // 세부 시장
     });
+
+    useEffect(() => {
+        const user = localStorage.getItem('loginUser');
+        if(user){
+            try {
+                const userData = JSON.parse(user);
+
+                const userAddress = userData.address || '';
+                const defaultSggCd = getSggCodeFromAddress(userAddress, DISTRICT_CODES);
+
+                console.log(defaultSggCd);
+
+                if(defaultSggCd){
+                    setSearchParams(prev => ({
+                        ...prev,
+                        sggCd: defaultSggCd
+                    }));
+                }
+            }catch (error){
+                console.log("유저 데이터 로드 실패 : ", error);
+            }
+        }
+    }, []);
 
     const [apiState, setApiState] = useState({
         isLoading: false,
@@ -31,7 +59,6 @@ function MarketPriceTestPage() {
 
     const availableItems = ITEM_CODES[searchParams.ctgryCd] || [{ label: "전체", value: "" }];
     const availableVarieties = VARIETY_CODES[searchParams.itemCd] || [{ label: "전체", value: "" }];
-    const availableMarkets = MARKET_CODES[searchParams.sggCd] || [{ label: "전체", value: "" }];
     const availableGrades = GRADE_CODES[searchParams.itemCd] || [{ label: "전체", value: "" }];
 
     // [부류] 변경 시 -> 품목, 품종, 등급 초기화
@@ -49,8 +76,7 @@ function MarketPriceTestPage() {
             itemCd: firstItem,
             vrtyCd: '',
             grdCd: '',
-            sggCd: prev.sggCd,
-            mrktCd: prev.mrktCd
+            sggCd: prev.sggCd
         }));
     };
 
@@ -66,8 +92,7 @@ function MarketPriceTestPage() {
             itemCd: selectedItem,
             vrtyCd: '',
             grdCd: '',
-            sggCd: prev.sggCd,
-            mrktCd: prev.mrktCd
+            sggCd: prev.sggCd
         }));
     };
 
@@ -83,8 +108,7 @@ function MarketPriceTestPage() {
             itemCd: prev.itemCd,
             vrtyCd: prev.vrtyCd,
             grdCd: prev.grdCd,
-            sggCd: selectedDistrict,
-            mrktCd: ''
+            sggCd: selectedDistrict
         }));
     };
 
@@ -95,7 +119,6 @@ function MarketPriceTestPage() {
     };
 
     // 5. 스마트 잠금(disabled) 조건문 정의
-    const isMarketDisabled = availableMarkets.length <= 2; // 세부 시장이 없는 지역 처리
     const isGradeDisabled = availableGrades.length <= 2;   // 등급이 '전체/표준' 뿐인 닭, 돼지 등 처리
 
     // 6. 백엔드 API 호출 실행
@@ -114,7 +137,7 @@ function MarketPriceTestPage() {
                 exmnYmdGte: searchParams.exmnYmdGte.replace(/-/g, ''),
                 exmnYmdLte: searchParams.exmnYmdLte.replace(/-/g, '')
             };
-            const response = await axios.get('http://localhost:8080/price-api/search-day', {
+            const response = await axios.get('http://localhost:8080/price-api/search-region', {
                 params: requestPayload
             });
 
@@ -168,6 +191,12 @@ function MarketPriceTestPage() {
                             {availableItems.filter(code => code.value !== '').map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
                         </select>
                     </div>
+                    <div className="field-group">
+                        <label>지역(시군구) *</label>
+                        <select name="sggCd" value={searchParams.sggCd} onChange={handleDistrictChange}>
+                            {DISTRICT_CODES.filter(code => code.value !== '').map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                        </select>
+                    </div>
 
                 </div>
 
@@ -191,18 +220,6 @@ function MarketPriceTestPage() {
                             <label>등급</label>
                             <select name="grdCd" value={searchParams.grdCd} onChange={handleInputChange} disabled={isGradeDisabled}>
                                 {availableGrades.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
-                            </select>
-                        </div>
-                        <div className="field-group">
-                            <label>지역(시군구)</label>
-                            <select name="sggCd" value={searchParams.sggCd} onChange={handleDistrictChange}>
-                                {DISTRICT_CODES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                            </select>
-                        </div>
-                        <div className="field-group">
-                            <label>조사 시장</label>
-                            <select name="mrktCd" value={searchParams.mrktCd} onChange={handleInputChange} disabled={isMarketDisabled}>
-                                {availableMarkets.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                             </select>
                         </div>
                     </div>
