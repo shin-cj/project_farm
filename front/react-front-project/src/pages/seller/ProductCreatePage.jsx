@@ -39,7 +39,6 @@ function ProductCreatePage() {
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
-        productStatus: 'PENDING',
         sameDayDelivery: 'N',
     })
 
