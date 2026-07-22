@@ -37,14 +37,12 @@ export async function getPublicProductPage({
   categoryId = null,
   saleType = 'RETAIL',
   keyword = '',
-  sameDayOnly = false,
   sortOption = 'LATEST',
   page = 0,
   size = 12,
 }) {
   const params = {
     saleType,
-    sameDayOnly,
     sortOption,
     page,
     size,

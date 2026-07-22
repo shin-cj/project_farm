@@ -97,6 +97,7 @@ public class ProductService {
             Long categoryId,
             String saleType,
             String keyword,
+            boolean sameDayOnly,
             String sortOption,
             int page,
             int size
@@ -161,9 +162,13 @@ public class ProductService {
                 ? null
                 : keyword.trim().toLowerCase().replaceAll("\\s+", "");
 
+        String normalizedSameDayDelivery =
+                sameDayOnly ? "Y" : null;
+
         Page<Product> productPage = productRepository.findPublicProductPage(
                 categoryId,
                 normalizedSaleType,
+                normalizedSameDayDelivery,
                 normalizedKeyword,
                 PageRequest.of(page, size, sort)
         );

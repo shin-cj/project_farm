@@ -43,10 +43,6 @@ function ProductListPage() {
             ? 'WHOLESALE'
             : 'RETAIL'
 
-    const sameDayOnly =
-        saleTypeFilter === 'RETAIL'
-        && searchParams.get('sameDay') === 'Y'
-
     const appliedKeyword = searchParams.get('keyword')?.trim() ?? ''
 
     const requestedSortOption = searchParams.get('sort')
@@ -116,7 +112,6 @@ function ProductListPage() {
                     categoryId: selectedCategoryId,
                     saleType: saleTypeFilter,
                     keyword: appliedKeyword,
-                    sameDayOnly,
                     sortOption,
                     page: currentPage,
                     size: pageSize,
@@ -149,7 +144,6 @@ function ProductListPage() {
         selectedCategoryId,
         saleTypeFilter,
         appliedKeyword,
-        sameDayOnly,
         sortOption,
         currentPage,
         pageSize,
@@ -181,14 +175,6 @@ function ProductListPage() {
     function handleSaleTypeSelect(saleType) {
         updateProductSearchParams({
             saleType: saleType === 'RETAIL' ? null : saleType,
-            sameDay: null,
-            page: null,
-        })
-    }
-
-    function handleSameDayToggle() {
-        updateProductSearchParams({
-            sameDay: sameDayOnly ? null : 'Y',
             page: null,
         })
     }
@@ -365,21 +351,6 @@ function ProductListPage() {
                 </div>
 
                 <div className="product-list-tools">
-                    {!wholesaleMode && (
-                        <button
-                            type="button"
-                            className={
-                                sameDayOnly
-                                    ? 'product-same-day-filter active'
-                                    : 'product-same-day-filter'
-                            }
-                            onClick={handleSameDayToggle}
-                            aria-pressed={sameDayOnly}
-                        >
-                            당일배송만 보기
-                        </button>
-                    )}
-
                     <select
                         value={sortOption}
                         onChange={handleSortChange}
