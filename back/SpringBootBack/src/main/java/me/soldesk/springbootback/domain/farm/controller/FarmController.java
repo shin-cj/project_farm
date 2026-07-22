@@ -1,11 +1,11 @@
 package me.soldesk.springbootback.domain.farm.controller;
 
-import me.soldesk.springbootback.domain.farm.dto.FarmApprovalRequest;
-import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
-import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
-import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
+import me.soldesk.springbootback.domain.farm.dto.*;
+import me.soldesk.springbootback.domain.farm.service.FarmImageService;
 import me.soldesk.springbootback.domain.farm.service.FarmService;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -14,9 +14,11 @@ import java.util.List;
 public class FarmController {
 
     private final FarmService farmService;
+    private final FarmImageService farmImageService;
 
-    public FarmController(FarmService farmService){
+    public FarmController(FarmService farmService, FarmImageService farmImageService){
         this.farmService = farmService;
+        this.farmImageService = farmImageService;
     }
 
     @GetMapping
@@ -38,6 +40,11 @@ public class FarmController {
     @GetMapping("/{farmId}")
     public FarmResponse getFarm(@PathVariable Long farmId){
         return farmService.getFarm(farmId);
+    }
+
+    @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public FarmImageUploadResponse uploadFarmImage(@RequestPart("image")MultipartFile image){
+        return farmImageService.uploadImage(image);
     }
 
     @PostMapping
