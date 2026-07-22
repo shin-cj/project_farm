@@ -623,7 +623,6 @@ public class ProductService {
         product.setHarvestDate(request.getHarvestDate());
         product.setExpirationDate(request.getExpirationDate());
         product.setProductImageUrl(request.getProductImageUrl());
-        product.setProductStatus(request.getProductStatus());
 
     }
     // 재고 수량에 따라 상품 판매 상태를 변경합니다.
