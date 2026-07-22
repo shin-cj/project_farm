@@ -24,9 +24,9 @@ function FarmEditPage() {
         farmDescription: '',
         farmImageUrl: '',
         saleType: 'RETAIL',
-        approvalStatus: 'PENDING',
     })
 
+    const [approvalStatus, setApprovalStatus] = useState('PENDING')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
@@ -69,8 +69,8 @@ function FarmEditPage() {
                     farmDescription: data.farmDescription ?? '',
                     farmImageUrl: data.farmImageUrl ?? '',
                     saleType: data.saleType ?? 'RETAIL',
-                    approvalStatus: data.approvalStatus ?? 'PENDING',
                 })
+                setApprovalStatus(data.approvalStatus ?? 'PENDING')
             } catch (err) {
                 if (!ignore) {
                     console.error(err)
@@ -217,14 +217,14 @@ function FarmEditPage() {
                                 name="saleType"
                                 value={form.saleType}
                                 onChange={handleChange}
-                                disabled={form.approvalStatus === 'APPROVED'}
+                                disabled={approvalStatus === 'APPROVED'}
                                 required
                             >
                                 <option value="RETAIL">소매 상점</option>
                                 <option value="WHOLESALE">도매 상점</option>
                             </select>
                             <small>
-                                {form.approvalStatus === 'APPROVED'
+                                {approvalStatus === 'APPROVED'
                                     ? '승인 완료된 농장의 판매 방식은 변경할 수 없습니다.'
                                     : '승인 전까지 판매 방식을 변경할 수 있습니다.'}
                             </small>

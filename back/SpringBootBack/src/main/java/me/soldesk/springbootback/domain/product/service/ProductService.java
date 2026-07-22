@@ -253,8 +253,11 @@ public class ProductService {
 
         applyRequestToProduct(product, request);
 
-        // 관리자 승인 전 상품은 판매자가 수정해도 승인 대기 상태를 유지합니다.
-        if ("PENDING".equals(currentProductStatus)) {
+        // 승인 대기 상품은 대기 상태를 유지하고,
+        // 승인 거절 상품은 수정하면 다시 승인 대기로 전환합니다.
+        if ("PENDING".equals(currentProductStatus)
+                || "REJECTED".equals(currentProductStatus)) {
+
             product.setProductStatus("PENDING");
         }
 
@@ -303,10 +306,12 @@ public class ProductService {
                         "상품을 찾을 수 없습니다."
                 ));
 
-        if ("PENDING".equals(product.getProductStatus())) {
+        if ("PENDING".equals(product.getProductStatus())
+                || "REJECTED".equals(product.getProductStatus())) {
+
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "승인 대기 중인 상품은 판매 상태를 변경할 수 없습니다."
+                    "승인 대기 또는 승인 거절 상품은 판매 상태를 변경할 수 없습니다."
             );
         }
 
@@ -315,6 +320,73 @@ public class ProductService {
         // 재고가 0인 상품을 판매 중으로 변경하면 품절로 처리합니다.
         applyStockStatus(product);
 
+        product.setUpdatedAt(LocalDateTime.now());
+
+        Product savedProduct = productRepository.save(product);
+
+        return toResponse(savedProduct);
+    }
+
+    // 관리자가 승인 대기 상품을 승인합니다.
+    public ProductResponse approveProduct(Long productId) {
+
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품을 찾을 수 없습니다."
+                ));
+
+        if (!"PENDING".equals(product.getProductStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "승인 대기 중인 상품만 승인할 수 있습니다."
+            );
+        }
+
+        Farm farm = farmRepository
+                .findById(product.getFarmId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품이 등록된 농장을 찾을 수 없습니다."
+                ));
+
+        if (!"APPROVED".equals(farm.getApprovalStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "승인 완료된 농장의 상품만 승인할 수 있습니다."
+            );
+        }
+
+        product.setProductStatus("ON_SALE");
+
+        applyStockStatus(product);
+
+        product.setUpdatedAt(LocalDateTime.now());
+
+        Product savedProduct = productRepository.save(product);
+
+        return toResponse(savedProduct);
+    }
+
+    // 관리자가 승인 대기 상품을 거절
+    public ProductResponse rejectProduct(Long productId) {
+
+        Product product = productRepository
+                .findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품을 찾을 수 없습니다."
+                ));
+
+        if (!"PENDING".equals(product.getProductStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "승인 대기 중인 상품만 거절할 수 있습니다."
+            );
+        }
+
+        product.setProductStatus("REJECTED");
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);

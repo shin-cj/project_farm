@@ -163,8 +163,11 @@ function ProductManagementPage() {
       return
     }
 
-    if (product.productStatus === 'PENDING') {
-      alert('승인 대기 중인 상품은 판매 상태를 변경할 수 없습니다.')
+    if (
+        product.productStatus === 'PENDING'
+        || product.productStatus === 'REJECTED'
+    ) {
+      alert('승인 대기 또는 승인 거절 상품은 판매 상태를 변경할 수 없습니다.')
       return
     }
 
@@ -292,6 +295,10 @@ function ProductManagementPage() {
 
     if (status === 'PENDING') {
       return '승인 대기'
+    }
+
+    if (status === 'REJECTED') {
+      return '승인 거절'
     }
 
     return '상태 미등록'
@@ -444,7 +451,14 @@ function ProductManagementPage() {
             >
                 승인 대기
               </button>
-
+            <button
+                type="button"
+                onClick={() => setStatusFilter('REJECTED')}
+                className={statusFilter === 'REJECTED' ? 'active' : ''}
+                aria-pressed={statusFilter === 'REJECTED'}
+            >
+              승인 거절
+            </button>
               <button
                   type="button"
                   className="seller-product-filter-reset"
@@ -579,23 +593,32 @@ function ProductManagementPage() {
                             수정
                           </Link>
 
-                          {product.productStatus === 'PENDING' ? (
+                          {product.productStatus === 'PENDING' && (
                               <span className="seller-product-approval-note">
-                                승인 후 변경 가능
-                              </span>
-                          ) : (
-                              <button
-                                  type="button"
-                                  onClick={() => handleChangeStatus(product)}
-                                  disabled={changingStatusId !== null}
-                              >
-                                {changingStatusId === product.productId
-                                    ? '처리 중...'
-                                    : product.productStatus === 'HIDDEN'
-                                        ? '판매재개'
-                                        : '판매중지'}
-                              </button>
+        승인 후 변경 가능
+    </span>
                           )}
+
+                          {product.productStatus === 'REJECTED' && (
+                              <span className="seller-product-approval-note">
+        수정 후 재심사
+    </span>
+                          )}
+
+                          {product.productStatus !== 'PENDING'
+                              && product.productStatus !== 'REJECTED' && (
+                                  <button
+                                      type="button"
+                                      onClick={() => handleChangeStatus(product)}
+                                      disabled={changingStatusId !== null}
+                                  >
+                                    {changingStatusId === product.productId
+                                        ? '처리 중...'
+                                        : product.productStatus === 'HIDDEN'
+                                            ? '판매재개'
+                                            : '판매중지'}
+                                  </button>
+                              )}
                         </div>
                       </td>
                     </tr>

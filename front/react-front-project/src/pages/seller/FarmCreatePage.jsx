@@ -22,7 +22,6 @@ function FarmCreatePage() {
         farmDescription: '',
         farmImageUrl: '',
         saleType: 'RETAIL',
-        approvalStatus: 'PENDING',
     })
 
     function handleChange(event) {

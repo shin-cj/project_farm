@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.farm.controller;
 
+import me.soldesk.springbootback.domain.farm.dto.FarmApprovalRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
 import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
@@ -47,6 +48,14 @@ public class FarmController {
     @PutMapping("/{farmId}")
     public FarmResponse updateFarm(@PathVariable Long farmId, @RequestBody FarmRequest request){
         return farmService.updateFarm(farmId, request);
+    }
+
+    @PatchMapping("/{farmId}/approval")
+    public FarmResponse updateApprovalStatus(
+            @PathVariable Long farmId,
+            @RequestBody FarmApprovalRequest request
+    ) {
+        return farmService.updateApprovalStatus(farmId, request);
     }
 
 }
