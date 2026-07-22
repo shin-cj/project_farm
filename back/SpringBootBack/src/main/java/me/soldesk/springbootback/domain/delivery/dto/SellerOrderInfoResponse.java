@@ -13,6 +13,7 @@ public class SellerOrderInfoResponse {
     private String orderNumber;
     private Long farmId;
     private String farmName;
+    private String saleType;
     private String orderName;
     private String receiverName;
     private String receiverPhone;
@@ -24,8 +25,12 @@ public class SellerOrderInfoResponse {
     private LocalDateTime orderedAt;
     private String paymentMethod;
     private String deliveryStatus;
+    private String deliveryType;
     private String courierName;
     private String trackingNumber;
+    private String deliveryPersonName;
+    private String deliveryPersonPhone;
+    private String deliveryMemo;
     private String refundReason;
     private LocalDateTime refundedAt;
 }

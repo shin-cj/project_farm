@@ -45,6 +45,22 @@ public class Delivery {
     @Column(name = "tracking_number", nullable = true)
     private String trackingNumber;
 
+    /** 배송 방식: COURIER=택배배송, SAME_DAY=당일배송 */
+    @Column(name = "delivery_type", nullable = false)
+    private String deliveryType = "COURIER";
+
+    /** 당일배송 담당자 이름 */
+    @Column(name = "delivery_person_name", nullable = true)
+    private String deliveryPersonName;
+
+    /** 당일배송 담당자 연락처 */
+    @Column(name = "delivery_person_phone", nullable = true)
+    private String deliveryPersonPhone;
+
+    /** 당일배송 메모 */
+    @Column(name = "delivery_memo", nullable = true)
+    private String deliveryMemo;
+
     /** 배송 처리 상태 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "delivery_status", nullable = false)
