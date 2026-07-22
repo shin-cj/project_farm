@@ -19,18 +19,21 @@ function CustomGraphTable({
     const getYValue = (item) => Number(typeof yKey === 'function' ? yKey(item) : item[yKey]) || 0;
 
     // 2. y축 최저가, 최고가 및 변동 폭 계산
-    const yValues = data.map(getYValue);
+    const yValues = data.map(item => Number(getYValue(item)));
     const minVal = Math.min(...yValues);
     const maxVal = Math.max(...yValues);
     const range = maxVal - minVal;
 
     // 데이터 개수에 따른 적절한 가로 최소 너비 계산
-    const minWidthPx = Math.max(100, data.length * 30);
+    const minWidthPerData = minWidthPerItem || 40;
+    const minWidthPx = Math.max(700, data.length * minWidthPerData);
     const calculatedMinWidth = `${minWidthPx}px`;
+
+    console.log(data.length);
 
     // 3. 데이터 개수에 따른 좌표 변환 (5%~95% 가로, 15%~85% 세로 여백 부여)
     const points = data.map((item, index) => {
-        const x = data.length === 1 ? 50 : 5 + (index / (data.length - 1)) * 90;
+        const x = data.length === 1 ? 50 : 2 + (index / (data.length - 1)) * 97;
 
         let y = 50; // 모든 데이터의 값이 동일할 경우 중앙 배치
         if (range > 0) {
@@ -76,7 +79,7 @@ function CustomGraphTable({
                 minWidth: '100%',
                 height
             }}>
-                <div style={{ width: '100%', height: 'calc(100% - 35px)', position: 'relative' }}>
+                <div style={{ width: '100%', height: 'calc(100% - 35px)', minWidth: 'max-content', position: 'relative', }}>
                     <svg
                         viewBox="0 0 100 100"
                         preserveAspectRatio="none"
@@ -108,8 +111,8 @@ function CustomGraphTable({
                                 left: `${point.x}%`,
                                 top: `${point.y}%`,
                                 transform: 'translate(-50%, -50%)',
-                                width: '8px',
-                                height: '8px',
+                                width: '14px',
+                                height: '14px',
                                 aspectRatio: '1',
                                 flexShrink: 0,
                                 borderRadius: '50%',
@@ -131,20 +134,23 @@ function CustomGraphTable({
                                 position: 'absolute',
                                 left: `${hoveredPoint.x}%`,
                                 top: hoveredPoint.y < 25 ? `${hoveredPoint.y + 12}%` : `${hoveredPoint.y}%`,
-                                transform:
-                                    hoveredPoint.x < 15
-                                        ? (hoveredPoint.y < 25 ? 'translate(0%, 0%)' : 'translate(0%, -115%)')
-                                        : hoveredPoint.x > 85
-                                            ? (hoveredPoint.y < 25 ? 'translate(-100%, 0%)' : 'translate(-100%, -115%)')
-                                            : (hoveredPoint.y < 25 ? 'translate(-50%, 0%)' : 'translate(-50%, -115%)'),
-                                backgroundColor: '#1e293b',
-                                color: '#fff',
+                                transform: (() => {
+                                    const translateY = hoveredPoint.y < 40 ? '10%' : '-115%';
+
+                                    // X축 화면 밖 잘림 방지 (좌/우/중앙 정렬)
+                                    if (hoveredPoint.x < 15) return `translate(0%, ${translateY})`;
+                                    if (hoveredPoint.x > 85) return `translate(-100%, ${translateY})`;
+                                    return `translate(-50%, ${translateY})`;
+                                })(),
+                                backgroundColor: '#f8fafc',
+                                color: '#0f172a',
+                                border: '1px solid #cbd5e1',
                                 padding: '8px 12px',
-                                borderRadius: '6px',
+                                borderRadius: '8px',
                                 fontSize: '12px',
                                 pointerEvents: 'none',
                                 whiteSpace: 'nowrap',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.2)',
+                                boxShadow: '0 4px 12px rgba(15, 23, 42, 0.12)',
                                 zIndex: 9999,
                             }}
                         >
@@ -163,21 +169,45 @@ function CustomGraphTable({
                 {/* X축 날짜/라벨 */}
                 <div style={{ position: 'relative', width: '100%', height: '20px', marginTop: '8px' }}>
                     {data.map((item, idx) => {
-                        const x = data.length === 1 ? 50 : 5 + (idx / (data.length - 1)) * 90;
-                        return (
-                            <span
+                        const rawDate = String(getXValue(item)); // 예: "20260722" 또는 "2026-07-22"
+
+                        // 날짜 형식에 맞춰 연도와 월/일 분리
+                        let year;
+                        let monthDay;
+
+                        if (rawDate.includes('-')) {
+                            // "2026-07-22" 형식인 경우
+                            const parts = rawDate.split('-');
+                            year = parts[0];
+                            monthDay = `${parts[1]}/${parts[2]}`; // "07/22"
+                        } else if (rawDate.length === 8) {
+                            // "20260722" 8자리 숫자 형식인 경우
+                            year = rawDate.substring(0, 4);
+                            monthDay = `${rawDate.substring(4, 6)}/${rawDate.substring(6, 8)}`; // "07/22"
+                        } else {
+                            monthDay = rawDate;
+                        }
+
+                        const x = data.length === 1 ? 50 : 2 + (idx / (data.length - 1)) * 97;
+
+                        return(
+                            <div
                                 key={idx}
                                 style={{
-                                    position: 'absolute',
-                                    left: `${x}%`,
-                                    transform: 'translateX(-50%)',
+                                    position: 'absolute',       // 👈 필수! 가로 위치 배치를 위해 추가
+                                    left: `${x}%`,              // 👈 필수! X축 좌표 지정
+                                    transform: 'translateX(-50%)', // 👈 필수! 점 위치에 날짜 중앙 정렬
+                                    textAlign: 'center',
                                     fontSize: '11px',
-                                    color: '#666',
+                                    lineHeight: '1.2',
+                                    color: '#555',
                                     whiteSpace: 'nowrap'
                                 }}
                             >
-                            {getXValue(item)}
-                        </span>
+                                <span style={{ fontSize: '10px', color: '#888' }}>{year}</span>
+                                <br />
+                                <strong style={{ fontWeight: '500' }}>{monthDay}</strong>
+                            </div>
                         );
                     })}
                 </div>

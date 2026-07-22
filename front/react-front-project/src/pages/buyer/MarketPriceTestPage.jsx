@@ -13,7 +13,7 @@ function MarketPriceTestPage() {
     const [searchParams, setSearchParams] = useState({
         exmnYmdGte: `${today}`, //조회 시작일
         exmnYmdLte: `${today}`, //조회 종료일
-        seCd: '',       // 구분
+        seCd: '02',       // 구분
         ctgryCd: '100', // 부류 (기본값: 식량작물)
         itemCd: '111',  // 품목 (기본값: 쌀)
         vrtyCd: '',     // 품종
@@ -36,9 +36,10 @@ function MarketPriceTestPage() {
 
     // [부류] 변경 시 -> 품목, 품종, 등급 초기화
     const handleCategoryChange = (e) => {
+
         const nextCategory = String(e.target.value);
         const nextItems = ITEM_CODES[nextCategory] || [];
-        const firstItem = nextItems.length > 0 ? String(nextItems[0].value) : '';
+        const firstItem = nextItems[1] ? String(nextItems[1].value) : '';
 
         setSearchParams(prev => ({
             exmnYmdGte: prev.exmnYmdGte,
@@ -142,23 +143,29 @@ function MarketPriceTestPage() {
                 {/* 필수 입력 데이터 영역 */}
                 <div className="required-fields-section">
                     <div className="field-group">
-                        <label>조회 종료일(최근) *</label>
-                        <input type="date" name="exmnYmdLte" value={searchParams.exmnYmdLte} max={today} onChange={handleInputChange} />
-                    </div>
-                    <div className="field-group">
                         <label>조회 시작일(과거) *</label>
                         <input type="date" name="exmnYmdGte" value={searchParams.exmnYmdGte} max={searchParams.exmnYmdLte || today} onChange={handleInputChange} />
                     </div>
                     <div className="field-group">
+                        <label>조회 종료일(최근) *</label>
+                        <input type="date" name="exmnYmdLte" value={searchParams.exmnYmdLte} max={today} onChange={handleInputChange} />
+                    </div>
+                    <div className="field-group">
+                        <label>유통 구분 *</label>
+                        <select name="seCd" value={searchParams.seCd} onChange={handleInputChange}>
+                            {SE_CODES.filter(code => code.value !== '').map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                        </select>
+                    </div>
+                    <div className="field-group">
                         <label>부류 *</label>
                         <select name="ctgryCd" value={searchParams.ctgryCd} onChange={handleCategoryChange}>
-                            {CATEGORY_CODES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                            {CATEGORY_CODES.filter(code => code.value !== '').map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                         </select>
                     </div>
                     <div className="field-group">
                         <label>품목 *</label>
                         <select name="itemCd" value={searchParams.itemCd} onChange={handleItemChange}>
-                            {availableItems.map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
+                            {availableItems.filter(code => code.value !== '').map(i => <option key={i.value} value={i.value}>{i.label}</option>)}
                         </select>
                     </div>
 
@@ -174,12 +181,6 @@ function MarketPriceTestPage() {
                 {/* 추가 검색 조건 영역 (조건부 렌더링) */}
                 {isExpanded && (
                     <div className="optional-fields-section">
-                        <div className="field-group">
-                            <label>유통 구분</label>
-                            <select name="seCd" value={searchParams.seCd} onChange={handleInputChange}>
-                                {SE_CODES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                            </select>
-                        </div>
                         <div className="field-group">
                             <label>상세 품종</label>
                             <select name="vrtyCd" value={searchParams.vrtyCd} onChange={handleInputChange}>
@@ -230,38 +231,41 @@ function MarketPriceTestPage() {
                     height="250px"
                     renderTooltip={(item) => (
                         <>
-                            <strong>{item.date} 시세</strong>
-                            <div>당일가: {item.todayAvgPrice?.toLocaleString()}원</div>
-                            <div>전일가: {item.prevAvgPrice ? `${item.prevAvgPrice.toLocaleString()}원` : '-'}</div>
+                            <strong>{item.date ? String(item.date).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'} 시세</strong>
+                            <div>당일가(1kg 기준): {item.todayAvgPrice?.toLocaleString()}원</div>
+                            <div>전일가(1kg 기준): {item.prevAvgPrice ? `${item.prevAvgPrice.toLocaleString()}원` : '-'}</div>
                             <div>
                                 등락률: <b style={{ color: item.changeRate > 0 ? 'red' : 'blue' }}>{item.changeRate}%</b>
                             </div>
                         </>
                     )}/>
+                    <div style={{color:'#828282', fontSize: '12px'}}>검색 조건이 많을 수록 시세 비교 데이터가 정확해집니다.</div>
                 <div className="result-table-container">
                     <table className="result-table">
                         <thead>
                         <tr>
                             <th>조사일자</th>
-                            <th>지역</th>
                             <th>시장명</th>
                             <th>품목</th>
                             <th>품종</th>
                             <th>등급</th>
                             <th>당일가격</th>
+                            <th>1Kg당가격</th>
 
                         </tr>
                         </thead>
                         <tbody>
                         {apiState.data.list.map((row, idx) => (
                             <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#fcfcfc' }}>
-                                <td>{row.exmn_ymd}</td>
-                                <td>{row.sgg_nm || '정보없음'}</td>
+                                <td>
+                                    {row.exmn_ymd ? String(row.exmn_ymd).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'}
+                                </td>
                                 <td>{row.mrkt_nm}</td>
                                 <td>{row.item_nm}</td>
                                 <td>{row.vrty_nm}</td>
                                 <td>{row.grd_nm}</td>
                                 <td className="price-text">{Number(row.exmn_dd_prc).toLocaleString()}원</td>
+                                <td className="price-text">{Number(row.exmn_dd_cnvs_prc).toLocaleString()}원</td>
                             </tr>
                         ))}
                         </tbody>

@@ -122,9 +122,11 @@ public class MarketPriceService {
         Map<String, Double> dateAvgMap = list.stream()
                 .collect(Collectors.groupingBy(
                         MarketPriceSearchResponse::getExmnYmd,
-                        Collectors.averagingDouble(item -> Double.parseDouble(item.getExmnDdPrc()))
+                        Collectors.averagingDouble(item -> {
+                            String priceStr = StringUtils.hasText(item.getExmnDdCnvsPrc()) ? item.getExmnDdCnvsPrc() : item.getExmnDdPrc();
+                            return Double.parseDouble(priceStr);
+                        })
                 ));
-
         //오름차순 정렬
         List<String> sortedDates = dateAvgMap.keySet().stream()
                 .sorted()
@@ -239,24 +241,51 @@ public class MarketPriceService {
 
     private MarketPriceSearchResult executeSearchAndConvert(UriComponentsBuilder builder) throws Exception {
 
-        URI uri = builder.build(true).toUri();
+        List<MarketPriceSearchResponse> allList = new ArrayList<>();
 
-        Object apiResponse = searchJsonApi(uri);
-        JsonNode root = objectMapper.convertValue(apiResponse, JsonNode.class);
+        int pageNo = 1;
+        int totalCount = 0;
 
-        checkCommonApiError(root);
-        JsonNode itemNode = checkNoContentError(root);
+        while (true) {
+            builder.replaceQueryParam("pageNo", pageNo);
+            URI uri = builder.build(true).toUri();
 
-        int totalCount = root.path("response").path("body").path("totalCount").asInt();
+            Object apiResponse = searchJsonApi(uri);
+            JsonNode root = objectMapper.convertValue(apiResponse, JsonNode.class);
 
-        List<MarketPriceSearchResponse> list = objectMapper.readValue(
-                itemNode.toString(),
-                new TypeReference<>() {}
-        );
+            checkCommonApiError(root);
 
-        List<DailyAvgPriceDto> dailyList = avgForDate(list);
+            if(pageNo == 1){
+                totalCount = root.path("response").path("body").path("totalCount").asInt();
+            }
 
-        return new MarketPriceSearchResult(totalCount, dailyList, list);
+            JsonNode itemNode = root.path("response").path("body").path("items").path("item");
+
+            if(itemNode.isEmpty()){
+                break;
+            }
+
+            List<MarketPriceSearchResponse> list = objectMapper.readValue(
+                    itemNode.toString(),
+                    new TypeReference<>() {}
+            );
+
+            allList.addAll(list);
+
+            if(allList.size() >= totalCount || list.isEmpty()){
+                break;
+            }
+
+            pageNo++;
+
+        }
+        if (allList.isEmpty()) {
+            throw new RuntimeException("요청하신 조건에 부합하는 시세 데이터가 존재하지 않습니다.");
+        }
+
+        List<DailyAvgPriceDto> dailyList = avgForDate(allList);
+
+        return new MarketPriceSearchResult(totalCount, dailyList, allList);
     }
 
     private MarketPriceSearchResult sameLabel(UriComponentsBuilder builder, MarketPriceSearchRequest request) throws Exception {
