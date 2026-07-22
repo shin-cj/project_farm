@@ -43,11 +43,19 @@ public class OrderResponse {
 
     private String deliveryStatus;
 
+    private String deliveryType;
+
     private Long deliveryId;
 
     private String courierName;
 
     private String trackingNumber;
+
+    private String deliveryPersonName;
+
+    private String deliveryPersonPhone;
+
+    private String deliveryMemo;
 
     /** 수령인 이름 */
     private String receiverName;

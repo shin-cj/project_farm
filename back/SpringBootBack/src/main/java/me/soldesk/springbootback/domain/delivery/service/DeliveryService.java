@@ -37,18 +37,45 @@ public class DeliveryService {
                     DeliveryResponse response = new DeliveryResponse();
                     response.setOrderId(orderId);
                     response.setDeliveryStatus("READY");
+                    response.setDeliveryType(order.getDeliveryType());
 
                     return response;
                 });
     }
 
     public DeliveryResponse registerDelivery(DeliveryRequest deliveryRequest) {
+        Order order = orderRepository.findById(deliveryRequest.getOrderId())
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보가 없습니다."));
+
         Delivery delivery = deliveryRepository.findByOrderId(deliveryRequest.getOrderId())
                 .orElse(new Delivery());
 
+        String deliveryType = deliveryRequest.getDeliveryType() == null
+                || deliveryRequest.getDeliveryType().isBlank()
+                ? order.getDeliveryType()
+                : deliveryRequest.getDeliveryType().trim().toUpperCase();
+
+        if (!"COURIER".equals(deliveryType) && !"SAME_DAY".equals(deliveryType)) {
+            throw new IllegalArgumentException("배송 방식은 COURIER 또는 SAME_DAY만 가능합니다.");
+        }
+
         delivery.setOrderId(deliveryRequest.getOrderId());
-        delivery.setCourierName(deliveryRequest.getCourierName());
-        delivery.setTrackingNumber(deliveryRequest.getTrackingNumber());
+        delivery.setDeliveryType(deliveryType);
+
+        if ("SAME_DAY".equals(deliveryType)) {
+            delivery.setCourierName(null);
+            delivery.setTrackingNumber(null);
+            delivery.setDeliveryPersonName(deliveryRequest.getDeliveryPersonName());
+            delivery.setDeliveryPersonPhone(deliveryRequest.getDeliveryPersonPhone());
+            delivery.setDeliveryMemo(deliveryRequest.getDeliveryMemo());
+        } else {
+            delivery.setCourierName(deliveryRequest.getCourierName());
+            delivery.setTrackingNumber(deliveryRequest.getTrackingNumber());
+            delivery.setDeliveryPersonName(null);
+            delivery.setDeliveryPersonPhone(null);
+            delivery.setDeliveryMemo(null);
+        }
+
         delivery.setDeliveryStatus("SHIPPING");
         delivery.setShippedAt(LocalDateTime.now());
         delivery.setUpdatedAt(LocalDateTime.now());
@@ -87,6 +114,10 @@ public class DeliveryService {
         response.setOrderId(delivery.getOrderId());
         response.setCourierName(delivery.getCourierName());
         response.setTrackingNumber(delivery.getTrackingNumber());
+        response.setDeliveryType(delivery.getDeliveryType());
+        response.setDeliveryPersonName(delivery.getDeliveryPersonName());
+        response.setDeliveryPersonPhone(delivery.getDeliveryPersonPhone());
+        response.setDeliveryMemo(delivery.getDeliveryMemo());
         response.setDeliveryStatus(delivery.getDeliveryStatus());
         response.setShippedAt(delivery.getShippedAt());
         response.setDeliveredAt(delivery.getDeliveredAt());
