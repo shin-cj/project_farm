@@ -24,8 +24,7 @@ public class MarketPriceController {
 
     @GetMapping("/search-day")
     public ResponseEntity<MarketPriceSearchResult> searchPerDay(MarketPriceSearchRequest request) throws Exception{
-        System.out.println("DTO가 받은 품목코드: " + request.getItemCd());
-        System.out.println("DTO가 받은 시작날짜: " + request.getExmnYmdGte());
+        System.out.println(request);
         MarketPriceSearchResult data = marketPriceService.searchPerDay(request);
         return ResponseEntity.ok(data);
     }
