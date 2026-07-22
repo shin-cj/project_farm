@@ -51,44 +51,46 @@ public interface ReportRepository extends JpaRepository<Report,Long> {
 
 
     @Query(value = """
-        SELECT
-            r.report_id        AS "reportId",
-            r.reporter_id      AS "reporterId",
-            reporter.email     AS "reporterEmail",
-    
-            r.reported_user_id AS "reportedUserId",
-            f.farm_name        AS "reportedFarmName",
-    
-            r.product_id       AS "productId",
-            p.product_name     AS "productName",
-    
-            r.report_type      AS "reportType",
-            r.report_reason    AS "reportReason",
-            r.report_status    AS "reportStatus",
-            r.created_at       AS "createdAt",
-    
-            r.admin_reply      AS "adminReply",
-            r.replied_at       AS "repliedAt",
-            r.replied_by       AS "repliedBy"
-    
-        FROM reports r
-    
-        JOIN users reporter
-          ON reporter.user_id = r.reporter_id
-    
-        LEFT JOIN products p
-          ON p.product_id = r.product_id
-    
-        LEFT JOIN farms f
-          ON f.farm_id = p.farm_id
-         AND f.seller_id = r.reported_user_id
-    
-        WHERE (
-            :reportStatus IS NULL
-            OR r.report_status = :reportStatus
-        )
-    
-        ORDER BY r.created_at DESC
-        """, nativeQuery = true)
-    List<AdminReportView> findAdminReportViews(@Param("reportStatus") String reportStatus);
+    SELECT
+        r.report_id        AS "reportId",
+        r.reporter_id      AS "reporterId",
+        reporter.email     AS "reporterEmail",
+
+        r.reported_user_id AS "reportedUserId",
+        f.farm_name        AS "reportedFarmName",
+
+        r.product_id       AS "productId",
+        p.product_name     AS "productName",
+
+        r.report_type      AS "reportType",
+        r.report_reason    AS "reportReason",
+        r.report_status    AS "reportStatus",
+        r.created_at       AS "createdAt",
+
+        r.admin_reply      AS "adminReply",
+        r.replied_at       AS "repliedAt",
+        r.replied_by       AS "repliedBy"
+
+    FROM reports r
+
+    LEFT JOIN users reporter
+      ON reporter.user_id = r.reporter_id
+
+    LEFT JOIN products p
+      ON p.product_id = r.product_id
+
+    LEFT JOIN farms f
+      ON f.farm_id = p.farm_id
+     AND f.seller_id = r.reported_user_id
+
+    WHERE (:reportId IS NULL OR r.report_id = :reportId)
+      AND (:reporterId IS NULL OR r.reporter_id = :reporterId)
+      AND (:reportStatus IS NULL OR r.report_status = :reportStatus)
+
+    ORDER BY r.created_at DESC
+    """, nativeQuery = true)
+    List<AdminReportView> findReportViews(
+            @Param("reportId") Long reportId,
+            @Param("reporterId") Long reporterId,
+            @Param("reportStatus") String reportStatus);
 }

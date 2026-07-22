@@ -1,10 +1,13 @@
 package me.soldesk.springbootback.domain.report.service;
 
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
+import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.report.dto.*;
 import me.soldesk.springbootback.domain.report.entity.Report;
 import me.soldesk.springbootback.domain.report.repository.ReportRepository;
 import me.soldesk.springbootback.domain.sellerpenalty.service.SellerPenaltyService;
+import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +20,9 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final SellerPenaltyService sellerPenaltyService;
+    private final UserRepository  userRepository;
+    private final ProductRepository  productRepository;
+    private final FarmRepository farmRepository;
 
 
     @Transactional(readOnly = true)
@@ -27,7 +33,7 @@ public class ReportService {
                 ? null : reportStatus.toUpperCase();
 
         return reportRepository
-                .findAdminReportViews(normalizedStatus)
+                .findReportViews(null,null,normalizedStatus)
                 .stream()
                 .map(this::toAdminResponse)
                 .toList();
@@ -45,8 +51,9 @@ public class ReportService {
                 .orElseThrow(() -> new IllegalArgumentException("신고 정보를 찾을 수 없습니다."));
 
         report.setReportStatus(reportStatus.toUpperCase());
+        reportRepository.saveAndFlush(report);
 
-        return toResponse(report);
+        return getComplerteResponse(reportId);
     }
 
     private void validateReportStatus(String reportStatus){
@@ -102,9 +109,9 @@ public class ReportService {
        report.setReportReason(request.getReportReason().trim());
        report.setReportStatus("PENDING");
 
-       Report savedReport = reportRepository.save(report);
+       Report savedReport = reportRepository.saveAndFlush(report);
 
-       return toResponse(savedReport);
+       return getComplerteResponse(savedReport.getReportId());
     }
 
 
@@ -130,27 +137,6 @@ public class ReportService {
 
     }
 
-    private ReportResponse toResponse(Report report) {
-        ReportResponse response = new ReportResponse();
-
-        response.setReportId(report.getReportId());
-        response.setReporterId(report.getReporterId());
-        response.setReportedUserId(report.getReportedUserId());
-
-        response.setProductId(report.getProductId());
-
-        response.setReportType(report.getReportType());
-        response.setReportReason(report.getReportReason());
-        response.setReportStatus(report.getReportStatus());
-        response.setCreatedAt(report.getCreatedAt());
-
-        response.setAdminReply(report.getAdminReply());
-        response.setRepliedAt(report.getRepliedAt());
-        response.setRepliedBy(report.getRepliedBy());
-
-        return response;
-    }
-
     @Transactional
     public ReportResponse replyToReport(Long reportId, ReportReplyRequest request){
 
@@ -173,8 +159,9 @@ public class ReportService {
         report.setAdminReply(request.getAdminReply().trim());
         report.setRepliedBy(request.getRepliedBy());
         report.setRepliedAt(LocalDateTime.now());
+        reportRepository.saveAndFlush(report);
 
-        return toResponse(report);
+        return getComplerteResponse(reportId);
     }
 
     @Transactional(readOnly = true)
@@ -186,9 +173,9 @@ public class ReportService {
         }
 
         return reportRepository
-                .findByReporterIdOrderByCreatedAtDesc(reporterId)
+                .findReportViews(null,reporterId,null)
                 .stream()
-                .map(this::toResponse)
+                .map(this::toAdminResponse)
                 .toList();
     }
 
@@ -221,8 +208,19 @@ public class ReportService {
         }
 
         report.setReportStatus(finalStatus);
+        reportRepository.saveAndFlush(report);
 
-        return toResponse(report);
+        return getComplerteResponse(reportId);
     }
 
+
+    private ReportResponse getComplerteResponse(Long reportId){
+        return reportRepository
+                .findReportViews(reportId,null,null)
+                .stream()
+                .findFirst()
+                .map(this::toAdminResponse)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("신고 정보를 찾을 수 없습니다."));
+    }
 }
