@@ -44,7 +44,6 @@ function ProductEditPage() {
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
-        productStatus: 'PENDING',
     })
 
     const selectedFarm = farms.find(
@@ -116,7 +115,6 @@ function ProductEditPage() {
                     harvestDate: productData.harvestDate ?? '',
                     expirationDate: productData.expirationDate ?? '',
                     productImageUrl: productData.productImageUrl ?? '',
-                    productStatus: productData.productStatus ?? 'PENDING',
                 })
             } catch (err) {
                 if (!ignore) {

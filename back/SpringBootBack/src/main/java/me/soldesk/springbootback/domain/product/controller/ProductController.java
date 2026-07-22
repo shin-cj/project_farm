@@ -83,6 +83,20 @@ public class ProductController {
         return productService.updateStatus(productId, request);
     }
 
+    @PatchMapping("/{productId}/approve")
+    public ProductResponse approveProduct(
+            @PathVariable Long productId
+    ) {
+        return productService.approveProduct(productId);
+    }
+
+    @PatchMapping("/{productId}/reject")
+    public ProductResponse rejectProduct(
+            @PathVariable Long productId
+    ) {
+        return productService.rejectProduct(productId);
+    }
+
     @PatchMapping("/{productId}/stock")
     public ProductResponse updateStock(@PathVariable Long productId, @RequestBody ProductStockRequest request){
         return productService.updateStock(productId,request);

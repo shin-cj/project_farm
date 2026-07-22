@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.farm.service;
 
+import me.soldesk.springbootback.domain.farm.dto.FarmApprovalRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
 import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
@@ -131,6 +132,48 @@ public class FarmService {
 
         applyRequestToFarm(farm, request);
 
+        farm.setUpdatedAt(LocalDateTime.now());
+
+        Farm savedFarm = farmRepository.save(farm);
+
+        return toResponse(savedFarm);
+    }
+
+    // 관리자가 농장을 승인하거나 거절합니다.
+    public FarmResponse updateApprovalStatus(
+            Long farmId,
+            FarmApprovalRequest request
+    ) {
+        if (request == null
+                || request.getApprovalStatus() == null
+                || request.getApprovalStatus().isBlank()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 승인 상태를 입력해야 합니다."
+            );
+        }
+
+        String nextStatus =
+                request.getApprovalStatus().trim().toUpperCase();
+
+        if (!"APPROVED".equals(nextStatus)
+                && !"REJECTED".equals(nextStatus)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 승인 상태는 APPROVED 또는 REJECTED만 가능합니다."
+            );
+        }
+
+        Farm farm = farmRepository
+                .findById(farmId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "농장을 찾을 수 없습니다."
+                ));
+
+        farm.setApprovalStatus(nextStatus);
         farm.setUpdatedAt(LocalDateTime.now());
 
         Farm savedFarm = farmRepository.save(farm);
