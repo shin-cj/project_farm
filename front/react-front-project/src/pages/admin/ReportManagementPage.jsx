@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import CommonTable from "../../components/common/CommonTable.jsx";
 import reportApi from "../../api/reportApi.js";
 import "./ReportManagementPage.css";
-import MyReportList from "../../components/report/MyReportList.jsx";
 import penaltyApi from "../../api/penaltyApi.js";
 import PenaltyDetailContent from "../../components/penalty/PenaltyDetailContent.jsx";
 
@@ -409,7 +408,6 @@ function ReportManagementPage() {
               "신고자 이메일",
               "피신고자 농장",
               "유형",
-              "상품 번호",
               "상품",
               "신고 내용",
               "접수 일시",
