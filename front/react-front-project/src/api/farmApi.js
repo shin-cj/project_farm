@@ -29,6 +29,15 @@ export async function getPublicFarm(farmId){
     return response.data
 }
 
+export async function uploadFarmImage(imageFile){
+    const formData = new FormData()
+
+    formData.append('image', imageFile)
+
+    const response = await axios.post('/api/farms/image', formData)
+    return response.data
+}
+
 export async function createFarm(farmData) {
     const response = await axios.post('/api/farms', farmData)
 

@@ -5,7 +5,7 @@ function getStoredUser() {
   try {
     const storedUser = localStorage.getItem("loginUser");
     return storedUser ? JSON.parse(storedUser) : null;
-  } catch (error) {
+  } catch  {
     localStorage.removeItem("loginUser");
     return null;
   }
@@ -52,6 +52,7 @@ function AppHeader() {
           <>
             <NavLink to="/chatbot">레시피 챗봇</NavLink>
             <NavLink to="/products">상품</NavLink>
+            <NavLink to="/farms">농장</NavLink>
             <NavLink to="/market-prices">주간 시세</NavLink>
             {isBuyer && <NavLink to="/cart">장바구니</NavLink>}
           </>
