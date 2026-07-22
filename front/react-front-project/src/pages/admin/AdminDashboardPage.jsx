@@ -5,7 +5,6 @@ import MyReportList from "../../components/report/MyReportList.jsx";
 function AdminDashboardPage() {
   return (
       <div>
-      <MyReportList/>
       <PagePlaceholder title="관리자 대시보드" description="회원, 콘텐츠, 신고와 시스템 상태를 요약하는 화면입니다." />
       </div>
   )
