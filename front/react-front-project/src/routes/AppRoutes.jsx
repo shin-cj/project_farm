@@ -15,6 +15,7 @@ import MarketPricePage from '../pages/buyer/MarketPricePage'
 import MarketPriceTestPage from '../pages/buyer/MarketPriceTestPage'
 import ChatbotPage from '../pages/buyer/ChatbotPage'
 import SellerDashboardPage from '../pages/seller/SellerDashboardPage'
+import SellerMyPage from '../pages/seller/SellerMyPage'
 import FarmManagementPage from '../pages/seller/FarmManagementPage'
 import ProductManagementPage from '../pages/seller/ProductManagementPage'
 import ProductCreatePage from '../pages/seller/ProductCreatePage'
@@ -57,6 +58,7 @@ function AppRoutes() {
 
       <Route path="/seller" element={<SellerLayout />}>
         <Route index element={<SellerDashboardPage />} />
+        <Route path="mypage" element={<SellerMyPage />} />
         <Route path="farms" element={<FarmManagementPage />} />
         <Route path="products" element={<ProductManagementPage />} />
         <Route path="products/new" element={<ProductCreatePage />} />
