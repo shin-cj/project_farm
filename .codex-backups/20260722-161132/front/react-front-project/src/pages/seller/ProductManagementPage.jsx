@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  deleteProduct,
   getProducts,
   updateProductStatus,
   updateProductStock
@@ -37,7 +36,6 @@ function ProductManagementPage() {
   const [reloadKey, setReloadKey] = useState(0)
   const [stockInputs, setStockInputs] = useState({})
   const [updatingStockId, setUpdatingStockId] = useState(null)
-  const [deletingProductId, setDeletingProductId] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -282,53 +280,6 @@ function ProductManagementPage() {
     }
   }
 
-  async function handleDeleteProduct(product) {
-    if (deletingProductId !== null) {
-      return
-    }
-
-    const sellerId = getLoginSellerId()
-
-    if (sellerId === null) {
-      alert('로그인한 판매자 정보를 확인할 수 없습니다.')
-      return
-    }
-
-    const ok = confirm(
-        `"${product.productName}" 상품을 삭제할까요?\n연결된 주문이나 장바구니가 있으면 삭제할 수 없습니다.`
-    )
-
-    if (!ok) {
-      return
-    }
-
-    try {
-      setDeletingProductId(product.productId)
-
-      await deleteProduct(product.productId, sellerId)
-
-      setProducts((currentProducts) =>
-          currentProducts.filter(
-              (currentProduct) =>
-                  currentProduct.productId !== product.productId
-          )
-      )
-
-      setStockInputs((currentInputs) => {
-        const nextInputs = { ...currentInputs }
-        delete nextInputs[product.productId]
-        return nextInputs
-      })
-
-      alert('상품이 삭제되었습니다.')
-    } catch (err) {
-      console.error(err)
-      alert(getApiErrorMessage(err, '상품 삭제에 실패했습니다.'))
-    } finally {
-      setDeletingProductId(null)
-    }
-  }
-
   function getStatusText(status) {
     if (status === 'ON_SALE') {
       return '판매 중'
@@ -407,78 +358,107 @@ function ProductManagementPage() {
 
         <section className="seller-product-card">
           <div className="seller-product-filter">
-            <div className="seller-product-filter-fields">
-              <label className="seller-product-filter-field">
-                <span>농장</span>
-                <select
-                    value={selectedFarmId}
-                    onChange={(event) => setSelectedFarmId(event.target.value)}
-                >
-                  <option value="">전체 농장</option>
+            <select
+                value={selectedFarmId}
+                onChange={(event) => setSelectedFarmId(event.target.value)}
+                aria-label="농장 필터"
+            >
+              <option value="">전체 농장</option>
 
-                  {farms.map((farm) => (
-                      <option key={farm.farmId} value={farm.farmId}>
-                        {farm.farmName}
-                      </option>
-                  ))}
-                </select>
-              </label>
+              {farms.map((farm) => (
+                  <option
+                      key={farm.farmId}
+                      value={farm.farmId}
+                  >
+                    {farm.farmName}
+                  </option>
+              ))}
+            </select>
+            <select
+                value={selectedCategoryId}
+                onChange={(event) => setSelectedCategoryId(event.target.value)}
+                aria-label="카테고리 필터"
+            >
+              <option value="">전체 카테고리</option>
 
-              <label className="seller-product-filter-field">
-                <span>카테고리</span>
-                <select
-                    value={selectedCategoryId}
-                    onChange={(event) => setSelectedCategoryId(event.target.value)}
-                >
-                  <option value="">전체 카테고리</option>
+              {categories.map((category) => (
+                  <option
+                      key={category.categoryId}
+                      value={category.categoryId}
+                  >
+                    {category.categoryName}
+                  </option>
+              ))}
+            </select>
+            <select
+                value={saleTypeFilter}
+                onChange={(event) => setSaleTypeFilter(event.target.value)}
+                aria-label="판매 방식 필터"
+            >
+              <option value="ALL">전체 판매 방식</option>
+              <option value="RETAIL">소매</option>
+              <option value="WHOLESALE">도매</option>
+            </select>
+            <input
+                type="text"
+                value={searchKeyword}
+                onChange={(event) => setSearchKeyword(event.target.value)}
+                placeholder="상품명 검색"
+                aria-label="상품명 검색"
+            />
 
-                  {categories.map((category) => (
-                      <option key={category.categoryId} value={category.categoryId}>
-                        {category.categoryName}
-                      </option>
-                  ))}
-                </select>
-              </label>
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('ALL')}
+                  className={statusFilter === 'ALL' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'ALL'}
+            >
+              전체
+            </button>
 
-              <label className="seller-product-filter-field">
-                <span>판매 방식</span>
-                <select
-                    value={saleTypeFilter}
-                    onChange={(event) => setSaleTypeFilter(event.target.value)}
-                >
-                  <option value="ALL">도매·소매 전체</option>
-                  <option value="RETAIL">소매</option>
-                  <option value="WHOLESALE">도매</option>
-                </select>
-              </label>
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('ON_SALE')}
+                  className={statusFilter === 'ON_SALE' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'ON_SALE'}
+            >
+              판매 중
+            </button>
 
-              <label className="seller-product-filter-field">
-                <span>상품 상태</span>
-                <select
-                    value={statusFilter}
-                    onChange={(event) => setStatusFilter(event.target.value)}
-                >
-                  <option value="ALL">전체 상태</option>
-                  <option value="ON_SALE">판매 중</option>
-                  <option value="HIDDEN">판매 중지</option>
-                  <option value="SOLD_OUT">품절</option>
-                  <option value="PENDING">승인 대기</option>
-                  <option value="REJECTED">승인 거절</option>
-                </select>
-              </label>
-            </div>
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('HIDDEN')}
+                  className={statusFilter === 'HIDDEN' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'HIDDEN'}
+            >
+              판매 중지
+            </button>
 
-            <div className="seller-product-filter-tools">
-              <label className="seller-product-search-field">
-                <span>상품명</span>
-                <input
-                    type="text"
-                    value={searchKeyword}
-                    onChange={(event) => setSearchKeyword(event.target.value)}
-                    placeholder="상품명 검색"
-                />
-              </label>
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('SOLD_OUT')}
+                  className={statusFilter === 'SOLD_OUT' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'SOLD_OUT'}
+            >
+              품절
+            </button>
 
+              <button
+                  type="button"
+                  onClick={() => setStatusFilter('PENDING')}
+                  className={statusFilter === 'PENDING' ? 'active' : ''}
+                  aria-pressed={statusFilter === 'PENDING'}
+            >
+                승인 대기
+              </button>
+            <button
+                type="button"
+                onClick={() => setStatusFilter('REJECTED')}
+                className={statusFilter === 'REJECTED' ? 'active' : ''}
+                aria-pressed={statusFilter === 'REJECTED'}
+            >
+              승인 거절
+            </button>
               <button
                   type="button"
                   className="seller-product-filter-reset"
@@ -492,7 +472,6 @@ function ProductManagementPage() {
                 {filteredProducts.length}개 상품
               </span>
             </div>
-          </div>
           {loading && <p className="seller-product-message">상품을 불러오는 중입니다.</p>}
 
           {error && (
@@ -587,7 +566,6 @@ function ProductManagementPage() {
                               disabled={
                                   updatingStockId !== null
                                   || changingStatusId !== null
-                                  || deletingProductId !== null
                               }
                           >
                             {updatingStockId === product.productId
@@ -632,10 +610,7 @@ function ProductManagementPage() {
                                   <button
                                       type="button"
                                       onClick={() => handleChangeStatus(product)}
-                                      disabled={
-                                          changingStatusId !== null
-                                          || deletingProductId !== null
-                                      }
+                                      disabled={changingStatusId !== null}
                                   >
                                     {changingStatusId === product.productId
                                         ? '처리 중...'
@@ -644,17 +619,6 @@ function ProductManagementPage() {
                                             : '판매중지'}
                                   </button>
                               )}
-
-                          <button
-                              type="button"
-                              className="seller-product-delete-button"
-                              onClick={() => handleDeleteProduct(product)}
-                              disabled={deletingProductId !== null}
-                          >
-                            {deletingProductId === product.productId
-                                ? '삭제 중...'
-                                : '삭제'}
-                          </button>
                         </div>
                       </td>
                     </tr>
