@@ -152,7 +152,55 @@ public class SellerPenaltyService {
         response.setCreatedAt(penalty.getCreatedAt());
         response.setExpiresAt(penalty.getExpiresAt());
 
+        if(penalty.getProductId() != null){
+            productRepository
+                    .findById(penalty.getProductId())
+                    .ifPresent(product ->
+                            response.setProductName(
+                                    product.getProductName()
+                            ));
+        }
+
+        if(penalty.getCreatedBy() != null){
+            userRepository
+                    .findById(penalty.getCreatedBy())
+                    .ifPresent(admin ->
+                            response.setCreatedByEmail(admin.getEmail()));
+        }
+
         return response;
     }
 
+    @Transactional(readOnly = true)
+    public SellerPenaltyResponse getPenaltyByReportId(
+            Long reportId
+    ){
+        if(reportId == null){
+            throw new IllegalArgumentException("신고 번호가 없습니다.");
+        }
+
+        SellerPenalty penalty = sellerPenaltyRepository
+                .findByReportId(reportId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("해당 신고에 부여된 페널티가 없습니다."));
+
+        return toResponse(penalty);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SellerPenaltyResponse> getPenaltyBySellerId(Long sellerId){
+        if(sellerId == null){
+            throw new IllegalArgumentException("판매자 번호가 없습니다.");
+        }
+
+        if(!userRepository.existsById(sellerId)){
+            throw new IllegalArgumentException("판매자 정보를 찾을 수 없습니다.");
+        }
+
+        return sellerPenaltyRepository
+                .findBySellerIdOrderByCreatedAtDesc(sellerId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
 }

@@ -3,6 +3,8 @@ import CommonTable from "../../components/common/CommonTable.jsx";
 import reportApi from "../../api/reportApi.js";
 import "./ReportManagementPage.css";
 import MyReportList from "../../components/report/MyReportList.jsx";
+import penaltyApi from "../../api/penaltyApi.js";
+import PenaltyDetailContent from "../../components/penalty/PenaltyDetailContent.jsx";
 
 const statusLabels = {
   PENDING: "접수 대기",
@@ -44,7 +46,9 @@ function ReportManagementPage() {
   const [replyingId, setReplyingId] = useState(null);
   const [penaltyType, setPenaltyType] = useState("");
   const [penaltyReason, setPenaltyReason] = useState("");
-
+  const [selectedPenalty, setSelectedPenalty] = useState(null);
+  const [penaltyLoading, setPenaltyLoading] = useState(false);
+  const [penaltyError, setPenaltyError] = useState("");
 
 
 
@@ -205,19 +209,19 @@ function ReportManagementPage() {
       if (isFinalStatus) {
         closeDetail();
       } else {
-        setSelectedReport((currentReports) => ({
-          ...currentReports,
+        setSelectedReport((currentReport) => ({
+          ...currentReport,
           ...updatedReport,
 
           reporterEmail:
                 updatedReport.reporterEmail ??
-                currentReports.reporterEmail,
+              currentReport.reporterEmail,
           reportedFarmName:
                 updatedReport.reportedFarmName ??
-                currentReports.reportedFarmName,
+              currentReport.reportedFarmName,
           productName:
                 updatedReport.productName ??
-                currentReports.productName,
+              currentReport.productName,
         }))
         setSelectedStatus(updatedReport.reportStatus);
       }
@@ -274,25 +278,22 @@ function ReportManagementPage() {
         )
       )
 
-      setSelectedReport((currentReports) =>
-      currentReports.map((report) =>
-      report.reportId === updatedReport.repotId
-            ? {
-                ...report,
-                ...updatedReport,
-                reporterEmail:
-                    updatedReport.reporterEmail ??
-                    report.reporterEmail,
-                reportedFarmName:
-                    updatedReport.reportedFarmName ??
-                    report.reportedFarmName,
-                productName:
-                    updatedReport.productName ??
-                    report.productName,
-          }
-          : report
-        )
-      )
+      setSelectedReport((currentReport) => ({
+        ...currentReport,
+        ...updatedReport,
+
+        reporterEmail:
+            updatedReport.reporterEmail ??
+            currentReport.reporterEmail,
+
+        reportedFarmName:
+            updatedReport.reportedFarmName ??
+            currentReport.reportedFarmName,
+
+        productName:
+            updatedReport.productName ??
+            currentReport.productName,
+      }));
       setAdminReply(updatedReport.adminReply || "")
 
       alert("관리자 답변이 등록되었습니다.")
@@ -307,13 +308,44 @@ function ReportManagementPage() {
     }
   }
 
+  async function loadPenalty(reportId){
+
+    try {
+      setPenaltyLoading(true);
+      setPenaltyError("")
+      setSelectedPenalty(null)
+
+      const response =
+          await penaltyApi.getByReportId(reportId)
+
+      setSelectedPenalty(response.data)
+    }catch (e){
+      console.error(e)
+
+      setPenaltyError(
+          e.response?.data?.message ||
+          "페널티 처리 내역을 불러오지 못했습니다."
+      )
+    }finally {
+      setPenaltyLoading(false)
+    }
+
+  }
+
+
   function openDetail(report){
     setSelectedReport(report)
     setSelectedStatus(report.reportStatus)
     setAdminReply(report.adminReply || "")
     setPenaltyType("")
     setPenaltyReason("")
+    setSelectedPenalty(null)
+    setPenaltyError("")
     setError("")
+
+    if(report.reportStatus === "RESOLVED"){
+      loadPenalty(report.reportId)
+    }
   }
 
 
@@ -323,6 +355,9 @@ function ReportManagementPage() {
     setAdminReply("")
     setPenaltyType("")
     setPenaltyReason("")
+    setSelectedPenalty(null)
+    setPenaltyLoading(false)
+    setPenaltyError("")
     setError("")
   }
 
@@ -496,12 +531,16 @@ function ReportManagementPage() {
               </label>
 
               <textarea
-                id="admin=reply"
+                id="admin-reply"
                 value={adminReply}
                 onChange={(e) => setAdminReply(e.target.value)}
                 placeholder="신고자에게 전달한 답변을 입력해주세요."
                 rows={5}
                 maxLength={1000}
+                disabled={
+                    selectedReportIsFinal ||
+                    replyingId === selectedReport.reportId
+                }
               />
 
               <div className="report-admin-reply-footer">
@@ -511,10 +550,12 @@ function ReportManagementPage() {
                   type="button"
                   onClick={handleReplySunbmit}
                   disabled={
-                  replyingId === selectedReport.reportId ||
-                      !adminReply.trim()
+                  selectedReportIsFinal ||
+                  replyingId === selectedReport.reportId || !adminReply.trim()
                   }>
-                  {replyingId === selectedReport.reportId
+                  {selectedReportIsFinal
+                  ? "처리 완료"
+                  : replyingId === selectedReport.reportId
                   ? "등록 중..."
                   : selectedReport.adminReply
                   ? "답변 수정"
@@ -529,6 +570,23 @@ function ReportManagementPage() {
                   </p>
               )}
             </div>
+              {selectedReport.reportStatus === "RESOLVED" && (
+                  <div className="report-applied-penalty">
+                    {penaltyLoading ? (
+                        <div className="report-state">
+                          페널티 처리 내역을 불러오는 중입니다.
+                        </div>
+                    ) : penaltyError ? (
+                        <div className="report-error">
+                          {penaltyError}
+                        </div>
+                    ) : (
+                        <PenaltyDetailContent
+                          penalty={selectedPenalty}
+                          showAdminInfo={true}/>
+                    )}
+                  </div>
+              )}
               {selectedStatus === "RESOLVED" &&
                   !["RESOLVED", "REJECTED"].includes(
                       selectedReport.reportStatus

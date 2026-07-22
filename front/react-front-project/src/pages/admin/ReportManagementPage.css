@@ -486,6 +486,19 @@
   box-shadow: 0 0 0 3px rgba(45, 126, 75, 0.14);
 }
 
+.report-admin-reply > textarea:disabled {
+  border-color: #d9e1db;
+  background: #f3f6f4;
+  color: #65736a;
+  cursor: not-allowed;
+  opacity: 1;
+  box-shadow: none;
+}
+
+.report-admin-reply > textarea:disabled::placeholder {
+  color: #98a39b;
+}
+
 .report-admin-reply-footer {
   display: flex;
   align-items: center;

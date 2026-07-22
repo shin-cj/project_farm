@@ -24,5 +24,8 @@ public class SellerPenaltyResponse {
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
 
+    private String productName;
+    private String createdByEmail;
+
 
 }

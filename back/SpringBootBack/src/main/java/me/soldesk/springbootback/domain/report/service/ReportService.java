@@ -165,6 +165,10 @@ public class ReportService {
         Report report = reportRepository.findById(reportId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("신고 정보를 찾을 수 없습니다."));
+        if(List.of("RESOLVED","REJECTED")
+                .contains(report.getReportStatus())){
+            throw new IllegalArgumentException("최종 처리된 신고의 답변은 수정할 수 없습니다.");
+        }
 
         report.setAdminReply(request.getAdminReply().trim());
         report.setRepliedBy(request.getRepliedBy());
