@@ -196,28 +196,6 @@
     background-color: #f6f8f4;
 }
 
-.product-same-day-filter {
-    padding: 11px 16px;
-    border: 1px solid #3f7d20;
-    border-radius: 10px;
-    background-color: #ffffff;
-    color: #2f681b;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.product-same-day-filter:hover,
-.product-same-day-filter.active {
-    background-color: #3f7d20;
-    color: #ffffff;
-}
-
-.product-same-day-filter:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(63, 125, 32, 0.18);
-}
-
 .product-sort-select {
     min-width: 130px;
     padding: 11px 36px 11px 14px;
