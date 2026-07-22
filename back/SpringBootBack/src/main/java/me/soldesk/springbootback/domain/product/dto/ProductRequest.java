@@ -50,4 +50,6 @@ public class ProductRequest {
     /** 상품 판매 상태 */
     private String productStatus;
 
+    private String sameDayDelivery;
+
 }

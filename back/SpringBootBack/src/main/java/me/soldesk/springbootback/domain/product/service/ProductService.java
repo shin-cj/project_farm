@@ -384,6 +384,7 @@ public class ProductService {
         response.setProductStatus(product.getProductStatus());
         response.setCreatedAt(product.getCreatedAt());
         response.setUpdatedAt(product.getUpdatedAt());
+        response.setSameDayDelivery(product.getSameDayDelivery());
 
         return response;
     }
@@ -511,6 +512,28 @@ public class ProductService {
                     "도매 상품의 최소 주문 수량은 2개 이상이어야 합니다."
             );
         }
+
+        String sameDayDelivery = request.getSameDayDelivery();
+
+        if (sameDayDelivery != null
+                && !sameDayDelivery.isBlank()
+                && !"Y".equals(sameDayDelivery.trim().toUpperCase())
+                && !"N".equals(sameDayDelivery.trim().toUpperCase())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "당일배송 여부는 Y 또는 N만 가능합니다."
+            );
+        }
+
+        if ("WHOLESALE".equals(saleType)
+                && "Y".equals(sameDayDelivery == null
+                ? "N"
+                : sameDayDelivery.trim().toUpperCase())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "도매 상품은 당일배송으로 등록할 수 없습니다."
+            );
+        }
     }
 
     private void applyRequestToProduct(Product product, ProductRequest request){
@@ -523,11 +546,13 @@ public class ProductService {
         product.setStockQuantity(request.getStockQuantity());
         product.setUnit(request.getUnit());
         product.setMinOrderQuantity(request.getMinOrderQuantity());
+        product.setSameDayDelivery(request.getSameDayDelivery()==null || request.getSameDayDelivery().isBlank() ? "N" : request.getSameDayDelivery().trim().toUpperCase());
         product.setOrigin(request.getOrigin());
         product.setHarvestDate(request.getHarvestDate());
         product.setExpirationDate(request.getExpirationDate());
         product.setProductImageUrl(request.getProductImageUrl());
         product.setProductStatus(request.getProductStatus());
+
     }
     // 재고 수량에 따라 상품 판매 상태를 변경합니다.
     private void applyStockStatus(Product product) {
