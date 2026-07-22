@@ -10,13 +10,11 @@ import me.soldesk.springbootback.domain.product.dto.ProductStatusRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -421,46 +419,6 @@ public class ProductService {
         Product savedProduct = productRepository.save(product);
 
         return toResponse(savedProduct);
-    }
-
-    /** 판매자 본인의 상품을 삭제합니다. 연결된 거래 데이터가 있으면 삭제하지 않습니다. */
-    @Transactional
-    public void deleteProduct(Long productId, Long sellerId) {
-        if (sellerId == null || sellerId <= 0) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "판매자 정보를 확인할 수 없습니다."
-            );
-        }
-
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "상품을 찾을 수 없습니다."
-                ));
-
-        Farm farm = farmRepository.findById(product.getFarmId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "상품의 농장 정보를 찾을 수 없습니다."
-                ));
-
-        if (!sellerId.equals(farm.getSellerId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "본인이 등록한 상품만 삭제할 수 있습니다."
-            );
-        }
-
-        try {
-            productRepository.delete(product);
-            productRepository.flush();
-        } catch (DataIntegrityViolationException exception) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "장바구니, 주문, 문의 또는 리뷰에 연결된 상품은 삭제할 수 없습니다. 판매 중지를 이용해 주세요."
-            );
-        }
     }
 
     //Product 엔티티를 ProductResponse DTO로 변환

@@ -50,13 +50,6 @@ export async function updateFarm(farmId, farmData) {
     return response.data
 }
 
-// 판매자 본인의 농장을 삭제합니다.
-export async function deleteFarm(farmId, sellerId) {
-    await axios.delete(`/api/farms/${farmId}`, {
-        params: { sellerId },
-    })
-}
-
 // 관리자가 농장의 승인 상태를 변경합니다.
 export async function updateFarmApprovalStatus(farmId, approvalStatus) {
     const response = await axios.patch(
