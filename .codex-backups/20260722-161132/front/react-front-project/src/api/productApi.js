@@ -114,13 +114,6 @@ export async function updateProductStock(productId, stockQuantity){
   return response.data
 }
 
-// 판매자 본인의 상품을 삭제합니다.
-export async function deleteProduct(productId, sellerId) {
-  await axios.delete(`/api/products/${productId}`, {
-    params: { sellerId },
-  })
-}
-
 // 관리자가 승인 대기 중인 상품을 승인합니다.
 export async function approveProduct(productId) {
   const response = await axios.patch(
