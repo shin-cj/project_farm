@@ -326,8 +326,10 @@
 }
 
 .report-detail-modal {
-  width: min(700px, 100%);
-  max-height: min(82vh, 760px);
+  display: flex;
+  flex-direction: column;
+  width: min(700px, calc(100vw - 48px));
+  max-height: min(90dvh, 760px);
   overflow: hidden;
   border: 1px solid #d9e1db;
   border-radius: 8px;
@@ -338,6 +340,7 @@
 
 .report-modal-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
@@ -384,8 +387,11 @@
 }
 
 .report-modal-body {
-  max-height: calc(82vh - 164px);
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 24px;
 }
 
@@ -651,6 +657,7 @@
 
 .report-modal-footer {
   display: flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
@@ -693,7 +700,8 @@
   }
 
   .report-detail-modal {
-    max-height: 90vh;
+    width: 100%;
+    max-height: calc(100dvh - 24px);
   }
 
   .report-detail-grid {
