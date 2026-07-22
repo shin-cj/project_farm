@@ -34,4 +34,16 @@ public class ReportResponse {
     /** 신고 접수 일시 */
     private LocalDateTime createdAt;
 
+    private String adminReply;
+
+    private LocalDateTime repliedAt;
+
+    private Long repliedBy;
+
+    private String reporterEmail;
+
+    private String reportedFarmName;
+
+    private String productName;
+
 }

@@ -3,6 +3,10 @@ import httpClient from "./httpClient";
 
 const reportApi = {
 
+    createRort(reportData){
+        return httpClient.post("/reports",reportData)
+    },
+
     getAdminReports(reportStatus){
         const params = reportStatus && reportStatus !== "ALL"
             ? {reportStatus}
@@ -14,7 +18,26 @@ const reportApi = {
     updateAdminReportStatus(reportId, reportStatus){
         return httpClient.patch(`/admin/reports/${reportId}/status`,
             {reportStatus: reportStatus})
+    },
+
+    replyAdminReport(reportId, adminReply, repliedBy){
+        return httpClient.patch(
+            `/admin/reports/${reportId}/reply`,{adminReply, repliedBy,
+            }
+        )
+    },
+
+    getMyReports(reporterId){
+        return httpClient.get("/reports/my",{params: {reporterId},
+        })
+    },
+
+    resolveAdminReport(reportId, resolutionData){
+        return httpClient.patch(
+            `/admin/reports/${reportId}/resolution`,
+            resolutionData)
     }
+
 
 }
 

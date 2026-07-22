@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getFarms } from '../../api/farmApi.js'
+import { deleteFarm, getFarms } from '../../api/farmApi.js'
 import {useNavigate} from "react-router-dom";
 import './FarmManagementPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
@@ -31,6 +31,7 @@ function FarmManagementPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const [deletingFarmId, setDeletingFarmId] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -69,6 +70,46 @@ function FarmManagementPage() {
       ignore = true
     }
   }, [reloadKey])
+
+  async function handleDeleteFarm(farm) {
+    if (deletingFarmId !== null) {
+      return
+    }
+
+    const sellerId = getLoginSellerId()
+
+    if (sellerId === null) {
+      alert('로그인한 판매자 정보를 확인할 수 없습니다.')
+      return
+    }
+
+    const ok = confirm(
+        `"${farm.farmName}" 농장을 삭제할까요?\n등록 상품이나 주문 내역이 있으면 삭제할 수 없습니다.`
+    )
+
+    if (!ok) {
+      return
+    }
+
+    try {
+      setDeletingFarmId(farm.farmId)
+
+      await deleteFarm(farm.farmId, sellerId)
+
+      setFarms((currentFarms) =>
+          currentFarms.filter(
+              (currentFarm) => currentFarm.farmId !== farm.farmId
+          )
+      )
+
+      alert('농장이 삭제되었습니다.')
+    } catch (err) {
+      console.error(err)
+      alert(getApiErrorMessage(err, '농장 삭제에 실패했습니다.'))
+    } finally {
+      setDeletingFarmId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -195,6 +236,17 @@ function FarmManagementPage() {
                           }
                       >
                         농장 수정
+                      </button>
+
+                      <button
+                          type="button"
+                          className="farm-management-delete-button"
+                          onClick={() => handleDeleteFarm(farm)}
+                          disabled={deletingFarmId !== null}
+                      >
+                        {deletingFarmId === farm.farmId
+                            ? '삭제 중...'
+                            : '농장 삭제'}
                       </button>
                     </div>
                   </article>

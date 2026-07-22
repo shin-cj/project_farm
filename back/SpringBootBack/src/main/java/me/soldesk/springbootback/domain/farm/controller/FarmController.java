@@ -3,6 +3,7 @@ package me.soldesk.springbootback.domain.farm.controller;
 import me.soldesk.springbootback.domain.farm.dto.*;
 import me.soldesk.springbootback.domain.farm.service.FarmImageService;
 import me.soldesk.springbootback.domain.farm.service.FarmService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -63,6 +64,15 @@ public class FarmController {
             @RequestBody FarmApprovalRequest request
     ) {
         return farmService.updateApprovalStatus(farmId, request);
+    }
+
+    @DeleteMapping("/{farmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFarm(
+            @PathVariable Long farmId,
+            @RequestParam Long sellerId
+    ) {
+        farmService.deleteFarm(farmId, sellerId);
     }
 
 }

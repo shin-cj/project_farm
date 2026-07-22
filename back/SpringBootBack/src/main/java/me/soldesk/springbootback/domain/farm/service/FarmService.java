@@ -6,8 +6,10 @@ import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
 import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
 import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
@@ -179,6 +181,40 @@ public class FarmService {
         Farm savedFarm = farmRepository.save(farm);
 
         return toResponse(savedFarm);
+    }
+
+    /** 판매자 본인의 농장을 삭제합니다. 상품이나 주문에 연결된 농장은 삭제하지 않습니다. */
+    @Transactional
+    public void deleteFarm(Long farmId, Long sellerId) {
+        if (sellerId == null || sellerId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "판매자 정보를 확인할 수 없습니다."
+            );
+        }
+
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "농장을 찾을 수 없습니다."
+                ));
+
+        if (!sellerId.equals(farm.getSellerId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "본인이 등록한 농장만 삭제할 수 있습니다."
+            );
+        }
+
+        try {
+            farmRepository.delete(farm);
+            farmRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "등록 상품이나 주문 내역이 있는 농장은 삭제할 수 없습니다."
+            );
+        }
     }
 
     //request 값을 엔터티에 적용하는 공통 메서드

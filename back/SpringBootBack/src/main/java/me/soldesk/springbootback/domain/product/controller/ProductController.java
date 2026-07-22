@@ -3,6 +3,7 @@ package me.soldesk.springbootback.domain.product.controller;
 import me.soldesk.springbootback.domain.product.dto.*;
 import me.soldesk.springbootback.domain.product.service.ProductImageService;
 import me.soldesk.springbootback.domain.product.service.ProductService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -100,5 +101,14 @@ public class ProductController {
     @PatchMapping("/{productId}/stock")
     public ProductResponse updateStock(@PathVariable Long productId, @RequestBody ProductStockRequest request){
         return productService.updateStock(productId,request);
+    }
+
+    @DeleteMapping("/{productId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProduct(
+            @PathVariable Long productId,
+            @RequestParam Long sellerId
+    ) {
+        productService.deleteProduct(productId, sellerId);
     }
 }
