@@ -87,6 +87,14 @@ function SellerLayout() {
               <span>▥</span>
               판매 통계
             </NavLink>
+
+            <NavLink
+                to="/seller/search"
+                className={getMenuClass}
+            >
+              <span style={{fontSize: '30px', display:'inline-block', transform:'translate(5px, -5px)'}}>⌕</span>
+              시세 검색
+            </NavLink>
           </nav>
           <div className="seller-sidebar-message">
             <strong>농부와 소비자를 직접 연결합니다.</strong>

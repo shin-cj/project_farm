@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { SE_CODES,CATEGORY_CODES,ITEM_CODES,
-    VARIETY_CODES,DISTRICT_CODES,MARKET_CODES,GRADE_CODES } from './categoryData';
+    VARIETY_CODES,DISTRICT_CODES,MARKET_CODES,GRADE_CODES } from '../buyer/categoryData';
 import axios from "axios";
-import './PriceSearchPage.css'
+import '../buyer/PriceSearchPage.css'
 import CustomGraphTable from '../../components/common/CustomGraphTable.jsx';
 
-function MarketPriceTestPage() {
+function SellerPriceSearchPage() {
 
     const today = new Date().toLocaleString('sv-SE').substring(0, 10);
 
@@ -134,6 +134,7 @@ function MarketPriceTestPage() {
     };
 
     return (
+        <section className="page-card">
         <div className="search-page-container">
             <h2>🌾 농산물 시세 검색창</h2>
             <hr />
@@ -224,60 +225,61 @@ function MarketPriceTestPage() {
 
             {!apiState.isLoading && apiState.data && apiState.data.totalCount > 0 ? (
                 <>
-                <CustomGraphTable
-                    data={apiState.data.dailyAvgList}
-                    xKey="date"
-                    yKey="todayAvgPrice"
-                    height="250px"
-                    renderTooltip={(item) => (
-                        <>
-                            <strong>{item.date ? String(item.date).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'} 시세</strong>
-                            <div>당일가(1kg 기준): {item.todayAvgPrice?.toLocaleString()}원</div>
-                            <div>전일가(1kg 기준): {item.prevAvgPrice ? `${item.prevAvgPrice.toLocaleString()}원` : '-'}</div>
-                            <div>
-                                등락률: <b style={{ color: item.changeRate > 0 ? 'red' : 'blue' }}>{item.changeRate}%</b>
-                            </div>
-                        </>
-                    )}/>
+                    <CustomGraphTable
+                        data={apiState.data.dailyAvgList}
+                        xKey="date"
+                        yKey="todayAvgPrice"
+                        height="250px"
+                        renderTooltip={(item) => (
+                            <>
+                                <strong>{item.date ? String(item.date).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'} 시세</strong>
+                                <div>당일가(1kg 기준): {item.todayAvgPrice?.toLocaleString()}원</div>
+                                <div>전일가(1kg 기준): {item.prevAvgPrice ? `${item.prevAvgPrice.toLocaleString()}원` : '-'}</div>
+                                <div>
+                                    등락률: <b style={{ color: item.changeRate > 0 ? 'red' : 'blue' }}>{item.changeRate}%</b>
+                                </div>
+                            </>
+                        )}/>
                     <div style={{color:'#828282', fontSize: '12px'}}>검색 조건이 많을 수록 시세 비교 데이터가 정확해집니다.</div>
-                <div className="result-table-container">
-                    <table className="result-table">
-                        <thead>
-                        <tr>
-                            <th>조사일자</th>
-                            <th>시장명</th>
-                            <th>품목</th>
-                            <th>품종</th>
-                            <th>등급</th>
-                            <th>당일가격</th>
-                            <th>1Kg당가격</th>
+                    <div className="result-table-container">
+                        <table className="result-table">
+                            <thead>
+                            <tr>
+                                <th>조사일자</th>
+                                <th>시장명</th>
+                                <th>품목</th>
+                                <th>품종</th>
+                                <th>등급</th>
+                                <th>당일가격</th>
+                                <th>1Kg당가격</th>
 
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {apiState.data.list.map((row, idx) => (
-                            <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#fcfcfc' }}>
-                                <td>
-                                    {row.exmn_ymd ? String(row.exmn_ymd).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'}
-                                </td>
-                                <td>{row.mrkt_nm}</td>
-                                <td>{row.item_nm}</td>
-                                <td>{row.vrty_nm}</td>
-                                <td>{row.grd_nm}</td>
-                                <td className="price-text">{Number(row.exmn_dd_prc).toLocaleString()}원</td>
-                                <td className="price-text">{Number(row.exmn_dd_cnvs_prc).toLocaleString()}원</td>
                             </tr>
-                        ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                            {apiState.data.list.map((row, idx) => (
+                                <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#fcfcfc' }}>
+                                    <td>
+                                        {row.exmn_ymd ? String(row.exmn_ymd).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'}
+                                    </td>
+                                    <td>{row.mrkt_nm}</td>
+                                    <td>{row.item_nm}</td>
+                                    <td>{row.vrty_nm}</td>
+                                    <td>{row.grd_nm}</td>
+                                    <td className="price-text">{Number(row.exmn_dd_prc).toLocaleString()}원</td>
+                                    <td className="price-text">{Number(row.exmn_dd_cnvs_prc).toLocaleString()}원</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </>
             ) : (
                 !apiState.isLoading && <div className="no-result-text">조회된 시세 데이터가 없습니다. 필터를 변경하여 다시 검색해 주세요.</div>
             )}
         </div>
+        </section>
     );
 
 }
 
-export default MarketPriceTestPage
+export default SellerPriceSearchPage
