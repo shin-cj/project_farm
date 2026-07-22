@@ -97,6 +97,175 @@
     font-size: 28px;
 }
 
+.seller-withdrawal-section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 1600px;
+    box-sizing: border-box;
+    margin: 0 auto 24px;
+}
+
+.seller-withdrawal-card {
+    padding: 22px;
+    border: 1px solid #e1e8df;
+    border-radius: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
+}
+
+.seller-withdrawal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.seller-withdrawal-head p {
+    margin: 0 0 8px;
+    color: #3f7d20;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.seller-withdrawal-head h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.seller-withdrawal-head > strong {
+    color: #216b3a;
+    font-size: 24px;
+    white-space: nowrap;
+}
+
+.seller-withdrawal-form {
+    display: grid;
+    gap: 12px;
+}
+
+.seller-withdrawal-form > div {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.seller-withdrawal-form span {
+    display: block;
+    margin-bottom: 7px;
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.seller-withdrawal-form input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid #dce6dd;
+    border-radius: 10px;
+    color: #243b2f;
+    font: inherit;
+    font-weight: 700;
+}
+
+.seller-withdrawal-form button {
+    justify-self: flex-start;
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 10px;
+    background-color: #3f7d20;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.seller-withdrawal-form button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.seller-withdrawal-message {
+    margin: 12px 0 0;
+    color: #216b3a;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.seller-withdrawal-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.seller-withdrawal-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 13px;
+    border-radius: 12px;
+    background-color: #f8faf7;
+}
+
+.seller-withdrawal-list li div {
+    display: grid;
+    gap: 5px;
+}
+
+.seller-withdrawal-list strong {
+    color: #243b2f;
+    font-size: 18px;
+}
+
+.seller-withdrawal-list span {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.seller-withdrawal-empty {
+    color: #6b7280;
+    font-weight: 700;
+}
+
+.withdrawal-status {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #3f4f43;
+    background-color: #edf1eb;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 900;
+}
+
+.withdrawal-status.requested {
+    color: #1d4ed8;
+    background-color: #dbeafe;
+}
+
+.withdrawal-status.approved {
+    color: #216b3a;
+    background-color: #e5f4ea;
+}
+
+.withdrawal-status.rejected {
+    color: #b91c1c;
+    background-color: #fee2e2;
+}
+
+.withdrawal-status.completed {
+    color: #4c1d95;
+    background-color: #ede9fe;
+}
+
 .seller-daily-goal-card {
     width: 100%;
     max-width: 1600px;

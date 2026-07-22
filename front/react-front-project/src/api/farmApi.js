@@ -29,6 +29,15 @@ export async function getPublicFarm(farmId){
     return response.data
 }
 
+export async function uploadFarmImage(imageFile){
+    const formData = new FormData()
+
+    formData.append('image', imageFile)
+
+    const response = await axios.post('/api/farms/image', formData)
+    return response.data
+}
+
 export async function createFarm(farmData) {
     const response = await axios.post('/api/farms', farmData)
 
@@ -37,6 +46,16 @@ export async function createFarm(farmData) {
 
 export async function updateFarm(farmId, farmData) {
     const response = await axios.put(`/api/farms/${farmId}`, farmData)
+
+    return response.data
+}
+
+// 관리자가 농장의 승인 상태를 변경합니다.
+export async function updateFarmApprovalStatus(farmId, approvalStatus) {
+    const response = await axios.patch(
+        `/api/farms/${farmId}/approval`,
+        { approvalStatus }
+    )
 
     return response.data
 }

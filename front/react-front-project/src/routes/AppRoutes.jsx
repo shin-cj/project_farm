@@ -27,6 +27,7 @@ import ContentManagementPage from '../pages/admin/ContentManagementPage'
 import ReportManagementPage from '../pages/admin/ReportManagementPage'
 import MarketPriceManagementPage from '../pages/admin/MarketPriceManagementPage'
 import AdminDeliveryManagementPage from '../pages/admin/AdminDeliveryManagementPage'
+import AdminPointWithdrawalPage from '../pages/admin/AdminPointWithdrawalPage'
 import { CheckoutPage } from '../components/payment/checkout.jsx'
 import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
@@ -35,6 +36,8 @@ import ProductEditPage from "../pages/seller/ProductEditPage.jsx";
 import FarmCreatePage from '../pages/seller/FarmCreatePage'
 import FarmEditPage from '../pages/seller/FarmEditPage'
 import FarmDetailPage from '../pages/buyer/FarmDetailPage'
+import FarmListPage from '../pages/buyer/FarmListPage'
+import AdminCatalogApprovalPage from '../pages/admin/AdminCatalogApprovalPage'
 // URL과 실제 페이지 컴포넌트를 한곳에서 연결합니다.
 function AppRoutes() {
   return (
@@ -45,6 +48,7 @@ function AppRoutes() {
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/products" element={<ProductListPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/farms" element={<FarmListPage />} />
         <Route path="/farms/:farmId" element={<FarmDetailPage />} />
         <Route path="/market-prices" element={<MarketPricePage />} />
         <Route path="/cart" element={<CartPage />} />
@@ -73,9 +77,14 @@ function AppRoutes() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboardPage />} />
         <Route path="users" element={<UserManagementPage />} />
+          <Route
+              path="approvals"
+              element={<AdminCatalogApprovalPage />}
+          />
         <Route path="content" element={<ContentManagementPage />} />
         <Route path="reports" element={<ReportManagementPage />} />
         <Route path="deliveries" element={<AdminDeliveryManagementPage />} />
+        <Route path="point-withdrawals" element={<AdminPointWithdrawalPage />} />
         <Route path="market-prices" element={<MarketPriceManagementPage />} />
       </Route>
 

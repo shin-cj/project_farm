@@ -444,6 +444,12 @@ function ProductListPage() {
                                         </span>
                                     )}
 
+                                    {product.sameDayDelivery === 'Y' && (
+                                        <span className="product-same-day-badge">
+                                            당일배송
+                                        </span>
+                                    )}
+
                                     <CatalogImage
                                         src={product.productImageUrl}
                                         alt={product.productName}

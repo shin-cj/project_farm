@@ -69,6 +69,7 @@ public class OrderService {
         Long totalPrice = 0L;
         Long farmId = null;
         String orderName = null;
+        boolean allSameDayDelivery = true;
 
         for (CartItem cartItem : cartItems) {
             Product product = productRepository.findById(cartItem.getProductId())
@@ -84,6 +85,10 @@ public class OrderService {
 
             if (orderName == null) {
                 orderName = product.getProductName();
+            }
+
+            if (!"Y".equals(product.getSameDayDelivery())) {
+                allSameDayDelivery = false;
             }
 
             totalPrice += product.getPrice() * cartItem.getQuantity();
@@ -109,6 +114,7 @@ public class OrderService {
         order.setReceiverAddress(request.getReceiverAddress());
         order.setReceiverDetailAddress(request.getReceiverDetailAddress());
         order.setRequestMessage(request.getRequestMessage());
+        order.setDeliveryType(allSameDayDelivery ? "SAME_DAY" : "COURIER");
 
         Order savedOrder = orderRepository.save(order);
 
@@ -134,6 +140,7 @@ public class OrderService {
         response.setOrderNumber(savedOrder.getOrderNumber());
         response.setOrderName(orderName);
         response.setFinalPrice(finalPrice);
+        response.setDeliveryType(savedOrder.getDeliveryType());
 
         return response;
     }
@@ -170,6 +177,7 @@ public class OrderService {
         order.setReceiverAddress(request.getReceiverAddress());
         order.setReceiverDetailAddress(request.getReceiverDetailAddress());
         order.setRequestMessage(request.getRequestMessage());
+        order.setDeliveryType("Y".equals(product.getSameDayDelivery()) ? "SAME_DAY" : "COURIER");
 
         Order savedOrder = orderRepository.save(order);
 
@@ -188,6 +196,7 @@ public class OrderService {
         response.setOrderNumber(savedOrder.getOrderNumber());
         response.setOrderName(product.getProductName());
         response.setFinalPrice(finalPrice);
+        response.setDeliveryType(savedOrder.getDeliveryType());
 
         return response;
     }
@@ -241,9 +250,13 @@ public class OrderService {
         response.setPaymentStatus(paymentOptional.map(Payment::getPaymentStatus).orElse(null));
         response.setPaymentMethod(paymentOptional.map(Payment::getPaymentMethod).orElse(null));
         response.setDeliveryStatus(deliveryOptional.map(Delivery::getDeliveryStatus).orElse("READY"));
+        response.setDeliveryType(deliveryOptional.map(Delivery::getDeliveryType).orElse(order.getDeliveryType()));
         response.setDeliveryId(deliveryOptional.map(Delivery::getDeliveryId).orElse(null));
         response.setCourierName(deliveryOptional.map(Delivery::getCourierName).orElse(null));
         response.setTrackingNumber(deliveryOptional.map(Delivery::getTrackingNumber).orElse(null));
+        response.setDeliveryPersonName(deliveryOptional.map(Delivery::getDeliveryPersonName).orElse(null));
+        response.setDeliveryPersonPhone(deliveryOptional.map(Delivery::getDeliveryPersonPhone).orElse(null));
+        response.setDeliveryMemo(deliveryOptional.map(Delivery::getDeliveryMemo).orElse(null));
         response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
         response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 

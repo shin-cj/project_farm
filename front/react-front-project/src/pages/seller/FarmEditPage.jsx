@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getFarm, updateFarm } from '../../api/farmApi.js'
+import { getFarm, updateFarm, uploadFarmImage, } from '../../api/farmApi.js'
 import './FarmCreatePage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
@@ -24,13 +24,15 @@ function FarmEditPage() {
         farmDescription: '',
         farmImageUrl: '',
         saleType: 'RETAIL',
-        approvalStatus: 'PENDING',
     })
 
+    const [approvalStatus, setApprovalStatus] = useState('PENDING')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [reloadKey, setReloadKey] = useState(0)
+    const [selectedImageFile, setSelectedImageFile] = useState(null)
+    const [newImagePreviewUrl, setNewImagePreviewUrl] = useState('')
 
     // 수정 페이지가 처음 열리거나 farmId가 바뀌면 실행됩니다.
     useEffect(() => {
@@ -69,8 +71,8 @@ function FarmEditPage() {
                     farmDescription: data.farmDescription ?? '',
                     farmImageUrl: data.farmImageUrl ?? '',
                     saleType: data.saleType ?? 'RETAIL',
-                    approvalStatus: data.approvalStatus ?? 'PENDING',
                 })
+                setApprovalStatus(data.approvalStatus ?? 'PENDING')
             } catch (err) {
                 if (!ignore) {
                     console.error(err)
@@ -89,6 +91,51 @@ function FarmEditPage() {
             ignore = true
         }
     }, [farmId, reloadKey])
+
+    useEffect(() => {
+        return () => {
+            if (newImagePreviewUrl) {
+                URL.revokeObjectURL(newImagePreviewUrl)
+            }
+        }
+    }, [newImagePreviewUrl])
+
+    function handleImageChange(event) {
+        const imageFile = event.target.files?.[0] ?? null
+
+        if (!imageFile) {
+            setSelectedImageFile(null)
+            setNewImagePreviewUrl('')
+            return
+        }
+
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ]
+
+        if (!allowedTypes.includes(imageFile.type)) {
+            alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setNewImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        if (imageFile.size > 5 * 1024 * 1024) {
+            alert('농장 이미지는 5MB 이하만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setNewImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        setSelectedImageFile(imageFile)
+        setNewImagePreviewUrl(
+            URL.createObjectURL(imageFile)
+        )
+    }
 
     function handleChange(event) {
         const { name, value } = event.target
@@ -141,8 +188,20 @@ function FarmEditPage() {
 
         try {
             setSubmitting(true)
-            // PUT /api/farms/{farmId} 요청을 보냅니다.
-            await updateFarm(farmId, farmData)
+
+            let farmImageUrl = form.farmImageUrl
+
+            if (selectedImageFile) {
+                const uploadResult =
+                    await uploadFarmImage(selectedImageFile)
+
+                farmImageUrl = uploadResult.imageUrl
+            }
+
+            await updateFarm(farmId, {
+                ...farmData,
+                farmImageUrl,
+            })
 
             alert('농장 정보가 수정되었습니다.')
             navigate('/seller/farms')
@@ -217,14 +276,14 @@ function FarmEditPage() {
                                 name="saleType"
                                 value={form.saleType}
                                 onChange={handleChange}
-                                disabled={form.approvalStatus === 'APPROVED'}
+                                disabled={approvalStatus === 'APPROVED'}
                                 required
                             >
                                 <option value="RETAIL">소매 상점</option>
                                 <option value="WHOLESALE">도매 상점</option>
                             </select>
                             <small>
-                                {form.approvalStatus === 'APPROVED'
+                                {approvalStatus === 'APPROVED'
                                     ? '승인 완료된 농장의 판매 방식은 변경할 수 없습니다.'
                                     : '승인 전까지 판매 방식을 변경할 수 있습니다.'}
                             </small>
@@ -279,19 +338,24 @@ function FarmEditPage() {
                         </label>
 
                         <label className="farm-create-field wide">
-                            <span>농장 이미지 주소</span>
+                            <span>농장 대표 이미지 변경</span>
+
                             <input
-                                name="farmImageUrl"
-                                value={form.farmImageUrl}
-                                onChange={handleChange}
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                onChange={handleImageChange}
                             />
+
+                            <small>
+                                새 이미지를 선택하지 않으면 기존 이미지가 유지됩니다.
+                            </small>
                         </label>
-                        {form.farmImageUrl.trim() && (
+                        {(newImagePreviewUrl || form.farmImageUrl.trim()) && (
                             <div className="farm-create-image-preview">
                                 <p>농장 대표 이미지 미리보기</p>
 
                                 <CatalogImage
-                                    src={form.farmImageUrl}
+                                    src={newImagePreviewUrl || form.farmImageUrl}
                                     alt="수정할 농장 미리보기"
                                     fallbackText="이미지를 불러올 수 없습니다."
                                     fallbackClassName="farm-create-image-fallback"

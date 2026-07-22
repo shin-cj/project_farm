@@ -103,10 +103,26 @@ public class SellerOrderInfoService {
         String trackingNumber = deliveryOptional
                 .map(Delivery::getTrackingNumber)
                 .orElse(null);
+        String deliveryType = deliveryOptional
+                .map(Delivery::getDeliveryType)
+                .orElse(order.getDeliveryType());
+        String deliveryPersonName = deliveryOptional
+                .map(Delivery::getDeliveryPersonName)
+                .orElse(null);
+        String deliveryPersonPhone = deliveryOptional
+                .map(Delivery::getDeliveryPersonPhone)
+                .orElse(null);
+        String deliveryMemo = deliveryOptional
+                .map(Delivery::getDeliveryMemo)
+                .orElse(null);
 
-        String farmName = farmRepository.findById(order.getFarmId())
+        Optional<Farm> farmOptional = farmRepository.findById(order.getFarmId());
+        String farmName = farmOptional
                 .map(Farm::getFarmName)
                 .orElse("농장 정보 없음");
+        String saleType = farmOptional
+                .map(Farm::getSaleType)
+                .orElse("RETAIL");
 
         Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
 
@@ -115,6 +131,7 @@ public class SellerOrderInfoService {
         response.setOrderNumber(order.getOrderNumber());
         response.setFarmId(order.getFarmId());
         response.setFarmName(farmName);
+        response.setSaleType(saleType);
         response.setOrderName(orderName);
         response.setReceiverName(order.getReceiverName());
         response.setReceiverAddress(order.getReceiverAddress());
@@ -126,8 +143,12 @@ public class SellerOrderInfoService {
         response.setOrderedAt(order.getOrderedAt());
         response.setPaymentMethod(paymentMethod);
         response.setDeliveryStatus(deliveryStatus);
+        response.setDeliveryType(deliveryType);
         response.setCourierName(courierName);
         response.setTrackingNumber(trackingNumber);
+        response.setDeliveryPersonName(deliveryPersonName);
+        response.setDeliveryPersonPhone(deliveryPersonPhone);
+        response.setDeliveryMemo(deliveryMemo);
         response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
         response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 

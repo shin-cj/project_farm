@@ -229,6 +229,7 @@ function ProductDetailPage() {
             unit: product.unit,
             productStatus: product.productStatus,
             saleType: product.saleType,
+            sameDayDelivery: product.sameDayDelivery,
             minOrderQuantity: minimumOrderQuantity,
             farmId: product.farmId,
             farmName: farm?.farmName,
@@ -264,6 +265,11 @@ function ProductDetailPage() {
             <span className="product-detail-status">
               {product.productStatus || '판매 상태 미등록'}
             </span>
+            {product.sameDayDelivery === 'Y' && (
+                <span className="product-detail-same-day-badge">
+                  오늘 도착 가능
+                </span>
+            )}
             <button
               type="button"
               className="product-detail-back-button"
@@ -319,6 +325,15 @@ function ProductDetailPage() {
             <div>
               <dt>최소 주문</dt>
               <dd>{minimumOrderQuantity}개</dd>
+            </div>
+
+            <div>
+              <dt>배송 방식</dt>
+              <dd>
+                {product.sameDayDelivery === 'Y'
+                    ? '당일배송 가능'
+                    : '일반배송'}
+              </dd>
             </div>
           </dl>
 
@@ -435,6 +450,9 @@ function ProductDetailPage() {
               <p>남은 재고: {product.stockQuantity}개</p>
               <p>
                 판매 방식: {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
+              </p>
+              <p>
+                배송 방식: {product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}
               </p>
               <p>최소 주문 수량: {minimumOrderQuantity}개</p>
 
