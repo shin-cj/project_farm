@@ -7,6 +7,7 @@ import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointSummaryResponse;
 import me.soldesk.springbootback.domain.sellerpoint.entity.SellerPoint;
 import me.soldesk.springbootback.domain.sellerpoint.repository.SellerPointRepository;
+import me.soldesk.springbootback.domain.sellerpoint.repository.SellerPointWithdrawalRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ public class SellerPointService {
     private static final double PLATFORM_FEE_RATE = 0.05;
 
     private final SellerPointRepository sellerPointRepository;
+    private final SellerPointWithdrawalRepository sellerPointWithdrawalRepository;
     private final FarmRepository farmRepository;
 
     public void earnPoint(Order order) {
@@ -75,9 +77,17 @@ public class SellerPointService {
                 .mapToLong(SellerPoint::getPlatformFee)
                 .sum();
 
+        Long lockedWithdrawalPoint = sellerPointWithdrawalRepository.findBySellerIdOrderByRequestedAtDesc(sellerId).stream()
+                .filter(withdrawal -> List.of("REQUESTED", "APPROVED", "COMPLETED")
+                        .contains(withdrawal.getWithdrawalStatus()))
+                .mapToLong(withdrawal -> withdrawal.getWithdrawalAmount())
+                .sum();
+
+        Long availablePoint = Math.max(totalEarnedPoint - lockedWithdrawalPoint, 0L);
+
         return new SellerPointSummaryResponse(
                 totalEarnedPoint,
-                totalEarnedPoint,
+                availablePoint,
                 canceledPoint,
                 refundedPoint,
                 totalPlatformFee

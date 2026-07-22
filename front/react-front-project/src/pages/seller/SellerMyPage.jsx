@@ -6,6 +6,8 @@ import { getSellerOrders } from "../../api/deliveryApi.js";
 import {
   getSellerDailyGoal,
   getSellerPointSummary,
+  getSellerPointWithdrawals,
+  requestSellerPointWithdrawal,
   updateSellerDailyGoal,
 } from "../../api/salesApi.js";
 import { getLoginSellerId } from "../../config/devAccount.js";
@@ -14,6 +16,26 @@ import "./SellerDashboardPage.css";
 function formatPoint(value) {
   return `${Number(value || 0).toLocaleString()}P`;
 }
+
+function formatDateTime(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Date(value).toLocaleString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+const WITHDRAWAL_STATUS_LABEL = {
+  REQUESTED: "신청 완료",
+  APPROVED: "승인 완료",
+  REJECTED: "반려",
+  COMPLETED: "지급 완료",
+};
 
 function SellerMyPage() {
   const [sellerId, setSellerId] = useState(null);
@@ -40,6 +62,15 @@ function SellerMyPage() {
   const [targetPointInput, setTargetPointInput] = useState("");
   const [goalSaving, setGoalSaving] = useState(false);
   const [goalMessage, setGoalMessage] = useState("");
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [withdrawalForm, setWithdrawalForm] = useState({
+    withdrawalAmount: "",
+    bankName: "",
+    accountNumber: "",
+    accountHolder: "",
+  });
+  const [withdrawalSaving, setWithdrawalSaving] = useState(false);
+  const [withdrawalMessage, setWithdrawalMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -57,11 +88,12 @@ function SellerMyPage() {
 
         setSellerId(sellerId);
 
-        const [farms, orders, pointResponse, dailyGoalResponse] = await Promise.all([
+        const [farms, orders, pointResponse, dailyGoalResponse, withdrawalResponse] = await Promise.all([
           getFarms(sellerId),
           getSellerOrders(sellerId),
           getSellerPointSummary(sellerId),
           getSellerDailyGoal(sellerId),
+          getSellerPointWithdrawals(sellerId),
         ]);
 
         const productLists = await Promise.all(
@@ -85,6 +117,7 @@ function SellerMyPage() {
         setPointSummary(pointResponse.data);
         setDailyGoal(dailyGoalResponse.data);
         setTargetPointInput(String(dailyGoalResponse.data.targetPoint || ""));
+        setWithdrawals(withdrawalResponse.data);
       } catch (error) {
         console.error(error);
         setError(error.message || "판매자 마이페이지 정보를 불러오지 못했습니다.");
@@ -124,6 +157,73 @@ function SellerMyPage() {
       setGoalMessage("목표 저장에 실패했습니다.");
     } finally {
       setGoalSaving(false);
+    }
+  }
+
+  async function refreshPointAndWithdrawals(currentSellerId) {
+    const [pointResponse, withdrawalResponse] = await Promise.all([
+      getSellerPointSummary(currentSellerId),
+      getSellerPointWithdrawals(currentSellerId),
+    ]);
+
+    setPointSummary(pointResponse.data);
+    setWithdrawals(withdrawalResponse.data);
+  }
+
+  function handleWithdrawalFormChange(event) {
+    const { name, value } = event.target;
+
+    setWithdrawalForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
+  }
+
+  async function handleRequestWithdrawal(event) {
+    event.preventDefault();
+
+    const withdrawalAmount = Number(withdrawalForm.withdrawalAmount);
+
+    if (!sellerId) {
+      setWithdrawalMessage("판매자 정보를 확인할 수 없습니다.");
+      return;
+    }
+
+    if (!Number.isFinite(withdrawalAmount) || withdrawalAmount <= 0) {
+      setWithdrawalMessage("출금 신청 포인트를 1 이상으로 입력해주세요.");
+      return;
+    }
+
+    if (withdrawalAmount > pointSummary.availablePoint) {
+      setWithdrawalMessage("출금 가능 포인트보다 큰 금액은 신청할 수 없습니다.");
+      return;
+    }
+
+    try {
+      setWithdrawalSaving(true);
+      setWithdrawalMessage("");
+
+      await requestSellerPointWithdrawal({
+        sellerId,
+        withdrawalAmount,
+        bankName: withdrawalForm.bankName,
+        accountNumber: withdrawalForm.accountNumber,
+        accountHolder: withdrawalForm.accountHolder,
+      });
+
+      setWithdrawalForm({
+        withdrawalAmount: "",
+        bankName: "",
+        accountNumber: "",
+        accountHolder: "",
+      });
+      setWithdrawalMessage("출금 신청이 완료되었습니다.");
+      await refreshPointAndWithdrawals(sellerId);
+    } catch (error) {
+      console.error(error);
+      setWithdrawalMessage(error.response?.data?.message || "출금 신청에 실패했습니다.");
+    } finally {
+      setWithdrawalSaving(false);
     }
   }
 
@@ -168,6 +268,99 @@ function SellerMyPage() {
           <strong>
             {formatPoint(pointSummary.canceledPoint + pointSummary.refundedPoint)}
           </strong>
+        </article>
+      </section>
+
+      <section className="seller-withdrawal-section">
+        <article className="seller-withdrawal-card">
+          <div className="seller-withdrawal-head">
+            <div>
+              <p>Point Withdrawal</p>
+              <h2>포인트 출금 신청</h2>
+            </div>
+            <strong>{formatPoint(pointSummary.availablePoint)}</strong>
+          </div>
+
+          <form className="seller-withdrawal-form" onSubmit={handleRequestWithdrawal}>
+            <label>
+              <span>출금 포인트</span>
+              <input
+                type="number"
+                name="withdrawalAmount"
+                min="1"
+                value={withdrawalForm.withdrawalAmount}
+                onChange={handleWithdrawalFormChange}
+                placeholder="예: 10000"
+              />
+            </label>
+
+            <div>
+              <label>
+                <span>은행명</span>
+                <input
+                  name="bankName"
+                  value={withdrawalForm.bankName}
+                  onChange={handleWithdrawalFormChange}
+                  placeholder="예: 국민은행"
+                />
+              </label>
+
+              <label>
+                <span>예금주</span>
+                <input
+                  name="accountHolder"
+                  value={withdrawalForm.accountHolder}
+                  onChange={handleWithdrawalFormChange}
+                  placeholder="예: 홍길동"
+                />
+              </label>
+            </div>
+
+            <label>
+              <span>계좌번호</span>
+              <input
+                name="accountNumber"
+                value={withdrawalForm.accountNumber}
+                onChange={handleWithdrawalFormChange}
+                placeholder="숫자만 입력"
+              />
+            </label>
+
+            <button type="submit" disabled={withdrawalSaving}>
+              {withdrawalSaving ? "신청 중" : "출금 신청"}
+            </button>
+          </form>
+
+          {withdrawalMessage && <p className="seller-withdrawal-message">{withdrawalMessage}</p>}
+        </article>
+
+        <article className="seller-withdrawal-card">
+          <div className="seller-withdrawal-head">
+            <div>
+              <p>History</p>
+              <h2>최근 출금 신청</h2>
+            </div>
+          </div>
+
+          <ul className="seller-withdrawal-list">
+            {withdrawals.length === 0 && (
+              <li className="seller-withdrawal-empty">출금 신청 내역이 없습니다.</li>
+            )}
+
+            {withdrawals.slice(0, 3).map((withdrawal) => (
+              <li key={withdrawal.withdrawalId}>
+                <div>
+                  <strong>{formatPoint(withdrawal.withdrawalAmount)}</strong>
+                  <span>
+                    {withdrawal.bankName} · {formatDateTime(withdrawal.requestedAt)}
+                  </span>
+                </div>
+                <em className={`withdrawal-status ${withdrawal.withdrawalStatus.toLowerCase()}`}>
+                  {WITHDRAWAL_STATUS_LABEL[withdrawal.withdrawalStatus] || withdrawal.withdrawalStatus}
+                </em>
+              </li>
+            ))}
+          </ul>
         </article>
       </section>
 

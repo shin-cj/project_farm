@@ -23,6 +23,7 @@ function AdminLayout() {
         <NavLink to="/admin/content">리뷰/문의 관리</NavLink>
         <NavLink to="/admin/reports">신고 관리</NavLink>
         <NavLink to="/admin/deliveries">배송 관리</NavLink>
+        <NavLink to="/admin/point-withdrawals">출금 관리</NavLink>
         <NavLink to="/admin/market-prices">시세 동기화</NavLink>
       </aside>
       <main className="role-content"><Outlet /></main>
