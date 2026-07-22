@@ -46,4 +46,10 @@ public class ProductRequest {
 
     /** 상품 이미지 주소 */
     private String productImageUrl;
+
+    /** 상품 판매 상태 */
+    private String productStatus;
+
+    private String sameDayDelivery;
+
 }

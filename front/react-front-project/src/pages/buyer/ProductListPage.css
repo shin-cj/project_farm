@@ -337,9 +337,9 @@
 }
 
 .product-sale-badge,
-.product-sold-out-badge {
+.product-sold-out-badge,
+.product-same-day-badge {
     position: absolute;
-    top: 12px;
     z-index: 1;
     padding: 6px 11px;
     border-radius: 999px;
@@ -349,13 +349,22 @@
 }
 
 .product-sale-badge {
+    top: 12px;
     left: 12px;
 }
 
 .product-sold-out-badge {
+    top: 12px;
     right: 12px;
     background-color: #4b5563;
     color: #ffffff;
+}
+
+.product-same-day-badge {
+    left: 12px;
+    bottom: 12px;
+    background-color: #e5f4ea;
+    color: #216b3a;
 }
 
 .product-sale-badge.retail {

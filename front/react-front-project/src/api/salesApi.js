@@ -40,3 +40,26 @@ export function updateSellerDailyGoal(sellerId, targetPoint) {
         targetPoint
     });
 }
+
+export function getSellerPointWithdrawals(sellerId) {
+    return httpClient.get("/seller/points/withdrawals", {
+        params: {
+            sellerId
+        }
+    });
+}
+
+export function requestSellerPointWithdrawal(withdrawalRequest) {
+    return httpClient.post("/seller/points/withdrawals", withdrawalRequest);
+}
+
+export function getAdminSellerPointWithdrawals() {
+    return httpClient.get("/admin/seller-point-withdrawals");
+}
+
+export function updateAdminSellerPointWithdrawalStatus(withdrawalId, withdrawalStatus, rejectReason = "") {
+    return httpClient.patch(`/admin/seller-point-withdrawals/${withdrawalId}/status`, {
+        withdrawalStatus,
+        rejectReason
+    });
+}
