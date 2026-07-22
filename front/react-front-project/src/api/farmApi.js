@@ -40,3 +40,13 @@ export async function updateFarm(farmId, farmData) {
 
     return response.data
 }
+
+// 관리자가 농장의 승인 상태를 변경합니다.
+export async function updateFarmApprovalStatus(farmId, approvalStatus) {
+    const response = await axios.patch(
+        `/api/farms/${farmId}/approval`,
+        { approvalStatus }
+    )
+
+    return response.data
+}

@@ -30,6 +30,7 @@ function ProductEditPage() {
 
     const [error, setError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
+    const [productStatus, setProductStatus] = useState('PENDING')
 
     const [form, setForm] = useState({
         farmId: '',
@@ -44,7 +45,6 @@ function ProductEditPage() {
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
-        productStatus: 'PENDING',
         sameDayDelivery: 'N',
     })
 
@@ -117,9 +117,10 @@ function ProductEditPage() {
                     harvestDate: productData.harvestDate ?? '',
                     expirationDate: productData.expirationDate ?? '',
                     productImageUrl: productData.productImageUrl ?? '',
-                    productStatus: productData.productStatus ?? 'PENDING',
                     sameDayDelivery: productData.sameDayDelivery ?? 'N',
                 })
+
+                setProductStatus(productData.productStatus ?? 'PENDING')
             } catch (err) {
                 if (!ignore) {
                     console.error(err)
@@ -604,7 +605,7 @@ function ProductEditPage() {
 
                         <input
                             name="productStatus"
-                            value={form.productStatus}
+                            value={productStatus}
                             readOnly
                         />
                         <small>
