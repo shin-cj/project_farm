@@ -39,6 +39,7 @@ app:
   upload:
     root-directory: ${AGROLINK_UPLOAD_ROOT:../../uploads}
     product-directory: ${app.upload.root-directory}/product
+    farm-directory: ${app.upload.root-directory}/farm
 
 tosspayments:
   secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
