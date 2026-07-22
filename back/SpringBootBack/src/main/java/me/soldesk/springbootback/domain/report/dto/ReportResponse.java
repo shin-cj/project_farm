@@ -40,4 +40,10 @@ public class ReportResponse {
 
     private Long repliedBy;
 
+    private String reporterEmail;
+
+    private String reportedFarmName;
+
+    private String productName;
+
 }

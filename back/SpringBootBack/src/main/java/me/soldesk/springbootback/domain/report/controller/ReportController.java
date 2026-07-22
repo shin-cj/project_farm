@@ -3,6 +3,7 @@ package me.soldesk.springbootback.domain.report.controller;
 import jakarta.websocket.server.PathParam;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.report.dto.ReportReplyRequest;
+import me.soldesk.springbootback.domain.report.dto.ReportResolutionRequest;
 import me.soldesk.springbootback.domain.report.dto.ReportResponse;
 import me.soldesk.springbootback.domain.report.dto.ReportStatusRequest;
 import me.soldesk.springbootback.domain.report.service.ReportService;
@@ -37,6 +38,12 @@ public class ReportController {
             @RequestBody ReportReplyRequest request
             ){
         return reportService.replyToReport(reportId, request);
+    }
+    @PatchMapping("/{reportId}/resolution")
+    public ReportResponse resolveReport(
+            @PathVariable Long reportId,
+            @RequestBody ReportResolutionRequest request){
+        return reportService.resolveReport(reportId, request);
     }
 
 }

@@ -18,6 +18,12 @@ const typeLabels = {
   CHATBOT: "챗봇",
 };
 
+const penaltyDescriptions = {
+  WARNING: "경고 이력과 페널티 1점이 부여됩니다.",
+  PRODUCT_SUSPENSION: "해당 상품의 판매가 중지되고 3점이 부여됩니다.",
+  SELLER_SUSPENSION: "판매자와 승인된 농장이 정지되고 5점이 부여됩니다.",
+}
+
 function formatDate(value) {
   if (!value) {
     return "-";
@@ -36,6 +42,8 @@ function ReportManagementPage() {
   const [error, setError] = useState("");
   const [adminReply, setAdminReply] = useState("");
   const [replyingId, setReplyingId] = useState(null);
+  const [penaltyType, setPenaltyType] = useState("");
+  const [penaltyReason, setPenaltyReason] = useState("");
 
 
 
@@ -112,34 +120,120 @@ function ReportManagementPage() {
   }
 
   async function handleStatusConfirm() {
-    if(!selectedReport || !selectedStatus) {
-      return
+    if (!selectedReport || !selectedStatus) {
+      return;
     }
 
-    const reportId = selectedReport.reportId
+    const reportId = selectedReport.reportId;
+    const isFinalStatus =
+        selectedStatus === "RESOLVED" ||
+        selectedStatus === "REJECTED";
+
+    const storedUser = localStorage.getItem("loginUser");
+    const loginUser = storedUser ? JSON.parse(storedUser) : null;
+    const adminId = loginUser?.userId;
+
+    if (isFinalStatus && !adminId) {
+      setError("관리자 로그인 정보가 없습니다.");
+      return;
+    }
+
+    if (
+        isFinalStatus &&
+        !selectedReport.adminReply?.trim()
+    ) {
+      setError("최종 처리 전에 관리자 답변을 먼저 등록해 주세요.");
+      return;
+    }
+
+    if (selectedStatus === "RESOLVED") {
+      if (!penaltyType) {
+        setError("페널티 유형을 선택해 주세요.");
+        return;
+      }
+
+      if (!penaltyReason.trim()) {
+        setError("페널티 사유를 입력해 주세요.");
+        return;
+      }
+    }
 
     try {
       setUpdatingId(reportId);
       setError("");
 
-      const response = await reportApi.updateAdminReportStatus(reportId, selectedStatus);
+      let response;
+
+      if (isFinalStatus) {
+        response = await reportApi.resolveAdminReport(
+            reportId,
+            {
+              reportStatus: selectedStatus,
+              penaltyType:
+                  selectedStatus === "RESOLVED"
+                      ? penaltyType
+                      : null,
+              penaltyReason:
+                  selectedStatus === "RESOLVED"
+                      ? penaltyReason.trim()
+                      : null,
+              adminId,
+            }
+        );
+      } else {
+        response = await reportApi.updateAdminReportStatus(
+            reportId,
+            selectedStatus
+        );
+      }
+
       const updatedReport = response.data;
 
       setReports((currentReports) =>
-        currentReports
-          .map((report) => (report.reportId === reportId ? updatedReport : report))
-          .filter(
-            (report) => reportStatus === "ALL" || report.reportStatus === reportStatus,
-          ),
+          currentReports
+              .map((report) =>
+                  report.reportId === updatedReport.reportId
+                      ? {...report, ...updatedReport}
+                      : report
+              )
+              .filter((report) =>
+                  reportStatus === "ALL" ||
+                  report.reportStatus === reportStatus
+              )
       );
 
-      setSelectedReport(updatedReport)
-      setSelectedStatus(updatedReport.reportStatus)
+      if (isFinalStatus) {
+        closeDetail();
+      } else {
+        setSelectedReport((currentReports) => ({
+          ...currentReports,
+          ...updatedReport,
 
-      alert("신고 처리 상태가 변경되었습니다.")
+          reporterEmail:
+                updatedReport.reporterEmail ??
+                currentReports.reporterEmail,
+          reportedFarmName:
+                updatedReport.reportedFarmName ??
+                currentReports.reportedFarmName,
+          productName:
+                updatedReport.productName ??
+                currentReports.productName,
+        }))
+        setSelectedStatus(updatedReport.reportStatus);
+      }
+
+      alert(
+          isFinalStatus
+              ? "신고 최종 처리가 완료되었습니다."
+              : "신고 상태가 변경되었습니다."
+      );
     } catch (requestError) {
       console.error(requestError);
-      setError("신고 상태를 변경하지 못했습니다.");
+
+      setError(
+          requestError.response?.data?.message ||
+          "신고 상태를 변경하지 못했습니다."
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -180,7 +274,25 @@ function ReportManagementPage() {
         )
       )
 
-      setSelectedReport(updatedReport)
+      setSelectedReport((currentReports) =>
+      currentReports.map((report) =>
+      report.reportId === updatedReport.repotId
+            ? {
+                ...report,
+                ...updatedReport,
+                reporterEmail:
+                    updatedReport.reporterEmail ??
+                    report.reporterEmail,
+                reportedFarmName:
+                    updatedReport.reportedFarmName ??
+                    report.reportedFarmName,
+                productName:
+                    updatedReport.productName ??
+                    report.productName,
+          }
+          : report
+        )
+      )
       setAdminReply(updatedReport.adminReply || "")
 
       alert("관리자 답변이 등록되었습니다.")
@@ -199,6 +311,9 @@ function ReportManagementPage() {
     setSelectedReport(report)
     setSelectedStatus(report.reportStatus)
     setAdminReply(report.adminReply || "")
+    setPenaltyType("")
+    setPenaltyReason("")
+    setError("")
   }
 
 
@@ -206,9 +321,16 @@ function ReportManagementPage() {
     setSelectedReport(null);
     setSelectedStatus("")
     setAdminReply("")
+    setPenaltyType("")
+    setPenaltyReason("")
+    setError("")
   }
 
-
+  const selectedReportIsFinal =
+      selectedReport &&
+      ["RESOLVED", "REJECTED"].includes(
+          selectedReport.reportStatus
+      )
 
   return (
     <section className="page-card report-management-page">
@@ -249,10 +371,11 @@ function ReportManagementPage() {
             rowKey="reportId"
             headers={[
               "신고 번호",
-              "신고자",
-              "피신고자",
+              "신고자 이메일",
+              "피신고자 농장",
               "유형",
               "상품 번호",
+              "상품",
               "신고 내용",
               "접수 일시",
               "처리 상태",
@@ -260,14 +383,23 @@ function ReportManagementPage() {
             renderRow={(report) => (
               <>
                 <td className="report-id-cell">#{report.reportId}</td>
-                <td>{report.reporterId}</td>
-                <td>{report.reportedUserId}</td>
+                <td>
+                  <strong>{report.reporterEmail || "이메일 없음"}</strong>
+                  <small>#{report.reporterId}</small>
+                </td>
+                <td>
+                  <strong>{report.reportedFarmName || "농장 정보 없음"}</strong>
+                  <small>판매자 #{report.reportedUserId}</small>
+                </td>
                 <td>
                   <span className="report-type-badge">
                     {typeLabels[report.reportType] || report.reportType}
                   </span>
                 </td>
-                <td>{report.productId ?? "-"}</td>
+                <td>
+                  <strong>{report.productName || "상품 정보 없음"}</strong>
+                  <small> #{report.productId ?? "-"}</small>
+                </td>
                 <td className="report-reason-cell">
                   <button
                     type="button"
@@ -335,16 +467,16 @@ function ReportManagementPage() {
                   <dd>{formatDate(selectedReport.createdAt)}</dd>
                 </div>
                 <div>
-                  <dt>신고자 번호</dt>
-                  <dd>{selectedReport.reporterId}</dd>
+                  <dt>신고자</dt>
+                  <dd>{selectedReport.reporterEmail}</dd>
                 </div>
                 <div>
-                  <dt>피신고자 번호</dt>
-                  <dd>{selectedReport.reportedUserId}</dd>
+                  <dt>피신고자 농장</dt>
+                  <dd>{selectedReport.reportedFarmName}</dd>
                 </div>
                 <div>
-                  <dt>상품 번호</dt>
-                  <dd>{selectedReport.productId ?? "해당 없음"}</dd>
+                  <dt>신고 상품</dt>
+                  <dd>{selectedReport.productName}</dd>
                 </div>
                 <div>
                   <dt>현재 상태</dt>
@@ -397,6 +529,60 @@ function ReportManagementPage() {
                   </p>
               )}
             </div>
+              {selectedStatus === "RESOLVED" &&
+                  !["RESOLVED", "REJECTED"].includes(
+                      selectedReport.reportStatus
+                  ) && (
+                      <section className="report-penalty-panel">
+                        <h3>판매자 페널티</h3>
+
+                        <label htmlFor="penalty-type">
+                          페널티 유형
+                        </label>
+
+                        <select
+                            id="penalty-type"
+                            value={penaltyType}
+                            onChange={(event) =>
+                                setPenaltyType(event.target.value)
+                            }
+                        >
+                          <option value="">페널티를 선택하세요</option>
+                          <option value="WARNING">경고</option>
+                          <option value="PRODUCT_SUSPENSION">
+                            상품 판매 중지
+                          </option>
+                          <option value="SELLER_SUSPENSION">
+                            판매자 이용 정지
+                          </option>
+                        </select>
+
+                        {penaltyType && (
+                            <p className="report-penalty-description">
+                              {penaltyDescriptions[penaltyType]}
+                            </p>
+                        )}
+
+                        <label htmlFor="penalty-reason">
+                          페널티 사유
+                        </label>
+
+                        <textarea
+                            id="penalty-reason"
+                            value={penaltyReason}
+                            onChange={(event) =>
+                                setPenaltyReason(event.target.value)
+                            }
+                            placeholder="페널티 부여 사유를 입력해 주세요."
+                            rows={4}
+                            maxLength={1000}
+                        />
+
+                        <span className="report-penalty-length">
+                                {penaltyReason.length}/1000
+                        </span>
+                      </section>
+                  )}
             </div>
 
             <footer className="report-modal-footer">
@@ -405,7 +591,7 @@ function ReportManagementPage() {
                 id="report-modal-status"
                 className={`report-status-select report-status-${selectedStatus?.toLowerCase()}`}
                 value={selectedStatus}
-                disabled={updatingId === selectedReport.reportId}
+                disabled={updatingId === selectedReport.reportId || selectedReportIsFinal}
                 onChange={(event) =>
                   setSelectedStatus(event.target.value)
                 }
@@ -421,7 +607,8 @@ function ReportManagementPage() {
                   onClick={handleStatusConfirm}
                   disabled={
                   updatingId === selectedReport.reportId ||
-                      selectedStatus === selectedReport.reportStatus
+                      selectedStatus === selectedReport.reportStatus ||
+                      selectedReportIsFinal
                   }
               >
                 {updatingId === selectedReport.reportId

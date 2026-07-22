@@ -32,6 +32,11 @@ const reportApi = {
         })
     },
 
+    resolveAdminReport(reportId, resolutionData){
+        return httpClient.patch(
+            `/admin/reports/${reportId}/resolution`,
+            resolutionData)
+    }
 
 
 }

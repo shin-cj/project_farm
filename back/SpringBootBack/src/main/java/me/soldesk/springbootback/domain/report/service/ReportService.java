@@ -1,12 +1,10 @@
 package me.soldesk.springbootback.domain.report.service;
 
 import lombok.RequiredArgsConstructor;
-import me.soldesk.springbootback.domain.report.dto.ReportReplyRequest;
-import me.soldesk.springbootback.domain.report.dto.ReportRequest;
-import me.soldesk.springbootback.domain.report.dto.ReportResponse;
-import me.soldesk.springbootback.domain.report.dto.ReportStatusRequest;
+import me.soldesk.springbootback.domain.report.dto.*;
 import me.soldesk.springbootback.domain.report.entity.Report;
 import me.soldesk.springbootback.domain.report.repository.ReportRepository;
+import me.soldesk.springbootback.domain.sellerpenalty.service.SellerPenaltyService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,22 +16,20 @@ import java.util.List;
 public class ReportService {
 
     private final ReportRepository reportRepository;
+    private final SellerPenaltyService sellerPenaltyService;
+
 
     @Transactional(readOnly = true)
     public List<ReportResponse> getReports(String reportStatus){
 
-        List<Report> reports;
+        String normalizedStatus =
+                reportStatus == null || reportStatus.isBlank()
+                ? null : reportStatus.toUpperCase();
 
-        if(reportStatus == null || reportStatus.isBlank()){
-            reports = reportRepository.findAllReports();
-        }else {
-            reports = reportRepository.findReportsByStatus(
-                    reportStatus.toUpperCase()
-            );
-        }
-
-        return reports.stream()
-                .map(this::toResponse)
+        return reportRepository
+                .findAdminReportViews(normalizedStatus)
+                .stream()
+                .map(this::toAdminResponse)
                 .toList();
 
     }
@@ -62,13 +58,11 @@ public class ReportService {
 
         List<String> allowedStatuses = List.of(
                 "PENDING",
-                "REVIEWING",
-                "RESOLVED",
-                "REJECTED"
+                "REVIEWING"
         );
 
         if(!allowedStatuses.contains(reportStatus.toUpperCase())){
-            throw new IllegalArgumentException("올바르지 않은 신고 처리 상태입니다.");
+            throw new IllegalArgumentException("최종 처리는 신고 최종 처리 API를 이용해야 합니다.");
         }
     }
 
@@ -114,23 +108,47 @@ public class ReportService {
     }
 
 
-    private ReportResponse toResponse(Report report){
+    private ReportResponse toAdminResponse(AdminReportView view){
+        ReportResponse response = new ReportResponse();
+
+        response.setReportId(view.getReportId());
+        response.setReporterId(view.getReporterId());
+        response.setReporterEmail(view.getReporterEmail());
+        response.setReportedUserId(view.getReportedUserId());
+        response.setReportedFarmName(view.getReportedFarmName());
+        response.setProductId(view.getProductId());
+        response.setProductName(view.getProductName());
+        response.setReportType(view.getReportType());
+        response.setReportReason(view.getReportReason());
+        response.setReportStatus(view.getReportStatus());
+        response.setCreatedAt(view.getCreatedAt());
+        response.setAdminReply(view.getAdminReply());
+        response.setRepliedAt(view.getRepliedAt());
+        response.setRepliedBy(view.getRepliedBy());
+
+        return response;
+
+    }
+
+    private ReportResponse toResponse(Report report) {
         ReportResponse response = new ReportResponse();
 
         response.setReportId(report.getReportId());
         response.setReporterId(report.getReporterId());
         response.setReportedUserId(report.getReportedUserId());
+
         response.setProductId(report.getProductId());
+
         response.setReportType(report.getReportType());
         response.setReportReason(report.getReportReason());
         response.setReportStatus(report.getReportStatus());
         response.setCreatedAt(report.getCreatedAt());
+
         response.setAdminReply(report.getAdminReply());
         response.setRepliedAt(report.getRepliedAt());
         response.setRepliedBy(report.getRepliedBy());
 
         return response;
-
     }
 
     @Transactional
@@ -168,6 +186,39 @@ public class ReportService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public ReportResponse resolveReport(Long reportId, ReportResolutionRequest request){
+        if(request.getReportStatus() == null ||
+        request.getReportStatus().isBlank()){
+            throw new IllegalArgumentException("최종 처리 상태를 확인해주세요.");
+        }
+
+        String finalStatus =
+                request.getReportStatus().trim().toUpperCase();
+
+        if(!List.of("RESOLVED","REJECTED")
+                .contains(finalStatus)){
+            throw new IllegalArgumentException("최종 상태는 RESOLVED 또는 REJECTED만 가능합니다.");
+        }
+
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("신고 정보를 찾을 수 없습니다."));
+
+        if("RESOLVED".equals(report.getReportStatus())
+                || "REJECTED".equals(report.getReportStatus()) ){
+            throw new IllegalArgumentException("이미 최종 처리 된 신고 입니다.");
+        }
+
+        if("RESOLVED".equals(finalStatus)){
+            sellerPenaltyService.applyPenalty(report, request);
+        }
+
+        report.setReportStatus(finalStatus);
+
+        return toResponse(report);
     }
 
 }
