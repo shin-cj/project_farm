@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import CommonTable from "../../components/common/CommonTable.jsx";
 import reportApi from "../../api/reportApi.js";
 import "./ReportManagementPage.css";
+import MyReportList from "../../components/report/MyReportList.jsx";
 
 const statusLabels = {
   PENDING: "접수 대기",
@@ -216,6 +217,7 @@ function ReportManagementPage() {
           <p className="page-label">AgroLink Admin</p>
           <h1>신고 관리</h1>
         </div>
+
         <span className="report-count">총 {reports.length}건</span>
       </header>
 

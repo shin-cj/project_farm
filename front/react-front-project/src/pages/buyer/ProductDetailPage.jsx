@@ -380,7 +380,6 @@ function ProductDetailPage() {
             <ReportButton
               productId={product.productId}
               reporterId={userid}
-              reportedUserId={farm?.sellerId}
               reportType="PRODUCT"
               targetLabel={product.productName}
               />

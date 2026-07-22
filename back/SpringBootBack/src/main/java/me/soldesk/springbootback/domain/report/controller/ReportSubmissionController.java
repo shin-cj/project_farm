@@ -5,10 +5,9 @@ import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.report.dto.ReportRequest;
 import me.soldesk.springbootback.domain.report.dto.ReportResponse;
 import me.soldesk.springbootback.domain.report.service.ReportService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -16,6 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportSubmissionController {
 
     private final ReportService reportService;
+
+    @GetMapping("/my")
+    public List<ReportResponse> getMyReports(
+            @RequestParam Long reporterId
+    ){
+        return reportService.getMyReports(reporterId);
+    }
 
     @PostMapping
     public ReportResponse createReport(@RequestBody ReportRequest request){

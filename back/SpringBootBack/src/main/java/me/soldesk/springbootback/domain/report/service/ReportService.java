@@ -79,15 +79,20 @@ public class ReportService {
            throw new IllegalArgumentException("신고할 상품 정보가 없습니다.");
        }
 
+        Long reportedUserId =
+                reportRepository
+                        .findSellerIdByProductId(request.getProductId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "상품의 판매자 정보를 찾을 수 없습니다."
+                                )
+                        );
+
        if(request.getReporterId() == null){
            throw new IllegalArgumentException("로그인이 필요한 기능입니다.");
        }
 
-       if(request.getReportedUserId() == null){
-           throw new IllegalArgumentException("신고 대상 판매자 정보가 없습니다.");
-       }
-
-       if(request.getReporterId().equals(request.getReportedUserId())){
+       if(request.getReporterId().equals(reportedUserId)){
            throw new IllegalArgumentException("자신을 신고할 수 없습니다.");
        }
        if(request.getReportReason() == null || request.getReportReason().isBlank()){
@@ -98,7 +103,7 @@ public class ReportService {
 
        report.setProductId((request.getProductId()));
        report.setReporterId(request.getReporterId());
-       report.setReportedUserId(request.getReportedUserId());
+       report.setReportedUserId(reportedUserId);
        report.setReportType("PRODUCT");
        report.setReportReason(request.getReportReason().trim());
        report.setReportStatus("PENDING");
@@ -149,4 +154,20 @@ public class ReportService {
 
         return toResponse(report);
     }
+
+    @Transactional(readOnly = true)
+    public List<ReportResponse> getMyReports(Long reporterId){
+        if (reporterId == null){
+            throw new IllegalArgumentException(
+                    "로그인 사용자 정보가 없습니다."
+            );
+        }
+
+        return reportRepository
+                .findByReporterIdOrderByCreatedAtDesc(reporterId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
 }

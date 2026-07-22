@@ -80,7 +80,6 @@ function AppRoutes() {
       <Route path="/sandbox" element={<CheckoutPage />} />
       <Route path="/sandbox/success" element={<SuccessPage />} />
       <Route path="/sandbox/fail" element={<FailPage />} />
-
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

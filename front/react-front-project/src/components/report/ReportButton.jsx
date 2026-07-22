@@ -14,7 +14,6 @@ const reportTypeLabels = {
 function ReportButton({
     productId,
     reporterId,
-    reportedUserId,
     reportType="PRODUCT",
     targetLabel,
     className="",
@@ -34,7 +33,7 @@ function ReportButton({
             return
         }
 
-        if(!productId || !reportedUserId){
+        if(!productId){
             alert("신고 대상 정보를 불러오지 못했습니다.")
             return
         }
@@ -69,7 +68,6 @@ function ReportButton({
             const response = await reportApi.createRort({
                 productId,
                 reporterId,
-                reportedUserId,
                 reportType,
                 reportReason: trimmedReason,
             })

@@ -445,6 +445,114 @@
   white-space: pre-wrap;
 }
 
+.report-admin-reply {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid #e3e9e4;
+}
+
+.report-admin-reply > label {
+  display: block;
+  margin: 0 0 9px;
+  color: #435047;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.report-admin-reply > textarea {
+  display: block;
+  width: 100%;
+  height: 120px;
+  min-height: 120px;
+  padding: 18px;
+  border: 1px solid #dfe6e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #2d3931;
+  font: inherit;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  resize: vertical;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.report-admin-reply > textarea::placeholder {
+  color: #8a968e;
+}
+
+.report-admin-reply > textarea:focus {
+  border-color: #5a9770;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(45, 126, 75, 0.14);
+}
+
+.report-admin-reply-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.report-admin-reply-footer > span {
+  color: #78857d;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-admin-reply-footer > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid #24653a;
+  border-radius: 6px;
+  background: #2d7e4b;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 120ms ease,
+    box-shadow 140ms ease;
+}
+
+.report-admin-reply-footer > button:hover:not(:disabled) {
+  border-color: #1e5a32;
+  background: #24653a;
+  box-shadow: 0 4px 12px rgba(36, 101, 58, 0.18);
+}
+
+.report-admin-reply-footer > button:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.report-admin-reply-footer > button:focus-visible {
+  outline: 3px solid rgba(45, 126, 75, 0.2);
+  outline-offset: 2px;
+}
+
+.report-admin-reply-footer > button:disabled {
+  border-color: #cbd6ce;
+  background: #e5ebe7;
+  color: #849087;
+  cursor: not-allowed;
+}
+
+.report-admin-reply > p {
+  margin: 10px 0 0;
+  color: #78857d;
+  font-size: 0.78rem;
+  text-align: right;
+}
+
 .report-modal-footer {
   display: flex;
   align-items: center;
@@ -507,6 +615,19 @@
 
   .report-modal-footer .report-status-confirm-button {
     width: 100%;
+  }
+
+  .report-admin-reply-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-admin-reply-footer > button {
+    width: 100%;
+  }
+
+  .report-admin-reply > p {
+    text-align: left;
   }
 }
 

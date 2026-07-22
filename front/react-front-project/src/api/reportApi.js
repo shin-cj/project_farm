@@ -27,6 +27,11 @@ const reportApi = {
         )
     },
 
+    getMyReports(reporterId){
+        return httpClient.get("/reports/my",{params: {reporterId},
+        })
+    },
+
 
 
 }
