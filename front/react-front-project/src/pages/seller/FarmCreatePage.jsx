@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createFarm } from '../../api/farmApi.js'
+import {
+    createFarm,
+    uploadFarmImage,
+} from '../../api/farmApi.js'
 import './FarmCreatePage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
@@ -11,6 +14,8 @@ function FarmCreatePage() {
     const navigate = useNavigate()
     const loginSellerId = getLoginSellerId()
     const [submitting, setSubmitting] = useState(false)
+    const [selectedImageFile, setSelectedImageFile] = useState(null)
+    const [imagePreviewUrl, setImagePreviewUrl] = useState('')
 
     const [form, setForm] = useState({
         sellerId: loginSellerId ?? '',
@@ -22,8 +27,50 @@ function FarmCreatePage() {
         farmDescription: '',
         farmImageUrl: '',
         saleType: 'RETAIL',
-        approvalStatus: 'PENDING',
     })
+
+    useEffect(() => {
+        return () => {
+            if (imagePreviewUrl) {
+                URL.revokeObjectURL(imagePreviewUrl)
+            }
+        }
+    }, [imagePreviewUrl])
+
+    function  handleImageChange(event){
+        const imageFile = event.target.files?.[0] ?? null
+
+        if(!imageFile) {
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            return
+        }
+
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ]
+
+        if(!allowedTypes.includes(imageFile.type)) {
+            alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        if (imageFile.size > 5 * 1024 * 1024) {
+            alert('농장 이미지는 5MB 이하만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        setSelectedImageFile(imageFile)
+        setImagePreviewUrl(URL.createObjectURL(imageFile))
+    }
 
     function handleChange(event) {
         const { name, value } = event.target
@@ -69,14 +116,38 @@ function FarmCreatePage() {
             return
         }
 
+        const businessNumber = form.businessNumber.trim()
+
+        if (
+            businessNumber
+            && !/^\d{3}-?\d{2}-?\d{5}$/.test(businessNumber)
+        ) {
+            alert('사업자등록번호는 123-45-67890 형식으로 입력해주세요.')
+            return
+        }
+
         const farmData = {
             ...form,
             sellerId,
+            businessNumber: businessNumber || null,
         }
 
         try {
             setSubmitting(true)
-            await createFarm(farmData)
+
+            let farmImageUrl = ''
+
+            if (selectedImageFile) {
+                const uploadResult =
+                    await uploadFarmImage(selectedImageFile)
+
+                farmImageUrl = uploadResult.imageUrl
+            }
+
+            await createFarm({
+                ...farmData,
+                farmImageUrl,
+            })
 
             alert('농장이 등록되었습니다.')
             navigate('/seller/farms')
@@ -197,20 +268,24 @@ function FarmCreatePage() {
                         </label>
 
                         <label className="farm-create-field wide">
-                            <span>농장 이미지 주소</span>
+                            <span>농장 대표 이미지</span>
+
                             <input
-                                name="farmImageUrl"
-                                value={form.farmImageUrl}
-                                onChange={handleChange}
-                                placeholder="이미지 URL"
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                onChange={handleImageChange}
                             />
+
+                            <small>
+                                JPG, JPEG, PNG, WEBP 형식의 5MB 이하 이미지를 선택해주세요.
+                            </small>
                         </label>
-                        {form.farmImageUrl.trim() && (
+                        {imagePreviewUrl && (
                             <div className="farm-create-image-preview">
                                 <p>농장 대표 이미지 미리보기</p>
 
                                 <CatalogImage
-                                    src={form.farmImageUrl}
+                                    src={imagePreviewUrl}
                                     alt="등록할 농장 미리보기"
                                     fallbackText="이미지를 불러올 수 없습니다."
                                     fallbackClassName="farm-create-image-fallback"

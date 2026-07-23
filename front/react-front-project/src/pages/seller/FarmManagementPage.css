@@ -1,48 +1,65 @@
 .farm-management-page {
+    min-height: 100vh;
+    box-sizing: border-box;
     padding: 32px;
-    color: #1f2937;
+    background-color: #f6f8f4;
+    color: #243b2f;
+}
+
+.farm-management-header,
+.farm-management-empty,
+.farm-management-grid {
+    width: 100%;
+    max-width: 1600px;
+    box-sizing: border-box;
+    margin-right: auto;
+    margin-left: auto;
 }
 
 .farm-management-header {
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    align-items: flex-start;
-    margin-bottom: 24px;
+    align-items: flex-end;
+    margin-bottom: 28px;
 }
 
 .farm-management-label {
     margin: 0 0 8px;
-    color: #16a34a;
+    color: #3f7d20;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .farm-management-header h1 {
-    margin: 0 0 8px;
-    font-size: 28px;
+    margin: 0;
+    font-size: 32px;
 }
 
-.farm-management-header p {
-    margin: 0;
+.farm-management-header > div > p:not(.farm-management-label) {
+    margin: 10px 0 0;
     color: #6b7280;
 }
 
 .farm-management-create-button {
     border: 0;
-    border-radius: 6px;
-    background-color: #16a34a;
+    border-radius: 10px;
+    background-color: #3f7d20;
     color: #ffffff;
     padding: 11px 16px;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 800;
+    white-space: nowrap;
 }
 
 .farm-management-empty {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border: 1px solid #e1e8df;
+    border-radius: 16px;
     background-color: #ffffff;
     padding: 32px;
+    box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
 }
 
 .farm-management-empty p {
@@ -62,10 +79,11 @@
 }
 
 .farm-management-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border: 1px solid #e1e8df;
+    border-radius: 16px;
     background-color: #ffffff;
     padding: 22px;
+    box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
 }
 
 .farm-management-card-header {
@@ -145,10 +163,10 @@
 }
 
 .farm-management-actions button {
-    border: 1px solid #16a34a;
-    border-radius: 6px;
+    border: 1px solid #3f7d20;
+    border-radius: 8px;
     background-color: #ffffff;
-    color: #15803d;
+    color: #3f7d20;
     padding: 9px 14px;
     font-weight: 700;
     cursor: pointer;
@@ -219,4 +237,34 @@
 
 .farm-management-actions button:disabled:hover {
     background-color: #f3f4f6;
+}
+
+.farm-management-actions .farm-management-delete-button {
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.farm-management-actions .farm-management-delete-button:not(:disabled):hover {
+    background-color: #fef2f2;
+}
+
+@media (max-width: 900px) {
+    .farm-management-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .farm-management-page {
+        padding: 18px;
+    }
+
+    .farm-management-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .farm-management-create-button {
+        width: 100%;
+    }
 }

@@ -107,8 +107,6 @@ function FarmDetailPage() {
                 </div>
 
                 <div className="farm-detail-info">
-                    <p className="farm-detail-label">AgroLink Farm</p>
-
                     <div className="farm-detail-title-row">
                         <div>
             <span className="farm-detail-region">

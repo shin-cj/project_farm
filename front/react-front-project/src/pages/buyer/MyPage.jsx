@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
+import MyReportSummaryCard from "../../components/report/MyReportSummaryCard.jsx";
 import {
   DELIVERY_STATUS_LABEL,
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
+
 
 function getLoginUser() {
   try {
@@ -52,7 +54,7 @@ function MyPage() {
       setLoading(true);
       setError("");
       const response = await orderApi.getOrdersByBuyer(buyerId);
-      setOrders(response.data);
+      setOrders(response.data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
     } catch (error) {
       console.error(error);
       setError("주문 요약 정보를 불러오지 못했습니다.");
@@ -151,6 +153,8 @@ function MyPage() {
                 </p>
               </div>
             </article>
+
+            <MyReportSummaryCard reporterId={buyerId}/>
           </div>
 
           <div style={{ marginTop: "28px" }}>

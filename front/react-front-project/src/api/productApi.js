@@ -37,12 +37,14 @@ export async function getPublicProductPage({
   categoryId = null,
   saleType = 'RETAIL',
   keyword = '',
+  sameDayOnly = false,
   sortOption = 'LATEST',
   page = 0,
   size = 12,
 }) {
   const params = {
     saleType,
+    sameDayOnly,
     sortOption,
     page,
     size,
@@ -111,5 +113,30 @@ export async function updateProductStock(productId, stockQuantity){
   const response = await axios.patch(`/api/products/${productId}/stock`, {
     stockQuantity
   })
+  return response.data
+}
+
+// 판매자 본인의 상품을 삭제합니다.
+export async function deleteProduct(productId, sellerId) {
+  await axios.delete(`/api/products/${productId}`, {
+    params: { sellerId },
+  })
+}
+
+// 관리자가 승인 대기 중인 상품을 승인합니다.
+export async function approveProduct(productId) {
+  const response = await axios.patch(
+      `/api/products/${productId}/approve`
+  )
+
+  return response.data
+}
+
+// 관리자가 승인 대기 중인 상품을 거절합니다.
+export async function rejectProduct(productId) {
+  const response = await axios.patch(
+      `/api/products/${productId}/reject`
+  )
+
   return response.data
 }

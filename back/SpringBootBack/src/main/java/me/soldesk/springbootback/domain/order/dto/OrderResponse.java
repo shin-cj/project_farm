@@ -25,6 +25,21 @@ public class OrderResponse {
     /** 판매 농장 번호 */
     private Long farmId;
 
+    /** 판매 농장 이름 */
+    private String farmName;
+
+    /** 판매 농장 지역 */
+    private String farmRegion;
+
+    /** 판매 농장 기본 주소 */
+    private String farmAddress;
+
+    /** 판매 농장 상세 주소 */
+    private String farmDetailAddress;
+
+    /** 농장 판매 방식 */
+    private String saleType;
+
     /** 상품 금액 합계 */
     private Long totalProductPrice;
 
@@ -43,11 +58,19 @@ public class OrderResponse {
 
     private String deliveryStatus;
 
+    private String deliveryType;
+
     private Long deliveryId;
 
     private String courierName;
 
     private String trackingNumber;
+
+    private String deliveryPersonName;
+
+    private String deliveryPersonPhone;
+
+    private String deliveryMemo;
 
     /** 수령인 이름 */
     private String receiverName;

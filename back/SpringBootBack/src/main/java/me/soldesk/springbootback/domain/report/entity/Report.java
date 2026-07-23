@@ -62,4 +62,13 @@ public class Report {
     @Column(name = "created_at", nullable = true)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "admin_reply")
+    private String adminReply;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt;
+
+    @Column(name = "replied_by")
+    private Long repliedBy;
+
 }

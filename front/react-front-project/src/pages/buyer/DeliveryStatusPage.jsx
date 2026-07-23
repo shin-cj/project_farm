@@ -34,11 +34,12 @@ function DeliveryStatusPage() {
     }, [orderId])
 
     const step = delivery ? statusStep[delivery.deliveryStatus] || 0 : 0
+    const isSameDayDelivery = delivery?.deliveryType === "SAME_DAY"
 
     return (
         <section className="page-card">
             <p className="page-label">Delivery</p>
-            <h1 style={{marginBottom: "8px"}}>배송 조회</h1>
+            <h1 style={{marginBottom: "8px", color: "#213328"}}>배송 조회</h1>
             <p style={{color: "#68756d", marginTop: 0}}>
                 주문한 상품의 배송 현황을 확인할 수 있습니다.
             </p>
@@ -64,8 +65,9 @@ function DeliveryStatusPage() {
                         marginTop: "28px",
                         padding: "28px",
                         border: "1px solid #dce6dd",
-                        borderRadius: "14px",
-                        background: "#fbfdfb",
+                        borderRadius: "18px",
+                        background: "linear-gradient(135deg, #fbfdfb, #ffffff)",
+                        boxShadow: "0 10px 28px rgba(36, 59, 47, 0.07)",
                     }}
                 >
                     <div
@@ -84,6 +86,19 @@ function DeliveryStatusPage() {
                             </strong>
                             <span style={{display: "block", marginTop: "8px", color: "#68756d"}}>
                 배송번호 {delivery.deliveryId}
+              </span>
+                            <span
+                                style={{
+                                    display: "inline-flex",
+                                    marginTop: "10px",
+                                    padding: "6px 10px",
+                                    borderRadius: "999px",
+                                    background: isSameDayDelivery ? "#fff4d6" : "#eef3ee",
+                                    color: isSameDayDelivery ? "#8a4b08" : "#405348",
+                                    fontWeight: 900,
+                                }}
+                            >
+                {isSameDayDelivery ? "당일배송" : "택배배송"}
               </span>
                         </div>
 
@@ -105,7 +120,7 @@ function DeliveryStatusPage() {
                         style={{
                             display: "grid",
                             gridTemplateColumns: "repeat(3, 1fr)",
-                            gap: "16px",
+                            gap: "18px",
                             marginTop: "28px",
                         }}
                     >
@@ -126,6 +141,7 @@ function DeliveryStatusPage() {
                                             background: active ? "#216b3a" : "#eef3ee",
                                             color: active ? "#ffffff" : "#68756d",
                                             fontWeight: 800,
+                                            boxShadow: active ? "0 8px 18px rgba(33, 107, 58, 0.18)" : "none",
                                         }}
                                     >
                                         {index + 1}
@@ -146,8 +162,18 @@ function DeliveryStatusPage() {
                             marginTop: "34px",
                         }}
                     >
-                        <InfoItem label="택배사" value={delivery.courierName || "택배사 등록 전"}/>
-                        <InfoItem label="송장번호" value={delivery.trackingNumber || "송장번호 등록 전"}/>
+                        {isSameDayDelivery ? (
+                            <>
+                                <InfoItem label="배송 담당자" value={delivery.deliveryPersonName || "담당자 배정 전"}/>
+                                <InfoItem label="담당자 연락처" value={delivery.deliveryPersonPhone || "연락처 등록 전"}/>
+                                <InfoItem label="배송 메모" value={delivery.deliveryMemo || "등록된 메모 없음"}/>
+                            </>
+                        ) : (
+                            <>
+                                <InfoItem label="택배사" value={delivery.courierName || "택배사 등록 전"}/>
+                                <InfoItem label="송장번호" value={delivery.trackingNumber || "송장번호 등록 전"}/>
+                            </>
+                        )}
                         <InfoItem label="배송 시작일" value={delivery.shippedAt || "배송 시작 전"}/>
                         <InfoItem label="배송 완료일" value={delivery.deliveredAt || "배송 완료 전"}/>
                     </div>
@@ -162,9 +188,10 @@ function InfoItem({label, value}) {
         <div
             style={{
                 padding: "16px",
-                borderRadius: "10px",
+                borderRadius: "12px",
                 background: "#ffffff",
                 border: "1px solid #e8eee8",
+                boxShadow: "0 6px 16px rgba(36, 59, 47, 0.04)",
             }}
         >
       <span style={{display: "block", color: "#68756d", fontSize: "0.9rem", fontWeight: 700}}>

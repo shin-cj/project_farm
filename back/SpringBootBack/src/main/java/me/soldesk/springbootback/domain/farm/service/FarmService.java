@@ -1,26 +1,35 @@
 package me.soldesk.springbootback.domain.farm.service;
 
+import me.soldesk.springbootback.domain.farm.dto.FarmApprovalRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
 import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
 import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class FarmService {
 
     private final FarmRepository farmRepository;
+    private final FarmImageService farmImageService;
 
     //주입
-    public FarmService(FarmRepository farmRepository) {
+    public FarmService(
+            FarmRepository farmRepository,
+            FarmImageService farmImageService
+    ) {
         this.farmRepository = farmRepository;
+        this.farmImageService = farmImageService;
     }
 
     //농장 목록 조회
@@ -92,6 +101,13 @@ public class FarmService {
 
         validateFarmRequest(request);
 
+        if(request.getBusinessNumber() != null
+        && farmRepository.existsByBusinessNumber(request.getBusinessNumber())){
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "이미 등록 된 사업자 등록번호입니다."
+            );
+        }
+
         Farm farm = new Farm();
 
         applyRequestToFarm(farm, request);
@@ -106,6 +122,18 @@ public class FarmService {
     public FarmResponse updateFarm(Long farmId, FarmRequest request) {
 
         validateFarmRequest(request);
+
+        if (request.getBusinessNumber() != null
+                && farmRepository.existsByBusinessNumberAndFarmIdNot(
+                request.getBusinessNumber(),
+                farmId
+        )) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 다른 농장에 등록된 사업자등록번호입니다."
+            );
+        }
 
         Farm farm = farmRepository
                 .findById(farmId)
@@ -129,13 +157,104 @@ public class FarmService {
             );
         }
 
+        String previousImageUrl = farm.getFarmImageUrl();
+
         applyRequestToFarm(farm, request);
+
+        farm.setApprovalStatus("PENDING");
 
         farm.setUpdatedAt(LocalDateTime.now());
 
         Farm savedFarm = farmRepository.save(farm);
 
+        if (!Objects.equals(
+                previousImageUrl,
+                savedFarm.getFarmImageUrl()
+        )) {
+            farmImageService.deleteStoredImage(previousImageUrl);
+        }
+
         return toResponse(savedFarm);
+    }
+
+    // 관리자가 농장을 승인하거나 거절합니다.
+    public FarmResponse updateApprovalStatus(
+            Long farmId,
+            FarmApprovalRequest request
+    ) {
+        if (request == null
+                || request.getApprovalStatus() == null
+                || request.getApprovalStatus().isBlank()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 승인 상태를 입력해야 합니다."
+            );
+        }
+
+        String nextStatus =
+                request.getApprovalStatus().trim().toUpperCase();
+
+        if (!"APPROVED".equals(nextStatus)
+                && !"REJECTED".equals(nextStatus)) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 승인 상태는 APPROVED 또는 REJECTED만 가능합니다."
+            );
+        }
+
+        Farm farm = farmRepository
+                .findById(farmId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "농장을 찾을 수 없습니다."
+                ));
+
+        farm.setApprovalStatus(nextStatus);
+        farm.setUpdatedAt(LocalDateTime.now());
+
+        Farm savedFarm = farmRepository.save(farm);
+
+        return toResponse(savedFarm);
+    }
+
+    /** 판매자 본인의 농장을 삭제합니다. 상품이나 주문에 연결된 농장은 삭제하지 않습니다. */
+    @Transactional
+    public void deleteFarm(Long farmId, Long sellerId) {
+        if (sellerId == null || sellerId <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "판매자 정보를 확인할 수 없습니다."
+            );
+        }
+
+        Farm farm = farmRepository.findById(farmId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "농장을 찾을 수 없습니다."
+                ));
+
+        if (!sellerId.equals(farm.getSellerId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "본인이 등록한 농장만 삭제할 수 있습니다."
+            );
+        }
+
+        String farmImageUrl = farm.getFarmImageUrl();
+
+        try {
+            farmRepository.delete(farm);
+            farmRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "등록 상품이나 주문 내역이 있는 농장은 삭제할 수 없습니다."
+            );
+        }
+
+        farmImageService.deleteStoredImage(farmImageUrl);
     }
 
     //request 값을 엔터티에 적용하는 공통 메서드
@@ -207,6 +326,33 @@ public class FarmService {
                     "판매자 번호를 올바르게 입력해주세요."
             );
         }
+
+        //사업자 등록번호 10자리 숫자 형식인지 검사
+        String businessNumber = request.getBusinessNumber();
+
+        if(businessNumber != null && !businessNumber.isBlank()){
+
+            String trimmedBusinessNumber = businessNumber.trim();
+
+            if(!trimmedBusinessNumber.matches(
+                    "\\d{3}-?\\d{2}-?\\d{5}"
+            )){
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "사업자등록번호는 123-45-67890 형식으로 입력해주세요."
+                );
+            }
+
+            // 하이픈 없이 입력해도 동일하게 저장
+            String digits = trimmedBusinessNumber.replace("-","");
+
+            request.setBusinessNumber(digits.substring(0, 3)
+            + "-" + digits.substring(3, 5) + "-" + digits.substring(5));
+        }else {
+            //빈 문자열 대신 db에 null 저장
+            request.setBusinessNumber(null);
+        }
+
         // 농장명이 비어 있는지 확인
         if (request.getFarmName() == null
                 || request.getFarmName().isBlank()) {

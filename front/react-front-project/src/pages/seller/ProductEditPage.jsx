@@ -30,6 +30,7 @@ function ProductEditPage() {
 
     const [error, setError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
+    const [productStatus, setProductStatus] = useState('PENDING')
 
     const [form, setForm] = useState({
         farmId: '',
@@ -44,7 +45,7 @@ function ProductEditPage() {
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
-        productStatus: 'PENDING',
+        sameDayDelivery: 'N',
     })
 
     const selectedFarm = farms.find(
@@ -116,8 +117,10 @@ function ProductEditPage() {
                     harvestDate: productData.harvestDate ?? '',
                     expirationDate: productData.expirationDate ?? '',
                     productImageUrl: productData.productImageUrl ?? '',
-                    productStatus: productData.productStatus ?? 'PENDING',
+                    sameDayDelivery: productData.sameDayDelivery ?? 'N',
                 })
+
+                setProductStatus(productData.productStatus ?? 'PENDING')
             } catch (err) {
                 if (!ignore) {
                     console.error(err)
@@ -194,6 +197,10 @@ function ProductEditPage() {
                 farmId: value,
                 minOrderQuantity:
                     nextFarm?.saleType === 'WHOLESALE' ? '2' : '1',
+                sameDayDelivery:
+                    nextFarm?.saleType === 'WHOLESALE'
+                        ? 'N'
+                        : currentForm.sameDayDelivery,
             }))
             return
         }
@@ -274,6 +281,12 @@ function ProductEditPage() {
             return
         }
 
+        if (selectedFarm.saleType === 'WHOLESALE'
+            && form.sameDayDelivery === 'Y') {
+            alert('도매 상품은 당일배송으로 등록할 수 없습니다.')
+            return
+        }
+
         // 백엔드 ProductRequest에 맞춰 전송할 객체를 만듭니다.
         const productData = {
             ...form,
@@ -306,7 +319,7 @@ function ProductEditPage() {
                 productImageUrl,
             })
 
-            alert('상품 정보가 수정되었습니다.')
+            alert('상품 정보가 수정되었습니다. 관리자 승인 후 다시 판매됩니다.')
             navigate('/seller/products')
         } catch (err) {
             console.error(err)
@@ -503,6 +516,29 @@ function ProductEditPage() {
                                         : '소매 농장의 상품은 1개부터 주문할 수 있습니다.'}
                                 </small>
                             </div>
+
+                            <div className="product-create-field">
+                                <label>배송 방식</label>
+
+                                <select
+                                    name="sameDayDelivery"
+                                    value={form.sameDayDelivery}
+                                    onChange={handleChange}
+                                    disabled={
+                                        !selectedFarm
+                                        || selectedFarm.saleType === 'WHOLESALE'
+                                    }
+                                >
+                                    <option value="N">일반배송</option>
+                                    <option value="Y">당일배송 가능</option>
+                                </select>
+
+                                <small>
+                                    {selectedFarm?.saleType === 'WHOLESALE'
+                                        ? '도매 상품은 일반배송만 선택할 수 있습니다.'
+                                        : '소매 상품은 당일배송 가능 여부를 선택할 수 있습니다.'}
+                                </small>
+                            </div>
                         </div>
 
                     <div className="product-create-row">
@@ -569,7 +605,7 @@ function ProductEditPage() {
 
                         <input
                             name="productStatus"
-                            value={form.productStatus}
+                            value={productStatus}
                             readOnly
                         />
                         <small>
