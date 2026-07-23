@@ -1,4 +1,4 @@
-import PagePlaceholder from '../../components/common/PagePlaceholder'
+ import PagePlaceholder from '../../components/common/PagePlaceholder'
 import CommonTable from "../../components/common/CommonTable.jsx";
 
 // 회원 관리 기능을 담당하는 페이지 컴포넌트입니다.
