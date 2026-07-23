@@ -39,4 +39,63 @@ public interface SellerPenaltyRepository extends JpaRepository<SellerPenalty, Lo
     List<SellerPenalty> findBySellerIdOrderByCreatedAtDesc(
            @Param("sellerId") Long sellerId
     );
+
+    @Query(value = """
+        SELECT sp.*
+        FROM seller_penalties sp
+        WHERE sp.penalty_status = :penaltyStatus
+        ORDER BY sp.created_at DESC
+        """,
+            nativeQuery = true
+    )
+    List<SellerPenalty> findByPenaltyStatusOrderByCreatedAtDesc(
+            @Param("penaltyStatus") String penaltyStatus
+    );
+
+    @Query(
+            value = """
+        SELECT COUNT(*)
+        FROM seller_penalties sp
+        WHERE sp.seller_id = :sellerId
+          AND sp.penalty_type = :penaltyType
+          AND sp.penalty_status = :penaltyStatus
+          AND sp.penalty_id <> :penaltyId
+        """,
+            nativeQuery = true
+    )
+    long countOtherSellerPenalties(
+            @Param("sellerId") Long sellerId,
+            @Param("penaltyType") String penaltyType,
+            @Param("penaltyStatus") String penaltyStatus,
+            @Param("penaltyId") Long penaltyId
+    );
+
+    @Query(
+            value = """
+        SELECT COUNT(*)
+        FROM seller_penalties sp
+        WHERE sp.product_id = :productId
+          AND sp.penalty_type = :penaltyType
+          AND sp.penalty_status = :penaltyStatus
+          AND sp.penalty_id <> :penaltyId
+        """,
+            nativeQuery = true
+    )
+    long countOtherProductPenalties(
+            @Param("productId") Long productId,
+            @Param("penaltyType") String penaltyType,
+            @Param("penaltyStatus") String penaltyStatus,
+            @Param("penaltyId") Long penaltyId
+    );
+
+    @Query(
+            value = """
+        SELECT sp.*
+        FROM seller_penalties sp
+        ORDER BY sp.created_at DESC
+        """,
+            nativeQuery = true
+    )
+    List<SellerPenalty> findAllOrderByCreatedAtDesc();
+
 }

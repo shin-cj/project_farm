@@ -4,6 +4,7 @@ import reportApi from "../../api/reportApi.js";
 import "./ReportManagementPage.css";
 import penaltyApi from "../../api/penaltyApi.js";
 import PenaltyDetailContent from "../../components/penalty/PenaltyDetailContent.jsx";
+import PenaltyRecoveryModal from "../../components/penalty/PenaltyRecoveryModal.jsx";
 
 const statusLabels = {
   PENDING: "접수 대기",
@@ -48,7 +49,7 @@ function ReportManagementPage() {
   const [selectedPenalty, setSelectedPenalty] = useState(null);
   const [penaltyLoading, setPenaltyLoading] = useState(false);
   const [penaltyError, setPenaltyError] = useState("");
-
+  const [recovertyModalOpen, setRecovertyModalOpen] = useState(false);
 
 
   async function loadReports(status) {
@@ -374,6 +375,10 @@ function ReportManagementPage() {
           <h1>신고 관리</h1>
         </div>
 
+        <button type="button" onClick={() => setRecovertyModalOpen(true)}>
+          페널티 이용자 관리
+        </button>
+
         <span className="report-count">총 {reports.length}건</span>
       </header>
 
@@ -675,6 +680,9 @@ function ReportManagementPage() {
           </section>
         </div>
       )}
+      <PenaltyRecoveryModal
+        open={recovertyModalOpen}
+        onClose={() => setRecovertyModalOpen(false)}/>
     </section>
   );
 }

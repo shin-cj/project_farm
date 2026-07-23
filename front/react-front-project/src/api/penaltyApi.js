@@ -12,6 +12,17 @@ const penaltyApi = {
             `/sellers/${sellerId}/penalties`
         );
     },
+
+    getAdminList(status = "ACTIVE") {
+        return httpClient.get("/admin/penalties", {
+            params: {status}})
+    },
+
+    revoke(penaltyId, data){
+        return httpClient.patch(
+            `/admin/penalties/${penaltyId}/revoke`,
+            data)
+    }
 };
 
 export default penaltyApi;
