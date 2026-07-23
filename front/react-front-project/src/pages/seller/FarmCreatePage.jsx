@@ -116,9 +116,20 @@ function FarmCreatePage() {
             return
         }
 
+        const businessNumber = form.businessNumber.trim()
+
+        if (
+            businessNumber
+            && !/^\d{3}-?\d{2}-?\d{5}$/.test(businessNumber)
+        ) {
+            alert('사업자등록번호는 123-45-67890 형식으로 입력해주세요.')
+            return
+        }
+
         const farmData = {
             ...form,
             sellerId,
+            businessNumber: businessNumber || null,
         }
 
         try {
