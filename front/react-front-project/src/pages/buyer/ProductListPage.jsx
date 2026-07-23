@@ -248,9 +248,6 @@ function ProductListPage() {
                         : 'product-list-hero retail'
                 }
             >
-                <p className="product-list-badge">
-                    {wholesaleMode ? 'AgroLink Wholesale' : 'AgroLink Market'}
-                </p>
                 <h1>
                     {wholesaleMode
                         ? '사업자를 위한 농산물 대량구매'

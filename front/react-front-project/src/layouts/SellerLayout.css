@@ -19,79 +19,22 @@
     background-color: #ffffff;
 }
 
-/* 농부링크 로고 영역입니다. */
+/* 서비스 로고 영역입니다. */
 .seller-sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
     padding: 0 8px 24px;
-    color: #216b3a;
     text-decoration: none;
 }
 
-.seller-sidebar-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    background-color: #eef6e8;
-    font-size: 25px;
-}
-
-.seller-sidebar-brand div {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.seller-sidebar-brand strong {
-    font-size: 21px;
-}
-
-.seller-sidebar-brand small {
-    color: #6d9c6f;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-/* 이전 화면과 사이트 홈 버튼입니다. */
-.seller-sidebar-navigation {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding-bottom: 22px;
-    border-bottom: 1px solid #edf1eb;
-}
-
-.seller-sidebar-navigation button,
-.seller-sidebar-navigation a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 38px;
-    box-sizing: border-box;
-    border: 1px solid #dce6dd;
-    border-radius: 9px;
-    background-color: #ffffff;
-    color: #5f6f64;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.seller-sidebar-navigation button:hover,
-.seller-sidebar-navigation a:hover {
-    border-color: #9cbd8c;
-    background-color: #f4f8f1;
-    color: #3f7d20;
+.seller-sidebar-brand-image {
+    display: block;
+    width: 140px;
+    height: auto;
 }
 
 .seller-sidebar-title {
-    margin: 24px 10px 12px;
+    margin: 8px 10px 12px;
     color: #9ca3af;
     font-size: 12px;
     font-weight: 800;
@@ -150,7 +93,7 @@
     color: #ffffff;
 }
 
-/* 메뉴 하단 농부링크 안내 카드입니다. */
+/* 메뉴 하단 서비스 안내 카드입니다. */
 .seller-sidebar-message {
     margin-top: auto;
     padding: 18px;
@@ -202,7 +145,7 @@
     }
 
     .seller-sidebar-title {
-        margin-top: 18px;
+        margin-top: 8px;
     }
 
     .seller-sidebar-menu {
@@ -225,9 +168,5 @@
         justify-content: center;
         padding: 0 10px;
         font-size: 13px;
-    }
-
-    .seller-sidebar-navigation {
-        grid-template-columns: 1fr;
     }
 }

@@ -142,7 +142,6 @@ function OrderPage() {
 
   return (
     <section className="page-card">
-      <p className="page-label">AgroLink</p>
       <h1>주문 정보 확인</h1>
 
       {userLoading && (

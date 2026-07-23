@@ -3,8 +3,9 @@
 body { margin: 0; min-width: 320px; }
 a { color: inherit; text-decoration: none; }
 .app-shell { min-height: 100vh; display: grid; grid-template-rows: auto 1fr auto; }
-.app-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 5vw; background: #ffffff; border-bottom: 1px solid #dce6dd; }
-.brand { color: #216b3a; font-size: 1.45rem; font-weight: 800; }
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 8px 5vw; background: #ffffff; border-bottom: 1px solid #dce6dd; }
+.brand { display: flex; align-items: center; flex-shrink: 0; }
+.brand img { display: block; width: 150px; height: auto; }
 .main-nav { display: flex; margin: auto; justify-content: center; flex-wrap: wrap; gap: 18px; }
 .main-nav a.active, .side-menu a.active { color: #216b3a; font-weight: 700; }
 .util-nav { display: flex; flex-wrap: wrap; gap: 18px; }
@@ -16,6 +17,8 @@ a { color: inherit; text-decoration: none; }
 .app-footer { padding: 24px 5vw; color: #68756d; background: #eef3ee; text-align: center; }
 .role-layout { min-height: 100vh; display: grid; grid-template-columns: 240px 1fr; }
 .side-menu { display: flex; flex-direction: column; gap: 16px; padding: 32px 24px; background: #1f5130; color: white; }
+.admin-sidebar-brand { display: flex; justify-content: center; padding: 12px; border-radius: 14px; background: #ffffff; }
+.admin-sidebar-brand img { display: block; width: 140px; height: auto; }
 .side-menu a.active { color: #bdf0c9; }
 .side-menu-navigation { display: grid; gap: 8px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.22); }
 .side-menu-navigation button,
@@ -25,6 +28,7 @@ a { color: inherit; text-decoration: none; }
 .role-content { padding: 48px; background: #f6f8f5; }
 @media (max-width: 760px) {
   .app-header { align-items: flex-start; flex-direction: column; }
+  .brand img { width: 136px; }
   .role-layout { grid-template-columns: 1fr; }
   .side-menu { position: static; }
   .role-content { padding: 24px; }
