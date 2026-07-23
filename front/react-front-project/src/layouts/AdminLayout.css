@@ -1,0 +1,273 @@
+/* 관리자 왼쪽 메뉴와 오른쪽 화면을 나란히 배치합니다. */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 100vh;
+  background-color: #f6f8f4;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100vh;
+  padding: 22px 18px 18px;
+  overflow-y: auto;
+  border-right: 1px solid #e1e8df;
+  background-color: #ffffff;
+}
+
+.admin-sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  padding: 0 0 14px;
+  text-decoration: none;
+}
+
+.admin-sidebar-brand-image {
+  display: block;
+  width: 132px;
+  height: auto;
+}
+
+.admin-sidebar-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 14px;
+  border: 1px solid #e0e8dd;
+  border-radius: 14px;
+  background-color: #fbfcfa;
+}
+
+.admin-sidebar-avatar {
+  display: flex;
+  flex: 0 0 42px;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: #eaf3e7;
+  color: #24683f;
+}
+
+.admin-sidebar-profile > div:last-child {
+  min-width: 0;
+}
+
+.admin-sidebar-profile strong,
+.admin-sidebar-profile span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-sidebar-profile strong {
+  color: #183d2b;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.admin-sidebar-profile span {
+  margin-top: 3px;
+  color: #7b867f;
+  font-size: 11px;
+}
+
+.admin-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-sidebar-title {
+  margin: 0 12px 4px;
+  color: #9aa39d;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+}
+
+.admin-sidebar-group-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-sidebar-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 0 13px;
+  overflow: hidden;
+  border-radius: 10px;
+  color: #56635b;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.admin-sidebar-icon {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  color: #7c8880;
+  transition: color 0.18s ease;
+}
+
+.admin-sidebar-link:hover {
+  background-color: #f2f6f0;
+  color: #245f3b;
+}
+
+.admin-sidebar-link:hover .admin-sidebar-icon {
+  color: #397b4d;
+}
+
+.admin-sidebar-link.active {
+  background-color: #eaf3e7;
+  color: #175c37;
+}
+
+.admin-sidebar-link.active::before {
+  position: absolute;
+  top: 7px;
+  bottom: 7px;
+  left: 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background-color: #175c37;
+  content: '';
+}
+
+.admin-sidebar-link.active .admin-sidebar-icon {
+  color: #175c37;
+}
+
+.admin-sidebar-footer {
+  margin-top: auto;
+  padding: 22px 0 14px;
+}
+
+.admin-sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid #dde5da;
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: #56635b;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.admin-sidebar-logout:hover {
+  border-color: #b8cdb5;
+  background-color: #f5f8f3;
+  color: #175c37;
+}
+
+.admin-sidebar-logout:hover .admin-sidebar-icon {
+  color: #175c37;
+}
+
+.admin-sidebar-footer > p {
+  margin: 14px 0 0;
+  color: #929b95;
+  font-size: 11px;
+  text-align: center;
+}
+
+.admin-main-content {
+  min-width: 0;
+}
+
+/* 태블릿에서는 메뉴를 화면 위쪽의 버튼 모음으로 바꿉니다. */
+@media (max-width: 900px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    height: auto;
+    padding: 16px 20px;
+    overflow: visible;
+  }
+
+  .admin-sidebar-brand {
+    min-height: 0;
+    padding: 0 4px 12px;
+  }
+
+  .admin-sidebar-brand-image {
+    width: 116px;
+  }
+
+  .admin-sidebar-profile,
+  .admin-sidebar-title,
+  .admin-sidebar-footer {
+    display: none;
+  }
+
+  .admin-sidebar-menu {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .admin-sidebar-group,
+  .admin-sidebar-group-menu {
+    display: contents;
+  }
+
+  .admin-sidebar-link {
+    justify-content: center;
+    min-height: 42px;
+    padding: 0 10px;
+  }
+}
+
+/* 휴대전화에서는 메뉴를 두 칸씩 표시합니다. */
+@media (max-width: 600px) {
+  .admin-sidebar {
+    padding: 14px;
+  }
+
+  .admin-sidebar-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-sidebar-link {
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .admin-sidebar-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

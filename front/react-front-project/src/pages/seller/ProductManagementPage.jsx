@@ -605,9 +605,16 @@ function ProductManagementPage() {
 
                       <td>
                         <div className="seller-product-actions">
-                          <Link to={`/products/${product.productId}`}>
-                            상세
-                          </Link>
+                          {(
+                              product.productStatus === 'ON_SALE'
+                              || product.productStatus === 'SOLD_OUT'
+                          ) && (
+                              <Link to={`/products/${product.productId}`}
+                                    state = {{ from: '/seller/products'}}
+                                    >
+                                상세
+                              </Link>
+                          )}
 
                           <Link to={
                             `/seller/products/${product.productId}/edit`

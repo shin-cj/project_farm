@@ -244,11 +244,14 @@ function ProductDetailPage() {
   }
 
   const requestedListPath = location.state?.from
-  const productListPath =
-      typeof requestedListPath === 'string'
-      && requestedListPath.startsWith('/products')
-          ? requestedListPath
-          : '/products'
+
+  const isAllowedListPath = typeof  requestedListPath === 'string'
+  && (
+      requestedListPath.startsWith('/products') ||
+          requestedListPath.startsWith('/seller/products')
+      )
+
+  const productListPath = isAllowedListPath ? requestedListPath : '/products'
 
   return (
     <main className="product-detail-page">
