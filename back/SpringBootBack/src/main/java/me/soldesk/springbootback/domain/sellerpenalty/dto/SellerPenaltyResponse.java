@@ -27,5 +27,9 @@ public class SellerPenaltyResponse {
     private String productName;
     private String createdByEmail;
 
+    private Long revokedBy;
+    private LocalDateTime revokedAt;
+    private String revokeReason;
+
 
 }
