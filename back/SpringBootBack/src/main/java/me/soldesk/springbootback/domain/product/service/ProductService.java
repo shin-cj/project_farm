@@ -261,17 +261,12 @@ public class ProductService {
                 ));
 
         String previousImageUrl = product.getProductImageUrl();
-        String currentProductStatus = product.getProductStatus();
 
         applyRequestToProduct(product, request);
 
-        // 승인 대기 상품은 대기 상태를 유지하고,
-        // 승인 거절 상품은 수정하면 다시 승인 대기로 전환합니다.
-        if ("PENDING".equals(currentProductStatus)
-                || "REJECTED".equals(currentProductStatus)) {
-
-            product.setProductStatus("PENDING");
-        }
+        // 상품명, 가격, 이미지 등의 일반 정보를 수정하면
+        // 관리자가 다시 확인할 수 있도록 승인 대기 상태로 변경합니다.
+        product.setProductStatus("PENDING");
 
         applyStockStatus(product);
 

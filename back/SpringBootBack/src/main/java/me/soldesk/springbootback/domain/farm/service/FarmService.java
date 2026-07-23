@@ -101,6 +101,13 @@ public class FarmService {
 
         validateFarmRequest(request);
 
+        if(request.getBusinessNumber() != null
+        && farmRepository.existsByBusinessNumber(request.getBusinessNumber())){
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "이미 등록 된 사업자 등록번호입니다."
+            );
+        }
+
         Farm farm = new Farm();
 
         applyRequestToFarm(farm, request);
@@ -115,6 +122,18 @@ public class FarmService {
     public FarmResponse updateFarm(Long farmId, FarmRequest request) {
 
         validateFarmRequest(request);
+
+        if (request.getBusinessNumber() != null
+                && farmRepository.existsByBusinessNumberAndFarmIdNot(
+                request.getBusinessNumber(),
+                farmId
+        )) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "이미 다른 농장에 등록된 사업자등록번호입니다."
+            );
+        }
 
         Farm farm = farmRepository
                 .findById(farmId)
@@ -141,6 +160,8 @@ public class FarmService {
         String previousImageUrl = farm.getFarmImageUrl();
 
         applyRequestToFarm(farm, request);
+
+        farm.setApprovalStatus("PENDING");
 
         farm.setUpdatedAt(LocalDateTime.now());
 
@@ -305,6 +326,33 @@ public class FarmService {
                     "판매자 번호를 올바르게 입력해주세요."
             );
         }
+
+        //사업자 등록번호 10자리 숫자 형식인지 검사
+        String businessNumber = request.getBusinessNumber();
+
+        if(businessNumber != null && !businessNumber.isBlank()){
+
+            String trimmedBusinessNumber = businessNumber.trim();
+
+            if(!trimmedBusinessNumber.matches(
+                    "\\d{3}-?\\d{2}-?\\d{5}"
+            )){
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "사업자등록번호는 123-45-67890 형식으로 입력해주세요."
+                );
+            }
+
+            // 하이픈 없이 입력해도 동일하게 저장
+            String digits = trimmedBusinessNumber.replace("-","");
+
+            request.setBusinessNumber(digits.substring(0, 3)
+            + "-" + digits.substring(3, 5) + "-" + digits.substring(5));
+        }else {
+            //빈 문자열 대신 db에 null 저장
+            request.setBusinessNumber(null);
+        }
+
         // 농장명이 비어 있는지 확인
         if (request.getFarmName() == null
                 || request.getFarmName().isBlank()) {

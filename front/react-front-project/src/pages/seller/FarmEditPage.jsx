@@ -181,9 +181,21 @@ function FarmEditPage() {
             return
         }
 
+        const businessNumber = form.businessNumber.trim()
+
+        if (
+            businessNumber
+            && !/^\d{3}-?\d{2}-?\d{5}$/.test(businessNumber)
+        ) {
+            alert('사업자등록번호는 123-45-67890 형식으로 입력해주세요.')
+            return
+        }
+
         const farmData = {
             ...form,
             sellerId,
+            businessNumber: businessNumber || null,
+
         }
 
         try {
@@ -203,7 +215,7 @@ function FarmEditPage() {
                 farmImageUrl,
             })
 
-            alert('농장 정보가 수정되었습니다.')
+            alert('농장 정보가 수정되었습니다. 관리자 승인 후 다시 공개됩니다.')
             navigate('/seller/farms')
         } catch (err) {
             console.error(err)
