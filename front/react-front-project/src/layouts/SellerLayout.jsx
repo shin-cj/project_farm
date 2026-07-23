@@ -1,10 +1,9 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet } from 'react-router-dom'
 import './SellerLayout.css'
+import nongdamLogo from '../assets/brand/nongdam-logo.png'
 
 // 판매자 화면에서 공통으로 사용하는 왼쪽 메뉴와 화면 배치입니다.
 function SellerLayout() {
-  const navigate = useNavigate()
-
   // 현재 선택된 메뉴에는 active 클래스를 추가합니다.
   function getMenuClass({ isActive }) {
     return isActive
@@ -15,26 +14,14 @@ function SellerLayout() {
   return (
       <div className="seller-layout">
         <aside className="seller-sidebar">
-          {/* 농부링크 로고 영역 */}
-          <NavLink to="/" className="seller-sidebar-brand">
-            <span className="seller-sidebar-logo">🌿</span>
-
-            <div>
-              <strong>농부링크</strong>
-              <small>AgroLink</small>
-            </div>
+          {/* 서비스 로고 영역 */}
+          <NavLink to="/seller" className="seller-sidebar-brand" aria-label="판매자 대시보드">
+            <img
+                className="seller-sidebar-brand-image"
+                src={nongdamLogo}
+                alt="농담 - 농산물을 담다"
+            />
           </NavLink>
-
-          {/* 뒤로가기와 사이트 홈 이동 */}
-          <div className="seller-sidebar-navigation">
-            <button type="button" onClick={() => navigate(-1)}>
-              ← 이전 화면
-            </button>
-
-            <NavLink to="/">
-              사이트 홈
-            </NavLink>
-          </div>
 
           <p className="seller-sidebar-title">판매자 메뉴</p>
 

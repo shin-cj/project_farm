@@ -2,7 +2,6 @@
 function PagePlaceholder({ title, description }) {
   return (
     <section className="page-card">
-      <p className="page-label">AgroLink</p>
       <h1>{title}</h1>
       <div>{description}</div>
       <p className="page-note">이 화면은 담당 팀원이 API 연결과 세부 UI를 구현할 자리입니다.</p>

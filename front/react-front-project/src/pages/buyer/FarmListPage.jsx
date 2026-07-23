@@ -106,14 +106,10 @@ function FarmListPage() {
     return (
         <main className="farm-list-page">
             <header className="farm-list-hero">
-                <p className="farm-list-label">
-                    AgroLink Farms
-                </p>
-
                 <h1>믿을 수 있는 농장을 만나보세요</h1>
 
                 <p>
-                    농부링크의 승인을 받은 농장과
+                    승인을 받은 농장과
                     판매 중인 농산물을 확인할 수 있습니다.
                 </p>
             </header>

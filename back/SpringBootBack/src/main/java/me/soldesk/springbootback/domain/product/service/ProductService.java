@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,15 +32,18 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final FarmRepository farmRepository;
     private final CategoryRepository categoryRepository;
+    private final ProductImageService productImageService;
 
     //의존성 주입
     public ProductService(ProductRepository productRepository,
                           FarmRepository farmRepository,
-                          CategoryRepository categoryRepository) {
+                          CategoryRepository categoryRepository,
+                          ProductImageService productImageService) {
 
         this.farmRepository = farmRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
+        this.productImageService = productImageService;
     }
 
     // 카테고리, 농장, 판매 상태를 조건으로 상품 목록을 조회합니다.
@@ -97,6 +101,7 @@ public class ProductService {
             Long categoryId,
             String saleType,
             String keyword,
+            boolean sameDayOnly,
             String sortOption,
             int page,
             int size
@@ -161,9 +166,13 @@ public class ProductService {
                 ? null
                 : keyword.trim().toLowerCase().replaceAll("\\s+", "");
 
+        String normalizedSameDayDelivery =
+                sameDayOnly ? "Y" : null;
+
         Page<Product> productPage = productRepository.findPublicProductPage(
                 categoryId,
                 normalizedSaleType,
+                normalizedSameDayDelivery,
                 normalizedKeyword,
                 PageRequest.of(page, size, sort)
         );
@@ -251,6 +260,7 @@ public class ProductService {
                         "상품을 찾을 수 없습니다."
                 ));
 
+        String previousImageUrl = product.getProductImageUrl();
         String currentProductStatus = product.getProductStatus();
 
         applyRequestToProduct(product, request);
@@ -269,6 +279,13 @@ public class ProductService {
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
+
+        if (!Objects.equals(
+                previousImageUrl,
+                savedProduct.getProductImageUrl()
+        )) {
+            productImageService.deleteStoredImage(previousImageUrl);
+        }
 
         return toResponse(savedProduct);
     }
@@ -452,6 +469,8 @@ public class ProductService {
             );
         }
 
+        String productImageUrl = product.getProductImageUrl();
+
         try {
             productRepository.delete(product);
             productRepository.flush();
@@ -461,6 +480,8 @@ public class ProductService {
                     "장바구니, 주문, 문의 또는 리뷰에 연결된 상품은 삭제할 수 없습니다. 판매 중지를 이용해 주세요."
             );
         }
+
+        productImageService.deleteStoredImage(productImageUrl);
     }
 
     //Product 엔티티를 ProductResponse DTO로 변환
