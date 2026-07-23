@@ -1,5 +1,11 @@
 /* PriceSearchPage.css */
 
+.page-card {
+    padding: 20px;
+    max-width: 1200px;
+    box-sizing: border-box;
+    margin: 40px auto;
+}
 .search-page-container {
     padding: 20px;
     max-width: 1200px;
