@@ -1,5 +1,6 @@
 ﻿import { NavLink, Outlet } from 'react-router-dom'
 
+import nongdamLogo from '../assets/brand/nongdam-logo.png'
 import { useNavigate } from 'react-router-dom'
 
 function AdminLayout() {
@@ -8,12 +9,16 @@ function AdminLayout() {
   return (
     <div className="role-layout">
       <aside className="side-menu">
+        <NavLink className="admin-sidebar-brand" to="/" aria-label="사이트 홈">
+          <img src={nongdamLogo} alt="농담 - 농산물을 담다" />
+        </NavLink>
+
         <div className="side-menu-navigation">
           <button type="button" onClick={() => navigate(-1)}>
             ← 이전 화면
           </button>
           <NavLink className="side-menu-home-link" to="/" end>
-            농부링크 홈
+            사이트 홈
           </NavLink>
         </div>
 

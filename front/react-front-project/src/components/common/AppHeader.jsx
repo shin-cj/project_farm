@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import nongdamLogo from "../../assets/brand/nongdam-logo.png";
 
 function getStoredUser() {
   try {
@@ -43,8 +44,8 @@ function AppHeader() {
 
   return (
     <header className="app-header">
-      <NavLink className="brand" to="/">
-        농부링크
+      <NavLink className="brand" to="/" aria-label="농담 홈">
+        <img src={nongdamLogo} alt="농담 - 농산물을 담다" />
       </NavLink>
 
       <nav className="main-nav" aria-label="주요 메뉴">

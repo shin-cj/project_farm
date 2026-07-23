@@ -1,6 +1,8 @@
 package me.soldesk.springbootback.domain.farm.service;
 
 import me.soldesk.springbootback.domain.farm.dto.FarmImageUploadResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,12 @@ import java.util.UUID;
 
 @Service
 public class FarmImageService {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(FarmImageService.class);
+
+    private static final String FARM_IMAGE_URL_PREFIX =
+            "/uploads/farm/";
 
     /** 한 이미지의 최대 크기는 5MB입니다. */
     private static final long MAX_FILE_SIZE =
@@ -78,9 +86,39 @@ public class FarmImageService {
         }
 
         String imageUrl =
-                "/uploads/farm/" + storedFileName;
+                FARM_IMAGE_URL_PREFIX + storedFileName;
 
         return new FarmImageUploadResponse(imageUrl);
+    }
+
+    /** 우리 서버에 저장된 농장 이미지만 삭제합니다. 외부 이미지 주소는 건드리지 않습니다. */
+    public void deleteStoredImage(String imageUrl) {
+        if (imageUrl == null
+                || !imageUrl.startsWith(FARM_IMAGE_URL_PREFIX)) {
+            return;
+        }
+
+        String storedFileName =
+                imageUrl.substring(FARM_IMAGE_URL_PREFIX.length());
+
+        if (storedFileName.isBlank()) {
+            return;
+        }
+
+        try {
+            Path storedFilePath = farmImageDirectory
+                    .resolve(storedFileName)
+                    .normalize();
+
+            if (!storedFilePath.startsWith(farmImageDirectory)) {
+                log.warn("농장 이미지 폴더 밖의 파일 삭제 요청을 무시합니다: {}", imageUrl);
+                return;
+            }
+
+            Files.deleteIfExists(storedFilePath);
+        } catch (IOException | RuntimeException exception) {
+            log.warn("사용하지 않는 농장 이미지를 삭제하지 못했습니다: {}", imageUrl, exception);
+        }
     }
 
     private void validateImage(MultipartFile image) {
