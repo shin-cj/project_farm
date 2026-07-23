@@ -81,7 +81,7 @@ function DeliveryManagementPage() {
     try {
       setLoading(true);
       const data = await getSellerOrders(sellerId, farmId || null);
-      setOrders(data);
+      setOrders(data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
       setSelectedOrder(null);
       setOrderId("");
       setCourierName("");

@@ -44,11 +44,23 @@ public class DeliveryService {
     }
 
     public DeliveryResponse registerDelivery(DeliveryRequest deliveryRequest) {
+        if (deliveryRequest.getOrderId() == null) {
+            throw new IllegalArgumentException("배송 등록할 주문을 선택해주세요.");
+        }
+
         Order order = orderRepository.findById(deliveryRequest.getOrderId())
                 .orElseThrow(() -> new IllegalArgumentException("주문 정보가 없습니다."));
 
+        if (!"PAID".equals(order.getOrderStatus())) {
+            throw new IllegalArgumentException("결제 완료 주문만 배송 등록할 수 있습니다.");
+        }
+
         Delivery delivery = deliveryRepository.findByOrderId(deliveryRequest.getOrderId())
                 .orElse(new Delivery());
+
+        if ("DELIVERED".equals(delivery.getDeliveryStatus())) {
+            throw new IllegalArgumentException("이미 배송 완료된 주문은 수정할 수 없습니다.");
+        }
 
         String deliveryType = deliveryRequest.getDeliveryType() == null
                 || deliveryRequest.getDeliveryType().isBlank()
@@ -63,12 +75,20 @@ public class DeliveryService {
         delivery.setDeliveryType(deliveryType);
 
         if ("SAME_DAY".equals(deliveryType)) {
+            if (isBlank(deliveryRequest.getDeliveryPersonName()) || isBlank(deliveryRequest.getDeliveryPersonPhone())) {
+                throw new IllegalArgumentException("당일배송 담당자 이름과 연락처를 입력해주세요.");
+            }
+
             delivery.setCourierName(null);
             delivery.setTrackingNumber(null);
             delivery.setDeliveryPersonName(deliveryRequest.getDeliveryPersonName());
             delivery.setDeliveryPersonPhone(deliveryRequest.getDeliveryPersonPhone());
             delivery.setDeliveryMemo(deliveryRequest.getDeliveryMemo());
         } else {
+            if (isBlank(deliveryRequest.getCourierName()) || isBlank(deliveryRequest.getTrackingNumber())) {
+                throw new IllegalArgumentException("택배사와 송장번호를 입력해주세요.");
+            }
+
             delivery.setCourierName(deliveryRequest.getCourierName());
             delivery.setTrackingNumber(deliveryRequest.getTrackingNumber());
             delivery.setDeliveryPersonName(null);
@@ -96,10 +116,19 @@ public class DeliveryService {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new IllegalArgumentException("배송 정보가 없습니다."));
 
-        delivery.setDeliveryStatus(request.getDeliveryStatus());
+        String currentStatus = delivery.getDeliveryStatus();
+        String nextStatus = request.getDeliveryStatus() == null ? null : request.getDeliveryStatus().trim().toUpperCase();
+
+        validateDeliveryStatusChange(currentStatus, nextStatus);
+
+        delivery.setDeliveryStatus(nextStatus);
         delivery.setUpdatedAt(LocalDateTime.now());
 
-        if ("DELIVERED".equals(request.getDeliveryStatus())) {
+        if ("SHIPPING".equals(nextStatus) && delivery.getShippedAt() == null) {
+            delivery.setShippedAt(LocalDateTime.now());
+        }
+
+        if ("DELIVERED".equals(nextStatus)) {
             delivery.setDeliveredAt(LocalDateTime.now());
         }
 
@@ -125,5 +154,27 @@ public class DeliveryService {
         response.setUpdatedAt(delivery.getUpdatedAt());
 
         return response;
+    }
+
+    private void validateDeliveryStatusChange(String currentStatus, String nextStatus) {
+        if (!List.of("READY", "SHIPPING", "DELIVERED").contains(nextStatus)) {
+            throw new IllegalArgumentException("변경할 수 없는 배송 상태입니다.");
+        }
+
+        if ("DELIVERED".equals(currentStatus)) {
+            throw new IllegalArgumentException("이미 배송 완료된 주문입니다.");
+        }
+
+        if ("SHIPPING".equals(currentStatus) && "READY".equals(nextStatus)) {
+            throw new IllegalArgumentException("배송 중인 주문은 배송 준비중으로 되돌릴 수 없습니다.");
+        }
+
+        if ("READY".equals(currentStatus) && "DELIVERED".equals(nextStatus)) {
+            throw new IllegalArgumentException("배송 준비중 주문은 배송 중 처리 후 완료할 수 있습니다.");
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 }

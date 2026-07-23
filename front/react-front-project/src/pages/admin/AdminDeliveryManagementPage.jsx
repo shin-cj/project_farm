@@ -14,6 +14,11 @@ const filterOptions = [
   { value: "DELIVERED", label: "배송 완료" },
 ];
 
+const saleTypeLabel = {
+  RETAIL: "소매",
+  WHOLESALE: "도매",
+};
+
 function formatDate(value) {
   if (!value) {
     return "-";
@@ -253,6 +258,33 @@ function AdminDeliveryManagementPage() {
                 <span style={{ display: "block", marginTop: "6px", color: "#68756d" }}>
                   결제금액: {formatPrice(order.finalPrice)}
                 </span>
+                <div
+                  style={{
+                    marginTop: "12px",
+                    padding: "12px",
+                    border: "1px solid #dce6dd",
+                    borderRadius: "10px",
+                    background: "#ffffff",
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: "8px", color: "#213328", fontWeight: 900 }}>
+                    {order.farmName || "농장 정보 없음"}
+                    <small
+                      style={{
+                        padding: "3px 8px",
+                        borderRadius: "999px",
+                        background: order.saleType === "WHOLESALE" ? "#eef2ff" : "#e5f4ea",
+                        color: order.saleType === "WHOLESALE" ? "#3730a3" : "#216b3a",
+                        fontWeight: 900,
+                      }}
+                    >
+                      {saleTypeLabel[order.saleType] || "소매"}
+                    </small>
+                  </span>
+                  <span style={{ display: "block", marginTop: "6px", color: "#68756d", lineHeight: 1.5 }}>
+                    {[order.farmRegion, order.farmAddress, order.farmDetailAddress].filter(Boolean).join(" ") || "농장 주소 정보 없음"}
+                  </span>
+                </div>
               </div>
 
               <div>

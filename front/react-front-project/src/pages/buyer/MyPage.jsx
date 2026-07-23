@@ -54,7 +54,7 @@ function MyPage() {
       setLoading(true);
       setError("");
       const response = await orderApi.getOrdersByBuyer(buyerId);
-      setOrders(response.data);
+      setOrders(response.data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
     } catch (error) {
       console.error(error);
       setError("주문 요약 정보를 불러오지 못했습니다.");
