@@ -4,6 +4,8 @@ import me.soldesk.springbootback.domain.cartitem.entity.CartItem;
 import me.soldesk.springbootback.domain.cartitem.repository.CartItemRepository;
 import me.soldesk.springbootback.domain.delivery.entity.Delivery;
 import me.soldesk.springbootback.domain.delivery.repository.DeliveryRepository;
+import me.soldesk.springbootback.domain.farm.entity.Farm;
+import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.order.dto.OrderRequest;
 import me.soldesk.springbootback.domain.order.dto.OrderResponse;
 import me.soldesk.springbootback.domain.order.entity.Order;
@@ -30,6 +32,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final PaymentRepository paymentRepository;
     private final DeliveryRepository deliveryRepository;
+    private final FarmRepository farmRepository;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -37,7 +40,8 @@ public class OrderService {
             CartItemRepository cartItemRepository,
             ProductRepository productRepository,
             PaymentRepository paymentRepository,
-            DeliveryRepository deliveryRepository
+            DeliveryRepository deliveryRepository,
+            FarmRepository farmRepository
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -45,6 +49,7 @@ public class OrderService {
         this.productRepository = productRepository;
         this.paymentRepository = paymentRepository;
         this.deliveryRepository = deliveryRepository;
+        this.farmRepository = farmRepository;
     }
 
     @Transactional
@@ -229,6 +234,7 @@ public class OrderService {
 
         Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
         Optional<Delivery> deliveryOptional = deliveryRepository.findByOrderId(order.getOrderId());
+        Optional<Farm> farmOptional = farmRepository.findById(order.getFarmId());
 
         OrderResponse response = new OrderResponse();
         response.setOrderId(order.getOrderId());
@@ -236,6 +242,11 @@ public class OrderService {
         response.setOrderName(orderName);
         response.setBuyerId(order.getBuyerId());
         response.setFarmId(order.getFarmId());
+        response.setFarmName(farmOptional.map(Farm::getFarmName).orElse("농장 정보 없음"));
+        response.setFarmRegion(farmOptional.map(Farm::getRegion).orElse(null));
+        response.setFarmAddress(farmOptional.map(Farm::getFarmAddress).orElse(null));
+        response.setFarmDetailAddress(farmOptional.map(Farm::getFarmDetailAddress).orElse(null));
+        response.setSaleType(farmOptional.map(Farm::getSaleType).orElse("RETAIL"));
         response.setTotalProductPrice(order.getTotalProductPrice());
         response.setDeliveryFee(order.getDeliveryFee());
         response.setFinalPrice(order.getFinalPrice());
