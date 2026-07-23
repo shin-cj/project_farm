@@ -8,6 +8,7 @@ import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.report.dto.ReportResolutionRequest;
 import me.soldesk.springbootback.domain.report.entity.Report;
+import me.soldesk.springbootback.domain.sellerpenalty.dto.PenaltyRevokeRequest;
 import me.soldesk.springbootback.domain.sellerpenalty.dto.SellerPenaltyResponse;
 import me.soldesk.springbootback.domain.sellerpenalty.entity.SellerPenalty;
 import me.soldesk.springbootback.domain.sellerpenalty.repository.SellerPenaltyRepository;
@@ -151,6 +152,9 @@ public class SellerPenaltyService {
         response.setCreatedBy(penalty.getCreatedBy());
         response.setCreatedAt(penalty.getCreatedAt());
         response.setExpiresAt(penalty.getExpiresAt());
+        response.setRevokedBy(penalty.getRevokedBy());
+        response.setRevokedAt(penalty.getRevokedAt());
+        response.setRevokeReason(penalty.getRevokeReason());
 
         if(penalty.getProductId() != null){
             productRepository
@@ -199,6 +203,211 @@ public class SellerPenaltyService {
 
         return sellerPenaltyRepository
                 .findBySellerIdOrderByCreatedAtDesc(sellerId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public SellerPenaltyResponse revokePenalty(
+            Long penaltyId,
+            PenaltyRevokeRequest request
+    ){
+        if(penaltyId == null){
+            throw new IllegalArgumentException("페널티 번호가 없습니다.");
+        }
+
+        if(request == null){
+            throw new IllegalArgumentException("복구 요청 정보가 없습니다.");
+        }
+
+        if(request.getAdminId() == null){
+            throw new IllegalArgumentException("관리자 정보가 없습니다.");
+        }
+
+        if(request.getRevokeReason() == null || request.getRevokeReason().isBlank()){
+            throw new IllegalArgumentException("복구 사유를 입력해 주세요.");
+        }
+
+        SellerPenalty penalty = sellerPenaltyRepository
+                .findById(penaltyId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("페널티 정보를 찾을 수 없습니다."));
+
+        if("REVOKED".equals(penalty.getPenaltyStatus())){
+            throw new IllegalArgumentException("이미 원상 복구 된 페널티 입니다.");
+        }
+
+        User admin = userRepository
+                .findById(request.getAdminId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("관리자 정보를 찾을 수 없습니다."));
+
+        if(!Long.valueOf(1L).equals(admin.getRoleId())){
+            throw new IllegalArgumentException("관리자만 페널티를 복구할 수 있습니다.");
+        }
+
+        restorePenaltyAction(penalty);
+
+        penalty.setPenaltyStatus("REVOKED");
+        penalty.setRevokedBy(request.getAdminId());
+        penalty.setRevokedAt(LocalDateTime.now());
+        penalty.setRevokeReason(request.getRevokeReason().trim());
+
+        SellerPenalty savedPenalty =
+                sellerPenaltyRepository.saveAndFlush(penalty);
+
+        return toResponse(savedPenalty);
+    }
+
+    private void restorePenaltyAction(SellerPenalty penalty){
+
+        switch (penalty.getPenaltyType()){
+            case "WARNING" -> {
+
+            }
+
+            case "PRODUCT_SUSPENSION" ->
+                restoreProduct(penalty);
+
+            case "SELLER_SUSPENSION" ->
+                restoreSeller(penalty);
+
+            default ->
+                throw new IllegalArgumentException("복구할 수 없는 페널티 유형입니다.");
+        }
+    }
+
+    private void restoreProduct(SellerPenalty penalty){
+
+        if(penalty.getProductId() == null){
+            throw new IllegalArgumentException("복구할 상품 정보가 없습니다.");
+        }
+
+        long otherPenaltyCount =
+                sellerPenaltyRepository.countOtherProductPenalties(
+                        penalty.getProductId(),
+                        "PRODUCT_SUSPENSION",
+                        "ACTIVE",
+                        penalty.getPenaltyId()
+                );
+
+        if (otherPenaltyCount > 0) {
+            return;
+        }
+
+        Product product = productRepository
+                .findById(penalty.getProductId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("복구할 상품을 찾을 수 없습니다."));
+
+        if(product.getStockQuantity() != null
+                && product.getStockQuantity() > 0){
+            product.setProductStatus("ON_SALE");
+        }else {
+            product.setProductStatus("SOLD_OUT");
+        }
+        product.setUpdatedAt(LocalDateTime.now());
+    }
+
+    private void restoreSeller(SellerPenalty penalty){
+        long otherPenaltyCount =
+                sellerPenaltyRepository.countOtherSellerPenalties(
+                        penalty.getSellerId(),
+                        "SELLER_SUSPENSION",
+                        "ACTIVE",
+                        penalty.getPenaltyId()
+                );
+        if (otherPenaltyCount > 0) {
+            return;
+        }
+
+        User seller = userRepository
+                .findById(penalty.getSellerId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("복구할 판매자를 찾을 수 없습니다."));
+
+        seller.setStatus("ACTIVE");
+        seller.setUpdatedAt(LocalDateTime.now());
+
+        List<Farm> farms =
+                farmRepository.findBySellerId(penalty.getSellerId());
+
+        for (Farm farm : farms) {
+            if("SUSPENDED".equals(farm.getApprovalStatus())){
+                farm.setApprovalStatus("APPROVED");
+                farm.setUpdatedAt(LocalDateTime.now());
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<SellerPenaltyResponse> getAdminSellerPenalties(
+            String penaltyStatus
+    ){
+        String normalizedStatus =
+                penaltyStatus == null || penaltyStatus.isBlank()
+                        ? "ACTIVE"
+                        : penaltyStatus.trim().toUpperCase();
+
+        List<String> allowedStatuses =
+                List.of("ALL", "ACTIVE", "REVOKED");
+
+        if(!allowedStatuses.contains(normalizedStatus)){
+            throw new IllegalArgumentException("올바르지 않은 페널티 상태입니다.");
+        }
+
+        List<SellerPenalty> penalties;
+
+        if("ALL".equals(normalizedStatus)){
+            penalties =
+                    sellerPenaltyRepository
+                            .findAllOrderByCreatedAtDesc();
+        }else{
+            penalties =
+                    sellerPenaltyRepository
+                            .findByPenaltyStatusOrderByCreatedAtDesc(normalizedStatus);
+        }
+
+        return penalties
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<SellerPenaltyResponse> getAdminPenalties(
+            String penaltyStatus
+    ) {
+        String normalizedStatus =
+                penaltyStatus == null || penaltyStatus.isBlank()
+                        ? "ACTIVE"
+                        : penaltyStatus.trim().toUpperCase();
+
+        List<String> allowedStatuses =
+                List.of("ALL", "ACTIVE", "REVOKED");
+
+        if (!allowedStatuses.contains(normalizedStatus)) {
+            throw new IllegalArgumentException(
+                    "올바르지 않은 페널티 상태입니다."
+            );
+        }
+
+        List<SellerPenalty> penalties;
+
+        if ("ALL".equals(normalizedStatus)) {
+            penalties =
+                    sellerPenaltyRepository
+                            .findAllOrderByCreatedAtDesc();
+        } else {
+            penalties =
+                    sellerPenaltyRepository
+                            .findByPenaltyStatusOrderByCreatedAtDesc(
+                                    normalizedStatus
+                            );
+        }
+
+        return penalties
                 .stream()
                 .map(this::toResponse)
                 .toList();

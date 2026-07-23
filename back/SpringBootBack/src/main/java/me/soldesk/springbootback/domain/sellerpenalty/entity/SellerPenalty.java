@@ -56,4 +56,13 @@ public class SellerPenalty {
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
+
+    @Column(name = "revoked_by")
+    private Long revokedBy;
+
+    @Column(name = "revoked_at")
+    private LocalDateTime revokedAt;
+
+    @Column(name = "revoke_reason", length = 1000)
+    private String revokeReason;
 }
