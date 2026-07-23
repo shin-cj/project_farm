@@ -15,15 +15,21 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class FarmService {
 
     private final FarmRepository farmRepository;
+    private final FarmImageService farmImageService;
 
     //주입
-    public FarmService(FarmRepository farmRepository) {
+    public FarmService(
+            FarmRepository farmRepository,
+            FarmImageService farmImageService
+    ) {
         this.farmRepository = farmRepository;
+        this.farmImageService = farmImageService;
     }
 
     //농장 목록 조회
@@ -132,11 +138,20 @@ public class FarmService {
             );
         }
 
+        String previousImageUrl = farm.getFarmImageUrl();
+
         applyRequestToFarm(farm, request);
 
         farm.setUpdatedAt(LocalDateTime.now());
 
         Farm savedFarm = farmRepository.save(farm);
+
+        if (!Objects.equals(
+                previousImageUrl,
+                savedFarm.getFarmImageUrl()
+        )) {
+            farmImageService.deleteStoredImage(previousImageUrl);
+        }
 
         return toResponse(savedFarm);
     }
@@ -206,6 +221,8 @@ public class FarmService {
             );
         }
 
+        String farmImageUrl = farm.getFarmImageUrl();
+
         try {
             farmRepository.delete(farm);
             farmRepository.flush();
@@ -215,6 +232,8 @@ public class FarmService {
                     "등록 상품이나 주문 내역이 있는 농장은 삭제할 수 없습니다."
             );
         }
+
+        farmImageService.deleteStoredImage(farmImageUrl);
     }
 
     //request 값을 엔터티에 적용하는 공통 메서드

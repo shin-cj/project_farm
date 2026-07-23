@@ -371,7 +371,6 @@ function ReportManagementPage() {
     <section className="page-card report-management-page">
       <header className="report-page-header">
         <div>
-          <p className="page-label">AgroLink Admin</p>
           <h1>신고 관리</h1>
         </div>
 

@@ -108,7 +108,7 @@ function OrderHistoryPage() {
       setLoading(true);
       setError("");
       const response = await orderApi.getOrdersByBuyer(buyerId);
-      setOrders(response.data);
+      setOrders(response.data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
       setCurrentPage(1);
     } catch {
       setError("주문 내역을 불러오지 못했습니다.");

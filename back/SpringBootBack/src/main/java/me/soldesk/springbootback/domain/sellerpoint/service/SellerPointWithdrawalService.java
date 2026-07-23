@@ -59,11 +59,18 @@ public class SellerPointWithdrawalService {
         SellerPointWithdrawal withdrawal = sellerPointWithdrawalRepository.findById(withdrawalId)
                 .orElseThrow(() -> new IllegalArgumentException("출금 신청 정보가 없습니다."));
 
-        String nextStatus = request.getWithdrawalStatus();
+        if (request == null || isBlank(request.getWithdrawalStatus())) {
+            throw new IllegalArgumentException("변경할 출금 상태를 선택해주세요.");
+        }
+
+        String currentStatus = withdrawal.getWithdrawalStatus();
+        String nextStatus = request.getWithdrawalStatus().trim().toUpperCase();
 
         if (!List.of("APPROVED", "REJECTED", "COMPLETED").contains(nextStatus)) {
             throw new IllegalArgumentException("변경할 수 없는 출금 상태입니다.");
         }
+
+        validateWithdrawalStatusChange(currentStatus, nextStatus, request);
 
         withdrawal.setWithdrawalStatus(nextStatus);
         withdrawal.setUpdatedAt(LocalDateTime.now());
@@ -100,5 +107,25 @@ public class SellerPointWithdrawalService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private void validateWithdrawalStatusChange(String currentStatus,
+                                                String nextStatus,
+                                                SellerPointWithdrawalStatusRequest request) {
+        if ("REJECTED".equals(currentStatus) || "COMPLETED".equals(currentStatus)) {
+            throw new IllegalArgumentException("이미 처리 완료된 출금 신청입니다.");
+        }
+
+        if ("APPROVED".equals(currentStatus) && "REJECTED".equals(nextStatus)) {
+            throw new IllegalArgumentException("이미 승인된 출금 신청은 반려할 수 없습니다.");
+        }
+
+        if ("REQUESTED".equals(currentStatus) && "COMPLETED".equals(nextStatus)) {
+            throw new IllegalArgumentException("출금 신청은 승인 후 지급 완료 처리할 수 있습니다.");
+        }
+
+        if ("REJECTED".equals(nextStatus) && isBlank(request.getRejectReason())) {
+            throw new IllegalArgumentException("반려 사유를 입력해주세요.");
+        }
     }
 }
