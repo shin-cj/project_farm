@@ -7,11 +7,17 @@ import CustomGraphTable from '../../components/common/CustomGraphTable.jsx';
 
 function SellerPriceSearchPage() {
 
-    const today = new Date().toLocaleString('sv-SE').substring(0, 10);
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 30;
 
+    const today = new Date().toLocaleString('sv-SE').substring(0, 10);
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+
+    const yesterday = yesterdayDate.toLocaleString('sv-SE').substring(0, 10);
 
     const [searchParams, setSearchParams] = useState({
-        exmnYmdGte: `${today}`, //조회 시작일
+        exmnYmdGte: `${yesterday}`, //조회 시작일
         exmnYmdLte: `${today}`, //조회 종료일
         seCd: '02',       // 구분
         ctgryCd: '100', // 부류 (기본값: 식량작물)
@@ -132,6 +138,11 @@ function SellerPriceSearchPage() {
             });
         }
     };
+    const allData = apiState.data?.list || [];
+    const indexOfLast = currentPage * pageSize;
+    const indexOfFirst = indexOfLast - pageSize;
+    const currentList = allData.slice(indexOfFirst, indexOfLast);
+    const totalPages = Math.ceil((apiState.data?.totalCount || 0) / pageSize);
 
     return (
         <section className="page-card">
@@ -230,6 +241,7 @@ function SellerPriceSearchPage() {
                         xKey="date"
                         yKey="todayAvgPrice"
                         height="250px"
+                        lineColors={['#3f7d20']}
                         renderTooltip={(item) => (
                             <>
                                 <strong>{item.date ? String(item.date).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'} 시세</strong>
@@ -256,7 +268,7 @@ function SellerPriceSearchPage() {
                             </tr>
                             </thead>
                             <tbody>
-                            {apiState.data.list.map((row, idx) => (
+                            {currentList.map((row, idx) => (
                                 <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#fcfcfc' }}>
                                     <td>
                                         {row.exmn_ymd ? String(row.exmn_ymd).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') : '-'}
@@ -271,6 +283,26 @@ function SellerPriceSearchPage() {
                             ))}
                             </tbody>
                         </table>
+                        <div className="pagination-container" style={{ marginTop: '20px', textAlign: 'center' }}>
+                            <button onClick={() => setCurrentPage(prev => Math.max(prev-1, 1))}
+                                    disabled={currentPage === 1}> ‹ </button>
+
+                            {Array.from({length : totalPages}, (_, i) => i+1).map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    style={{
+                                        margin: '0 4px',
+                                        fontWeight: currentPage === page ? 'bold' : 'normal',
+                                        backgroundColor: currentPage === page ? '#e2e8f0' : '#fff'
+                                    }}>
+                                    {page}
+                                </button>
+                            ))}
+
+                            <button onClick={() => setCurrentPage(prev => Math.min(prev+1, totalPages))}
+                                    disabled={currentPage === totalPages || totalPages === 0}> › </button>
+                        </div>
                     </div>
                 </>
             ) : (
