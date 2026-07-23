@@ -319,7 +319,7 @@ function ProductEditPage() {
                 productImageUrl,
             })
 
-            alert('상품 정보가 수정되었습니다.')
+            alert('상품 정보가 수정되었습니다. 관리자 승인 후 다시 판매됩니다.')
             navigate('/seller/products')
         } catch (err) {
             console.error(err)
