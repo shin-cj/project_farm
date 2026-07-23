@@ -12,6 +12,7 @@ import {
 } from "../../api/salesApi.js";
 import { getLoginSellerId } from "../../config/devAccount.js";
 import "./SellerDashboardPage.css";
+import SellerPenaltyViewer from "../../components/penalty/SellerPenaltyViewer.jsx";
 
 function formatPoint(value) {
   return `${Number(value || 0).toLocaleString()}P`;
@@ -270,6 +271,8 @@ function SellerMyPage() {
           </strong>
         </article>
       </section>
+
+      {sellerId && (<SellerPenaltyViewer sellerId={sellerId} />)}
 
       <section className="seller-withdrawal-section">
         <article className="seller-withdrawal-card">

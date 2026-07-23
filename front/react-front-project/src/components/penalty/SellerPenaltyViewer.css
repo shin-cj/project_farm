@@ -1,0 +1,314 @@
+.seller-penalty-viewer,
+.seller-penalty-viewer * {
+    box-sizing: border-box;
+}
+
+.seller-penalty-viewer {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto 24px;
+    padding: 22px;
+    border: 1px solid #e1e8df;
+    border-radius: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
+    color: #243b2f;
+}
+
+.seller-penalty-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
+.seller-penalty-heading p {
+    margin: 0 0 7px;
+    color: #3f7d20;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.seller-penalty-heading h2 {
+    margin: 0;
+    font-size: 20px;
+    letter-spacing: 0;
+}
+
+.seller-penalty-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.seller-penalty-summary span {
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.seller-penalty-summary strong {
+    min-width: 58px;
+    padding: 7px 11px;
+    border: 1px solid #efd18d;
+    border-radius: 999px;
+    background-color: #fff8e7;
+    color: #8a5a00;
+    font-size: 14px;
+    text-align: center;
+}
+
+.seller-penalty-state,
+.seller-penalty-error {
+    margin: 0;
+    padding: 24px 18px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.seller-penalty-state {
+    border: 1px dashed #cbd6ce;
+    background-color: #f8faf7;
+    color: #6b7280;
+}
+
+.seller-penalty-error {
+    border: 1px solid #fecaca;
+    background-color: #fff7f7;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.seller-penalty-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.seller-penalty-list li {
+    min-width: 0;
+}
+
+.seller-penalty-list li > button {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    min-height: 74px;
+    padding: 14px 16px;
+    border: 1px solid #e6ece4;
+    border-radius: 12px;
+    background-color: #f8faf7;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease,
+        box-shadow 160ms ease, transform 120ms ease;
+}
+
+.seller-penalty-list li > button:hover {
+    border-color: #a9c49b;
+    background-color: #f3f8f1;
+    box-shadow: 0 6px 16px rgba(36, 59, 47, 0.08);
+}
+
+.seller-penalty-list li > button:focus-visible {
+    border-color: #3f7d20;
+    outline: 3px solid rgba(63, 125, 32, 0.16);
+    outline-offset: 2px;
+}
+
+.seller-penalty-list li > button:active {
+    transform: translateY(1px);
+}
+
+.seller-penalty-list li > button > div {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+}
+
+.seller-penalty-list li > button > div:last-child {
+    justify-items: end;
+    min-width: 104px;
+}
+
+.seller-penalty-list strong {
+    overflow: hidden;
+    color: #243b2f;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seller-penalty-list span {
+    overflow: hidden;
+    color: #6b7280;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seller-penalty-list b {
+    color: #8a5a00;
+    font-size: 16px;
+}
+
+.seller-penalty-backdrop {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background-color: rgba(24, 33, 27, 0.56);
+    animation: seller-penalty-backdrop-in 160ms ease-out;
+}
+
+.seller-penalty-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(700px, calc(100vw - 48px));
+    max-height: min(90dvh, 760px);
+    overflow: hidden;
+    border: 1px solid #d9e1db;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 24px 70px rgba(20, 35, 25, 0.28);
+    animation: seller-penalty-modal-in 180ms ease-out;
+}
+
+.seller-penalty-modal > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex: 0 0 auto;
+    padding: 18px 22px;
+    border-bottom: 1px solid #e4e9e5;
+}
+
+.seller-penalty-modal > header h2 {
+    margin: 0;
+    font-size: 19px;
+    letter-spacing: 0;
+}
+
+.seller-penalty-modal > header button {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid #d6ded8;
+    border-radius: 8px;
+    background-color: #ffffff;
+    color: #526057;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 140ms ease, transform 120ms ease;
+}
+
+.seller-penalty-modal > header button:hover {
+    background-color: #f0f4f1;
+}
+
+.seller-penalty-modal > header button:focus-visible {
+    outline: 3px solid rgba(63, 125, 32, 0.16);
+    outline-offset: 2px;
+}
+
+.seller-penalty-modal > header button:active {
+    transform: scale(0.96);
+}
+
+.seller-penalty-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 22px;
+}
+
+@keyframes seller-penalty-backdrop-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes seller-penalty-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 700px) {
+    .seller-penalty-viewer {
+        padding: 18px;
+    }
+
+    .seller-penalty-heading {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .seller-penalty-summary {
+        justify-content: space-between;
+    }
+
+    .seller-penalty-list li > button {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .seller-penalty-list li > button > div:last-child {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        justify-items: normal;
+        min-width: 0;
+    }
+
+    .seller-penalty-backdrop {
+        align-items: end;
+        padding: 12px;
+    }
+
+    .seller-penalty-modal {
+        width: 100%;
+        max-height: calc(100dvh - 24px);
+    }
+
+    .seller-penalty-modal > header,
+    .seller-penalty-modal-body {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .seller-penalty-backdrop,
+    .seller-penalty-modal {
+        animation: none;
+    }
+
+    .seller-penalty-list li > button,
+    .seller-penalty-modal > header button {
+        transition: none;
+    }
+}
