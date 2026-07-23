@@ -164,68 +164,30 @@ function SellerLayout() {
               <div className="seller-sidebar-group-menu">
                 <NavLink to="/seller/orders" className={getMenuClass}>
                   <SidebarIcon name="order" />
-                  <span>주문·배송 관리</span>
+                  <span>주문/배송 관리</span>
                 </NavLink>
 
-          <p className="seller-sidebar-title">판매자 메뉴</p>
+                <NavLink to="/seller/statistics" className={getMenuClass}>
+                  <SidebarIcon name="statistics" />
+                  <span>판매 통계</span>
+                </NavLink>
 
-          <nav className="seller-sidebar-menu">
-            <NavLink
-                to="/seller"
-                end
-                className={getMenuClass}
-            >
-              <span>⌂</span>
-              대시보드
-            </NavLink>
+                <NavLink to="/seller/search" className={getMenuClass}>
+                  <SidebarIcon name="statistics" />
+                  <span>시세 검색</span>
+                </NavLink>
+              </div>
+            </section>
 
-            <NavLink
-                to="/seller/mypage"
-                className={getMenuClass}
-            >
-              <span>◉</span>
-              마이페이지
-            </NavLink>
-
-            <NavLink
-                to="/seller/farms"
-                className={getMenuClass}
-            >
-              <span>♧</span>
-              농장 관리
-            </NavLink>
-
-            <NavLink
-                to="/seller/products"
-                className={getMenuClass}
-            >
-              <span>▣</span>
-              상품 관리
-            </NavLink>
-
-            <NavLink
-                to="/seller/orders"
-                className={getMenuClass}
-            >
-              <span>▤</span>
-              주문/배송 관리
-            </NavLink>
-
-            <NavLink
-                to="/seller/statistics"
-                className={getMenuClass}
-            >
-              <span>▥</span>
-              판매 통계
-            </NavLink>
-
-            <NavLink
-                to="/seller/search"
-                className={getMenuClass}
-            >
-              <span style={{fontSize: '30px', display:'inline-block', transform:'translate(5px, -5px)'}}>⌕</span>
-              시세 검색
-            </NavLink>
+            <section className="seller-sidebar-group">
+              <p className="seller-sidebar-title">내 계정</p>
+              <div className="seller-sidebar-group-menu">
+                <NavLink to="/seller/mypage" className={getMenuClass}>
+                  <SidebarIcon name="user" />
+                  <span>마이페이지</span>
+                </NavLink>
+              </div>
+            </section>
           </nav>
 
           <div className="seller-sidebar-footer">
