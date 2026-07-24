@@ -16,10 +16,10 @@ public class MarketPriceController {
     private  final MarketPriceService marketPriceService;
 
     @GetMapping("/fetch")
-    public String triggerFetch() {
-        marketPriceService.fetchPriceSequel();
+    public ResponseEntity<String> manualUpdate() {
         marketPriceService.fetchRecent();
-        return "시세 업데이트 중";
+        marketPriceService.fetchPriceSequel();
+        return ResponseEntity.ok("시세 데이터 수동 업데이트 성공!");
     }
 
     @GetMapping("/search-day")
