@@ -15,9 +15,15 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
+    flex-wrap: wrap;
     gap: 24px;
     padding-bottom: 22px;
     border-bottom: 1px solid #e3e8e4;
+}
+
+.admin-user-header > div:first-child {
+    flex: 1 1 180px;
+    min-width: 180px;
 }
 
 .admin-user-header h1 {
@@ -35,9 +41,49 @@
     font-weight: 700;
 }
 
+.admin-user-header > select {
+    flex: 0 1 190px;
+    width: 190px;
+    min-width: 170px;
+    height: 42px;
+    box-sizing: border-box;
+    padding: 0 38px 0 13px;
+    border: 1px solid #cbd6ce;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #2f4036;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 750;
+    cursor: pointer;
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.admin-user-header > select:hover {
+    border-color: #8eaa96;
+    background-color: #f8faf8;
+}
+
+.admin-user-header > select:focus {
+    border-color: #39764d;
+    outline: 0;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(45, 126, 75, 0.14);
+}
+
+.admin-user-header > select option {
+    background: #ffffff;
+    color: #2f4036;
+    font-weight: 600;
+}
+
 .admin-user-search {
     display: flex;
     align-items: center;
+    flex: 1 1 340px;
     width: min(100%, 460px);
     gap: 8px;
 }
@@ -99,6 +145,7 @@
 }
 
 .admin-user-search button:focus-visible,
+.admin-user-header > select:focus-visible,
 .admin-user-filter button:focus-visible,
 .admin-user-pagination button:focus-visible {
     outline: 3px solid rgba(45, 126, 75, 0.2);
@@ -399,6 +446,18 @@
         align-items: stretch;
         flex-direction: column;
         gap: 16px;
+    }
+
+    .admin-user-header > div:first-child,
+    .admin-user-header > select,
+    .admin-user-search {
+        width: 100%;
+        min-width: 0;
+        flex-basis: auto;
+    }
+
+    .admin-user-header > select {
+        padding-right: 42px;
     }
 
     .admin-user-search {
