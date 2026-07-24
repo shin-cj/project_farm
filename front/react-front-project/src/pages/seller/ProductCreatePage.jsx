@@ -21,6 +21,7 @@ function ProductCreatePage() {
     const [farms, setFarms] = useState([])
     const [registeredFarmCount, setRegisteredFarmCount] = useState(0)
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [imagePreviewUrl, setImagePreviewUrl] = useState('')
     const [formLoading, setFormLoading] = useState(true)
@@ -157,12 +158,15 @@ function ProductCreatePage() {
             return
         }
 
+        setIsDirty(true)
         setSelectedImageFile(imageFile)
         setImagePreviewUrl(URL.createObjectURL(imageFile))
     }
 
     function handleChange(event) {
         const {name, value} = event.target
+
+        setIsDirty(true)
 
         if (name === 'farmId') {
             const nextFarm = farms.find(
@@ -302,6 +306,20 @@ function ProductCreatePage() {
     }
 
     function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                '작성 중인 상품 정보가 사라집니다. 닫으시겠습니까?'
+            )
+
+            if (!confirmed) {
+                return
+            }
+        }
+
         navigate('/seller/products')
     }
 

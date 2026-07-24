@@ -104,6 +104,8 @@ public class PaymentService {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
 
+            validateMinimumOrderQuantity(product, item.getQuantity());
+
             if (product.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException(product.getProductName() + " 상품의 재고가 부족합니다.");
             }
@@ -131,7 +133,8 @@ public class PaymentService {
 
             product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
 
-            if (product.getStockQuantity() == 0 && "ON_SALE".equals(product.getProductStatus())) {
+            if (product.getStockQuantity() < getMinimumOrderQuantity(product)
+                    && "ON_SALE".equals(product.getProductStatus())) {
                 product.setProductStatus("SOLD_OUT");
             }
 
@@ -223,7 +226,8 @@ public class PaymentService {
 
             product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
 
-            if (product.getStockQuantity() > 0 && "SOLD_OUT".equals(product.getProductStatus())) {
+            if (product.getStockQuantity() >= getMinimumOrderQuantity(product)
+                    && "SOLD_OUT".equals(product.getProductStatus())) {
                 product.setProductStatus("ON_SALE");
             }
 
@@ -264,6 +268,24 @@ public class PaymentService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private void validateMinimumOrderQuantity(Product product, int quantity) {
+        int minimumOrderQuantity = getMinimumOrderQuantity(product);
+
+        if (quantity < minimumOrderQuantity) {
+            throw new IllegalArgumentException(
+                    product.getProductName() + " 상품의 최소 주문 수량은 "
+                            + minimumOrderQuantity + "개입니다."
+            );
+        }
+    }
+
+    private int getMinimumOrderQuantity(Product product) {
+        Integer minimumOrderQuantity = product.getMinOrderQuantity();
+        return minimumOrderQuantity == null || minimumOrderQuantity < 1
+                ? 1
+                : minimumOrderQuantity;
     }
 
     @Transactional

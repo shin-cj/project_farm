@@ -15,6 +15,7 @@ function FarmCreatePage() {
     const navigate = useNavigate()
     const loginSellerId = getLoginSellerId()
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [imagePreviewUrl, setImagePreviewUrl] = useState('')
 
@@ -69,12 +70,15 @@ function FarmCreatePage() {
             return
         }
 
+        setIsDirty(true)
         setSelectedImageFile(imageFile)
         setImagePreviewUrl(URL.createObjectURL(imageFile))
     }
 
     function handleChange(event) {
         const { name, value } = event.target
+
+        setIsDirty(true)
 
         setForm({
             ...form,
@@ -110,6 +114,8 @@ function FarmCreatePage() {
                     data.sigungu,
                 ].filter(Boolean).join(' ')
 
+                setIsDirty(true)
+
                 setForm((currentForm) => ({
                     ...currentForm,
                     farmAddress: selectedAddress,
@@ -123,6 +129,24 @@ function FarmCreatePage() {
             popupTitle: '농장 주소 검색',
             popupKey: 'farm-address-search',
         })
+    }
+
+    function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                '작성 중인 농장 정보가 사라집니다. 닫으시겠습니까?'
+            )
+
+            if (!confirmed) {
+                return
+            }
+        }
+
+        navigate('/seller/farms')
     }
 
     async function handleSubmit(event) {
@@ -206,7 +230,7 @@ function FarmCreatePage() {
     return (
         <SellerFormModal
             ariaLabel="농장 등록"
-            onClose={() => navigate('/seller/farms')}
+            onClose={handleClose}
         >
             <main className="farm-create-page">
             <section className="farm-create-header">
@@ -356,7 +380,7 @@ function FarmCreatePage() {
                         <button
                             type="button"
                             className="farm-create-cancel"
-                            onClick={() => navigate('/seller/farms')}
+                            onClick={handleClose}
                             disabled={submitting}
                         >
                             취소

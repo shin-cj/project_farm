@@ -31,6 +31,7 @@ function FarmEditPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const [reloadKey, setReloadKey] = useState(0)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [newImagePreviewUrl, setNewImagePreviewUrl] = useState('')
@@ -132,6 +133,7 @@ function FarmEditPage() {
             return
         }
 
+        setIsDirty(true)
         setSelectedImageFile(imageFile)
         setNewImagePreviewUrl(
             URL.createObjectURL(imageFile)
@@ -140,6 +142,8 @@ function FarmEditPage() {
 
     function handleChange(event) {
         const { name, value } = event.target
+
+        setIsDirty(true)
 
         setForm({
             ...form,
@@ -174,6 +178,8 @@ function FarmEditPage() {
                     data.sido,
                     data.sigungu,
                 ].filter(Boolean).join(' ')
+
+                setIsDirty(true)
 
                 setForm((currentForm) => ({
                     ...currentForm,
@@ -268,30 +274,58 @@ function FarmEditPage() {
         }
     }
 
+    function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                '수정 중인 농장 정보가 사라집니다. 닫으시겠습니까?'
+            )
+
+            if (!confirmed) {
+                return
+            }
+        }
+
+        navigate('/seller/farms')
+    }
+
     if (loading) {
         return (
-            <CatalogPageState
-                title="농장 정보 불러오는 중"
-                message="수정할 농장 정보를 확인하고 있습니다."
-            />
+            <SellerFormModal
+                ariaLabel="농장 정보 불러오는 중"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="농장 정보 불러오는 중"
+                    message="수정할 농장 정보를 확인하고 있습니다."
+                />
+            </SellerFormModal>
         )
     }
 
     if (error) {
         return (
-            <CatalogPageState
-                title="농장 정보를 불러오지 못했습니다"
-                message={error}
-                actionLabel="다시 시도"
-                onAction={() => setReloadKey((value) => value + 1)}
-            />
+            <SellerFormModal
+                ariaLabel="농장 정보를 불러오지 못했습니다"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="농장 정보를 불러오지 못했습니다"
+                    message={error}
+                    actionLabel="다시 시도"
+                    onAction={() => setReloadKey((value) => value + 1)}
+                />
+            </SellerFormModal>
         )
     }
 
     return (
         <SellerFormModal
             ariaLabel="농장 수정"
-            onClose={() => navigate('/seller/farms')}
+            onClose={handleClose}
         >
             <main className="farm-create-page">
             <section className="farm-create-header">
@@ -438,7 +472,7 @@ function FarmEditPage() {
                         <button
                             type="button"
                             className="farm-create-cancel"
-                            onClick={() => navigate('/seller/farms')}
+                            onClick={handleClose}
                             disabled={submitting}
                         >
                             취소
