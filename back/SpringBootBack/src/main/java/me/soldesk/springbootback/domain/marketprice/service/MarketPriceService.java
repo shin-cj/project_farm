@@ -250,6 +250,28 @@ public class MarketPriceService {
         );
     }
 
+    public List<BuyerMainRankingItemResponse> getBuyerMainTodayPrices(MarketPriceSearchRequest request) throws Exception {
+        List<MarketPriceSearchResponse> recentList = filterRecentList(readRecentPriceFile(), request);
+        int resultLimit = request.getLimit() == null || request.getLimit() <= 0 ? 200 : request.getLimit();
+
+        return recentList.stream()
+                .map(item -> toRankingItem(item, parsePrice(item.getDd1BfrCnvsPrc())))
+                .filter(item -> item.getCurrentPrice() > 0)
+                .collect(Collectors.toMap(
+                        item -> item.getItemName() + "|"
+                                + item.getVarietyName() + "|"
+                                + item.getSaleTypeName() + "|"
+                                + item.getUnit(),
+                        item -> item,
+                        (first, second) -> first
+                ))
+                .values()
+                .stream()
+                .sorted(Comparator.comparing(BuyerMainRankingItemResponse::getItemName))
+                .limit(resultLimit)
+                .toList();
+    }
+
     // 가격 추이 정보 조회(조회일 기준 1~4주전 평균 가격 제공)-7월 16일 기준 이전 데이터 모두 업데이트 됨, 업데이트 주기는 모르겠음
     // 최근 4주 가격 추이 미니 차트 제작용 - 소비자 제공
     public void fetchPriceSequel() {

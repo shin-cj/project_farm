@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getWeeklyPopularFarms } from '../../api/farmApi.js'
 import marketPriceApi from '../../api/marketPriceApi.js'
-import { CATEGORY_CODES } from './categoryData.js'
+import { getPublicProductPage } from '../../api/productApi.js'
+import { CATEGORY_CODES, ITEM_CODES, VARIETY_CODES } from './categoryData.js'
 import './BuyerHomePage.css'
 
 const DEFAULT_FILTER = {
@@ -9,10 +11,22 @@ const DEFAULT_FILTER = {
   ctgryCd: '',
 }
 
+const DEFAULT_LOW_PRICE_FILTER = {
+  saleType: 'RETAIL',
+  ctgryCd: '',
+  itemCd: '',
+  varietyCd: '',
+}
+
 const SALE_TYPE_OPTIONS = [
   { label: '전체', value: '' },
   { label: '소매', value: '01' },
   { label: '도매', value: '02' },
+]
+
+const PRODUCT_SALE_TYPE_OPTIONS = [
+  { label: '소매', value: 'RETAIL' },
+  { label: '도매', value: 'WHOLESALE' },
 ]
 
 const FARM_CATEGORY_CODES = CATEGORY_CODES.filter(
@@ -220,6 +234,29 @@ function BuyerHomePage() {
   const [filters, setFilters] = useState(DEFAULT_FILTER)
   const [todaySaleType, setTodaySaleType] = useState('')
   const [todaySlideIndex, setTodaySlideIndex] = useState(0)
+  const [lowPriceFilters, setLowPriceFilters] = useState(DEFAULT_LOW_PRICE_FILTER)
+  const [lowPriceProducts, setLowPriceProducts] = useState([])
+  const [lowPriceMarketItems, setLowPriceMarketItems] = useState([])
+  const [isLowPriceLoading, setIsLowPriceLoading] = useState(true)
+  const [lowPriceErrorMessage, setLowPriceErrorMessage] = useState('')
+  const [popularFarms, setPopularFarms] = useState([])
+  const [isPopularFarmLoading, setIsPopularFarmLoading] = useState(true)
+  const [popularFarmErrorMessage, setPopularFarmErrorMessage] = useState('')
+
+  const lowPriceItemOptions = ITEM_CODES[lowPriceFilters.ctgryCd] || [{ label: '전체', value: '' }]
+  const lowPriceVarietyOptions = VARIETY_CODES[lowPriceFilters.itemCd] || [{ label: '전체', value: '' }]
+  const selectedLowPriceItemLabel = lowPriceItemOptions.find(
+    (item) => item.value === lowPriceFilters.itemCd
+  )?.label
+  const selectedLowPriceVarietyLabel = lowPriceVarietyOptions.find(
+    (variety) => variety.value === lowPriceFilters.varietyCd
+  )?.label
+  const lowPriceKeyword =
+    selectedLowPriceVarietyLabel && selectedLowPriceVarietyLabel !== '전체'
+      ? selectedLowPriceVarietyLabel
+      : selectedLowPriceItemLabel && selectedLowPriceItemLabel !== '전체'
+        ? selectedLowPriceItemLabel
+        : ''
 
   useEffect(() => {
     async function fetchRanking() {
@@ -266,6 +303,75 @@ function BuyerHomePage() {
     fetchTodayRanking()
   }, [todaySaleType])
 
+  useEffect(() => {
+    async function fetchLowPriceProducts() {
+      setIsLowPriceLoading(true)
+      setLowPriceErrorMessage('')
+
+      try {
+        const [productResponse, marketResponse] = await Promise.all([
+          getPublicProductPage({
+            saleType: lowPriceFilters.saleType,
+            keyword: lowPriceKeyword,
+            sortOption: 'PRICE_LOW',
+            page: 0,
+            size: 12,
+          }),
+          marketPriceApi.getBuyerMainTodayPrices({
+            seCd: lowPriceFilters.saleType === 'WHOLESALE' ? '02' : '01',
+            ctgryCd: lowPriceFilters.ctgryCd,
+            itemCd: lowPriceFilters.itemCd,
+            limit: 200,
+          }),
+        ])
+
+        const productList =
+          productResponse?.products
+          || productResponse?.content
+          || productResponse?.data?.content
+          || productResponse?.data?.products
+          || productResponse?.items
+          || productResponse
+          || []
+
+        setLowPriceProducts((Array.isArray(productList) ? productList : []).slice(0, 3))
+        setLowPriceMarketItems(marketResponse.data || [])
+      } catch (error) {
+        setLowPriceProducts([])
+        setLowPriceMarketItems([])
+        setLowPriceErrorMessage('최저가 상품을 불러오지 못했습니다.')
+      } finally {
+        setIsLowPriceLoading(false)
+      }
+    }
+
+    fetchLowPriceProducts()
+  }, [
+    lowPriceFilters.saleType,
+    lowPriceFilters.ctgryCd,
+    lowPriceFilters.itemCd,
+    lowPriceKeyword,
+  ])
+
+  useEffect(() => {
+    async function fetchPopularFarms() {
+      setIsPopularFarmLoading(true)
+      setPopularFarmErrorMessage('')
+
+      try {
+        const data = await getWeeklyPopularFarms()
+        setPopularFarms((data || []).slice(0, 3))
+      } catch (error) {
+        setPopularFarms([])
+        setPopularFarmErrorMessage('인기 농장을 불러오지 못했습니다.')
+      } finally {
+        setIsPopularFarmLoading(false)
+      }
+    }
+
+    fetchPopularFarms()
+  }, [])
+
   const handleCategoryChange = (event) => {
     const nextCategoryCode = event.target.value
 
@@ -284,6 +390,37 @@ function BuyerHomePage() {
 
   const handleTodaySaleTypeChange = (event) => {
     setTodaySaleType(event.target.value)
+  }
+
+  const handleLowPriceSaleTypeChange = (event) => {
+    setLowPriceFilters((current) => ({
+      ...current,
+      saleType: event.target.value,
+    }))
+  }
+
+  const handleLowPriceCategoryChange = (event) => {
+    setLowPriceFilters((current) => ({
+      ...current,
+      ctgryCd: event.target.value,
+      itemCd: '',
+      varietyCd: '',
+    }))
+  }
+
+  const handleLowPriceItemChange = (event) => {
+    setLowPriceFilters((current) => ({
+      ...current,
+      itemCd: event.target.value,
+      varietyCd: '',
+    }))
+  }
+
+  const handleLowPriceVarietyChange = (event) => {
+    setLowPriceFilters((current) => ({
+      ...current,
+      varietyCd: event.target.value,
+    }))
   }
 
   const periodMap = {
@@ -328,7 +465,6 @@ function BuyerHomePage() {
     .sort((firstItem, secondItem) => (
       Math.abs(Number(secondItem.changeRate || 0)) - Math.abs(Number(firstItem.changeRate || 0))
     ))
-  const goodPriceItems = (rankingData?.monthDownTop5 || []).slice(0, 3)
   const selectedCategoryLabel = FARM_CATEGORY_CODES.find(
     (category) => category.value === filters.ctgryCd
   )?.label || '전체'
@@ -352,7 +488,56 @@ function BuyerHomePage() {
     item.price > highestItem.price ? item : highestItem
   ), regionPriceItems[0])
 
-  const getProductImage = (itemName) => PRODUCT_IMAGE_MAP[itemName] || FALLBACK_PRODUCT_IMAGE
+  const getProductImage = (itemName) => PRODUCT_IMAGE_MAP[itemName]
+
+  const getProductName = (product) => product.productName || product.name || product.itemName || '상품명 없음'
+  const getProductPrice = (product) => Number(product.price || product.productPrice || product.finalPrice || 0)
+  const getProductUnit = (product) => product.unit || product.productUnit || '단위'
+  const getProductFarmName = (product) => product.farmName || product.farmname || '농장 정보'
+  const getProductImageUrl = (product) => (
+    product.productImageUrl || product.imageUrl || getProductImage(getProductName(product))
+  )
+  const normalizeText = (value) => String(value || '').replace(/\s/g, '').toLowerCase()
+  const getTodayMarketAveragePrice = (productName) => {
+    const normalizedProductName = normalizeText(productName)
+    const matchedItems = lowPriceMarketItems.filter((item) => {
+      const marketName = normalizeText(`${item.itemName || ''}${item.varietyName || ''}`)
+      return normalizedProductName && marketName && (
+        normalizedProductName.includes(normalizeText(item.itemName))
+        || normalizedProductName.includes(normalizeText(item.varietyName))
+        || marketName.includes(normalizedProductName)
+      )
+    })
+
+    if (matchedItems.length === 0) {
+      return 0
+    }
+
+    const totalPrice = matchedItems.reduce((sum, item) => sum + Number(item.currentPrice || 0), 0)
+    return Math.round(totalPrice / matchedItems.length)
+  }
+  const getLowPriceComparisonText = (product) => {
+    const productPrice = getProductPrice(product)
+    const marketAveragePrice = getTodayMarketAveragePrice(getProductName(product))
+
+    if (!marketAveragePrice || productPrice <= 0) {
+      return '오늘 시세 비교 준비 중'
+    }
+
+    const differenceRate = ((marketAveragePrice - productPrice) / marketAveragePrice) * 100
+
+    if (differenceRate <= 0) {
+      return '오늘 시세와 비슷해요'
+    }
+
+    return `오늘 시세보다 ${formatRate(differenceRate)} 저렴`
+  }
+  const handleCardKeyDown = (event, callback) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      callback()
+    }
+  }
 
   useEffect(() => {
     if (todayPriceList.length <= 4) {
@@ -440,27 +625,94 @@ function BuyerHomePage() {
         </section>
       )}
 
-      {!isLoading && !errorMessage && rankingData && (
-        <section className="buyer-home-split">
+      <section className="buyer-home-split">
           <div className="buyer-good-price-card">
             <div className="buyer-section-header">
               <div>
-                <p className="buyer-home-label">오늘 가격이 좋은 상품</p>
-                <h2>내려간 품목부터 장보기</h2>
+                <p className="buyer-home-label">우리 사이트 최저가</p>
+                <h2>오늘 시세보다 낮은 상품</h2>
               </div>
               <button type="button" onClick={() => navigate('/products')}>
                 상품 전체 보기
               </button>
             </div>
 
+            <div className="buyer-low-price-filter">
+              <label>
+                <span>거래유형</span>
+                <select value={lowPriceFilters.saleType} onChange={handleLowPriceSaleTypeChange}>
+                  {PRODUCT_SALE_TYPE_OPTIONS.map((saleType) => (
+                    <option key={saleType.value} value={saleType.value}>
+                      {saleType.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>부류</span>
+                <select value={lowPriceFilters.ctgryCd} onChange={handleLowPriceCategoryChange}>
+                  {FARM_CATEGORY_CODES.map((category) => (
+                    <option key={category.value || 'low-price-all-category'} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>품목</span>
+                <select value={lowPriceFilters.itemCd} onChange={handleLowPriceItemChange}>
+                  {lowPriceItemOptions.map((item) => (
+                    <option key={item.value || 'low-price-all-item'} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>품종</span>
+                <select value={lowPriceFilters.varietyCd} onChange={handleLowPriceVarietyChange}>
+                  {lowPriceVarietyOptions.map((variety) => (
+                    <option key={variety.value || 'low-price-all-variety'} value={variety.value}>
+                      {variety.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
             <div className="buyer-good-price-list">
-              {goodPriceItems.map((item, index) => (
-                <article key={`${item.itemName}-${item.varietyName}-${index}`}>
-                  <img src={getProductImage(item.itemName)} alt="" />
-                  <strong>{item.itemName}</strong>
-                  <span>{item.varietyName || '농산물'}</span>
-                  <b>{formatPriceWithUnit(item.currentPrice, item.unit)}</b>
-                  <em>평균보다 {formatRate(Math.abs(item.changeRate))} 변동</em>
+              {isLowPriceLoading && <p className="buyer-card-state">최저가 상품을 불러오는 중입니다.</p>}
+              {!isLowPriceLoading && lowPriceErrorMessage && (
+                <p className="buyer-card-state">{lowPriceErrorMessage}</p>
+              )}
+              {!isLowPriceLoading && !lowPriceErrorMessage && lowPriceProducts.length === 0 && (
+                <p className="buyer-card-state">조건에 맞는 상품이 없습니다.</p>
+              )}
+              {!isLowPriceLoading && !lowPriceErrorMessage && lowPriceProducts.map((product) => (
+                <article
+                  key={product.productId || `${getProductName(product)}-${getProductPrice(product)}`}
+                  className={product.productId ? 'clickable' : ''}
+                  role={product.productId ? 'button' : undefined}
+                  tabIndex={product.productId ? 0 : undefined}
+                  onClick={() => {
+                    if (product.productId) {
+                      navigate(`/products/${product.productId}`)
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (product.productId) {
+                      handleCardKeyDown(event, () => navigate(`/products/${product.productId}`))
+                    }
+                  }}
+                >
+                  {getProductImageUrl(product) && <img src={getProductImageUrl(product)} alt="" />}
+                  <strong>{getProductName(product)}</strong>
+                  <span>{getProductFarmName(product)} · {getProductUnit(product)}</span>
+                  <b>{formatPrice(getProductPrice(product))}</b>
+                  <em>{getLowPriceComparisonText(product)}</em>
                 </article>
               ))}
             </div>
@@ -469,8 +721,8 @@ function BuyerHomePage() {
           <div className="buyer-farm-card">
             <div className="buyer-section-header">
               <div>
-                <p className="buyer-home-label">가까운 농장</p>
-                <h2>믿고 보는 산지 이야기</h2>
+                <p className="buyer-home-label">이번 주 인기 농장</p>
+                <h2>주문이 많은 농장</h2>
               </div>
               <button type="button" onClick={() => navigate('/farms')}>
                 농장 전체 보기
@@ -478,20 +730,41 @@ function BuyerHomePage() {
             </div>
 
             <div className="buyer-farm-list">
-              {FARM_CARDS.map((farm) => (
-                <article key={farm.name}>
-                  <img src={farm.image} alt="" />
+              {isPopularFarmLoading && <p className="buyer-card-state">인기 농장을 불러오는 중입니다.</p>}
+              {!isPopularFarmLoading && popularFarmErrorMessage && (
+                <p className="buyer-card-state">{popularFarmErrorMessage}</p>
+              )}
+              {!isPopularFarmLoading && !popularFarmErrorMessage && popularFarms.length === 0 && (
+                <p className="buyer-card-state">이번 주 인기 농장이 없습니다.</p>
+              )}
+              {!isPopularFarmLoading && !popularFarmErrorMessage && popularFarms.map((farm) => (
+                <article
+                  key={farm.farmId || farm.farmName}
+                  className={farm.farmId ? 'clickable' : ''}
+                  role={farm.farmId ? 'button' : undefined}
+                  tabIndex={farm.farmId ? 0 : undefined}
+                  onClick={() => {
+                    if (farm.farmId) {
+                      navigate(`/farms/${farm.farmId}`)
+                    }
+                  }}
+                  onKeyDown={(event) => {
+                    if (farm.farmId) {
+                      handleCardKeyDown(event, () => navigate(`/farms/${farm.farmId}`))
+                    }
+                  }}
+                >
+                  {farm.farmImageUrl && <img src={farm.farmImageUrl} alt="" />}
                   <div>
-                    <span>{farm.location}</span>
-                    <strong>{farm.name}</strong>
-                    <p>{farm.description}</p>
+                    <span>{farm.region || farm.farmAddress || '지역 정보 없음'}</span>
+                    <strong>{farm.farmName || '농장명 없음'}</strong>
+                    <p>{farm.farmDescription || '농장 설명을 준비 중입니다.'}</p>
                   </div>
                 </article>
               ))}
             </div>
           </div>
         </section>
-      )}
 
       <section className="buyer-market-toolbar">
         <div>
