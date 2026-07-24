@@ -1,13 +1,383 @@
-import PagePlaceholder from '../../components/common/PagePlaceholder'
-import MyReportList from "../../components/report/MyReportList.jsx";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import adminDashboardApi from "../../api/adminDashboardApi";
+import reportApi from "../../api/reportApi";
+import "./AdminDashboardPage.css";
 
-// 관리자 대시보드 기능을 담당하는 페이지 컴포넌트입니다.
-function AdminDashboardPage() {
-  return (
-      <div>
-      <PagePlaceholder title="관리자 대시보드" description="회원, 콘텐츠, 신고와 시스템 상태를 요약하는 화면입니다." />
-      </div>
-  )
+const TREND_METRICS = {
+    salesAmount: {
+        label: "매출",
+        unit: "원"
+    },
+    orderCount:{
+        label: "주문",
+        unit: "건"
+    },
+    newMemberCount: {
+        label:"신규 회원",
+        unit:"명"
+    },
+    reportCount: {
+        label:"신고",
+        unit:"건"
+    }
 }
 
-export default AdminDashboardPage
+function formatNumber(value){
+    return Number(value ?? 0).toLocaleString("ko-KR")
+}
+
+function AdminDashboardPage() {
+    const navigate = useNavigate();
+
+    const [summary, setSummary] = useState(null);
+    const [recentReports, setRecentReports] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [details, setDetails] = useState(null);
+    const [period, setPeriod] = useState(7);
+    const [trendMetric, setTrendMetric] = useState("salesAmount");
+    const [detailsLoading, setDetailsLoading] = useState(true);
+    const [detailsError, setDetailsError] = useState("");
+
+    useEffect(() => {
+        Promise.all([
+            adminDashboardApi.getSummary(),
+            reportApi.getAdminReports("PENDING")
+        ])
+            .then(([summaryResponse, reportResponse]) => {
+                setSummary(summaryResponse.data);
+                setRecentReports(reportResponse.data.slice(0, 5));
+            })
+            .catch((requestError) => {
+                console.error(requestError);
+                setError("대시보드 정보를 불러오지 못했습니다.");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
+
+    useEffect(() => {
+        setDetailsLoading(true);
+        setDetailsError("");
+
+        adminDashboardApi
+            .getDetails(period)
+            .then((response) => {
+                setDetails(response.data);
+            })
+            .catch((requestError) => {
+                console.error(requestError);
+                setDetailsError(
+                    "상세 운영 현황을 불러오지 못했습니다."
+                );
+            })
+            .finally(() => {
+                setDetailsLoading(false);
+            });
+    }, [period]);
+
+    if (loading) {
+        return <div>대시보드를 불러오는 중입니다.</div>;
+    }
+
+    if (error) {
+        return <div>{error}</div>;
+    }
+
+    const trends = details?.trends ?? [];
+
+    const selectedMetric =
+        TREND_METRICS[trendMetric];
+
+    const maxTrendValue = Math.max(
+        ...trends.map((item) =>
+            Number(item[trendMetric] ?? 0)
+        ),
+        1
+    );
+
+    const memberStatus = details?.memberStatus ?? {
+        activeMembers: 0,
+        suspendedMembers: 0,
+        withdrawnMembers: 0
+    };
+
+    const memberTotal =
+        Number(memberStatus.activeMembers) +
+        Number(memberStatus.suspendedMembers) +
+        Number(memberStatus.withdrawnMembers);
+
+    function calculateMemberPercent(value) {
+        if (memberTotal === 0) {
+            return 0;
+        }
+
+        return Number(value) / memberTotal * 100;
+    }
+
+    return (
+        <section className="admin-dashboard-page">
+            <header className="dashboard-header">
+                <h1>관리자 대시보드</h1>
+                <p>사이트의 주요 운영 현황을 확인합니다.</p>
+            </header>
+
+            <div className="dashboard-summary-grid">
+                <button onClick={() => navigate("/admin/users")}>
+                    <span>전체 회원</span>
+                    <strong>{summary.totalMembers}명</strong>
+                </button>
+
+                <button>
+                    <span>오늘 주문</span>
+                    <strong>{summary.todayOrders}건</strong>
+                </button>
+
+                <button>
+                    <span>오늘 매출</span>
+                    <strong>
+                        {summary.todaySales.toLocaleString()}원
+                    </strong>
+                </button>
+
+                <button onClick={() => navigate("/admin/reports")}>
+                    <span>미처리 신고</span>
+                    <strong>{summary.pendingReports}건</strong>
+                </button>
+            </div>
+
+            <div className="dashboard-content-grid">
+                <section className="dashboard-work-section">
+                    <h2>처리 필요 업무</h2>
+
+                    <button onClick={() => navigate("/admin/approvals")}>
+                        농장 승인 대기
+                        <strong>{summary.pendingFarms}건</strong>
+                    </button>
+
+                    <button onClick={() => navigate("/admin/approvals")}>
+                        상품 승인 대기
+                        <strong>{summary.pendingProducts}건</strong>
+                    </button>
+
+                    <button onClick={() => navigate("/admin/reports")}>
+                        검토 중인 신고
+                        <strong>{summary.reviewingReports}건</strong>
+                    </button>
+
+                    <button onClick={() => navigate("/admin/reports")}>
+                        활성 페널티
+                        <strong>{summary.activePenalties}건</strong>
+                    </button>
+                </section>
+
+                <section className="dashboard-report-section">
+                    <h2>최근 접수된 신고</h2>
+
+                    {recentReports.map((report) => (
+                        <button
+                            key={report.reportId}
+                            onClick={() => navigate("/admin/reports")}
+                        >
+                            <span>신고 #{report.reportId}</span>
+                            <strong>{report.productName || "상품 정보 없음"}</strong>
+                            <small>{report.reporterEmail}</small>
+                        </button>
+                    ))}
+                </section>
+            </div>
+
+            <section className="dashboard-detail-area">
+                <header className="dashboard-detail-header">
+                    <div>
+                        <h2>운영 분석</h2>
+                        <p>기간별 운영 추이와 주의 항목입니다.</p>
+                    </div>
+
+                    <select
+                        value={period}
+                        onChange={(e) =>
+                    setPeriod(Number(e.target.value))}>
+                        <option value={7}>최근 7일</option>
+                        <option value={30}>최근 30일</option>
+                    </select>
+                </header>
+                {detailsLoading ? (
+                    <div className="dashboard-detail-state">
+                        운영 현황을 불러오는 중입니다.
+                    </div>
+                ) : detailsError ? (
+                    <div className="dashboard-detail-error">
+                        {detailsError}
+                    </div>
+                ) : details && (
+                    <>
+                        <div className="dashboard-bottom-grid">
+                            <section className="dashboard-trend-section">
+                                <header>
+                                    <h3>최근 운영 추이</h3>
+
+                                    <div className="dashboard-trend-tabs">
+                                        {Object.entries(TREND_METRICS).map(([key, metric]) => (
+                                            <button
+                                                type="button"
+                                                key={key}
+                                                className={trendMetric === key
+                                                ? "active"
+                                                : ""}
+                                            onClick={() => setTrendMetric(key)}>
+                                                {metric.label}
+                                            </button>
+                                        )
+                                        )}
+                                    </div>
+                                </header>
+
+                                <div className="dashboard-trend-list">
+                                    {trends.map((item) => {
+                                        const value =
+                                            Number(item[trendMetric] ?? 0);
+
+                                        const barWidth =
+                                            value / maxTrendValue * 100;
+
+                                        return (
+                                            <div
+                                                className="dashboard-trend-row"
+                                                key={item.date}
+                                            >
+                                                <time>{item.date.slice(5)}</time>
+
+                                                <div className="dashboard-trend-track">
+                                                    <span
+                                                        style={{width:`${barWidth}%`}}
+                                                    />
+                                                </div>
+
+                                                <strong>
+                                                    {formatNumber(value)}
+                                                    {selectedMetric.unit}
+                                                </strong>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </section>
+
+                            <section className="dashboard-member-section">
+                                <h3>회원 상태</h3>
+
+                                <div className="dashboard-member-bar">
+                                    <span
+                                        className="active"
+                                        style={{width:`${calculateMemberPercent(memberStatus.activeMembers)}%`}}
+                                    />
+                                    <span
+                                        className="suspended"
+                                        style={{
+                                            width:`${calculateMemberPercent(memberStatus.suspendedMembers)}%`
+                                        }}
+                                    />
+                                    <span
+                                        className="withdrawn"
+                                        style={{
+                                            width: `${calculateMemberPercent(memberStatus.withdrawnMembers)}%`}}
+                                    />
+                                </div>
+
+                                <div className="dashboard-member-list">
+                                    <p>
+                                        <span>정상 회원</span>
+                                        <strong>
+                                            {formatNumber(memberStatus.activeMembers)}명
+                                        </strong>
+                                    </p>
+
+                                    <p>
+                                        <span>정지 회원</span>
+                                        <strong>
+                                            {formatNumber(memberStatus.suspendedMembers)}명
+                                        </strong>
+                                    </p>
+
+                                    <p>
+                                        <span>탈퇴 회원</span>
+                                        <strong>
+                                            {formatNumber(memberStatus.withdrawnMembers)}명
+                                        </strong>
+                                    </p>
+                                </div>
+                            </section>
+                        </div>
+
+                        <section className="dashboard-alert-section">
+                            <h3>주의가 필요한 항목</h3>
+
+                            <div className="dashboard-alert-list">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/reports")
+                                    }
+                                >
+                                    <span>3일 이상 미처리 신고</span>
+                                    <strong>
+                                        {details.alerts.oldPendingReports}건
+                                    </strong>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/approvals")
+                                    }
+                                >
+                                    <span>장기 승인 대기 농장</span>
+                                    <strong>
+                                        {details.alerts.oldPendingFarms}건
+                                    </strong>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/approvals")
+                                    }
+                                >
+                                    <span>장기 승인 대기 상품</span>
+                                    <strong>
+                                        {details.alerts.oldPendingProducts}건
+                                    </strong>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/deliveries")
+                                    }
+                                >
+                                    <span>배송 지연</span>
+                                    <strong>
+                                        {details.alerts.delayedDeliveries}건
+                                    </strong>
+                                </button>
+
+                                <button type="button">
+                                    <span>품절 상품</span>
+                                    <strong>
+                                        {details.alerts.soldOutProducts}건
+                                    </strong>
+                                </button>
+                            </div>
+                        </section>
+                    </>
+                )}
+
+            </section>
+        </section>
+    );
+}
+
+export default AdminDashboardPage;
