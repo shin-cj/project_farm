@@ -21,12 +21,16 @@ public class AdminUserController {
             String role,
             @RequestParam(required = false)
             String keyword,
+            @RequestParam(defaultValue = "LATEST")
+            String sortOption,
+            @RequestParam(defaultValue = "ALL")
+            String status,
             @RequestParam(defaultValue = "0")
             int page,
             @RequestParam(defaultValue = "20")
             int size
     ){
-        return adminUserService.getUsers(role, keyword, page, size);
+        return adminUserService.getUsers(role, keyword, sortOption, status, page, size);
     }
 
 }

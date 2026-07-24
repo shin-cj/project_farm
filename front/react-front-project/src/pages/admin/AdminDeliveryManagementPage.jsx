@@ -43,13 +43,14 @@ function AdminDeliveryManagementPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deliveryConfirm, setDeliveryConfirm] = useState(null);
 
   async function fetchOrders() {
     try {
       setLoading(true);
       setError("");
       const data = await getAdminOrders();
-      setOrders(data);
+      setOrders(data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
     } catch (error) {
       console.error(error);
       setError("관리자 주문 목록을 불러오지 못했습니다.");
@@ -82,7 +83,7 @@ function AdminDeliveryManagementPage() {
     return true;
   });
 
-  async function handleStatusChange(order, nextStatus) {
+  async function updateDeliveryStatus(order, nextStatus) {
     if (!order.deliveryId) {
       setError("배송 등록 전 주문은 배송 상태를 변경할 수 없습니다.");
       return;
@@ -116,6 +117,25 @@ function AdminDeliveryManagementPage() {
       console.error(error);
       setError("배송 상태 변경에 실패했습니다.");
     }
+  }
+
+  async function handleStatusChange(order, nextStatus) {
+    if (nextStatus === "DELIVERED") {
+      setDeliveryConfirm({ order, nextStatus });
+      return;
+    }
+
+    await updateDeliveryStatus(order, nextStatus);
+  }
+
+  async function handleConfirmDelivered() {
+    if (!deliveryConfirm) {
+      return;
+    }
+
+    const { order, nextStatus } = deliveryConfirm;
+    setDeliveryConfirm(null);
+    await updateDeliveryStatus(order, nextStatus);
   }
 
   async function handleApproveRefund(order) {
@@ -214,19 +234,20 @@ function AdminDeliveryManagementPage() {
           const isCanceled = order.orderStatus === "CANCELED";
           const isRefundRequested = order.orderStatus === "REFUND_REQUESTED";
           const isRefunded = order.orderStatus === "REFUNDED";
-          const canChangeDelivery = !isCanceled && !isRefundRequested && !isRefunded && order.deliveryId;
+          const isDelivered = order.deliveryStatus === "DELIVERED";
+          const canChangeDelivery = !isCanceled && !isRefundRequested && !isRefunded && !isDelivered && order.deliveryId;
 
           return (
             <article
               key={order.orderId}
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.25fr 1fr 1fr",
-                gap: "18px",
-                alignItems: "center",
-                padding: "20px",
+                gridTemplateColumns: "minmax(0, 1fr) 340px",
+                gap: "14px",
+                alignItems: "start",
+                padding: "14px",
                 border: isCanceled || isRefunded ? "2px solid #dc2626" : isRefundRequested ? "2px solid #92400e" : "1px solid #dce6dd",
-                borderRadius: "12px",
+                borderRadius: "10px",
                 background: isCanceled || isRefunded ? "#fff1f2" : isRefundRequested ? "#fffbeb" : "#fbfdfb",
               }}
             >
@@ -249,9 +270,58 @@ function AdminDeliveryManagementPage() {
                 <strong style={{ display: "block", color: "#213328", fontSize: "1.05rem" }}>
                   주문번호 {order.orderNumber || order.orderId}
                 </strong>
-                <span style={{ display: "block", marginTop: "6px", color: "#68756d" }}>
-                  상품명: {order.orderName || "상품 정보 없음"}
-                </span>
+                {order.orderItems?.length > 0 ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "4px",
+                      marginTop: "8px",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      background: "#ffffff",
+                      border: "1px solid #edf2ed",
+                    }}
+                  >
+                    {order.orderItems.map((item) => (
+                      <div
+                        key={item.orderItemId}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: "10px",
+                          color: "#405348",
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        <span>
+                          <small
+                            style={{
+                              display: "inline-flex",
+                              marginRight: "8px",
+                              padding: "3px 7px",
+                              borderRadius: "999px",
+                              background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                              color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                              fontSize: "12px",
+                              fontWeight: 900,
+                            }}
+                          >
+                            {saleTypeLabel[item.saleType] || "소매"}
+                          </small>
+                          {item.productName}
+                          <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
+                            {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`].filter(Boolean).join(" ")}
+                          </strong>
+                        </span>
+                        <strong>{formatPrice(item.itemTotalPrice)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span style={{ display: "block", marginTop: "6px", color: "#68756d" }}>
+                    상품명: {order.orderName || "상품 정보 없음"}
+                  </span>
+                )}
                 <span style={{ display: "block", marginTop: "6px", color: "#68756d" }}>
                   주문일: {formatDate(order.orderedAt)}
                 </span>
@@ -260,118 +330,265 @@ function AdminDeliveryManagementPage() {
                 </span>
                 <div
                   style={{
-                    marginTop: "12px",
+                    marginTop: "8px",
+                    padding: "9px 10px",
+                    border: "1px solid #dce6dd",
+                    borderRadius: "8px",
+                    background: "#ffffff",
+                  }}
+                >
+                  <span style={{ display: "flex", alignItems: "center", gap: "8px", color: "#213328", fontWeight: 900 }}>
+                    {order.farmName || "농장 정보 없음"}
+                  </span>
+                  <span style={{ display: "block", marginTop: "6px", color: "#68756d", lineHeight: 1.5 }}>
+                    {order.farmRegion || "농장 지역 정보 없음"}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "8px",
+                    marginTop: "8px",
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: "10px",
+                      border: "1px solid #dce6dd",
+                      borderRadius: "8px",
+                      background: "#ffffff",
+                      color: "#405348",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <strong style={{ display: "block", color: "#213328", marginBottom: "6px" }}>
+                      구매자 배송 정보
+                    </strong>
+                    <span style={{ display: "block" }}>
+                      주문자: {order.receiverName || "주문자 정보 없음"}
+                    </span>
+                    <span style={{ display: "block" }}>
+                      전화번호: {order.receiverPhone || "전화번호 정보 없음"}
+                    </span>
+                    <span style={{ display: "block" }}>
+                      주소: {[order.receiverAddress, order.receiverDetailAddress].filter(Boolean).join(" ") || "주소 정보 없음"}
+                    </span>
+                    {order.requestMessage && (
+                      <span style={{ display: "block", color: "#216b3a", fontWeight: 800 }}>
+                        요청사항: {order.requestMessage}
+                      </span>
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "10px",
+                      border: "1px solid #dce6dd",
+                      borderRadius: "8px",
+                      background: "#ffffff",
+                      color: "#405348",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    <strong style={{ display: "block", color: "#213328", marginBottom: "6px" }}>
+                      판매자 정보
+                    </strong>
+                    <span style={{ display: "block" }}>
+                      판매자: {order.sellerName || "판매자 정보 없음"}
+                    </span>
+                    <span style={{ display: "block" }}>
+                      전화번호: {order.sellerPhone || "전화번호 정보 없음"}
+                    </span>
+                    <span style={{ display: "block" }}>
+                      이메일: {order.sellerEmail || "이메일 정보 없음"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gap: "10px" }}>
+                <div
+                  style={{
                     padding: "12px",
                     border: "1px solid #dce6dd",
                     borderRadius: "10px",
                     background: "#ffffff",
                   }}
                 >
-                  <span style={{ display: "flex", alignItems: "center", gap: "8px", color: "#213328", fontWeight: 900 }}>
-                    {order.farmName || "농장 정보 없음"}
-                    <small
-                      style={{
-                        padding: "3px 8px",
-                        borderRadius: "999px",
-                        background: order.saleType === "WHOLESALE" ? "#eef2ff" : "#e5f4ea",
-                        color: order.saleType === "WHOLESALE" ? "#3730a3" : "#216b3a",
-                        fontWeight: 900,
-                      }}
-                    >
-                      {saleTypeLabel[order.saleType] || "소매"}
-                    </small>
+                  <span style={{ display: "block", color: "#68756d", fontWeight: 700 }}>결제 / 환불 정보</span>
+                  <strong style={{ display: "block", marginTop: "6px", color: isCanceled || isRefunded ? "#dc2626" : isRefundRequested ? "#92400e" : "#213328" }}>
+                    {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
+                  </strong>
+                  <span style={{ display: "block", marginTop: "6px", color: "#68756d" }}>
+                    결제수단: {order.paymentMethod || "결제 전"}
                   </span>
-                  <span style={{ display: "block", marginTop: "6px", color: "#68756d", lineHeight: 1.5 }}>
-                    {[order.farmRegion, order.farmAddress, order.farmDetailAddress].filter(Boolean).join(" ") || "농장 주소 정보 없음"}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <span style={{ display: "block", color: "#68756d", fontWeight: 700 }}>결제 / 환불 정보</span>
-                <strong style={{ display: "block", marginTop: "6px", color: isCanceled || isRefunded ? "#dc2626" : isRefundRequested ? "#92400e" : "#213328" }}>
-                  {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
-                </strong>
-                <span style={{ display: "block", marginTop: "6px", color: "#68756d" }}>
-                  결제수단: {order.paymentMethod || "결제 전"}
-                </span>
-                {(isCanceled || isRefundRequested || isRefunded) && (
-                  <>
-                    <span style={{ display: "block", marginTop: "8px", color: isRefundRequested ? "#92400e" : "#dc2626", fontWeight: 800 }}>
-                      사유: {order.refundReason || "사유 없음"}
-                    </span>
-                    {order.refundedAt && (
-                      <span style={{ display: "block", marginTop: "6px", color: "#dc2626", fontWeight: 800 }}>
-                        처리일: {formatDate(order.refundedAt)}
+                  {(isCanceled || isRefundRequested || isRefunded) && (
+                    <>
+                      <span style={{ display: "block", marginTop: "8px", color: isRefundRequested ? "#92400e" : "#dc2626", fontWeight: 800 }}>
+                        사유: {order.refundReason || "사유 없음"}
                       </span>
-                    )}
-                  </>
-                )}
-                {isRefundRequested && (
-                  <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-                    <button
-                      type="button"
-                      onClick={() => handleApproveRefund(order)}
-                      style={{ flex: 1, padding: "10px 12px", border: "none", borderRadius: "8px", background: "#216b3a", color: "#ffffff", fontWeight: 800, cursor: "pointer" }}
-                    >
-                      승인
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRejectRefund(order)}
-                      style={{ flex: 1, padding: "10px 12px", border: "none", borderRadius: "8px", background: "#b91c1c", color: "#ffffff", fontWeight: 800, cursor: "pointer" }}
-                    >
-                      반려
-                    </button>
-                  </div>
-                )}
-              </div>
+                      {order.refundedAt && (
+                        <span style={{ display: "block", marginTop: "6px", color: "#dc2626", fontWeight: 800 }}>
+                          처리일: {formatDate(order.refundedAt)}
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {isRefundRequested && (
+                    <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                      <button
+                        type="button"
+                        onClick={() => handleApproveRefund(order)}
+                        style={{ flex: 1, padding: "9px 10px", border: "none", borderRadius: "8px", background: "#216b3a", color: "#ffffff", fontWeight: 800, cursor: "pointer" }}
+                      >
+                        승인
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRejectRefund(order)}
+                        style={{ flex: 1, padding: "9px 10px", border: "none", borderRadius: "8px", background: "#b91c1c", color: "#ffffff", fontWeight: 800, cursor: "pointer" }}
+                      >
+                        반려
+                      </button>
+                    </div>
+                  )}
+                </div>
 
-              <div>
-                <span
+                <div
                   style={{
-                    display: "inline-flex",
-                    marginBottom: "10px",
-                    padding: "6px 12px",
-                    borderRadius: "999px",
-                    background: isCanceled || isRefunded ? "#fee2e2" : "#e5f4ea",
-                    color: isCanceled || isRefunded ? "#b91c1c" : "#216b3a",
-                    fontWeight: 800,
-                  }}
-                >
-                  {isCanceled || isRefunded ? "배송 변경 불가" : DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
-                </span>
-
-                <span style={{ display: "block", color: "#68756d" }}>
-                  {order.courierName || "택배사 등록 전"}
-                </span>
-                <span style={{ display: "block", marginBottom: "10px", color: "#68756d" }}>
-                  {order.trackingNumber || "송장번호 등록 전"}
-                </span>
-
-                <select
-                  value={order.deliveryStatus}
-                  onChange={(event) => handleStatusChange(order, event.target.value)}
-                  disabled={!canChangeDelivery}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
+                    padding: "12px",
                     border: "1px solid #dce6dd",
-                    borderRadius: "8px",
-                    background: canChangeDelivery ? "#ffffff" : "#f3f4f6",
-                    color: canChangeDelivery ? "#213328" : "#9ca3af",
-                    cursor: canChangeDelivery ? "pointer" : "not-allowed",
+                    borderRadius: "10px",
+                    background: "#ffffff",
                   }}
                 >
-                  <option value="READY">배송 준비중</option>
-                  <option value="SHIPPING">배송 중</option>
-                  <option value="DELIVERED">배송 완료</option>
-                </select>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      marginBottom: "10px",
+                      padding: "6px 12px",
+                      borderRadius: "999px",
+                      background: isCanceled || isRefunded ? "#fee2e2" : "#e5f4ea",
+                      color: isCanceled || isRefunded ? "#b91c1c" : "#216b3a",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {isCanceled || isRefunded ? "배송 변경 불가" : DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
+                  </span>
+
+                  {(order.courierName || order.trackingNumber) && (
+                    <div style={{ marginBottom: "10px", color: "#68756d" }}>
+                      {order.courierName && (
+                        <span style={{ display: "block" }}>
+                          택배사: {order.courierName}
+                        </span>
+                      )}
+                      {order.trackingNumber && (
+                        <span style={{ display: "block" }}>
+                          송장번호: {order.trackingNumber}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <select
+                    value={order.deliveryStatus}
+                    onChange={(event) => handleStatusChange(order, event.target.value)}
+                    disabled={!canChangeDelivery}
+                    style={{
+                      width: "100%",
+                      padding: "9px 10px",
+                      border: "1px solid #dce6dd",
+                      borderRadius: "8px",
+                      background: canChangeDelivery ? "#ffffff" : "#f3f4f6",
+                      color: canChangeDelivery ? "#213328" : "#9ca3af",
+                      cursor: canChangeDelivery ? "pointer" : "not-allowed",
+                    }}
+                  >
+                    <option value="READY">배송 준비중</option>
+                    <option value="SHIPPING">배송 중</option>
+                    <option value="DELIVERED">배송 완료</option>
+                  </select>
+                </div>
               </div>
             </article>
           );
         })}
       </div>
+
+      {deliveryConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            padding: "24px",
+            background: "rgba(15, 23, 42, 0.34)",
+            zIndex: 1000,
+          }}
+          onClick={() => setDeliveryConfirm(null)}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "420px",
+              padding: "22px",
+              borderRadius: "14px",
+              background: "#ffffff",
+              boxShadow: "0 24px 70px rgba(15, 23, 42, 0.24)",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p style={{ margin: "0 0 8px", color: "#216b3a", fontWeight: 900 }}>
+              배송 완료 확인
+            </p>
+            <h2 style={{ margin: "0 0 12px", color: "#213328", fontSize: "1.35rem" }}>
+              배송 완료 처리할까요?
+            </h2>
+            <p style={{ margin: "0 0 18px", color: "#68756d", lineHeight: 1.6 }}>
+              주문번호 {deliveryConfirm.order.orderNumber || deliveryConfirm.order.orderId}의 배송 상태가 배송 완료로 변경됩니다.
+              <br />
+              완료 처리 후에는 배송 상태를 다시 변경할 수 없습니다.
+            </p>
+
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setDeliveryConfirm(null)}
+                style={{
+                  padding: "10px 14px",
+                  border: "1px solid #dce6dd",
+                  borderRadius: "8px",
+                  background: "#ffffff",
+                  color: "#405348",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelivered}
+                style={{
+                  padding: "10px 14px",
+                  border: "none",
+                  borderRadius: "8px",
+                  background: "#216b3a",
+                  color: "#ffffff",
+                  fontWeight: 900,
+                  cursor: "pointer",
+                }}
+              >
+                배송 완료 처리
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

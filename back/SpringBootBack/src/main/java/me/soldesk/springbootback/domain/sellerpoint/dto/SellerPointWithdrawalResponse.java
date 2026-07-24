@@ -12,6 +12,9 @@ public class SellerPointWithdrawalResponse {
 
     private Long withdrawalId;
     private Long sellerId;
+    private String sellerName;
+    private String sellerPhone;
+    private String sellerEmail;
     private Long withdrawalAmount;
     private String bankName;
     private String accountNumber;

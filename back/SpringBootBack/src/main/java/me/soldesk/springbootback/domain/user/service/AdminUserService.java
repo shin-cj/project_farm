@@ -31,6 +31,8 @@ public class AdminUserService {
     public AdminUserPageResponse getUsers(
             String role,
             String keyword,
+            String sortOption,
+            String status,
             int page,
             int size
     ){
@@ -44,12 +46,31 @@ public class AdminUserService {
         PageRequest pageable =
                 PageRequest.of(safePage,safeSize);
 
+        String normalizedStatus =
+                status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)
+                ? null
+                : status.trim().toUpperCase();
+
+        String normalizedSort =
+                sortOption == null || sortOption.isBlank()
+                ? "LATEST"
+                : sortOption.trim().toUpperCase();
+
+        List<String> allowedSorts =
+                List.of("LATEST","TOTAL_PENALTY", "ACTIVE_PENALTY");
+
+        if (!allowedSorts.contains(normalizedSort)) {
+            throw new IllegalArgumentException("올바르지 않은 정렬 기준 입니다.");
+        }
+
         Page<User> result =
                 adminUserRepository.findAdminUsers(
                         List.of(2L,3L),
                         roleId,
+                        normalizedStatus,
                         searchPattern,
                         farmId,
+                        normalizedSort,
                         pageable
                 );
         List<AdminUserSummaryResponse> users =

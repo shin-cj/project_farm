@@ -17,6 +17,8 @@ import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.user.entity.User;
+import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +38,7 @@ public class OrderService {
     private final PaymentRepository paymentRepository;
     private final DeliveryRepository deliveryRepository;
     private final FarmRepository farmRepository;
+    private final UserRepository userRepository;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -44,7 +47,8 @@ public class OrderService {
             ProductRepository productRepository,
             PaymentRepository paymentRepository,
             DeliveryRepository deliveryRepository,
-            FarmRepository farmRepository
+            FarmRepository farmRepository,
+            UserRepository userRepository
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -53,6 +57,7 @@ public class OrderService {
         this.paymentRepository = paymentRepository;
         this.deliveryRepository = deliveryRepository;
         this.farmRepository = farmRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -266,6 +271,9 @@ public class OrderService {
         Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
         Optional<Delivery> deliveryOptional = deliveryRepository.findByOrderId(order.getOrderId());
         Optional<Farm> farmOptional = farmRepository.findById(order.getFarmId());
+        Optional<User> sellerOptional = farmOptional
+                .map(Farm::getSellerId)
+                .flatMap(userRepository::findById);
 
         OrderResponse response = new OrderResponse();
         response.setOrderId(order.getOrderId());
@@ -276,6 +284,10 @@ public class OrderService {
                 .toList());
         response.setBuyerId(order.getBuyerId());
         response.setFarmId(order.getFarmId());
+        response.setSellerId(farmOptional.map(Farm::getSellerId).orElse(null));
+        response.setSellerName(sellerOptional.map(User::getName).orElse("판매자 정보 없음"));
+        response.setSellerPhone(sellerOptional.map(User::getPhone).orElse(null));
+        response.setSellerEmail(sellerOptional.map(User::getEmail).orElse(null));
         response.setFarmName(farmOptional.map(Farm::getFarmName).orElse("농장 정보 없음"));
         response.setFarmRegion(farmOptional.map(Farm::getRegion).orElse(null));
         response.setFarmAddress(farmOptional.map(Farm::getFarmAddress).orElse(null));
