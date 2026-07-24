@@ -6,6 +6,12 @@
     box-sizing: border-box;
     margin: 40px auto;
 }
+
+/* 공통 본문 여백과 중복되지 않도록 주간 시세 화면의 바깥 여백만 제거합니다. */
+.page-container > .page-card:has(.search-page-container) {
+    margin-top: 0;
+    margin-bottom: 0;
+}
 .search-page-container {
     padding: 20px;
     max-width: 1200px;
