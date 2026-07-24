@@ -22,9 +22,11 @@ function UserManagementPage() {
     const [page, setPage] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [sortOption, setSortOptions] = useState("LATEST")
+    const [statusFilter, setStatusFilter] = useState("ALL");
+
 
     useEffect(() => {
         let active = true;
@@ -37,6 +39,8 @@ function UserManagementPage() {
                 const response = await adminUserApi.getUsers({
                     role,
                     keyword: searchKeyword,
+                    sortOption,
+                    status: statusFilter,
                     page,
                     size: PAGE_SIZE
                 });
@@ -64,7 +68,7 @@ function UserManagementPage() {
         return () => {
             active = false;
         };
-    }, [role, searchKeyword, page]);
+    }, [role, searchKeyword, sortOption, statusFilter, page]);
 
     const handleRoleChange = (nextRole) => {
         setRole(nextRole);
@@ -84,6 +88,24 @@ function UserManagementPage() {
                     <h1>회원 관리</h1>
                     <p>전체 회원 {totalElements.toLocaleString()}명</p>
                 </div>
+                <select value={sortOption} onChange={(e) => {
+                    setSortOptions(e.target.value)
+                    setPage(0)
+                }}>
+                    <option value="LATEST">최신 가입일 순</option>
+                    <option value="TOTAL_PENALTY">누적 페널티 높은 순</option>
+                    <option value="ACTIVE_PENALTY">현재 페널티 높은 순</option>
+                </select>
+
+                <select value={statusFilter} onChange={(e) => {
+                    setStatusFilter(e.target.value)
+                    setPage(0)
+                }}>
+                    <option value="ALL">전체 상태</option>
+                    <option value="ACTIVE">정상 회원</option>
+                    <option value="SUSPENDED">이용 정지 회원</option>
+                    <option value="WITHDRAWN">탈퇴 회원</option>
+                </select>
 
                 <form
                     className="admin-user-search"
