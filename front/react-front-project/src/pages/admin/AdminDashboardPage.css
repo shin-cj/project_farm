@@ -26,7 +26,7 @@
 .dashboard-header p {
     margin: 8px 0 0;
     color: #65736a;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 700;
 }
 
@@ -61,28 +61,6 @@
         transform 120ms ease;
 }
 
-.dashboard-summary-grid > button::before {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 4px;
-    background-color: #39764d;
-    content: "";
-}
-
-.dashboard-summary-grid > button:nth-child(2)::before {
-    background-color: #39709a;
-}
-
-.dashboard-summary-grid > button:nth-child(3)::before {
-    background-color: #b47725;
-}
-
-.dashboard-summary-grid > button:nth-child(4)::before {
-    background-color: #b84a4a;
-}
-
 .dashboard-summary-grid > button:hover {
     border-color: #b9c9bd;
     box-shadow: 0 8px 20px rgba(29, 57, 39, 0.08);
@@ -102,7 +80,7 @@
 
 .dashboard-summary-grid span {
     color: #65736a;
-    font-size: 0.86rem;
+    font-size: 0.96rem;
     font-weight: 800;
 }
 
@@ -110,7 +88,7 @@
     max-width: 100%;
     overflow-wrap: anywhere;
     color: #173226;
-    font-size: 1.75rem;
+    font-size: 1.9rem;
     line-height: 1.15;
 }
 
@@ -137,7 +115,7 @@
     padding-bottom: 13px;
     border-bottom: 1px solid #edf1ee;
     color: #223c2d;
-    font-size: 1.02rem;
+    font-size: 1.12rem;
     line-height: 1.4;
     letter-spacing: 0;
 }
@@ -157,7 +135,7 @@
     background-color: transparent;
     color: #35443b;
     font: inherit;
-    font-size: 0.88rem;
+    font-size: 0.98rem;
     text-align: left;
     cursor: pointer;
     transition: background-color 150ms ease, color 150ms ease;
@@ -182,7 +160,7 @@
 .dashboard-work-section > button strong {
     flex: 0 0 auto;
     color: #266b3f;
-    font-size: 0.9rem;
+    font-size: 1rem;
 }
 
 .dashboard-report-section > button {
@@ -193,7 +171,7 @@
 
 .dashboard-report-section > button span {
     color: #68756d;
-    font-size: 0.78rem;
+    font-size: 0.87rem;
     font-weight: 800;
 }
 
@@ -207,12 +185,12 @@
 
 .dashboard-report-section > button strong {
     color: #27382e;
-    font-size: 0.86rem;
+    font-size: 0.96rem;
 }
 
 .dashboard-report-section > button small {
     color: #7c8880;
-    font-size: 0.76rem;
+    font-size: 0.85rem;
     text-align: right;
 }
 
@@ -238,7 +216,7 @@
 
 .dashboard-detail-header h2 {
     color: #173226;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     line-height: 1.35;
     letter-spacing: 0;
 }
@@ -246,7 +224,7 @@
 .dashboard-detail-header p {
     margin-top: 6px;
     color: #738078;
-    font-size: 0.84rem;
+    font-size: 0.94rem;
     font-weight: 650;
 }
 
@@ -261,7 +239,7 @@
     background-color: #ffffff;
     color: #304238;
     font: inherit;
-    font-size: 0.82rem;
+    font-size: 0.92rem;
     font-weight: 750;
     cursor: pointer;
     transition: border-color 150ms ease, box-shadow 150ms ease;
@@ -289,7 +267,7 @@
     border-radius: 8px;
     background-color: #ffffff;
     color: #66736b;
-    font-size: 0.88rem;
+    font-size: 0.98rem;
     font-weight: 700;
     text-align: center;
 }
@@ -333,7 +311,7 @@
 .dashboard-alert-section h3 {
     margin: 0;
     color: #223c2d;
-    font-size: 1rem;
+    font-size: 1.1rem;
     line-height: 1.4;
     letter-spacing: 0;
 }
@@ -357,7 +335,7 @@
     background-color: transparent;
     color: #65736a;
     font: inherit;
-    font-size: 0.76rem;
+    font-size: 0.92rem;
     font-weight: 800;
     cursor: pointer;
     transition:
@@ -400,13 +378,13 @@
 
 .dashboard-trend-row time {
     color: #738078;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     font-weight: 750;
 }
 
 .dashboard-trend-row strong {
     color: #304238;
-    font-size: 0.78rem;
+    font-size: 0.94rem;
     font-variant-numeric: tabular-nums;
     text-align: right;
     white-space: nowrap;
@@ -505,13 +483,13 @@
 
 .dashboard-member-list span {
     color: #65736a;
-    font-size: 0.82rem;
+    font-size: 0.92rem;
     font-weight: 700;
 }
 
 .dashboard-member-list strong {
     color: #263a2e;
-    font-size: 0.86rem;
+    font-size: 0.96rem;
     font-variant-numeric: tabular-nums;
 }
 
@@ -556,29 +534,6 @@
         transform 120ms ease;
 }
 
-.dashboard-alert-list button::before {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 3px;
-    background-color: #c76855;
-    content: "";
-}
-
-.dashboard-alert-list button:nth-child(2)::before,
-.dashboard-alert-list button:nth-child(3)::before {
-    background-color: #d18a2d;
-}
-
-.dashboard-alert-list button:nth-child(4)::before {
-    background-color: #4c7595;
-}
-
-.dashboard-alert-list button:nth-child(5)::before {
-    background-color: #7b8880;
-}
-
 .dashboard-alert-list button:hover {
     border-color: #bccbbf;
     background-color: #ffffff;
@@ -594,7 +549,7 @@
 .dashboard-alert-list span {
     max-width: 100%;
     color: #65736a;
-    font-size: 0.78rem;
+    font-size: 0.96rem;
     font-weight: 750;
     overflow-wrap: anywhere;
 }
@@ -602,7 +557,7 @@
 .dashboard-alert-list strong {
     margin-top: 10px;
     color: #273a2e;
-    font-size: 1.12rem;
+    font-size: 1.22rem;
     font-variant-numeric: tabular-nums;
 }
 
