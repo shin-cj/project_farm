@@ -30,6 +30,18 @@ public class OrderResponse {
     /** 판매 농장 번호 */
     private Long farmId;
 
+    /** 판매자 회원 번호 */
+    private Long sellerId;
+
+    /** 판매자 이름 */
+    private String sellerName;
+
+    /** 판매자 전화번호 */
+    private String sellerPhone;
+
+    /** 판매자 이메일 */
+    private String sellerEmail;
+
     /** 판매 농장 이름 */
     private String farmName;
 
