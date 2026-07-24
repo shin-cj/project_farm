@@ -23,6 +23,12 @@ public class OrderItemResponse {
     /** 주문 당시 상품명 */
     private String productName;
 
+    /** 상품 판매 방식 */
+    private String saleType;
+
+    /** 판매 단위 */
+    private String unit;
+
     /** 주문 당시 상품 단가 */
     private Long unitPrice;
 

@@ -45,18 +45,10 @@ export function CheckoutPage() {
     const orderName = searchParams.get("orderName") || "";
     const orderId = searchParams.get("orderId") || "";
 
-    const [receiverName, setReceiverName] = useState(
-        searchParams.get("receiverName") || ""
-    );
-    const [receiverPhone, setReceiverPhone] = useState(
-        searchParams.get("receiverPhone") || ""
-    );
-    const [receiverAddress, setReceiverAddress] = useState(
-        searchParams.get("receiverAddress") || ""
-    );
-    const [receiverDetailAddress, setReceiverDetailAddress] = useState(
-        searchParams.get("receiverDetailAddress") || ""
-    );
+    const receiverName = searchParams.get("receiverName") || "";
+    const receiverPhone = searchParams.get("receiverPhone") || "";
+    const receiverAddress = searchParams.get("receiverAddress") || "";
+    const receiverDetailAddress = searchParams.get("receiverDetailAddress") || "";
 
     const hasValidOrderInfo =
         orderId.trim() !== ""
@@ -67,6 +59,7 @@ export function CheckoutPage() {
     const [isPaying, setIsPaying] = useState(false);
     const [widgets, setWidgets] = useState(null);
     const paymentMethodWidgetRef = useRef(null);
+    const [checkoutItems, setCheckoutItems] = useState([]);
 
     const orderInfo = {
         orderId,
@@ -77,6 +70,21 @@ export function CheckoutPage() {
         receiverAddress,
         receiverDetailAddress,
     };
+
+    useEffect(() => {
+        if (!orderId) {
+            setCheckoutItems([]);
+            return;
+        }
+
+        try {
+            const storedItems = sessionStorage.getItem(`checkoutItems:${orderId}`);
+            setCheckoutItems(storedItems ? JSON.parse(storedItems) : []);
+        } catch (error) {
+            console.error(error);
+            setCheckoutItems([]);
+        }
+    }, [orderId]);
 
     useEffect(() => {
         async function fetchPaymentWidgets() {
@@ -263,6 +271,51 @@ export function CheckoutPage() {
                         >
                             {orderInfo.orderName || "상품 정보 없음"}
                         </strong>
+
+                        {checkoutItems.length > 0 && (
+                            <div style={{ display: "grid", gap: "8px", marginTop: "14px" }}>
+                                {checkoutItems.map((item, index) => (
+                                    <div
+                                        key={`${item.productName}-${index}`}
+                                        style={{
+                                            display: "grid",
+                                            gridTemplateColumns: "1fr auto",
+                                            gap: "10px",
+                                            padding: "10px 0",
+                                            borderTop: index === 0 ? "1px solid #e5ece5" : "none",
+                                            color: "#405348",
+                                            fontSize: "15px",
+                                            lineHeight: 1.5,
+                                        }}
+                                    >
+                                        <span>
+                                            <small
+                                                style={{
+                                                    display: "inline-flex",
+                                                    marginRight: "8px",
+                                                    padding: "3px 7px",
+                                                    borderRadius: "999px",
+                                                    background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                                                    color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                                                    fontSize: "12px",
+                                                    fontWeight: 900,
+                                                }}
+                                            >
+                                                {item.saleType === "WHOLESALE" ? "도매" : "소매"}
+                                            </small>
+                                            {item.productName}
+                                            <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
+                                                {[item.unit, `${Number(item.quantity).toLocaleString()}개`].filter(Boolean).join(" ")}
+                                            </strong>
+                                        </span>
+                                        <strong>
+                                            {Number(item.itemTotalPrice).toLocaleString()}원
+                                        </strong>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         <p
                             style={{
                                 margin: "10px 0 0",
@@ -291,45 +344,45 @@ export function CheckoutPage() {
                             </p>
                         </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>주문자</span>
                             <input
                                 type="text"
                                 value={receiverName}
-                                onChange={(event) => setReceiverName(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>전화번호</span>
                             <input
                                 type="text"
                                 value={receiverPhone}
-                                onChange={(event) => setReceiverPhone(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>배송지</span>
                             <input
                                 type="text"
                                 value={receiverAddress}
-                                onChange={(event) => setReceiverAddress(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>상세 배송지</span>
                             <input
                                 type="text"
                                 value={receiverDetailAddress}
-                                onChange={(event) => setReceiverDetailAddress(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
                     </div>
 
                     <div

@@ -2,8 +2,10 @@ package me.soldesk.springbootback.domain.delivery.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.soldesk.springbootback.domain.orderitem.dto.OrderItemResponse;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,6 +17,7 @@ public class SellerOrderInfoResponse {
     private String farmName;
     private String saleType;
     private String orderName;
+    private List<OrderItemResponse> orderItems;
     private String receiverName;
     private String receiverPhone;
     private String receiverAddress;
