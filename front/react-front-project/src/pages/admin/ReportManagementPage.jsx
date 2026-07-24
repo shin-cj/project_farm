@@ -22,8 +22,8 @@ const typeLabels = {
 
 const penaltyDescriptions = {
   WARNING: "경고 이력과 페널티 1점이 부여됩니다.",
-  PRODUCT_SUSPENSION: "해당 상품의 판매가 중지되고 3점이 부여됩니다.",
-  SELLER_SUSPENSION: "판매자와 승인된 농장이 정지되고 5점이 부여됩니다.",
+  PRODUCT_SUSPENSION: "페널티 점수 3점이 부여됩니다.",
+  SELLER_SUSPENSION: "페널티 점수 5점이 부여됩니다.",
 }
 
 function formatDate(value) {
@@ -50,6 +50,7 @@ function ReportManagementPage() {
   const [penaltyLoading, setPenaltyLoading] = useState(false);
   const [penaltyError, setPenaltyError] = useState("");
   const [recovertyModalOpen, setRecovertyModalOpen] = useState(false);
+
 
 
   async function loadReports(status) {
@@ -607,13 +608,13 @@ function ReportManagementPage() {
                                 setPenaltyType(event.target.value)
                             }
                         >
-                          <option value="">페널티를 선택하세요</option>
-                          <option value="WARNING">경고</option>
+                          <option value="">페널티 점수를 선택하세요</option>
+                          <option value="WARNING">페널티 1점</option>
                           <option value="PRODUCT_SUSPENSION">
-                            상품 판매 중지
+                            페널티 3점
                           </option>
                           <option value="SELLER_SUSPENSION">
-                            판매자 이용 정지
+                            페널티 5점
                           </option>
                         </select>
 

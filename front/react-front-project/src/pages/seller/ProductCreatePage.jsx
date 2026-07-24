@@ -8,6 +8,7 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import SellerFormModal from '../../components/common/SellerFormModal.jsx'
 
 
 
@@ -20,6 +21,7 @@ function ProductCreatePage() {
     const [farms, setFarms] = useState([])
     const [registeredFarmCount, setRegisteredFarmCount] = useState(0)
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [imagePreviewUrl, setImagePreviewUrl] = useState('')
     const [formLoading, setFormLoading] = useState(true)
@@ -156,12 +158,15 @@ function ProductCreatePage() {
             return
         }
 
+        setIsDirty(true)
         setSelectedImageFile(imageFile)
         setImagePreviewUrl(URL.createObjectURL(imageFile))
     }
 
     function handleChange(event) {
         const {name, value} = event.target
+
+        setIsDirty(true)
 
         if (name === 'farmId') {
             const nextFarm = farms.find(
@@ -299,30 +304,63 @@ function ProductCreatePage() {
             setSubmitting(false)
         }
     }
+
+    function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                '작성 중인 상품 정보가 사라집니다. 닫으시겠습니까?'
+            )
+
+            if (!confirmed) {
+                return
+            }
+        }
+
+        navigate('/seller/products')
+    }
+
     const formReady = farms.length > 0 && categories.length > 0
 
     if (formLoading) {
         return (
-            <CatalogPageState
-                title="상품 등록 준비 중"
-                message="농장과 카테고리 정보를 불러오고 있습니다."
-            />
+            <SellerFormModal
+                ariaLabel="상품 등록 준비 중"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="상품 등록 준비 중"
+                    message="농장과 카테고리 정보를 불러오고 있습니다."
+                />
+            </SellerFormModal>
         )
     }
 
     if (formError) {
         return (
-            <CatalogPageState
-                title="상품 등록 준비 실패"
-                message={formError}
-                actionLabel="다시 시도"
-                onAction={() => setReloadKey((value) => value + 1)}
-            />
+            <SellerFormModal
+                ariaLabel="상품 등록 준비 실패"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="상품 등록 준비 실패"
+                    message={formError}
+                    actionLabel="다시 시도"
+                    onAction={() => setReloadKey((value) => value + 1)}
+                />
+            </SellerFormModal>
         )
     }
 
     return (
-        <main className="product-create-page">
+        <SellerFormModal
+            ariaLabel="상품 등록"
+            onClose={handleClose}
+        >
+            <main className="product-create-page">
             <section className="product-create-card">
                 <div className="product-create-header">
                     <h1 className="product-create-title">상품 등록</h1>
@@ -609,7 +647,7 @@ function ProductCreatePage() {
                         <button
                             type="button"
                             className="product-create-cancel-button"
-                            onClick={() => navigate('/seller/products')}
+                            onClick={handleClose}
                             disabled={submitting}
                         >
                             취소
@@ -625,7 +663,8 @@ function ProductCreatePage() {
                     </div>
                 </form>
             </section>
-        </main>
+            </main>
+        </SellerFormModal>
     )
 }
 

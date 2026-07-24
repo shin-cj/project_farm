@@ -7,6 +7,8 @@ import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointWithdrawalRes
 import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointWithdrawalStatusRequest;
 import me.soldesk.springbootback.domain.sellerpoint.entity.SellerPointWithdrawal;
 import me.soldesk.springbootback.domain.sellerpoint.repository.SellerPointWithdrawalRepository;
+import me.soldesk.springbootback.domain.user.entity.User;
+import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ public class SellerPointWithdrawalService {
 
     private final SellerPointWithdrawalRepository sellerPointWithdrawalRepository;
     private final SellerPointService sellerPointService;
+    private final UserRepository userRepository;
 
     @Transactional
     public SellerPointWithdrawalResponse requestWithdrawal(SellerPointWithdrawalRequest request) {
@@ -38,18 +41,18 @@ public class SellerPointWithdrawalService {
         withdrawal.setAccountHolder(request.getAccountHolder());
         withdrawal.setWithdrawalStatus("REQUESTED");
 
-        return new SellerPointWithdrawalResponse(sellerPointWithdrawalRepository.save(withdrawal));
+        return toResponse(sellerPointWithdrawalRepository.save(withdrawal));
     }
 
     public List<SellerPointWithdrawalResponse> getSellerWithdrawals(Long sellerId) {
         return sellerPointWithdrawalRepository.findBySellerIdOrderByRequestedAtDesc(sellerId).stream()
-                .map(SellerPointWithdrawalResponse::new)
+                .map(this::toResponse)
                 .toList();
     }
 
     public List<SellerPointWithdrawalResponse> getAllWithdrawals() {
         return sellerPointWithdrawalRepository.findAllByOrderByRequestedAtDesc().stream()
-                .map(SellerPointWithdrawalResponse::new)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -88,7 +91,20 @@ public class SellerPointWithdrawalService {
             withdrawal.setCompletedAt(LocalDateTime.now());
         }
 
-        return new SellerPointWithdrawalResponse(sellerPointWithdrawalRepository.save(withdrawal));
+        return toResponse(sellerPointWithdrawalRepository.save(withdrawal));
+    }
+
+    private SellerPointWithdrawalResponse toResponse(SellerPointWithdrawal withdrawal) {
+        SellerPointWithdrawalResponse response = new SellerPointWithdrawalResponse(withdrawal);
+
+        userRepository.findById(withdrawal.getSellerId())
+                .ifPresent((User seller) -> {
+                    response.setSellerName(seller.getName());
+                    response.setSellerPhone(seller.getPhone());
+                    response.setSellerEmail(seller.getEmail());
+                });
+
+        return response;
     }
 
     private void validateRequest(SellerPointWithdrawalRequest request) {

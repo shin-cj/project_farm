@@ -82,6 +82,7 @@ function DeliveryManagementPage() {
       setLoading(true);
       const data = await getSellerOrders(sellerId, farmId || null);
       setOrders(data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
+      setCurrentPage(1);
       setSelectedOrder(null);
       setOrderId("");
       setCourierName("");
@@ -132,6 +133,10 @@ function DeliveryManagementPage() {
     return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order?.orderStatus);
   }
 
+  function isProcessableOrder(order) {
+    return order?.orderStatus === "PAID" && order?.deliveryStatus === "READY";
+  }
+
   function getVisibleOrders() {
     if (deliveryFilter === "CANCELED") {
       return orders.filter((order) => isClosedOrder(order));
@@ -145,8 +150,16 @@ function DeliveryManagementPage() {
       return orders.filter((order) => !isClosedOrder(order) && order.deliveryStatus === "DELIVERED");
     }
 
-    return orders.filter((order) => !isClosedOrder(order) && order.deliveryStatus === "READY");
+    return orders.filter((order) => isProcessableOrder(order));
   }
+
+  useEffect(() => {
+    const nextTotalPages = Math.max(1, Math.ceil(getVisibleOrders().length / ordersPerPage));
+
+    if (currentPage > nextTotalPages) {
+      setCurrentPage(nextTotalPages);
+    }
+  }, [orders, deliveryFilter, currentPage]);
 
   function handleFarmChange(event) {
     setSelectedFarmId(event.target.value);
@@ -284,7 +297,7 @@ function DeliveryManagementPage() {
       setDeliveryPersonName("");
       setDeliveryPersonPhone("");
       setDeliveryMemo("");
-      await fetchSellerOrders();
+      await fetchSellerOrders(selectedFarmId);
     } catch (error) {
       console.error(error);
       setError("배송 등록에 실패했습니다.");
@@ -322,7 +335,7 @@ function DeliveryManagementPage() {
   };
 
   const visibleOrders = getVisibleOrders();
-  const totalPages = Math.ceil(visibleOrders.length / ordersPerPage);
+  const totalPages = Math.max(1, Math.ceil(visibleOrders.length / ordersPerPage));
   const startIndex = (currentPage - 1) * ordersPerPage;
   const currentOrders = visibleOrders.slice(startIndex, startIndex + ordersPerPage);
   const isDeliveryLocked = selectedOrder && (selectedOrder.deliveryStatus !== "READY" || isClosedOrder(selectedOrder));
@@ -498,18 +511,6 @@ function DeliveryManagementPage() {
                     style={{
                       padding: "6px 10px",
                       borderRadius: "999px",
-                      background: order.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
-                      color: order.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
-                      fontWeight: 900,
-                      fontSize: "0.82rem",
-                    }}
-                  >
-                    {getSaleTypeLabel(order.saleType)}
-                  </span>
-                  <span
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: "999px",
                       background: order.deliveryType === "SAME_DAY" ? "#fff4d6" : "#eef3ee",
                       color: order.deliveryType === "SAME_DAY" ? "#8a4b08" : "#405348",
                       fontWeight: 900,
@@ -519,7 +520,80 @@ function DeliveryManagementPage() {
                     {getDeliveryTypeLabel(order.deliveryType)}
                   </span>
                 </div>
-                <p style={{ margin: "12px 0 0", color: "#405348", fontWeight: 800 }}>상품명: {order.orderName || "상품명 없음"}</p>
+                {order.orderItems?.length > 0 && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "6px",
+                      marginTop: "12px",
+                      padding: "10px",
+                      borderRadius: "10px",
+                      background: "#fbfdfb",
+                      border: "1px solid #edf2ed",
+                    }}
+                  >
+                    {order.orderItems.map((item) => (
+                      <div
+                        key={item.orderItemId}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: "10px",
+                          color: "#405348",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <span>
+                          <small
+                            style={{
+                              display: "inline-flex",
+                              marginRight: "8px",
+                              padding: "3px 7px",
+                              borderRadius: "999px",
+                              background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                              color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                              fontSize: "12px",
+                              fontWeight: 900,
+                            }}
+                          >
+                            {getSaleTypeLabel(item.saleType)}
+                          </small>
+                          {item.productName}
+                          <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
+                            {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`].filter(Boolean).join(" ")}
+                          </strong>
+                        </span>
+                        <strong>{Number(item.itemTotalPrice || 0).toLocaleString()}원</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {(!order.orderItems || order.orderItems.length === 0) && (
+                  <p style={{ margin: "12px 0 0", color: "#405348", fontWeight: 800 }}>
+                    상품명: {order.orderName || "상품명 없음"}
+                  </p>
+                )}
+
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "6px",
+                    marginTop: "12px",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    background: "#f8faf7",
+                    border: "1px solid #e5ece5",
+                    color: "#405348",
+                  }}
+                >
+                  <strong style={{ color: "#213328" }}>구매자 배송 정보</strong>
+                  <span>주문자: {order.receiverName || "주문자 정보 없음"}</span>
+                  <span>전화번호: {order.receiverPhone || "전화번호 정보 없음"}</span>
+                  <span>
+                    주소: {[order.receiverAddress, order.receiverDetailAddress].filter(Boolean).join(" ") || "주소 정보 없음"}
+                  </span>
+                </div>
+
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>농장명: {order.farmName || "농장 정보 없음"}</p>
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>구매한 날짜: {formatDateTime(order.orderedAt)}</p>
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>결제수단: {order.paymentMethod || "결제 전"}</p>
@@ -534,8 +608,6 @@ function DeliveryManagementPage() {
                     당일배송 정보: {order.deliveryPersonName || "담당자 미등록"} / {order.deliveryPersonPhone || "연락처 미등록"}
                   </p>
                 )}
-                <p style={{ margin: "6px 0 0" }}>주문자: {order.receiverName}</p>
-                <p style={{ margin: "6px 0 0" }}>전화번호: {order.receiverPhone}</p>
                 {isClosedOrder(order) && (
                     <p style={{ margin: "8px 0 0", color: "#dc2626", fontWeight: 800 }}>
                       사유: {order.refundReason || "사유 없음"}
@@ -636,19 +708,78 @@ function DeliveryManagementPage() {
               <h3 style={{ margin: "0 0 14px", color: "#213328" }}>선택한 주문 정보</h3>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 14px", color: "#405348" }}>
                 <InfoLine label="농장명" value={selectedOrder.farmName || "농장 정보 없음"} />
-                <InfoLine label="판매 방식" value={getSaleTypeLabel(selectedOrder.saleType)} />
                 <InfoLine label="주문코드" value={selectedOrder.orderNumber} />
-                <InfoLine label="상품명" value={selectedOrder.orderName} />
                 <InfoLine label="구매일" value={formatDateTime(selectedOrder.orderedAt)} />
                 <InfoLine label="결제수단" value={selectedOrder.paymentMethod || "결제 전"} />
                 <InfoLine label="배송 방식" value={getDeliveryTypeLabel(selectedOrder.deliveryType)} />
                 <InfoLine label="배송 상태" value={getDeliveryStatusLabel(selectedOrder.deliveryStatus)} />
-                <InfoLine label="주문자" value={selectedOrder.receiverName} />
-                <InfoLine label="전화번호" value={selectedOrder.receiverPhone} />
               </div>
-              <p style={{ margin: "12px 0 0", color: "#405348" }}>
-                주소: {selectedOrder.receiverAddress} {selectedOrder.receiverDetailAddress}
-              </p>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: "8px",
+                  marginTop: "12px",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  background: "#ffffff",
+                  border: "1px solid #edf2ed",
+                  color: "#405348",
+                }}
+              >
+                <strong style={{ color: "#213328" }}>구매자 배송 정보</strong>
+                <span>주문자: {selectedOrder.receiverName || "주문자 정보 없음"}</span>
+                <span>전화번호: {selectedOrder.receiverPhone || "전화번호 정보 없음"}</span>
+                <span>
+                  주소: {[selectedOrder.receiverAddress, selectedOrder.receiverDetailAddress].filter(Boolean).join(" ") || "주소 정보 없음"}
+                </span>
+              </div>
+
+              {selectedOrder.orderItems?.length > 0 && (
+                <div
+                  style={{
+                    display: "grid",
+                    gap: "8px",
+                    marginTop: "12px",
+                    padding: "12px",
+                    borderRadius: "10px",
+                    background: "#ffffff",
+                    border: "1px solid #edf2ed",
+                  }}
+                >
+                  <strong style={{ color: "#213328" }}>상품별 수량</strong>
+                  {selectedOrder.orderItems.map((item) => (
+                    <div
+                      key={item.orderItemId}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr auto",
+                        gap: "10px",
+                        color: "#405348",
+                      }}
+                    >
+                      <span>{item.productName}</span>
+                      <span>
+                        <small
+                          style={{
+                            display: "inline-flex",
+                            marginRight: "8px",
+                            padding: "3px 7px",
+                            borderRadius: "999px",
+                            background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                            color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                            fontSize: "12px",
+                            fontWeight: 900,
+                          }}
+                        >
+                          {getSaleTypeLabel(item.saleType)}
+                        </small>
+                        {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`].filter(Boolean).join(" ")} / {Number(item.itemTotalPrice || 0).toLocaleString()}원
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <p style={{ margin: "6px 0 0", color: "#405348" }}>요청사항: {selectedOrder.requestMessage || "없음"}</p>
                   {isDeliveryLocked && (
                 <p style={{ padding: "12px", borderRadius: "10px", background: "#ffffff", color: isClosedOrder(selectedOrder) ? "#dc2626" : "#216b3a", fontWeight: 800 }}>

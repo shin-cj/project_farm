@@ -12,6 +12,7 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import SellerFormModal from '../../components/common/SellerFormModal.jsx'
 
 function ProductEditPage() {
     const {productId} = useParams()
@@ -25,6 +26,7 @@ function ProductEditPage() {
     const [loading, setLoading] = useState(true)
 
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [newImagePreviewUrl, setNewImagePreviewUrl] = useState('')
 
@@ -179,6 +181,7 @@ function ProductEditPage() {
             return
         }
 
+        setIsDirty(true)
         setSelectedImageFile(imageFile)
         setNewImagePreviewUrl(URL.createObjectURL(imageFile))
     }
@@ -186,6 +189,8 @@ function ProductEditPage() {
     // 사용자가 입력 칸을 변경할 때 form의 해당 값만 변경합니다.
     function handleChange(event) {
         const {name, value} = event.target
+
+        setIsDirty(true)
 
         if (name === 'farmId') {
             const nextFarm = farms.find(
@@ -329,28 +334,60 @@ function ProductEditPage() {
         }
     }
 
+    function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                '수정 중인 상품 정보가 사라집니다. 닫으시겠습니까?'
+            )
+
+            if (!confirmed) {
+                return
+            }
+        }
+
+        navigate('/seller/products')
+    }
+
     if (loading) {
         return (
-            <CatalogPageState
-                title="상품 정보 불러오는 중"
-                message="수정할 상품 정보를 확인하고 있습니다."
-            />
+            <SellerFormModal
+                ariaLabel="상품 정보 불러오는 중"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="상품 정보 불러오는 중"
+                    message="수정할 상품 정보를 확인하고 있습니다."
+                />
+            </SellerFormModal>
         )
     }
 
     if (error) {
         return (
-            <CatalogPageState
-                title="상품 정보를 불러오지 못했습니다"
-                message={error}
-                actionLabel="다시 시도"
-                onAction={() => setReloadKey((value) => value + 1)}
-            />
+            <SellerFormModal
+                ariaLabel="상품 정보를 불러오지 못했습니다"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="상품 정보를 불러오지 못했습니다"
+                    message={error}
+                    actionLabel="다시 시도"
+                    onAction={() => setReloadKey((value) => value + 1)}
+                />
+            </SellerFormModal>
         )
     }
 
     return (
-        <main className="product-create-page">
+        <SellerFormModal
+            ariaLabel="상품 수정"
+            onClose={handleClose}
+        >
+            <main className="product-create-page">
             <section className="product-create-card">
                 <div className="product-create-header">
                     <h1 className="product-create-title">상품 수정</h1>
@@ -619,7 +656,7 @@ function ProductEditPage() {
                         <button
                             type="button"
                             className="product-create-cancel-button"
-                            onClick={() => navigate('/seller/products')}
+                            onClick={handleClose}
                             disabled={submitting}
                         >
                             취소
@@ -635,7 +672,8 @@ function ProductEditPage() {
                     </div>
                 </form>
             </section>
-        </main>
+            </main>
+        </SellerFormModal>
     )
 }
 

@@ -6,6 +6,7 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import SellerFormModal from "../../components/common/SellerFormModal.jsx";
 
 function FarmEditPage() {
     const navigate = useNavigate()
@@ -30,6 +31,7 @@ function FarmEditPage() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const [reloadKey, setReloadKey] = useState(0)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [newImagePreviewUrl, setNewImagePreviewUrl] = useState('')
@@ -131,6 +133,7 @@ function FarmEditPage() {
             return
         }
 
+        setIsDirty(true)
         setSelectedImageFile(imageFile)
         setNewImagePreviewUrl(
             URL.createObjectURL(imageFile)
@@ -140,12 +143,58 @@ function FarmEditPage() {
     function handleChange(event) {
         const { name, value } = event.target
 
+        setIsDirty(true)
+
         setForm({
             ...form,
             [name]: value,
         })
     }
 
+    function handleAddressSearch() {
+        if (!window.kakao?.Postcode) {
+            alert('주소 검색 서비스를 불러오지 못했습니다.')
+            return
+        }
+
+        const popupWidth = 500
+        const popupHeight = 600
+
+        const popupLeft =
+            window.screenX + (window.outerWidth - popupWidth) / 2
+
+        const popupTop =
+            window.screenY + (window.outerHeight - popupHeight) / 2
+
+        new window.kakao.Postcode({
+            width: popupWidth,
+            height: popupHeight,
+
+            oncomplete(data) {
+                const selectedAddress =
+                    data.roadAddress || data.jibunAddress
+
+                const selectedRegion = [
+                    data.sido,
+                    data.sigungu,
+                ].filter(Boolean).join(' ')
+
+                setIsDirty(true)
+
+                setForm((currentForm) => ({
+                    ...currentForm,
+                    farmAddress: selectedAddress,
+                    farmDetailAddress: '',
+                    region: selectedRegion,
+                }))
+            },
+        }).open({
+            left: Math.round(popupLeft),
+            top: Math.round(popupTop),
+            popupTitle: '농장 주소 검색',
+            popupKey: 'farm-address-search',
+        })
+    }
     async function handleSubmit(event) {
         event.preventDefault()
 
@@ -225,28 +274,60 @@ function FarmEditPage() {
         }
     }
 
+    function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                '수정 중인 농장 정보가 사라집니다. 닫으시겠습니까?'
+            )
+
+            if (!confirmed) {
+                return
+            }
+        }
+
+        navigate('/seller/farms')
+    }
+
     if (loading) {
         return (
-            <CatalogPageState
-                title="농장 정보 불러오는 중"
-                message="수정할 농장 정보를 확인하고 있습니다."
-            />
+            <SellerFormModal
+                ariaLabel="농장 정보 불러오는 중"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="농장 정보 불러오는 중"
+                    message="수정할 농장 정보를 확인하고 있습니다."
+                />
+            </SellerFormModal>
         )
     }
 
     if (error) {
         return (
-            <CatalogPageState
-                title="농장 정보를 불러오지 못했습니다"
-                message={error}
-                actionLabel="다시 시도"
-                onAction={() => setReloadKey((value) => value + 1)}
-            />
+            <SellerFormModal
+                ariaLabel="농장 정보를 불러오지 못했습니다"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="농장 정보를 불러오지 못했습니다"
+                    message={error}
+                    actionLabel="다시 시도"
+                    onAction={() => setReloadKey((value) => value + 1)}
+                />
+            </SellerFormModal>
         )
     }
 
     return (
-        <main className="farm-create-page">
+        <SellerFormModal
+            ariaLabel="농장 수정"
+            onClose={handleClose}
+        >
+            <main className="farm-create-page">
             <section className="farm-create-header">
                 <p className="farm-create-label">Seller Farm</p>
                 <h1>농장 수정</h1>
@@ -320,15 +401,26 @@ function FarmEditPage() {
                             />
                         </label>
 
-                        <label className="farm-create-field wide">
+                        <div className="farm-create-field wide">
                             <span>농장 주소</span>
-                            <input
-                                name="farmAddress"
-                                value={form.farmAddress}
-                                onChange={handleChange}
-                                required
-                            />
-                        </label>
+
+                            <div className="farm-address-search">
+                                <input
+                                    name="farmAddress"
+                                    value={form.farmAddress}
+                                    placeholder="주소 검색 버튼을 눌러주세요"
+                                    readOnly
+                                    required
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={handleAddressSearch}
+                                >
+                                    주소 검색
+                                </button>
+                            </div>
+                        </div>
 
                         <label className="farm-create-field wide">
                             <span>상세 주소</span>
@@ -380,7 +472,7 @@ function FarmEditPage() {
                         <button
                             type="button"
                             className="farm-create-cancel"
-                            onClick={() => navigate('/seller/farms')}
+                            onClick={handleClose}
                             disabled={submitting}
                         >
                             취소
@@ -397,6 +489,7 @@ function FarmEditPage() {
                 </div>
             </form>
         </main>
+    </SellerFormModal>
     )
 }
 
