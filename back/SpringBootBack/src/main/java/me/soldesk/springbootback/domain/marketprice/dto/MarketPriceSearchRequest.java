@@ -28,6 +28,7 @@ public class MarketPriceSearchRequest {
 
     private Integer pageNo = 1;
     private Integer numOfRows = 1000;
+    private Integer limit = 5;
 
     // ==========================================
     //  추가될 수 있는 검색 조건들
