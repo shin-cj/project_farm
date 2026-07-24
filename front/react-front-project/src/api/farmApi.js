@@ -29,6 +29,12 @@ export async function getPublicFarm(farmId){
     return response.data
 }
 
+export async function getWeeklyPopularFarms(){
+    const response = await axios.get('/api/farms/popular/weekly')
+
+    return response.data
+}
+
 export async function uploadFarmImage(imageFile){
     const formData = new FormData()
 
