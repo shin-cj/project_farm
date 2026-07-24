@@ -276,9 +276,60 @@ function OrderHistoryPage() {
                   </span>
                 </div>
 
-                <h2 style={{ margin: "0 0 10px", fontSize: "22px", color: "#1f2f24" }}>
-                  {order.orderName || "주문 상품"}
-                </h2>
+                {order.orderItems?.length > 0 && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "8px",
+                      margin: "0 0 14px",
+                      padding: "12px",
+                      border: "1px solid #edf2ed",
+                      borderRadius: "8px",
+                      background: "#fbfdfb",
+                    }}
+                  >
+                    {order.orderItems.map((item) => (
+                      <div
+                        key={item.orderItemId}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: "12px",
+                          color: "#405348",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <span>
+                          <small
+                            style={{
+                              display: "inline-flex",
+                              marginRight: "8px",
+                              padding: "3px 7px",
+                              borderRadius: "999px",
+                              background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                              color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                              fontSize: "12px",
+                              fontWeight: 900,
+                            }}
+                          >
+                            {item.saleType === "WHOLESALE" ? "도매" : "소매"}
+                          </small>
+                          {item.productName}
+                          <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
+                            {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`].filter(Boolean).join(" ")}
+                          </strong>
+                        </span>
+                        <strong>{formatPrice(item.itemTotalPrice)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {(!order.orderItems || order.orderItems.length === 0) && (
+                  <h2 style={{ margin: "0 0 10px", fontSize: "22px", color: "#1f2f24" }}>
+                    {order.orderName || "주문 상품"}
+                  </h2>
+                )}
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px 20px", color: "#3f4f44", lineHeight: 1.7 }}>
                   <span>주문번호: {order.orderNumber}</span>

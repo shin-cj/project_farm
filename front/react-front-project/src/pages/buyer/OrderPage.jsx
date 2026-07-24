@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
 import userApi from "../../api/userApi.js";
@@ -29,6 +29,7 @@ function OrderPage() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [userLoading, setUserLoading] = useState(false);
+  const detailAddressRef = useRef(null);
 
   const isBuyer = user?.roleId === 2;
 
@@ -65,6 +66,27 @@ function OrderPage() {
 
     fetchUser();
   }, [buyerId]);
+
+  function handleAddressSearch() {
+    if (!window.daum?.Postcode) {
+      alert("주소 검색 서비스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
+    new window.daum.Postcode({
+      oncomplete(data) {
+        const selectedAddress =
+          data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
+
+        setReceiverAddress(selectedAddress);
+        setReceiverDetailAddress("");
+
+        setTimeout(() => {
+          detailAddressRef.current?.focus();
+        }, 0);
+      },
+    }).open();
+  }
 
   async function handlePaymentClick() {
     if (!isDirectOrder && cartItemIds.length === 0) {
@@ -117,6 +139,21 @@ function OrderPage() {
           });
 
       const order = response.data;
+
+      sessionStorage.setItem(
+        `checkoutItems:${order.orderNumber}`,
+        JSON.stringify(
+          orderItems.map((item) => ({
+            productName: item.productName,
+            saleType: item.saleType || "RETAIL",
+            unit: item.unit || "",
+            quantity: Number(item.quantity) || 0,
+            unitPrice: Number(item.product_price) || 0,
+            itemTotalPrice: (Number(item.product_price) || 0) * (Number(item.quantity) || 0),
+          }))
+        )
+      );
+
       const params = new URLSearchParams({
         orderId: order.orderNumber,
         amount: String(order.finalPrice),
@@ -294,12 +331,34 @@ function OrderPage() {
 
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>배송지</span>
-          <input type="text" value={receiverAddress} onChange={(event) => setReceiverAddress(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 96px", gap: "8px" }}>
+            <input
+              type="text"
+              value={receiverAddress}
+              readOnly
+              placeholder="주소 검색 버튼을 눌러주세요"
+              style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px", boxSizing: "border-box" }}
+            />
+            <button
+              type="button"
+              onClick={handleAddressSearch}
+              style={{
+                border: "1px solid #216b3a",
+                borderRadius: "8px",
+                background: "#ffffff",
+                color: "#216b3a",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              주소 검색
+            </button>
+          </div>
         </label>
 
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>상세 배송지</span>
-          <input type="text" value={receiverDetailAddress} onChange={(event) => setReceiverDetailAddress(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
+          <input ref={detailAddressRef} type="text" value={receiverDetailAddress} onChange={(event) => setReceiverDetailAddress(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px", boxSizing: "border-box" }} />
         </label>
 
         <label>
