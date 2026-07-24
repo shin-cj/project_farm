@@ -5,6 +5,7 @@ import {getPublicProductPage} from '../../api/productApi.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import {getApiErrorMessage} from '../../utils/apiError.js'
 import './ProductListPage.css'
+import ProductListWidget from "./ProductListWidget.jsx";
 
 function isSoldOutProduct(product) {
     const minimumOrderQuantity = Number(product.minOrderQuantity ?? 1)
@@ -575,6 +576,8 @@ function ProductListPage() {
                     </nav>
                 )}
             </section>
+            {!loading && !error && appliedKeyword != null && <ProductListWidget
+            keyword="appliedKeyword"/>}
         </main>
     )
 }

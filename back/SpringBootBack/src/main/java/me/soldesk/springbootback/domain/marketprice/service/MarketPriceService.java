@@ -77,6 +77,20 @@ public class MarketPriceService {
         System.out.println("최근 30일 간 조회할 수 있는 시세 데이터가 없습니다.");
     }
 
+    public MarketPriceSearchResponse getPriceSequelJson(){
+        String fileName = filePath + "api_priceSequel.json";
+        File file = new File(fileName);
+
+        if(!file.exists()){
+            throw new RuntimeException("저장된 시세 파일이 존재하지 않습니다. 업데이트를 먼저 해주세요.");
+        }
+        try {
+            return objectMapper.readValue(file, MarketPriceSearchResponse.class);
+        }catch (Exception e){
+            throw  new RuntimeException("데이터 파일을 읽는 중 오류가 발생했습니다 : "+ e.getMessage(), e);
+        }
+    }
+
     public String today(int beforeDay){
         LocalDate currentDate = LocalDate.now();
         LocalDate day = currentDate.minusDays(beforeDay);
