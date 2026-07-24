@@ -366,7 +366,7 @@ function AdminDashboardPage() {
                     {recentReports.map((report) => (
                         <button
                             key={report.reportId}
-                            onClick={() => navigate("/admin/reports")}
+                            onClick={() => openWorkModal("RECENT_REPORTS")}
                         >
                             <span>신고 #{report.reportId}</span>
                             <strong>{report.productName || "상품 정보 없음"}</strong>
