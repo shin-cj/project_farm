@@ -20,9 +20,11 @@ import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -90,6 +92,27 @@ public class MarketPriceService {
        String fileName = filePath+"api_recent.json";
 
        downloadJsonApi(url, fileName);
+    }
+
+    public Map<String, Object> getAutoUpdateStatus() {
+        Map<String, Object> statusMap = new HashMap<>();
+
+        // 스케줄러가 저장하는 대표 파일 확인
+        File file = new File(filePath + "api_priceSequel.json");
+
+        if (file.exists()) {
+            long lastModified = file.lastModified(); // 파일 수정 시간 (ms)
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+            statusMap.put("isUpdated", true);
+            statusMap.put("lastUpdatedTime", sdf.format(lastModified));
+            statusMap.put("fileName", file.getName());
+        } else {
+            statusMap.put("isUpdated", false);
+            statusMap.put("lastUpdatedTime", "자동 업데이트 기록 없음");
+        }
+
+        return statusMap;
     }
 
     // 일별 도,소매 가격정보 조회(JSON 저장 X)특정 품목의 '날짜별 전국 평균' 시세

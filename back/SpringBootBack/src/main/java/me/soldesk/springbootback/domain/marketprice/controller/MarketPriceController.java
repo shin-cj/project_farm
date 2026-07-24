@@ -7,6 +7,8 @@ import me.soldesk.springbootback.domain.marketprice.service.MarketPriceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/price-api")
@@ -20,6 +22,12 @@ public class MarketPriceController {
         marketPriceService.fetchRecent();
         marketPriceService.fetchPriceSequel();
         return ResponseEntity.ok("시세 데이터 수동 업데이트 성공!");
+    }
+
+    @GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> getStatus(){
+        Map<String, Object> status = marketPriceService.getAutoUpdateStatus();
+        return ResponseEntity.ok(status);
     }
 
     @GetMapping("/search-day")
