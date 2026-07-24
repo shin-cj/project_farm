@@ -1,7 +1,10 @@
 package me.soldesk.springbootback.domain.marketprice.controller;
 
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.marketprice.dto.BuyerMainRankingResponse;
+import me.soldesk.springbootback.domain.marketprice.dto.BuyerMainPriceTrendResponse;
 import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchRequest;
+import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchResponse;
 import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchResult;
 import me.soldesk.springbootback.domain.marketprice.service.MarketPriceService;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +43,22 @@ public class MarketPriceController {
     @GetMapping("/search-region")
     public ResponseEntity<MarketPriceSearchResult> searchPerRegion(MarketPriceSearchRequest request) throws Exception{
         MarketPriceSearchResult data = marketPriceService.searchPerRegion(request);
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/buyer-main/month-trend")
+    public ResponseEntity<BuyerMainPriceTrendResponse> getBuyerMainMonthTrend(
+            MarketPriceSearchRequest request
+    ) throws Exception{
+        BuyerMainPriceTrendResponse data = marketPriceService.getBuyerMainMonthTrend(request);
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/buyer-main/ranking")
+    public ResponseEntity<BuyerMainRankingResponse> getBuyerMainRanking(
+            MarketPriceSearchRequest request
+    ) throws Exception {
+        BuyerMainRankingResponse data = marketPriceService.getBuyerMainRanking(request);
         return ResponseEntity.ok(data);
     }
 }

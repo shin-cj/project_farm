@@ -14,6 +14,11 @@ export default defineConfig({
         changeOrigin: true,
       },
 
+      '/price-api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+
       '/uploads': {
         target: 'http://localhost:8080',
         changeOrigin: true,
