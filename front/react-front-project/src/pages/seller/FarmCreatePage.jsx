@@ -8,6 +8,7 @@ import './FarmCreatePage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import SellerFormModal from '../../components/common/SellerFormModal.jsx'
 
 
 function FarmCreatePage() {
@@ -78,6 +79,49 @@ function FarmCreatePage() {
         setForm({
             ...form,
             [name]: value,
+        })
+    }
+
+    function handleAddressSearch() {
+        if (!window.kakao?.Postcode) {
+            alert('주소 검색 서비스를 불러오지 못했습니다.')
+            return
+        }
+
+        const popupWidth = 500
+        const popupHeight = 600
+
+        const popupLeft =
+            window.screenX + (window.outerWidth - popupWidth) / 2
+
+        const popupTop =
+            window.screenY + (window.outerHeight - popupHeight) / 2
+
+        new window.kakao.Postcode({
+            width: popupWidth,
+            height: popupHeight,
+
+            oncomplete(data) {
+                const selectedAddress =
+                    data.roadAddress || data.jibunAddress
+
+                const selectedRegion = [
+                    data.sido,
+                    data.sigungu,
+                ].filter(Boolean).join(' ')
+
+                setForm((currentForm) => ({
+                    ...currentForm,
+                    farmAddress: selectedAddress,
+                    farmDetailAddress: '',
+                    region: selectedRegion,
+                }))
+            },
+        }).open({
+            left: Math.round(popupLeft),
+            top: Math.round(popupTop),
+            popupTitle: '농장 주소 검색',
+            popupKey: 'farm-address-search',
         })
     }
 
@@ -160,7 +204,11 @@ function FarmCreatePage() {
     }
 
     return (
-        <main className="farm-create-page">
+        <SellerFormModal
+            ariaLabel="농장 등록"
+            onClose={() => navigate('/seller/farms')}
+        >
+            <main className="farm-create-page">
             <section className="farm-create-header">
                 <p className="farm-create-label">Seller Farm</p>
                 <h1>농장 등록</h1>
@@ -235,16 +283,26 @@ function FarmCreatePage() {
                             />
                         </label>
 
-                        <label className="farm-create-field wide">
+                        <div className="farm-create-field wide">
                             <span>농장 주소</span>
-                            <input
-                                name="farmAddress"
-                                value={form.farmAddress}
-                                onChange={handleChange}
-                                placeholder="기본 주소"
-                                required
-                            />
-                        </label>
+
+                            <div className="farm-address-search">
+                                <input
+                                    name="farmAddress"
+                                    value={form.farmAddress}
+                                    placeholder="주소 검색 버튼을 눌러주세요"
+                                    readOnly
+                                    required
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={handleAddressSearch}
+                                >
+                                    주소 검색
+                                </button>
+                            </div>
+                        </div>
 
                         <label className="farm-create-field wide">
                             <span>상세 주소</span>
@@ -315,6 +373,7 @@ function FarmCreatePage() {
                 </div>
             </form>
         </main>
+     </SellerFormModal>
     )
 }
 

@@ -1,0 +1,70 @@
+.seller-form-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background-color: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(2px);
+}
+
+.seller-form-modal-panel {
+    position: relative;
+    width: min(920px, 100%);
+    max-height: calc(100vh - 64px);
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    background-color: #ffffff;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+}
+
+.seller-form-modal-content {
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+}
+
+.seller-form-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background-color: #f3f4f6;
+    color: #374151;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.seller-form-modal-close:hover {
+    background-color: #e5e7eb;
+    color: #111827;
+}
+
+@media (max-width: 640px) {
+    .seller-form-modal-backdrop {
+        align-items: stretch;
+        padding: 0;
+    }
+
+    .seller-form-modal-panel {
+        width: 100%;
+        max-height: none;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .seller-form-modal-content {
+        height: 100vh;
+        max-height: none;
+    }
+}

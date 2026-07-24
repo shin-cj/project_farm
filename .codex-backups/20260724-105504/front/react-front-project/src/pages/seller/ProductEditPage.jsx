@@ -1,31 +1,36 @@
-import { useEffect, useState } from 'react'
-import { createProduct, uploadProductImage } from '../../api/productApi.js'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getCategories } from '../../api/categoryApi.js'
+import {useEffect, useState} from 'react'
+import {useNavigate, useParams} from 'react-router-dom'
+import {
+    getProduct,
+    updateProduct,
+    uploadProductImage,
+} from '../../api/productApi.js'
+import {getCategories} from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
-import { getFarms } from '../../api/farmApi.js'
+import {getFarms} from "../../api/farmApi.js";
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
-import SellerFormModal from '../../components/common/SellerFormModal.jsx'
 
+function ProductEditPage() {
+    const {productId} = useParams()
 
-
-function ProductCreatePage() {
     const navigate = useNavigate()
-    const [searchParams] = useSearchParams()
-    const requestedFarmId = searchParams.get('farmId') ?? ''
 
     const [categories, setCategories] = useState([])
+
     const [farms, setFarms] = useState([])
-    const [registeredFarmCount, setRegisteredFarmCount] = useState(0)
+
+    const [loading, setLoading] = useState(true)
+
     const [submitting, setSubmitting] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
-    const [imagePreviewUrl, setImagePreviewUrl] = useState('')
-    const [formLoading, setFormLoading] = useState(true)
-    const [formError, setFormError] = useState('')
+    const [newImagePreviewUrl, setNewImagePreviewUrl] = useState('')
+
+    const [error, setError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
+    const [productStatus, setProductStatus] = useState('PENDING')
 
     const [form, setForm] = useState({
         farmId: '',
@@ -47,91 +52,108 @@ function ProductCreatePage() {
         (farm) => String(farm.farmId) === String(form.farmId)
     )
 
-
+    // 수정 페이지가 처음 열리거나 productId가 바뀌면 실행됩니다.
     useEffect(() => {
         let ignore = false
 
-        async function loadFormData() {
+        async function loadEditData() {
             try {
-                setFormLoading(true)
-                setFormError('')
+                setLoading(true)
+                setError('')
 
                 const sellerId = getLoginSellerId()
 
                 if (sellerId === null) {
-                    throw new Error(
-                        '로그인한 판매자 정보를 확인할 수 없습니다.'
-                    )
+                    throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
                 }
 
-                // 카테고리와 로그인 판매자의 농장을 동시에 요청합니다.
-                const [categoryData, farmData] = await Promise.all([
+                // 카테고리 목록과 기존 상품 정보를 동시에 요청합니다.
+                const [categoryData, farmData, productData] = await Promise.all([
                     getCategories(),
                     getFarms(sellerId),
+                    getProduct(productId),
                 ])
 
-                if (!ignore) {
-                    setCategories(categoryData)
-                    setRegisteredFarmCount(farmData.length)
+                if (ignore) {
+                    return
+                }
 
-                    const approvedFarms = farmData.filter(
+                const ownsProduct = farmData.some(
+                    (farm) => Number(farm.farmId) === Number(productData.farmId)
+                )
+
+                if (!ownsProduct) {
+                    throw new Error('수정 권한이 없는 상품입니다.')
+                }
+
+                const currentFarm = farmData.find(
+                    (farm) => Number(farm.farmId) === Number(productData.farmId)
+                )
+
+                if (currentFarm?.approvalStatus !== 'APPROVED') {
+                    throw new Error('승인 완료된 농장의 상품만 수정할 수 있습니다.')
+                }
+
+                setFarms(
+                    farmData.filter(
                         (farm) => farm.approvalStatus === 'APPROVED'
                     )
+                )
+                setCategories(categoryData)
 
-                    setFarms(approvedFarms)
+                // 백엔드에서 받아온 기존 상품 정보를 입력 칸에 넣습니다.
+                setForm({
+                    farmId: productData.farmId ?? '',
+                    categoryId: productData.categoryId ?? '',
+                    productName: productData.productName ?? '',
+                    description: productData.description ?? '',
+                    price: productData.price ?? '',
+                    stockQuantity: productData.stockQuantity ?? '',
+                    unit: productData.unit ?? '',
+                    minOrderQuantity: String(
+                        productData.minOrderQuantity ?? 1
+                    ),
+                    origin: productData.origin ?? '',
+                    harvestDate: productData.harvestDate ?? '',
+                    expirationDate: productData.expirationDate ?? '',
+                    productImageUrl: productData.productImageUrl ?? '',
+                    sameDayDelivery: productData.sameDayDelivery ?? 'N',
+                })
 
-                    const requestedFarm = approvedFarms.find(
-                        (farm) =>
-                            String(farm.farmId) === requestedFarmId
-                    )
-
-                    if (requestedFarm) {
-                        setForm((currentForm) => ({
-                            ...currentForm,
-                            farmId: String(requestedFarm.farmId),
-                            minOrderQuantity:
-                                requestedFarm.saleType === 'WHOLESALE'
-                                    ? '2'
-                                    : '1',
-                        }))
-                    }
-                }
-            } catch (error) {
+                setProductStatus(productData.productStatus ?? 'PENDING')
+            } catch (err) {
                 if (!ignore) {
-                    console.error(error)
-                    setFormError(getApiErrorMessage(
-                        error,
-                        '상품 등록에 필요한 정보를 불러오지 못했습니다.'
-                    ))
+                    console.error(err)
+                    setError(getApiErrorMessage(err, '상품 정보를 불러오지 못했습니다.'))
                 }
             } finally {
                 if (!ignore) {
-                    setFormLoading(false)
+                    setLoading(false)
                 }
             }
         }
 
-        loadFormData()
+        loadEditData()
 
         return () => {
             ignore = true
         }
-    }, [reloadKey, requestedFarmId])
+    }, [productId, reloadKey])
 
     useEffect(() => {
         return () => {
-            if (imagePreviewUrl) {
-                URL.revokeObjectURL(imagePreviewUrl)
+            if (newImagePreviewUrl) {
+                URL.revokeObjectURL(newImagePreviewUrl)
             }
         }
-    }, [imagePreviewUrl])
+    }, [newImagePreviewUrl])
 
     function handleImageChange(event) {
         const imageFile = event.target.files?.[0] ?? null
 
         if (!imageFile) {
             setSelectedImageFile(null)
-            setImagePreviewUrl('')
+            setNewImagePreviewUrl('')
             return
         }
 
@@ -144,7 +166,7 @@ function ProductCreatePage() {
         if (!allowedTypes.includes(imageFile.type)) {
             alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
             setSelectedImageFile(null)
-            setImagePreviewUrl('')
+            setNewImagePreviewUrl('')
             event.target.value = ''
             return
         }
@@ -152,15 +174,16 @@ function ProductCreatePage() {
         if (imageFile.size > 5 * 1024 * 1024) {
             alert('상품 이미지는 5MB 이하만 선택할 수 있습니다.')
             setSelectedImageFile(null)
-            setImagePreviewUrl('')
+            setNewImagePreviewUrl('')
             event.target.value = ''
             return
         }
 
         setSelectedImageFile(imageFile)
-        setImagePreviewUrl(URL.createObjectURL(imageFile))
+        setNewImagePreviewUrl(URL.createObjectURL(imageFile))
     }
 
+    // 사용자가 입력 칸을 변경할 때 form의 해당 값만 변경합니다.
     function handleChange(event) {
         const {name, value} = event.target
 
@@ -188,6 +211,7 @@ function ProductCreatePage() {
         }))
     }
 
+    // 상품 수정 버튼을 눌렀을 때 실행됩니다.
     async function handleSubmit(event) {
         event.preventDefault()
 
@@ -195,17 +219,15 @@ function ProductCreatePage() {
             return
         }
 
-        if (farms.length === 0 || categories.length === 0) {
-            alert('농장과 카테고리 정보를 먼저 확인해주세요.')
-            return
-        }
-
+        // input에서 받은 값은 문자열이므로 숫자로 변환합니다.
         const farmId = Number(form.farmId)
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
-        const minOrderQuantity = Number(form.minOrderQuantity)
+        const minOrderQuantity =
+            Number(form.minOrderQuantity)
 
+        // 입력값 검사
         if (!Number.isFinite(farmId) || farmId <= 0) {
             alert('농장 번호를 올바르게 입력해주세요.')
             return
@@ -227,12 +249,12 @@ function ProductCreatePage() {
         }
 
         if (!Number.isFinite(price) || price <= 0) {
-            alert('가격은 1원 이상 숫자로 입력해주세요.')
+            alert('가격은 1원 이상 입력해주세요.')
             return
         }
 
         if (!Number.isFinite(stockQuantity) || stockQuantity < 0) {
-            alert('재고는 0개 이상 숫자로 입력해주세요.')
+            alert('재고는 0개 이상 입력해주세요.')
             return
         }
 
@@ -265,19 +287,24 @@ function ProductCreatePage() {
             return
         }
 
+        // 백엔드 ProductRequest에 맞춰 전송할 객체를 만듭니다.
         const productData = {
             ...form,
-            farmId: farmId,
-            categoryId: categoryId,
-            price: price,
-            stockQuantity: stockQuantity,
-            minOrderQuantity: minOrderQuantity,
+            farmId,
+            categoryId,
+            price,
+            stockQuantity,
+            minOrderQuantity,
+
+            // 날짜를 지웠다면 빈 문자열 대신 null을 보냅니다.
+            harvestDate: form.harvestDate || null,
+            expirationDate: form.expirationDate || null,
         }
 
         try {
             setSubmitting(true)
 
-            let productImageUrl = ''
+            let productImageUrl = form.productImageUrl
 
             if (selectedImageFile) {
                 const uploadResult =
@@ -286,107 +313,52 @@ function ProductCreatePage() {
                 productImageUrl = uploadResult.imageUrl
             }
 
-            await createProduct({
+            // PUT /api/products/{productId} 요청을 보냅니다.
+            await updateProduct(productId, {
                 ...productData,
                 productImageUrl,
             })
 
-            alert('상품이 등록되었습니다.')
+            alert('상품 정보가 수정되었습니다. 관리자 승인 후 다시 판매됩니다.')
             navigate('/seller/products')
-        } catch (error) {
-            console.error(error)
-            alert(getApiErrorMessage(error, '상품 등록에 실패했습니다.'))
+        } catch (err) {
+            console.error(err)
+            alert(getApiErrorMessage(err, '상품 수정에 실패했습니다.'))
         } finally {
             setSubmitting(false)
         }
     }
 
-    function handleClose() {
-        navigate('/seller/products')
-    }
-
-    const formReady = farms.length > 0 && categories.length > 0
-
-    if (formLoading) {
+    if (loading) {
         return (
-            <SellerFormModal
-                ariaLabel="상품 등록 준비 중"
-                onClose={handleClose}
-            >
-                <CatalogPageState
-                    title="상품 등록 준비 중"
-                    message="농장과 카테고리 정보를 불러오고 있습니다."
-                />
-            </SellerFormModal>
+            <CatalogPageState
+                title="상품 정보 불러오는 중"
+                message="수정할 상품 정보를 확인하고 있습니다."
+            />
         )
     }
 
-    if (formError) {
+    if (error) {
         return (
-            <SellerFormModal
-                ariaLabel="상품 등록 준비 실패"
-                onClose={handleClose}
-            >
-                <CatalogPageState
-                    title="상품 등록 준비 실패"
-                    message={formError}
-                    actionLabel="다시 시도"
-                    onAction={() => setReloadKey((value) => value + 1)}
-                />
-            </SellerFormModal>
+            <CatalogPageState
+                title="상품 정보를 불러오지 못했습니다"
+                message={error}
+                actionLabel="다시 시도"
+                onAction={() => setReloadKey((value) => value + 1)}
+            />
         )
     }
 
     return (
-        <SellerFormModal
-            ariaLabel="상품 등록"
-            onClose={handleClose}
-        >
-            <main className="product-create-page">
+        <main className="product-create-page">
             <section className="product-create-card">
                 <div className="product-create-header">
-                    <h1 className="product-create-title">상품 등록</h1>
+                    <h1 className="product-create-title">상품 수정</h1>
+
                     <p className="product-create-description">
-                        판매할 농산물의 기본 정보를 입력해주세요.
+                        등록된 상품의 가격, 재고, 판매 정보를 수정합니다.
                     </p>
                 </div>
-
-                {!formReady && (
-                    <div className="product-create-prerequisite" role="alert">
-                        {farms.length === 0 && registeredFarmCount === 0 && (
-                            <div>
-                                <strong>등록된 농장이 없습니다.</strong>
-                                <span>상품을 등록하려면 농장을 먼저 등록해주세요.</span>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/seller/farms/new')}
-                                >
-                                    농장 등록하러 가기
-                                </button>
-                            </div>
-                        )}
-
-                        {farms.length === 0 && registeredFarmCount > 0 && (
-                            <div>
-                                <strong>승인 완료된 농장이 없습니다.</strong>
-                                <span>농장 승인이 완료된 뒤 상품을 등록할 수 있습니다.</span>
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/seller/farms')}
-                                >
-                                    농장 승인 상태 확인하기
-                                </button>
-                            </div>
-                        )}
-
-                        {categories.length === 0 && (
-                            <div>
-                                <strong>등록 가능한 카테고리가 없습니다.</strong>
-                                <span>카테고리 등록 상태를 확인해주세요.</span>
-                            </div>
-                        )}
-                    </div>
-                )}
 
                 <form
                     onSubmit={handleSubmit}
@@ -399,7 +371,7 @@ function ProductCreatePage() {
                     >
                     <div className="product-create-row">
                         <div className="product-create-field">
-                            <label>판매 농장</label>
+                            <label>농장 번호</label>
 
                             <select
                                 name="farmId"
@@ -410,11 +382,8 @@ function ProductCreatePage() {
                                 <option value="">농장 선택</option>
 
                                 {farms.map((farm) => (
-                                    <option
-                                        key={farm.farmId}
-                                        value={farm.farmId}
-                                    >
-                                        {farm.farmName} - {farm.region} · {
+                                    <option key={farm.farmId} value={farm.farmId}>
+                                        {farm.farmName} · {
                                             farm.saleType === 'WHOLESALE'
                                                 ? '도매'
                                                 : '소매'
@@ -422,10 +391,12 @@ function ProductCreatePage() {
                                     </option>
                                 ))}
                             </select>
+
                         </div>
 
                         <div className="product-create-field">
                             <label>카테고리</label>
+
                             <select
                                 name="categoryId"
                                 value={form.categoryId}
@@ -433,8 +404,12 @@ function ProductCreatePage() {
                                 required
                             >
                                 <option value="">카테고리 선택</option>
+
                                 {categories.map((category) => (
-                                    <option key={category.categoryId} value={category.categoryId}>
+                                    <option
+                                        key={category.categoryId}
+                                        value={category.categoryId}
+                                    >
                                         {category.categoryName}
                                     </option>
                                 ))}
@@ -444,34 +419,34 @@ function ProductCreatePage() {
 
                     <div className="product-create-field">
                         <label>상품명</label>
+
                         <input
                             name="productName"
                             value={form.productName}
                             onChange={handleChange}
-                            placeholder="예: 유기농 고구마"
                             required
                         />
                     </div>
 
                     <div className="product-create-field">
                         <label>상품 설명</label>
+
                         <textarea
                             name="description"
                             value={form.description}
                             onChange={handleChange}
-                            placeholder="상품 특징, 재배 방식, 맛 등을 입력해주세요."
                         />
                     </div>
 
                     <div className="product-create-row">
                         <div className="product-create-field">
                             <label>가격</label>
+
                             <input
                                 type="number"
                                 name="price"
                                 value={form.price}
                                 onChange={handleChange}
-                                placeholder="15000"
                                 min="1"
                                 required
                             />
@@ -479,12 +454,12 @@ function ProductCreatePage() {
 
                         <div className="product-create-field">
                             <label>재고</label>
+
                             <input
                                 type="number"
                                 name="stockQuantity"
                                 value={form.stockQuantity}
                                 onChange={handleChange}
-                                placeholder="20"
                                 min="0"
                                 required
                             />
@@ -492,6 +467,7 @@ function ProductCreatePage() {
 
                         <div className="product-create-field">
                             <label>판매 단위</label>
+
                             <input
                                 name="unit"
                                 value={form.unit}
@@ -501,6 +477,7 @@ function ProductCreatePage() {
                             />
                         </div>
                     </div>
+
                         <div className="product-create-row">
                             <div className="product-create-field">
                                 <label>판매 방식</label>
@@ -567,16 +544,17 @@ function ProductCreatePage() {
                     <div className="product-create-row">
                         <div className="product-create-field">
                             <label>원산지</label>
+
                             <input
                                 name="origin"
                                 value={form.origin}
                                 onChange={handleChange}
-                                placeholder="예: 전라남도"
                             />
                         </div>
 
                         <div className="product-create-field">
                             <label>수확일</label>
+
                             <input
                                 type="date"
                                 name="harvestDate"
@@ -587,6 +565,7 @@ function ProductCreatePage() {
 
                         <div className="product-create-field">
                             <label>유통기한</label>
+
                             <input
                                 type="date"
                                 name="expirationDate"
@@ -596,32 +575,43 @@ function ProductCreatePage() {
                         </div>
                     </div>
 
-                        <div className="product-create-field">
-                            <label>상품 이미지</label>
+                    <div className="product-create-field">
+                        <label>상품 이미지 변경</label>
 
-                            <input
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                onChange={handleImageChange}
-                            />
-
-                            <small>
-                                JPG, JPEG, PNG, WEBP 형식의 5MB 이하 이미지를 선택해주세요.
-                            </small>
-                        </div>
-
-                        {imagePreviewUrl && (
-                    <div className="product-create-image-preview">
-                        <p>상품 이미지 미리보기</p>
-
-                        <CatalogImage
-                            src={imagePreviewUrl}
-                            alt="등록할 상품 미리보기"
-                            fallbackText="이미지를 불러올 수 없습니다."
-                            fallbackClassName="product-create-image-fallback"
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            onChange={handleImageChange}
                         />
+
+                        <small>
+                            새 이미지를 선택하지 않으면 기존 이미지가 유지됩니다.
+                        </small>
+                    </div>
+                    {(newImagePreviewUrl || form.productImageUrl.trim()) && (
+                        <div className="product-create-image-preview">
+                            <p>상품 이미지 미리보기</p>
+
+                            <CatalogImage
+                                src={newImagePreviewUrl || form.productImageUrl}
+                                alt="수정할 상품 미리보기"
+                                fallbackText="이미지를 불러올 수 없습니다."
+                                fallbackClassName="product-create-image-fallback"
+                            />
                         </div>
                     )}
+                    <div className="product-create-field">
+                        <label>판매 상태</label>
+
+                        <input
+                            name="productStatus"
+                            value={productStatus}
+                            readOnly
+                        />
+                        <small>
+                            승인 상태는 상품 관리 화면의 판매 상태 기능으로 변경합니다.
+                        </small>
+                    </div>
 
                     </fieldset>
 
@@ -629,7 +619,7 @@ function ProductCreatePage() {
                         <button
                             type="button"
                             className="product-create-cancel-button"
-                            onClick={handleClose}
+                            onClick={() => navigate('/seller/products')}
                             disabled={submitting}
                         >
                             취소
@@ -638,16 +628,15 @@ function ProductCreatePage() {
                         <button
                             type="submit"
                             className="product-create-submit-button"
-                            disabled={submitting || !formReady}
+                            disabled={submitting}
                         >
-                            {submitting ? '등록 중...' : '상품 등록'}
+                            {submitting ? '수정 중...' : '수정 저장'}
                         </button>
                     </div>
                 </form>
             </section>
-            </main>
-        </SellerFormModal>
+        </main>
     )
 }
 
-export default ProductCreatePage
+export default ProductEditPage

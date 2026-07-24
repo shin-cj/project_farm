@@ -1,13 +1,16 @@
 .product-create-page {
-    padding: 32px;
-    color: #1f2937;
+    min-height: 100vh;
+    padding: 40px 20px;
+    background-color: #f6f8f4;
 }
 
 .product-create-card {
-    padding: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px;
     background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .product-create-header {
