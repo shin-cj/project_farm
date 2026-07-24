@@ -1,59 +1,33 @@
-import { useState } from 'react';
-import OrderHistoryPage from "./OrderHistoryPage.jsx"; // 👈 주문 내역 페이지 임포트 필수!
-import UserProfileEditPage from "./UserProfileEditPage.jsx";
+import OrderHistoryPage from "./OrderHistoryPage.jsx";
+import { useNavigate } from "react-router-dom";
 
 function MyPage() {
-    // 현재 어떤 탭을 보고 있는지 상태 관리
-    const [activeTab, setActiveTab] = useState('orders');
+    const navigate = useNavigate();
 
     return (
-        <div className="my-page-container" style={{ maxWidth: '1000px', margin: '40px auto', padding: '0 20px' }}>
+        <div className="my-page-container" style={{ maxWidth: '1120px', margin: '40px auto', padding: '0 20px' }}>
 
-
-            <div className="my-page-nav-tabs" style={{ display: 'flex', gap: '12px', marginBottom: '30px', borderBottom: '2px solid #eaeaea', paddingBottom: '15px' }}>
+            {/* 마이페이지 상단 타이틀 및 개인정보 수정 이동 버튼 */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '20px' }}>
                 <button
                     type="button"
-                    onClick={() => setActiveTab('orders')}
+                    onClick={() => navigate('/user/edit')} // 👈 개인정보 수정 페이지 경로에 맞게 설정
                     style={{
-                        padding: '10px 20px',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        backgroundColor: activeTab === 'orders' ? '#2f3640' : '#f5f6fa',
-                        color: activeTab === 'orders' ? '#fff' : '#333',
+                        padding: '10px 18px',
+                        backgroundColor: '#2f3640',
+                        color: '#fff',
                         border: 'none',
                         borderRadius: '6px',
-                        transition: 'background-color 0.2s'
-                    }}
-                >
-                    주문 내역
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => setActiveTab('profile')}
-                    style={{
-                        padding: '10px 20px',
-                        fontSize: '1rem',
                         fontWeight: 'bold',
-                        cursor: 'pointer',
-                        backgroundColor: activeTab === 'profile' ? '#2f3640' : '#f5f6fa',
-                        color: activeTab === 'profile' ? '#fff' : '#333',
-                        border: 'none',
-                        borderRadius: '6px',
-                        transition: 'background-color 0.2s'
+                        cursor: 'pointer'
                     }}
                 >
-                    개인정보
+                    개인정보 수정하기 ⚙️
                 </button>
             </div>
 
-
-            <div className="my-page-content">
-                {activeTab === 'orders' && <OrderHistoryPage />}
-                {activeTab === 'profile' && <UserProfileEditPage />}
-            </div>
-
+            {/* 기존 주문 내역 컴포넌트 그대로 출력 */}
+            <OrderHistoryPage />
         </div>
     );
 }
