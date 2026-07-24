@@ -1,6 +1,6 @@
 .product-list-page {
     min-height: 100vh;
-    padding: 32px 20px 48px;
+    padding: 8px 20px 48px;
     background-color: #f6f8f4;
 }
 
@@ -558,7 +558,7 @@
 
 @media (max-width: 600px) {
     .product-list-page {
-        padding: 20px 12px 36px;
+        padding: 4px 12px 36px;
     }
 
     .product-mode-switch {

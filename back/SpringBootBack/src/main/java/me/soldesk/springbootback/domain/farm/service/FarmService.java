@@ -327,31 +327,34 @@ public class FarmService {
             );
         }
 
-        //사업자 등록번호 10자리 숫자 형식인지 검사
+        // 사업자등록번호는 농장 등록과 수정에 반드시 필요
         String businessNumber = request.getBusinessNumber();
 
-        if(businessNumber != null && !businessNumber.isBlank()){
-
-            String trimmedBusinessNumber = businessNumber.trim();
-
-            if(!trimmedBusinessNumber.matches(
-                    "\\d{3}-?\\d{2}-?\\d{5}"
-            )){
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "사업자등록번호는 123-45-67890 형식으로 입력해주세요."
-                );
-            }
-
-            // 하이픈 없이 입력해도 동일하게 저장
-            String digits = trimmedBusinessNumber.replace("-","");
-
-            request.setBusinessNumber(digits.substring(0, 3)
-            + "-" + digits.substring(3, 5) + "-" + digits.substring(5));
-        }else {
-            //빈 문자열 대신 db에 null 저장
-            request.setBusinessNumber(null);
+        if (businessNumber == null || businessNumber.isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "사업자등록번호를 입력해주세요."
+            );
         }
+
+        String trimmedBusinessNumber = businessNumber.trim();
+
+        // 하이픈이 있거나 없는 10자리 사업자등록번호 형식만 허용
+        if (!trimmedBusinessNumber.matches("\\d{3}-?\\d{2}-?\\d{5}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "사업자등록번호는 123-45-67890 형식으로 입력해주세요."
+            );
+        }
+
+        // 하이픈 없이 입력해도 123-45-67890 형식으로 통일해 저장
+        String digits = trimmedBusinessNumber.replace("-", "");
+
+        request.setBusinessNumber(
+                digits.substring(0, 3)
+                        + "-" + digits.substring(3, 5)
+                        + "-" + digits.substring(5)
+        );
 
         // 농장명이 비어 있는지 확인
         if (request.getFarmName() == null

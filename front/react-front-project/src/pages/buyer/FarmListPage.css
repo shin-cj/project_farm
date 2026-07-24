@@ -1,7 +1,7 @@
 .farm-list-page {
     width: min(1240px, 100%);
     margin: 0 auto;
-    padding: 36px 28px 70px;
+    padding: 8px 28px 70px;
     color: #173226;
 }
 
@@ -251,7 +251,7 @@
 
 @media (max-width: 760px) {
     .farm-list-page {
-        padding: 24px 16px 50px;
+        padding: 4px 16px 50px;
     }
 
     .farm-list-hero {
