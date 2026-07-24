@@ -425,6 +425,18 @@
   text-align: center;
 }
 
+/* 상품 상세 수량 입력창의 브라우저 기본 증감 화살표만 숨깁니다. */
+.product-detail-quantity-control input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.product-detail-quantity-control input[type="number"]::-webkit-inner-spin-button,
+.product-detail-quantity-control input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .product-detail-quantity-control button:disabled {
   cursor: not-allowed;
   opacity: 0.4;
