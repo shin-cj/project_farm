@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getFarms } from "../../api/farmApi.js";
+import { getProducts } from "../../api/productApi.js";
+import penaltyApi from "../../api/penaltyApi.js";
+import DashboardWorkModal from "../../components/report/DashboardWorkModal.jsx";
 import adminDashboardApi from "../../api/adminDashboardApi";
 import reportApi from "../../api/reportApi";
 import "./AdminDashboardPage.css";
+import DashboardItemDetailModal
+    from "../../components/report/DashboardItemDetailModal.jsx";
 
 const TREND_METRICS = {
     salesAmount: {
@@ -39,6 +45,187 @@ function AdminDashboardPage() {
     const [trendMetric, setTrendMetric] = useState("salesAmount");
     const [detailsLoading, setDetailsLoading] = useState(true);
     const [detailsError, setDetailsError] = useState("");
+    const [workModal, setWorkModal] = useState({
+        open: false,
+        type:"",
+        title: "",
+        items: [],
+        loading: false,
+        error: ""
+    });
+
+    const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
+
+    async function openWorkModal(type) {
+        const titles = {
+            PENDING_REPORTS: "처리가 필요한 신고",
+            RECENT_REPORTS: "최근 접수된 신고",
+            REVIEWING_REPORTS: "검토 중인 신고",
+            PENDING_FARMS: "승인 대기 농장",
+            PENDING_PRODUCTS: "승인 대기 상품",
+            ACTIVE_PENALTIES: "현재 적용 중인 페널티"
+        };
+
+        setWorkModal({
+            open: true,
+            type: type,
+            title: titles[type],
+            items: [],
+            loading: true,
+            error: ""
+        });
+
+        try {
+            let items = [];
+
+            if (type === "PENDING_REPORTS") {
+                const response =
+                    await reportApi.getAdminReports("PENDING");
+
+                items = response.data.map((report) => ({
+                    id: report.reportId,
+                    kind:"REPORT",
+                    data:report,
+
+                    title: report.productName || "상품 정보 없음",
+                    subtitle: report.reporterEmail || "신고자 정보 없음",
+                    description: report.reportReason,
+                    status: report.reportStatus,
+                    createdAt: report.createdAt
+                }));
+            }
+
+            if (type === "RECENT_REPORTS") {
+                const response =
+                    await reportApi.getAdminReports("ALL");
+
+                items = [...response.data]
+                    .sort(
+                        (a, b) =>
+                            new Date(b.createdAt) -
+                            new Date(a.createdAt)
+                    )
+                    .map((report) => ({
+                        id: report.reportId,
+                        kind:"REPORT",
+                        data:report,
+                        title: report.productName || "상품 정보 없음",
+                        subtitle: report.reporterEmail || "신고자 정보 없음",
+                        description: report.reportReason,
+                        status: report.reportStatus,
+                        createdAt: report.createdAt
+                    }));
+            }
+
+            if (type === "REVIEWING_REPORTS") {
+                const response =
+                    await reportApi.getAdminReports("REVIEWING");
+
+                items = response.data.map((report) => ({
+                    id: report.reportId,
+                    kind:"REPORT",
+                    data:report,
+                    title: report.productName || "상품 정보 없음",
+                    subtitle: report.reporterEmail || "신고자 정보 없음",
+                    description: report.reportReason,
+                    status: report.reportStatus,
+                    createdAt: report.createdAt
+                }));
+            }
+
+            if (type === "PENDING_FARMS") {
+                const farms = await getFarms(null);
+
+                items = farms
+                    .filter((farm) => farm.approvalStatus === "PENDING")
+                    .map((farm) => ({
+                        id: farm.farmId,
+                        title: farm.farmName,
+                        kind: "FARM",
+                        data: farm,
+                        subtitle: farm.region || "지역 미등록",
+                        description:
+                            farm.farmDescription || "농장 소개 없음",
+                        status: farm.approvalStatus,
+                        createdAt: farm.createdAt
+                    }));
+            }
+
+            if (type === "PENDING_PRODUCTS") {
+                const products =
+                    await getProducts(null, null, "PENDING");
+
+                items = products.map((product) => ({
+                    id: product.productId,
+                    title: product.productName,
+                    kind: "PRODUCT",
+                    data: product,
+                    subtitle: product.farmName || "농장 정보 없음",
+                    description:
+                        `${product.price?.toLocaleString()}원 · 재고 ${product.stockQuantity}`,
+                    status: product.productStatus,
+                    createdAt: product.createdAt
+                }));
+            }
+
+            if (type === "ACTIVE_PENALTIES") {
+                const response =
+                    await penaltyApi.getAdminList("ACTIVE");
+
+                items = response.data.map((penalty) => ({
+                    id: penalty.penaltyId,
+                    title:
+                        penalty.productName ||
+                        `판매자 번호 ${penalty.sellerId}`,
+                    kind: "PENALTY",
+                    data: penalty,
+                    subtitle: `누적 점수 ${penalty.penaltyPoints}점`,
+                    description:
+                        penalty.penaltyReason || "사유 없음",
+                    status: penalty.penaltyStatus,
+                    createdAt: penalty.createdAt
+                }));
+            }
+
+            setWorkModal({
+                open: true,
+                type: type,
+                title: titles[type],
+                items,
+                loading: false,
+                error: ""
+            });
+        } catch (error) {
+            setWorkModal({
+                open: true,
+                type:type,
+                title: titles[type],
+                items: [],
+                loading: false,
+                error:
+                    error.response?.data?.message ||
+                    "목록을 불러오지 못했습니다."
+            });
+        }
+    }
+
+    function openWorkDetail(item){
+        setWorkModal((previous) => ({
+            ...previous,
+            open: false
+        }))
+
+        setSelectedWorkDetail(item)
+    }
+
+    function closeWorkDetail(){
+        setSelectedWorkDetail(null)
+
+        setWorkModal((previous) => ({
+            ...previous,
+            open: true
+        }))
+    }
 
     useEffect(() => {
         Promise.all([
@@ -142,7 +329,7 @@ function AdminDashboardPage() {
                     </strong>
                 </button>
 
-                <button onClick={() => navigate("/admin/reports")}>
+                <button onClick={() => openWorkModal("PENDING_REPORTS")}>
                     <span>미처리 신고</span>
                     <strong>{summary.pendingReports}건</strong>
                 </button>
@@ -152,22 +339,22 @@ function AdminDashboardPage() {
                 <section className="dashboard-work-section">
                     <h2>처리 필요 업무</h2>
 
-                    <button onClick={() => navigate("/admin/approvals")}>
+                    <button onClick={() => openWorkModal("PENDING_FARMS")}>
                         농장 승인 대기
                         <strong>{summary.pendingFarms}건</strong>
                     </button>
 
-                    <button onClick={() => navigate("/admin/approvals")}>
+                    <button onClick={() => openWorkModal("PENDING_PRODUCTS")}>
                         상품 승인 대기
                         <strong>{summary.pendingProducts}건</strong>
                     </button>
 
-                    <button onClick={() => navigate("/admin/reports")}>
+                    <button onClick={() => openWorkModal("REVIEWING_REPORTS")}>
                         검토 중인 신고
                         <strong>{summary.reviewingReports}건</strong>
                     </button>
 
-                    <button onClick={() => navigate("/admin/reports")}>
+                    <button onClick={() => openWorkModal("ACTIVE_PENALTIES")}>
                         활성 페널티
                         <strong>{summary.activePenalties}건</strong>
                     </button>
@@ -374,6 +561,19 @@ function AdminDashboardPage() {
                         </section>
                     </>
                 )}
+                <DashboardWorkModal
+                    modal={workModal}
+                    onItemClick={openWorkDetail}
+                    onClose={() => setWorkModal((previous) => ({
+                        ...previous,
+                        open: false
+                    }))
+                    }
+                />
+                <DashboardItemDetailModal
+                    item={selectedWorkDetail}
+                    onClose={closeWorkDetail}
+                />
 
             </section>
         </section>
