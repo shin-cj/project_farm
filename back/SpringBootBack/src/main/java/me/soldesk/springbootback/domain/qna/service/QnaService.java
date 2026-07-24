@@ -35,12 +35,13 @@ public class QnaService {
 
     @Transactional
     public void createQna(QnaRequest request) {
-        Long safeBuyerId = request.getBuyerId() != null ? request.getBuyerId() : 2L;
+        // 프론트에서 넘어온 buyerId를 그대로 사용하고, 없을 때만 2L을 쓰도록 안전장치 유지
+        Long safeBuyerId = request.getBuyerId();
         Long safeProductId = request.getProductId() != null ? request.getProductId() : 1L;
 
         Qna qna = new Qna();
         qna.setProductId(safeProductId);
-        qna.setBuyerId(safeBuyerId);
+        qna.setBuyerId(safeBuyerId); // 👈 로그인한 진짜 유저 ID가 DB에 박힙니다!
         qna.setQuestionTitle(request.getQuestionTitle());
         qna.setQuestionContent(request.getQuestionContent());
         qna.setIsSecret(request.getIsSecret() != null ? request.getIsSecret() : 0);
@@ -49,7 +50,6 @@ public class QnaService {
 
         qnaRepository.save(qna);
     }
-
     private QnaResponse toResponse(Qna qna) {
         QnaResponse res = new QnaResponse();
         res.setQnaId(qna.getQnaId());
@@ -89,7 +89,7 @@ public class QnaService {
         Long safeAdminId = request.getAdminId() != null ? request.getAdminId() : 1L;
 
         qna.setAnswerContent(request.getAnswerContent());
-        qna.setAnsweredBy(safeAdminId);
+       // qna.setAnsweredBy(safeAdminId);//
         qna.setQnaStatus("ANSWERED");
         qna.setAnsweredAt(LocalDateTime.now());
     }

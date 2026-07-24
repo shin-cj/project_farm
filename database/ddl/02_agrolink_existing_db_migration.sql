@@ -32,6 +32,7 @@ BEGIN
 END;
 /
 
+ALTER TABLE reviews MODIFY order_item_id NULL;
 /* products.min_order_quantity 컬럼이 없을 때만 추가 */
 DECLARE
     v_count NUMBER;
@@ -145,3 +146,5 @@ SELECT table_name,
            'FK_REPORTS_PRODUCT_ID'
        )
  ORDER BY table_name, constraint_name;
+SELECT * FROM users;
+ALTER TABLE qna DROP CONSTRAINT FK_QNA_ANSWERED_BY;
