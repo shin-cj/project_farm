@@ -83,6 +83,8 @@ public class OrderService {
             Product product = productRepository.findById(cartItem.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
 
+            validateMinimumOrderQuantity(product, cartItem.getQuantity());
+
             if (product.getStockQuantity() < cartItem.getQuantity()) {
                 throw new IllegalArgumentException("상품 재고가 부족합니다.");
             }
@@ -186,6 +188,8 @@ public class OrderService {
         if (orderQuantity <= 0) {
             throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
         }
+
+        validateMinimumOrderQuantity(product, orderQuantity);
 
         if (product.getStockQuantity() < orderQuantity) {
             throw new IllegalArgumentException("상품 재고가 부족합니다.");
@@ -331,5 +335,23 @@ public class OrderService {
         return productRepository.findById(productId)
                 .map(Product::getUnit)
                 .orElse(null);
+    }
+
+    private void validateMinimumOrderQuantity(Product product, int quantity) {
+        int minimumOrderQuantity = getMinimumOrderQuantity(product);
+
+        if (quantity < minimumOrderQuantity) {
+            throw new IllegalArgumentException(
+                    product.getProductName() + " 상품의 최소 주문 수량은 "
+                            + minimumOrderQuantity + "개입니다."
+            );
+        }
+    }
+
+    private int getMinimumOrderQuantity(Product product) {
+        Integer minimumOrderQuantity = product.getMinOrderQuantity();
+        return minimumOrderQuantity == null || minimumOrderQuantity < 1
+                ? 1
+                : minimumOrderQuantity;
     }
 }

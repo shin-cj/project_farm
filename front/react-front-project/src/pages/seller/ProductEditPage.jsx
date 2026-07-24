@@ -26,6 +26,7 @@ function ProductEditPage() {
     const [loading, setLoading] = useState(true)
 
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [newImagePreviewUrl, setNewImagePreviewUrl] = useState('')
 
@@ -180,6 +181,7 @@ function ProductEditPage() {
             return
         }
 
+        setIsDirty(true)
         setSelectedImageFile(imageFile)
         setNewImagePreviewUrl(URL.createObjectURL(imageFile))
     }
@@ -187,6 +189,8 @@ function ProductEditPage() {
     // 사용자가 입력 칸을 변경할 때 form의 해당 값만 변경합니다.
     function handleChange(event) {
         const {name, value} = event.target
+
+        setIsDirty(true)
 
         if (name === 'farmId') {
             const nextFarm = farms.find(
@@ -331,6 +335,20 @@ function ProductEditPage() {
     }
 
     function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = window.confirm(
+                '수정 중인 상품 정보가 사라집니다. 닫으시겠습니까?'
+            )
+
+            if (!confirmed) {
+                return
+            }
+        }
+
         navigate('/seller/products')
     }
 

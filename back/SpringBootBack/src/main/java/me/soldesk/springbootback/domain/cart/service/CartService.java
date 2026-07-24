@@ -60,6 +60,8 @@ public class CartService {
 
         int finalQuantity = currentQuantity + addQuantity;
 
+        validateMinimumOrderQuantity(product, finalQuantity);
+
         if(finalQuantity > product.getStockQuantity()){
             throw new ResponseStatusException(HttpStatus.CONFLICT, "현재 재고는 " + product.getStockQuantity() + "개입니다.");
         }
@@ -150,6 +152,8 @@ public class CartService {
                 .findById(cartItem.getProductId())
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"상품이 없습니다."));
 
+        validateMinimumOrderQuantity(product, quantity);
+
         if(quantity > product.getStockQuantity()){
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,"현재 재고는 " + product.getStockQuantity() + "개입니다."
@@ -158,6 +162,24 @@ public class CartService {
 
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
+    }
+
+    private void validateMinimumOrderQuantity(Product product, int quantity) {
+        int minimumOrderQuantity = getMinimumOrderQuantity(product);
+
+        if (quantity < minimumOrderQuantity) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "최소 주문 수량은 " + minimumOrderQuantity + "개입니다."
+            );
+        }
+    }
+
+    private int getMinimumOrderQuantity(Product product) {
+        Integer minimumOrderQuantity = product.getMinOrderQuantity();
+        return minimumOrderQuantity == null || minimumOrderQuantity < 1
+                ? 1
+                : minimumOrderQuantity;
     }
 
 }
