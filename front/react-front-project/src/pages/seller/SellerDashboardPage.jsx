@@ -132,16 +132,12 @@ function SellerDashboardPage() {
               ? 'down'
               : 'same'
 
-  const activeDeliveryOrders = sellerOrders.filter(
-      (order) => order.orderStatus !== 'CANCELED'
-  )
-
-  const readyOrderCount = activeDeliveryOrders.filter(
-      (order) => order.deliveryStatus === 'READY'
+  const readyOrderCount = sellerOrders.filter(
+      (order) => order.orderStatus === 'PAID' && order.deliveryStatus === 'READY'
   ).length
 
-  const shippingOrderCount = activeDeliveryOrders.filter(
-      (order) => order.deliveryStatus === 'SHIPPING'
+  const shippingOrderCount = sellerOrders.filter(
+      (order) => order.orderStatus === 'PAID' && order.deliveryStatus === 'SHIPPING'
   ).length
 
 // 매출 중 가장 큰 값을 기준으로 그래프 높이를 계산합니다.
