@@ -26,6 +26,7 @@ public class CategoryService {
             CategoryResponse response = new CategoryResponse();
             response.setCategoryId(category.getCategoryId());
             response.setCategoryName(category.getCategoryName());
+            response.setMarketCategoryCode(category.getMarketCategoryCode());
             response.setDisplayOrder(category.getDisplayOrder());
             responses.add(response);
         }

@@ -1,4 +1,77 @@
 /* =========================================================
+   농담(Nongdam) 개발 DB 1단계: 구조 초기화 SQL
+
+   실행 순서: 01 → 02 → 03
+   주의: 이 파일은 현재 Oracle 스키마의 농담 테이블·시퀀스와
+         데이터를 삭제한 뒤 최신 구조만 다시 만듭니다.
+         운영 DB에서는 절대 실행하지 마세요.
+   ========================================================= */
+
+/* 기존 테이블 제거: 없는 테이블은 건너뜁니다. */
+DECLARE
+    PROCEDURE drop_table_if_exists(p_table_name VARCHAR2) IS
+    BEGIN
+        EXECUTE IMMEDIATE 'DROP TABLE ' || p_table_name || ' CASCADE CONSTRAINTS PURGE';
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -942 THEN RAISE; END IF;
+    END;
+BEGIN
+    drop_table_if_exists('reports');
+    drop_table_if_exists('chatbot');
+    drop_table_if_exists('reviews');
+    drop_table_if_exists('qna');
+    drop_table_if_exists('deliveries');
+    drop_table_if_exists('payments');
+    drop_table_if_exists('seller_points');
+    drop_table_if_exists('seller_point_goals');
+    drop_table_if_exists('product_stock_histories');
+    drop_table_if_exists('order_items');
+    drop_table_if_exists('cart_items');
+    drop_table_if_exists('orders');
+    drop_table_if_exists('carts');
+    drop_table_if_exists('market_prices');
+    drop_table_if_exists('products');
+    drop_table_if_exists('farms');
+    drop_table_if_exists('categories');
+    drop_table_if_exists('users');
+    drop_table_if_exists('roles');
+END;
+/
+
+/* 기존 시퀀스 제거: 없는 시퀀스는 건너뜁니다. */
+DECLARE
+    PROCEDURE drop_sequence_if_exists(p_sequence_name VARCHAR2) IS
+    BEGIN
+        EXECUTE IMMEDIATE 'DROP SEQUENCE ' || p_sequence_name;
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE != -2289 THEN RAISE; END IF;
+    END;
+BEGIN
+    drop_sequence_if_exists('users_seq');
+    drop_sequence_if_exists('categories_seq');
+    drop_sequence_if_exists('farms_seq');
+    drop_sequence_if_exists('products_seq');
+    drop_sequence_if_exists('product_stock_histories_seq');
+    drop_sequence_if_exists('seller_points_seq');
+    drop_sequence_if_exists('seller_point_goals_seq');
+    drop_sequence_if_exists('carts_seq');
+    drop_sequence_if_exists('cart_items_seq');
+    drop_sequence_if_exists('orders_seq');
+    drop_sequence_if_exists('order_items_seq');
+    drop_sequence_if_exists('payments_seq');
+    drop_sequence_if_exists('deliveries_seq');
+    drop_sequence_if_exists('qna_seq');
+    drop_sequence_if_exists('reviews_seq');
+    drop_sequence_if_exists('market_prices_seq');
+    drop_sequence_if_exists('chatbot_seq');
+    drop_sequence_if_exists('reports_seq');
+END;
+/
+
+/* 최신 테이블 구조 생성 */
+/* =========================================================
    농부링크(AgroLink) 통합 테이블 생성 SQL
    Oracle Database / DBeaver 기준
 
@@ -468,3 +541,107 @@ CREATE TABLE reports (
     CONSTRAINT fk_reports_product_id
         FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
+
+
+/* PK 자동 번호 시퀀스 생성 */
+/* =========================================================
+   농부링크(AgroLink) PK 자동번호용 시퀀스 생성 SQL
+   Oracle Database / DBeaver 기준
+
+   실행 대상: 시퀀스가 없는 새 스키마
+   실행 순서: ddl/01_agrolink_schema.sql 실행 후 이 파일 실행
+   참고: roles는 고정 권한 번호를 사용하므로 roles_seq를 만들지 않는다.
+   ========================================================= */
+
+CREATE SEQUENCE users_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE categories_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE farms_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE products_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE product_stock_histories_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE seller_points_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE seller_point_goals_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE carts_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE cart_items_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE orders_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE order_items_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE payments_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE deliveries_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE qna_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE reviews_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE market_prices_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE chatbot_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE reports_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+
+COMMIT;

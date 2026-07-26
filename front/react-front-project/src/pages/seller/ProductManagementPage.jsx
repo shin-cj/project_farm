@@ -38,6 +38,7 @@ function ProductManagementPage() {
   const [changingStatusId, setChangingStatusId] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [stockInputs, setStockInputs] = useState({})
+  const [stockReasons, setStockReasons] = useState({})
   const [updatingStockId, setUpdatingStockId] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
 
@@ -223,6 +224,13 @@ function ProductManagementPage() {
     }))
   }
 
+  function handleStockReasonChange(productId, value) {
+    setStockReasons((currentReasons) => ({
+      ...currentReasons,
+      [productId]: value,
+    }))
+  }
+
   async function handleStockSave(product) {
     if (updatingStockId !== null) {
       return
@@ -251,13 +259,21 @@ function ProductManagementPage() {
       return
     }
 
+    const changeReason = (stockReasons[product.productId] ?? '').trim()
+
+    if (!changeReason) {
+      alert('재고 변경 사유를 입력해주세요.')
+      return
+    }
+
     try {
       setUpdatingStockId(product.productId)
 
       const updatedProduct =
           await updateProductStock(
               product.productId,
-              stockQuantity
+              stockQuantity,
+              changeReason,
           )
 
       setProducts((currentProducts) =>
@@ -272,6 +288,11 @@ function ProductManagementPage() {
         ...currentInputs,
         [product.productId]:
             String(updatedProduct.stockQuantity),
+      }))
+
+      setStockReasons((currentReasons) => ({
+        ...currentReasons,
+        [product.productId]: '',
       }))
 
       alert('재고가 변경되었습니다.')
@@ -328,6 +349,12 @@ function ProductManagementPage() {
         const nextInputs = { ...currentInputs }
         delete nextInputs[product.productId]
         return nextInputs
+      })
+
+      setStockReasons((currentReasons) => {
+        const nextReasons = { ...currentReasons }
+        delete nextReasons[product.productId]
+        return nextReasons
       })
 
       alert('상품이 삭제되었습니다.')
@@ -575,6 +602,7 @@ function ProductManagementPage() {
                       <td>
                         <div className="seller-product-stock-control">
                           <input
+                              className="seller-product-stock-quantity-input"
                               type="number"
                               min="0"
                               step="1"
@@ -589,6 +617,21 @@ function ProductManagementPage() {
                                   )
                               }
                               aria-label={`${product.productName} 재고 수량`}
+                          />
+
+                          <input
+                              className="seller-product-stock-reason-input"
+                              type="text"
+                              value={stockReasons[product.productId] ?? ''}
+                              onChange={(event) =>
+                                  handleStockReasonChange(
+                                      product.productId,
+                                      event.target.value,
+                                  )
+                              }
+                              placeholder="변경 사유 입력"
+                              maxLength="500"
+                              aria-label={`${product.productName} 재고 변경 사유`}
                           />
 
                           <button
@@ -615,16 +658,9 @@ function ProductManagementPage() {
 
                       <td>
                         <div className="seller-product-actions">
-                          {(
-                              product.productStatus === 'ON_SALE'
-                              || product.productStatus === 'SOLD_OUT'
-                          ) && (
-                              <Link to={`/products/${product.productId}`}
-                                    state = {{ from: '/seller/products'}}
-                                    >
-                                상세
-                              </Link>
-                          )}
+                          <Link to={`/seller/products/${product.productId}`}>
+                            상세
+                          </Link>
 
                           <Link to={
                             `/seller/products/${product.productId}/edit`

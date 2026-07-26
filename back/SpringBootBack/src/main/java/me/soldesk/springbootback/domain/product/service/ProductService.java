@@ -10,6 +10,8 @@ import me.soldesk.springbootback.domain.product.dto.ProductStatusRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.stockhistory.dto.ProductStockHistoryResponse;
+import me.soldesk.springbootback.domain.stockhistory.service.ProductStockHistoryService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,17 +35,20 @@ public class ProductService {
     private final FarmRepository farmRepository;
     private final CategoryRepository categoryRepository;
     private final ProductImageService productImageService;
+    private final ProductStockHistoryService productStockHistoryService;
 
     //의존성 주입
     public ProductService(ProductRepository productRepository,
                           FarmRepository farmRepository,
                           CategoryRepository categoryRepository,
-                          ProductImageService productImageService) {
+                          ProductImageService productImageService,
+                          ProductStockHistoryService productStockHistoryService) {
 
         this.farmRepository = farmRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.productImageService = productImageService;
+        this.productStockHistoryService = productStockHistoryService;
     }
 
     // 카테고리, 농장, 판매 상태를 조건으로 상품 목록을 조회합니다.
@@ -228,6 +233,7 @@ public class ProductService {
     }
 
     //새로운 상품을 등록
+    @Transactional
     public ProductResponse createProduct(ProductRequest request) {
 
         //유효성  검사 추가
@@ -244,11 +250,21 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
+        productStockHistoryService.record(
+                savedProduct.getProductId(),
+                null,
+                "INITIAL_STOCK",
+                0,
+                savedProduct.getStockQuantity(),
+                "상품 등록 초기 재고"
+        );
+
         return toResponse(savedProduct);
 
     }
 
     //기존 상품 정보를 수정
+    @Transactional
     public ProductResponse updateProduct(Long productId, ProductRequest request) {
 
         validateProductRequest(request);
@@ -261,6 +277,7 @@ public class ProductService {
                 ));
 
         String previousImageUrl = product.getProductImageUrl();
+        Integer previousStockQuantity = product.getStockQuantity();
 
         applyRequestToProduct(product, request);
 
@@ -274,6 +291,17 @@ public class ProductService {
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
+
+        if (!Objects.equals(previousStockQuantity, savedProduct.getStockQuantity())) {
+            productStockHistoryService.record(
+                    savedProduct.getProductId(),
+                    null,
+                    "MANUAL_ADJUSTMENT",
+                    previousStockQuantity,
+                    savedProduct.getStockQuantity(),
+                    "상품 정보 수정 화면에서 재고 변경"
+            );
+        }
 
         if (!Objects.equals(
                 previousImageUrl,
@@ -409,10 +437,21 @@ public class ProductService {
     }
 
     //상품의 재고 수량만 변경
+    @Transactional
     public ProductResponse updateStock(Long productId, ProductStockRequest request){
 
         if(request == null || request.getStockQuantity() == null){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "변경 할 재고 수량을 입력해주세요.");
+        }
+
+        if (request.getChangeReason() == null || request.getChangeReason().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고 변경 사유를 입력해주세요.");
+        }
+
+        String changeReason = request.getChangeReason().trim();
+
+        if (changeReason.length() > 500) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고 변경 사유는 500자 이하로 입력해주세요.");
         }
 
         if(request.getStockQuantity() < 0){
@@ -424,6 +463,7 @@ public class ProductService {
                         HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."
                 ));
 
+        Integer previousStockQuantity = product.getStockQuantity();
         product.setStockQuantity(request.getStockQuantity());
 
         applyStockStatus(product);
@@ -432,7 +472,29 @@ public class ProductService {
 
         Product savedProduct = productRepository.save(product);
 
+        if (!Objects.equals(previousStockQuantity, savedProduct.getStockQuantity())) {
+            productStockHistoryService.record(
+                    savedProduct.getProductId(),
+                    null,
+                    "MANUAL_ADJUSTMENT",
+                    previousStockQuantity,
+                    savedProduct.getStockQuantity(),
+                    changeReason
+            );
+        }
+
         return toResponse(savedProduct);
+    }
+
+    /** 상품 재고 이력을 최신 변경 순서로 조회합니다. */
+    public List<ProductStockHistoryResponse> getProductStockHistories(Long productId) {
+        productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "상품을 찾을 수 없습니다."
+                ));
+
+        return productStockHistoryService.getProductStockHistories(productId);
     }
 
     /** 판매자 본인의 상품을 삭제합니다. 연결된 거래 데이터가 있으면 삭제하지 않습니다. */
@@ -498,6 +560,7 @@ public class ProductService {
                 farm == null ? "농장 정보 없음" : farm.getFarmName()
         );
         response.setCategoryId(product.getCategoryId());
+        response.setMarketItemCode(product.getMarketItemCode());
         response.setProductName(product.getProductName());
         response.setDescription(product.getDescription());
         response.setPrice(product.getPrice());
@@ -535,6 +598,15 @@ public class ProductService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "농장을 선택해주세요."
+            );
+        }
+
+        if (request.getMarketItemCode() != null
+                && !request.getMarketItemCode().isBlank()
+                && !request.getMarketItemCode().trim().matches("\\d{1,10}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "공공 시세 품목 코드는 숫자 10자리 이하로 입력해주세요."
             );
         }
 
@@ -670,6 +742,11 @@ public class ProductService {
 
         product.setFarmId(request.getFarmId());
         product.setCategoryId(request.getCategoryId());
+        product.setMarketItemCode(
+                request.getMarketItemCode() == null || request.getMarketItemCode().isBlank()
+                        ? null
+                        : request.getMarketItemCode().trim()
+        );
         product.setProductName(request.getProductName());
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());

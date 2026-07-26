@@ -34,6 +34,7 @@ import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
 import DeliveryStatusPage from "../pages/buyer/DeliveryStatusPage.jsx";
 import ProductEditPage from "../pages/seller/ProductEditPage.jsx";
+import SellerProductDetailPage from '../pages/seller/SellerProductDetailPage.jsx'
 import FarmCreatePage from '../pages/seller/FarmCreatePage'
 import FarmEditPage from '../pages/seller/FarmEditPage'
 import FarmDetailPage from '../pages/buyer/FarmDetailPage'
@@ -73,6 +74,7 @@ function AppRoutes() {
           <Route path="search" element={<SellerPriceSearchPage />} />
           <Route path="deliveries" element={<Navigate to="/seller/orders" replace />} />
           <Route path="products/:productId/edit" element={<ProductEditPage />} />
+          <Route path="products/:productId" element={<SellerProductDetailPage />} />
           <Route path="statistics" element={<SalesStatisticsPage />} />
           <Route path="farms/new" element={<FarmCreatePage />} />
           <Route path="farms/:farmId/edit" element={<FarmEditPage />} />

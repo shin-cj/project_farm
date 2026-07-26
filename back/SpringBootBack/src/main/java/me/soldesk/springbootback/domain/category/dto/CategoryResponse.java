@@ -16,6 +16,9 @@ public class CategoryResponse {
     /** 카테고리 이름 */
     private String categoryName;
 
+    /** 공공 시세 API 부류 코드 */
+    private String marketCategoryCode;
+
     /** 화면 표시 순서 */
     private Integer displayOrder;
 

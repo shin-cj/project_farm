@@ -17,6 +17,9 @@ public class ProductRequest {
     /** 상품 카테고리 번호 */
     private Long categoryId;
 
+    /** 공공 농산물 시세 API 품목 코드. 아직 시세 조회에 연결하지 않아도 저장할 수 있습니다. */
+    private String marketItemCode;
+
     /** 상품 이름 */
     private String productName;
 

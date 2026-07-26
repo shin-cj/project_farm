@@ -39,6 +39,7 @@ function ProductEditPage() {
     const [form, setForm] = useState({
         farmId: '',
         categoryId: '',
+        marketItemCode: '',
         productName: '',
         description: '',
         price: '',
@@ -109,6 +110,7 @@ function ProductEditPage() {
                 setForm({
                     farmId: productData.farmId ?? '',
                     categoryId: productData.categoryId ?? '',
+                    marketItemCode: productData.marketItemCode ?? '',
                     productName: productData.productName ?? '',
                     description: productData.description ?? '',
                     price: productData.price ?? '',
@@ -456,6 +458,17 @@ function ProductEditPage() {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="product-create-field">
+                            <label>공공 시세 품목 코드</label>
+                            <input
+                                name="marketItemCode"
+                                value={form.marketItemCode}
+                                onChange={handleChange}
+                                placeholder="예: 411 (선택 입력)"
+                                maxLength="10"
+                            />
                         </div>
                     </div>
 

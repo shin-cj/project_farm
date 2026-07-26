@@ -3,6 +3,7 @@ package me.soldesk.springbootback.domain.product.controller;
 import me.soldesk.springbootback.domain.product.dto.*;
 import me.soldesk.springbootback.domain.product.service.ProductImageService;
 import me.soldesk.springbootback.domain.product.service.ProductService;
+import me.soldesk.springbootback.domain.stockhistory.dto.ProductStockHistoryResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -71,6 +72,13 @@ public class ProductController {
             @RequestParam(defaultValue = "false") boolean publicOnly
     ) {
         return productService.getProduct(productId, publicOnly);
+    }
+
+    @GetMapping("/{productId}/stock-histories")
+    public List<ProductStockHistoryResponse> getProductStockHistories(
+            @PathVariable Long productId
+    ) {
+        return productService.getProductStockHistories(productId);
     }
 
     @PutMapping("/{productId}")
