@@ -12,12 +12,14 @@ import { getCategories } from '../../api/categoryApi.js'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 
 // 상품 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductManagementPage() {
 
   const navigate = useNavigate()
+  const { alert, confirm } = useAppFeedback()
   const [searchParams] = useSearchParams()
   const requestedFarmId = searchParams.get('farmId') ?? ''
 
@@ -181,7 +183,12 @@ function ProductManagementPage() {
         ? '이 상품을 판매중지할까요?'
         : '이 상품을 다시 판매할까요?'
 
-    const ok = confirm(message)
+    const ok = await confirm({
+      title: '판매 상태를 변경할까요?',
+      message,
+      confirmText: nextStatus === 'HIDDEN' ? '판매중지' : '판매 재개',
+      type: nextStatus === 'HIDDEN' ? 'danger' : 'info',
+    })
 
     if (!ok) {
       return
@@ -294,9 +301,12 @@ function ProductManagementPage() {
       return
     }
 
-    const ok = confirm(
-        `"${product.productName}" 상품을 삭제할까요?\n연결된 주문이나 장바구니가 있으면 삭제할 수 없습니다.`
-    )
+    const ok = await confirm({
+      title: '상품을 삭제할까요?',
+      message: `"${product.productName}" 상품을 삭제합니다. 연결된 주문이나 장바구니가 있으면 삭제할 수 없습니다.`,
+      confirmText: '삭제',
+      type: 'danger',
+    })
 
     if (!ok) {
       return

@@ -5,6 +5,7 @@ import {
   DELIVERY_STATUS_LABEL,
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
+import { useAppFeedback } from "../../context/AppFeedbackContext.jsx";
 
 const filterOptions = [
   { value: "ALL", label: "전체" },
@@ -38,6 +39,7 @@ function formatPrice(value) {
 }
 
 function AdminDeliveryManagementPage() {
+  const { alert, confirm, prompt } = useAppFeedback();
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("ALL");
   const [message, setMessage] = useState("");
@@ -139,7 +141,14 @@ function AdminDeliveryManagementPage() {
   }
 
   async function handleApproveRefund(order) {
-    if (!window.confirm("환불을 승인하시겠습니까?")) {
+    const confirmed = await confirm({
+      title: "환불을 승인할까요?",
+      message: "승인한 환불은 결제 취소 절차로 이어집니다.",
+      confirmText: "환불 승인",
+      type: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -153,7 +162,15 @@ function AdminDeliveryManagementPage() {
   }
 
   async function handleRejectRefund(order) {
-    const rejectReason = window.prompt("반려 사유를 입력해주세요.", "환불 기준에 맞지 않습니다.");
+    const rejectReason = await prompt({
+      title: "환불 요청을 반려할까요?",
+      message: "구매자에게 전달할 반려 사유를 입력해주세요.",
+      inputLabel: "반려 사유",
+      placeholder: "예: 환불 기준에 맞지 않습니다.",
+      initialValue: "환불 기준에 맞지 않습니다.",
+      confirmText: "반려 처리",
+      type: "danger",
+    });
     if (rejectReason === null) {
       return;
     }

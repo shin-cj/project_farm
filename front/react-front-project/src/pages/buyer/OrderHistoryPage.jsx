@@ -6,6 +6,7 @@ import {
   DELIVERY_STATUS_LABEL,
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
+import { useAppFeedback } from "../../context/AppFeedbackContext.jsx";
 
 function getLoginUser() {
   try {
@@ -69,6 +70,7 @@ function canViewDelivery(order) {
 
 function OrderHistoryPage() {
   const navigate = useNavigate();
+  const { alert, prompt } = useAppFeedback();
   const location = useLocation();
   const loginUser = getLoginUser();
   const buyerId = loginUser?.userId;
@@ -129,7 +131,15 @@ function OrderHistoryPage() {
       return;
     }
 
-    const cancelReason = window.prompt("취소 사유를 입력해주세요.", "구매자 요청");
+    const cancelReason = await prompt({
+      title: "주문을 취소할까요?",
+      message: `${order.orderNumber} 주문의 취소 사유를 입력해주세요.`,
+      inputLabel: "취소 사유",
+      placeholder: "예: 구매자 요청",
+      initialValue: "구매자 요청",
+      confirmText: "취소 요청",
+      type: "danger",
+    });
     if (cancelReason === null) {
       return;
     }
@@ -152,7 +162,15 @@ function OrderHistoryPage() {
       return;
     }
 
-    const refundReason = window.prompt("환불 사유를 입력해주세요.", "상품 하자");
+    const refundReason = await prompt({
+      title: "환불을 요청할까요?",
+      message: `${order.orderNumber} 주문의 환불 사유를 입력해주세요.`,
+      inputLabel: "환불 사유",
+      placeholder: "예: 상품 하자",
+      initialValue: "상품 하자",
+      confirmText: "환불 요청",
+      type: "danger",
+    });
     if (refundReason === null) {
       return;
     }
