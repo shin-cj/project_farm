@@ -7,7 +7,6 @@ import {
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
 
-
 function getLoginUser() {
   try {
     const storedUser = localStorage.getItem("loginUser");
@@ -88,12 +87,39 @@ function MyPage() {
 
   return (
     <section style={{ maxWidth: "1120px", margin: "0 auto", padding: "42px 20px 70px" }}>
-      <div style={{ marginBottom: "26px" }}>
-        <p style={{ margin: "0 0 8px", color: "#4f8c60", fontWeight: 800 }}>My Page</p>
-        <h1 style={{ margin: 0, fontSize: "32px", color: "#1f2f24" }}>마이페이지</h1>
-        <p style={{ margin: "10px 0 0", color: "#68756d" }}>
-          주문, 배송, 취소/환불 현황을 한눈에 확인하세요.
-        </p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "16px",
+          marginBottom: "26px",
+        }}
+      >
+        <div>
+          <p style={{ margin: "0 0 8px", color: "#4f8c60", fontWeight: 800 }}>My Page</p>
+          <h1 style={{ margin: 0, fontSize: "32px", color: "#1f2f24" }}>마이페이지</h1>
+          <p style={{ margin: "10px 0 0", color: "#68756d" }}>
+            주문, 배송, 취소/환불 현황을 한눈에 확인하세요.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate("/user/edit")}
+          style={{
+            padding: "10px 18px",
+            backgroundColor: "#2f3640",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          개인정보 수정하기
+        </button>
       </div>
 
       {loading && <p style={{ color: "#5f6f64" }}>마이페이지 정보를 불러오는 중입니다.</p>}
@@ -154,11 +180,19 @@ function MyPage() {
               </div>
             </article>
 
-            <MyReportSummaryCard reporterId={buyerId}/>
+            <MyReportSummaryCard reporterId={buyerId} />
           </div>
 
           <div style={{ marginTop: "28px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "14px",
+              }}
+            >
               <h2 style={{ margin: 0, color: "#1f2f24" }}>최근 주문</h2>
               <button
                 type="button"
@@ -178,7 +212,15 @@ function MyPage() {
             </div>
 
             {recentOrders.length === 0 ? (
-              <div style={{ padding: "26px", border: "1px solid #dce6dd", borderRadius: "12px", background: "#fbfdfb", color: "#68756d" }}>
+              <div
+                style={{
+                  padding: "26px",
+                  border: "1px solid #dce6dd",
+                  borderRadius: "12px",
+                  background: "#fbfdfb",
+                  color: "#68756d",
+                }}
+              >
                 최근 주문이 없습니다.
               </div>
             ) : (
@@ -224,10 +266,28 @@ function MyPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#e5f4ea", color: "#216b3a", fontSize: "0.85rem", fontWeight: 800 }}>
+                      <span
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          background: "#e5f4ea",
+                          color: "#216b3a",
+                          fontSize: "0.85rem",
+                          fontWeight: 800,
+                        }}
+                      >
                         {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
                       </span>
-                      <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontSize: "0.85rem", fontWeight: 800 }}>
+                      <span
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          background: "#f3f6f3",
+                          color: "#526357",
+                          fontSize: "0.85rem",
+                          fontWeight: 800,
+                        }}
+                      >
                         {DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
                       </span>
                     </div>

@@ -195,7 +195,7 @@ SAVEPOINT before_agrolink_dummy_replace;
 DELETE FROM reports;
 DELETE FROM chatbot;
 DELETE FROM reviews;
-DELETE FROM qna;
+DELETE FROM qna; 
 DELETE FROM deliveries;
 DELETE FROM payments;
 DELETE FROM seller_points;
