@@ -56,11 +56,6 @@ const formatDate = (value) => {
   return `${value.slice(0, 4)}.${value.slice(4, 6)}.${value.slice(6, 8)}`
 }
 
-const CHART_TYPE_OPTIONS = [
-  { label: '상승률 TOP 10', value: 'up' },
-  { label: '하락률 TOP 10', value: 'down' },
-]
-
 const PRODUCT_IMAGE_MAP = {
   감자: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=500&q=80',
   고구마: 'https://images.unsplash.com/photo-1596097635121-14b63b7a0c19?auto=format&fit=crop&w=500&q=80',
@@ -124,7 +119,7 @@ const SALE_TYPE_PRICE_MODIFIER = {
   '02': 0.82,
 }
 
-function ChartCard({ title, description, items, tone, chartType, onChartTypeChange }) {
+function ChartCard({ title, description, items, tone }) {
   const chartItems = (items || []).filter((item, index, itemList) => {
     const itemKey = `${item.itemName}-${item.varietyName}-${item.saleTypeName}-${item.unit}-${item.tone}`
 
@@ -145,17 +140,6 @@ function ChartCard({ title, description, items, tone, chartType, onChartTypeChan
           <p>{description}</p>
           <h2>{title}</h2>
         </div>
-
-        <label className="buyer-change-chart-select">
-          <span>그래프 선택</span>
-          <select value={chartType} onChange={(event) => onChartTypeChange(event.target.value)}>
-            {CHART_TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <div className="buyer-change-chart">
@@ -202,21 +186,26 @@ function ChartCard({ title, description, items, tone, chartType, onChartTypeChan
 }
 
 function ChangeRateChart({ upItems, downItems, periodLabel }) {
-  const [chartType, setChartType] = useState('up')
-  const isUpChart = chartType === 'up'
-
   return (
     <section className="buyer-change-chart-grid">
       <ChartCard
-        title={`${periodLabel} ${isUpChart ? '상승' : '하락'} 그래프`}
-        description={isUpChart ? '상승률 TOP 10' : '하락률 TOP 10'}
-        items={(isUpChart ? upItems || [] : downItems || []).map((item) => ({
+        title={`${periodLabel} 상승 그래프`}
+        description="상승률 TOP 5"
+        items={(upItems || []).slice(0, 5).map((item) => ({
           ...item,
-          tone: chartType,
+          tone: 'up',
         }))}
-        tone={chartType}
-        chartType={chartType}
-        onChartTypeChange={setChartType}
+        tone="up"
+      />
+
+      <ChartCard
+        title={`${periodLabel} 하락 그래프`}
+        description="하락률 TOP 5"
+        items={(downItems || []).slice(0, 5).map((item) => ({
+          ...item,
+          tone: 'down',
+        }))}
+        tone="down"
       />
     </section>
   )
@@ -823,53 +812,6 @@ function BuyerHomePage() {
             downItems={selectedPeriod.downItems}
             periodLabel={selectedPeriod.label}
           />
-
-          <section className="buyer-region-price-card">
-            <div className="buyer-section-header">
-              <div>
-                <p className="buyer-home-label">지역 시세</p>
-                <h2>전국 8도 가격 흐름</h2>
-              </div>
-              <button type="button" onClick={() => navigate('/market-prices')}>
-                자세히 보기
-              </button>
-            </div>
-
-            <div className="buyer-region-price-content">
-              <div className="buyer-region-summary">
-                <strong>오늘 평균가</strong>
-                <span>전국 8도 {selectedSaleTypeLabel} · {selectedCategoryLabel}</span>
-                <b>{formatPrice(regionAveragePrice)}</b>
-                <p>
-                  가장 낮은 지역은 {lowestRegion.region}, 가장 높은 지역은 {highestRegion.region}이에요.
-                </p>
-              </div>
-
-              <div className="buyer-region-bars">
-                <h3>지역별 {selectedCategoryLabel} {selectedSaleTypeLabel}가격</h3>
-                {regionPriceItems.map((item) => {
-                  const maxPrice = Math.max(...regionPriceItems.map((region) => region.price))
-                  const barWidth = Math.max((item.price / maxPrice) * 100, 12)
-
-                  return (
-                    <article key={item.region}>
-                      <div>
-                        <strong>{item.region}</strong>
-                        <span className={item.rate >= 0 ? 'up' : 'down'}>{formatRate(item.rate)}</span>
-                      </div>
-                      <div className="buyer-region-bar-track">
-                        <span style={{ width: `${barWidth}%` }} />
-                      </div>
-                      <b>{formatPrice(item.price)}</b>
-                    </article>
-                  )
-                })}
-                <p>
-                  전국 8도 기준으로 가격과 등락률을 빠르게 비교할 수 있어요.
-                </p>
-              </div>
-            </div>
-          </section>
         </section>
       )}
 
