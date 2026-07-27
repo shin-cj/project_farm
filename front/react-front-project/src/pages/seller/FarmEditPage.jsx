@@ -7,9 +7,11 @@ import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 import SellerFormModal from "../../components/common/SellerFormModal.jsx";
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 function FarmEditPage() {
     const navigate = useNavigate()
+    const { alert, confirm } = useAppFeedback()
 
     // 주소에 들어 있는 농장 번호를 꺼냅니다.
     // 예: /seller/farms/3/edit → farmId는 3
@@ -274,15 +276,18 @@ function FarmEditPage() {
         }
     }
 
-    function handleClose() {
+    async function handleClose() {
         if (submitting) {
             return
         }
 
         if (isDirty) {
-            const confirmed = window.confirm(
-                '수정 중인 농장 정보가 사라집니다. 닫으시겠습니까?'
-            )
+            const confirmed = await confirm({
+                title: '농장 수정을 닫을까요?',
+                message: '수정 중인 농장 정보가 사라집니다.',
+                confirmText: '닫기',
+                type: 'danger',
+            })
 
             if (!confirmed) {
                 return

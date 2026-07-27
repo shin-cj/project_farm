@@ -41,6 +41,10 @@ public class Product {
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
+    /** 공공 농산물 시세 API에서 이 상품을 식별하는 품목 코드 */
+    @Column(name = "market_item_code", length = 10)
+    private String marketItemCode;
+
     /** 상품 이름 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "product_name", nullable = false)

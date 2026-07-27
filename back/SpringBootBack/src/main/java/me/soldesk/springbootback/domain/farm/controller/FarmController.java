@@ -32,6 +32,11 @@ public class FarmController {
         return farmService.getPublicFarms();
     }
 
+    @GetMapping("/popular/weekly")
+    public List<PopularFarmResponse> getWeeklyPopularFarms(){
+        return farmService.getWeeklyPopularFarms();
+    }
+
     @GetMapping("/public/{farmId}")
     public PublicFarmResponse  getPublicFarm(@PathVariable Long farmId){
         return farmService.getPublicFarm(farmId);

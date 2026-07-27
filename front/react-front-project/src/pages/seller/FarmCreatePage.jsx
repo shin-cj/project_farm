@@ -9,10 +9,12 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 import SellerFormModal from '../../components/common/SellerFormModal.jsx'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 
 function FarmCreatePage() {
     const navigate = useNavigate()
+    const { alert, confirm } = useAppFeedback()
     const loginSellerId = getLoginSellerId()
     const [submitting, setSubmitting] = useState(false)
     const [isDirty, setIsDirty] = useState(false)
@@ -131,15 +133,18 @@ function FarmCreatePage() {
         })
     }
 
-    function handleClose() {
+    async function handleClose() {
         if (submitting) {
             return
         }
 
         if (isDirty) {
-            const confirmed = window.confirm(
-                '작성 중인 농장 정보가 사라집니다. 닫으시겠습니까?'
-            )
+            const confirmed = await confirm({
+                title: '농장 등록을 닫을까요?',
+                message: '작성 중인 농장 정보가 사라집니다.',
+                confirmText: '닫기',
+                type: 'danger',
+            })
 
             if (!confirmed) {
                 return

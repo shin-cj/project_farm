@@ -677,6 +677,54 @@
   font-size: 23px;
 }
 
+.buyer-low-price-filter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #e5ece5;
+  border-radius: 8px;
+  background: #f8fbf7;
+}
+
+.buyer-low-price-filter label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.buyer-low-price-filter span {
+  color: #68756d;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.buyer-low-price-filter select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #d6e2d8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #173d26;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.buyer-card-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 22px;
+  border: 1px dashed #d6e2d8;
+  border-radius: 8px;
+  background: #fbfdfb;
+  color: #68756d;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+}
+
 .buyer-good-price-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -689,6 +737,22 @@
   border: 1px solid #e5ece5;
   border-radius: 8px;
   background: #fbfdfb;
+}
+
+.buyer-good-price-list article.clickable,
+.buyer-farm-list article.clickable {
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.buyer-good-price-list article.clickable:hover,
+.buyer-good-price-list article.clickable:focus-visible,
+.buyer-farm-list article.clickable:hover,
+.buyer-farm-list article.clickable:focus-visible {
+  border-color: #216b3a;
+  box-shadow: 0 10px 24px rgba(23, 61, 38, 0.1);
+  outline: none;
+  transform: translateY(-2px);
 }
 
 .buyer-good-price-list img {
@@ -823,6 +887,7 @@
   .buyer-region-price-content,
   .buyer-chart-row,
   .buyer-home-split,
+  .buyer-low-price-filter,
   .buyer-good-price-list,
   .buyer-farm-list,
   .buyer-trust-strip {

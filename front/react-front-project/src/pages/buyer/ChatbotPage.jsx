@@ -2,6 +2,7 @@ import { useEffect , useRef ,useState } from 'react'
 import chatbotApi from '../../api/chatbotApi.js'
 import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import './ChatbotPage.css'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 
 function createConversation(){
@@ -57,6 +58,7 @@ function ProgressCard({status}){
 }
 
 function ChatbotPage() {
+  const { confirm } = useAppFeedback()
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
   const storageKey = `chatbotConversation-${userid ?? "guest"}`;
@@ -204,8 +206,15 @@ function ChatbotPage() {
     setError('')
   };
 
-  const deleteConversation = id => {
-    if(!confirm("이 대화를 삭제할까요?")) return;
+  const deleteConversation = async id => {
+    const confirmed = await confirm({
+      title: '대화를 삭제할까요?',
+      message: '삭제한 대화와 추천 결과는 복구할 수 없습니다.',
+      confirmText: '삭제',
+      type: 'danger',
+    })
+
+    if (!confirmed) return;
 
     let remaining =
         conversations.filter(conversation => conversation.id !== id);
