@@ -15,6 +15,7 @@ const statusLabels = {
 
 const typeLabels = {
   PRODUCT: "상품",
+  FARM:"농장",
   USER: "회원",
   REVIEW: "리뷰",
   CHATBOT: "챗봇",

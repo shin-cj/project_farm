@@ -5,6 +5,7 @@ import {getPublicProductPage} from '../../api/productApi.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import {getApiErrorMessage} from '../../utils/apiError.js'
 import './ProductListPage.css'
+import ProductListWidget from "./ProductListWidget.jsx";
 
 function isSoldOutProduct(product) {
     const minimumOrderQuantity = Number(product.minOrderQuantity ?? 1)
@@ -267,7 +268,19 @@ function ProductListPage() {
         : '/products'
 
     return (
-        <main className="product-list-page" aria-busy={isRefreshing}>
+        <main className="product-list-page">
+
+            {/* 👈 좌측 (또는 우측) : 스크롤을 따라다닐 위젯 */}
+            {!loading && !error && appliedKeyword !== '' && (
+                <div className="floating-widget-container">
+                    <div className="sticky-widget-inner">
+                        <ProductListWidget
+                            keyword={appliedKeyword}
+                            saleType={saleTypeFilter}
+                        />
+                    </div>
+                </div>
+            )}
             <section
                 className={
                     wholesaleMode
@@ -602,6 +615,7 @@ function ProductListPage() {
                     </nav>
                 )}
             </section>
+
         </main>
     )
 }

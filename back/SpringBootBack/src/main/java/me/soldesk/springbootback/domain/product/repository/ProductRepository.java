@@ -21,6 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     WHERE p.product_name LIKE '%' || :keyword || '%'
       AND p.product_status = :status
       AND p.stock_quantity > :stockQuantity
+      AND p.stock_quantity >= NVL(p.min_order_quantity, 1)
       AND f.sale_type = :saleType
     ORDER BY p.price ASC
     FETCH FIRST 1 ROWS ONLY
