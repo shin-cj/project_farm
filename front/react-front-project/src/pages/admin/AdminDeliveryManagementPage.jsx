@@ -24,6 +24,18 @@ function getDeliveryTypeLabel(deliveryType) {
   return deliveryType === "SAME_DAY" ? "당일배송" : "택배배송";
 }
 
+function isClosedOrder(order) {
+  return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+}
+
+function getOrderDeliveryStatusLabel(order) {
+  if (isClosedOrder(order)) {
+    return "배송 대상 아님";
+  }
+
+  return DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중";
+}
+
 function formatDate(value) {
   if (!value) {
     return "-";
@@ -256,7 +268,7 @@ function AdminDeliveryManagementPage() {
           const isRefundRequested = order.orderStatus === "REFUND_REQUESTED";
           const isRefunded = order.orderStatus === "REFUNDED";
           const isDelivered = order.deliveryStatus === "DELIVERED";
-          const canChangeDelivery = !isCanceled && !isRefundRequested && !isRefunded && !isDelivered && order.deliveryId;
+          const canChangeDelivery = !isClosedOrder(order) && !isDelivered && order.deliveryId;
 
           return (
             <article
@@ -511,7 +523,7 @@ function AdminDeliveryManagementPage() {
                       fontWeight: 800,
                     }}
                   >
-                    {isCanceled || isRefunded ? "배송 변경 불가" : DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
+                    {getOrderDeliveryStatusLabel(order)}
                   </span>
 
                   {(order.courierName || order.trackingNumber) && (

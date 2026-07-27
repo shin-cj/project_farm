@@ -395,7 +395,12 @@ public class MarketPriceService {
                "&pageNo=1&numOfRows=1000&returnType=JSON";
        String fileName = filePath+"api_recent.json";
 
-       downloadJsonApi(url, fileName);
+       URI uri = java.net.URI.create(url);
+       Object response = searchJsonApi(uri);
+       JsonNode data = objectMapper.convertValue(response, JsonNode.class);
+       checkCommonApiError(data);
+
+       downloadJsonApi(response, fileName);
     }
 
     public Map<String, Object> getAutoUpdateStatus() {
