@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { getFarms } from '../../api/farmApi.js'
 import { getProducts } from '../../api/productApi.js'
 import './SellerDashboardPage.css'
@@ -9,18 +9,44 @@ import {getSellerOrders} from "../../api/deliveryApi.js";
 
 const SALES_DAY_OPTIONS = [7, 14, 30]
 
+const EXPIRATION_WARNING_DAYS = 7
+
+function getDaysLeft(expirationDate){
+  const today = new Date()
+  today.setHours(0,0,0,0)
+
+  const expiration = new Date(`${expirationDate}T00:00:00`)
+
+  return Math.round(
+      (expiration.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+  )
+}
+
+function getExpirationLabel(daysLeft){
+  if(daysLeft === 0){
+    return '오늘까지'
+  }
+
+  return `${daysLeft}일 남음`
+}
+
 // 판매자 대시보드 기능을 담당하는 페이지입니다.
 function SellerDashboardPage() {
+  const location = useLocation()
+  const returnTo = `${location.pathname}${location.search}`
+
   // 농장·상품 API에서 계산한 요약 정보를 저장합니다.
   const [summary, setSummary] = useState({
     farmCount: 0,
     productCount: 0,
     onSaleCount: 0,
+    expirationWarningCount: 0,
     soldOutCount: 0,
   })
 
   // 최근 등록 상품 목록을 저장합니다.
   const [recentProducts, setRecentProducts] = useState([])
+  const [expiringProducts, setExpiringProducts] = useState([])
   const [salesData,setSalesData] = useState([])
   const [salesDays, setSalesDays] = useState(7)
   const [loading, setLoading] = useState(true)
@@ -57,6 +83,21 @@ function SellerDashboardPage() {
         // 3. 농장별 상품 배열을 하나의 상품 배열로 합칩니다.
         const products = productLists.flat()
 
+        const allExpiringProducts = products
+            .filter((product) =>
+              product.productStatus === 'ON_SALE'
+              && product.expirationDate
+            )
+            .map((product) => ({
+              ...product,
+              daysLeft: getDaysLeft(product.expirationDate),
+            }))
+            .filter((product) =>
+              product.daysLeft >= 0
+              && product.daysLeft <= EXPIRATION_WARNING_DAYS
+            )
+            .sort((a, b) => a.daysLeft - b.daysLeft)
+
         // 4. 대시보드 카드에 표시할 숫자를 계산합니다.
         setSummary({
           farmCount: farmData.length,
@@ -64,6 +105,7 @@ function SellerDashboardPage() {
           onSaleCount: products.filter(
               (product) => product.productStatus === 'ON_SALE'
           ).length,
+          expirationWarningCount: allExpiringProducts.length,
           soldOutCount: products.filter(
               (product) => product.productStatus === 'SOLD_OUT'
           ).length,
@@ -75,6 +117,8 @@ function SellerDashboardPage() {
             .slice(0, 5)
 
         setRecentProducts(sortedProducts)
+
+        setExpiringProducts(allExpiringProducts.slice(0, 5))
       } catch (err) {
         console.error(err)
         setError('대시보드 정보를 불러오지 못했습니다.')
@@ -233,6 +277,12 @@ function SellerDashboardPage() {
           <article>
             <span>판매 중 상품</span>
             <strong>{summary.onSaleCount}개</strong>
+          </article>
+
+          <article className="seller-dashboard-expiration-summary">
+            <span>유통기한 임박 상품</span>
+            <strong>{summary.expirationWarningCount}개</strong>
+            <small>7일 이내</small>
           </article>
 
           <article>
@@ -414,7 +464,50 @@ function SellerDashboardPage() {
                     </span>
                         </div>
 
-                        <Link to={`/seller/products/${product.productId}/edit`}>
+                        <Link
+                            to={`/seller/products/${product.productId}/edit`}
+                            state={{ returnTo }}
+                        >
+                          관리
+                        </Link>
+                      </li>
+                  ))}
+                </ul>
+            )}
+          </article>
+
+          <article className="seller-dashboard-recent seller-dashboard-expiring">
+            <div>
+              <h2>유통기한 임박 상품</h2>
+              <Link to="/seller/products">상품 관리</Link>
+            </div>
+
+            {expiringProducts.length === 0 ? (
+                <p>7일 이내 유통기한 상품이 없습니다.</p>
+            ) : (
+                <ul>
+                  {expiringProducts.map((product) => (
+                      <li key={product.productId}>
+                        <div>
+                          <strong>{product.productName}</strong>
+
+                          <span
+                              className={
+                                product.daysLeft <= 1
+                                    ? 'seller-expiration-info urgent'
+                                    : 'seller-expiration-info'
+                              }
+                          >
+                  {getExpirationLabel(product.daysLeft)}
+                            {' · '}
+                            {product.expirationDate.replaceAll('-', '.')}
+                </span>
+                        </div>
+
+                        <Link
+                            to={`/seller/products/${product.productId}/edit`}
+                            state={{ returnTo }}
+                        >
                           관리
                         </Link>
                       </li>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createProduct, uploadProductImage } from '../../api/productApi.js'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
 import { getFarms } from '../../api/farmApi.js'
@@ -16,6 +16,8 @@ import MarketItemCodePicker from '../../components/seller/MarketItemCodePicker.j
 
 function ProductCreatePage() {
     const navigate = useNavigate()
+    const location = useLocation()
+    const returnTo = location.state?.returnTo || '/seller/products'
     const { alert, confirm } = useAppFeedback()
     const [searchParams] = useSearchParams()
     const requestedFarmId = searchParams.get('farmId') ?? ''
@@ -377,7 +379,7 @@ function ProductCreatePage() {
             }
         }
 
-        navigate('/seller/products')
+        navigate(returnTo)
     }
 
     const formReady = farms.length > 0 && categories.length > 0
