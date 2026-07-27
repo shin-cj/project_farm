@@ -162,7 +162,8 @@
     font-weight: 800;
 }
 
-.seller-withdrawal-form input {
+.seller-withdrawal-form input,
+.seller-withdrawal-form select {
     width: 100%;
     box-sizing: border-box;
     padding: 12px 14px;
@@ -171,6 +172,17 @@
     color: #243b2f;
     font: inherit;
     font-weight: 700;
+}
+
+.seller-withdrawal-form select {
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+.seller-withdrawal-form input[readonly] {
+    background-color: #f4f8f5;
+    color: #4b5f50;
+    cursor: default;
 }
 
 .seller-withdrawal-form button {
@@ -228,6 +240,11 @@
 .seller-withdrawal-list span {
     color: #6b7280;
     font-size: 13px;
+}
+
+.seller-withdrawal-list .seller-withdrawal-reject-reason {
+    color: #b91c1c;
+    font-weight: 800;
 }
 
 .seller-withdrawal-empty {
@@ -376,6 +393,17 @@
     color: #243b2f;
     font: inherit;
     font-weight: 700;
+}
+
+.seller-daily-goal-form input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.seller-daily-goal-form input[type="number"]::-webkit-outer-spin-button,
+.seller-daily-goal-form input[type="number"]::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
 }
 
 .seller-daily-goal-form button {
@@ -1114,18 +1142,24 @@
     position: absolute;
     z-index: 3;
     inset: 12px 10px 10px;
-    pointer-events: none;
+    pointer-events: auto;
 }
 
 .seller-statistics-order-point {
     position: absolute;
-    width: 7px;
-    height: 7px;
+    width: 11px;
+    height: 11px;
     border: 2px solid #ffffff;
     border-radius: 50%;
     background-color: #d97706;
     box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.45), 0 3px 7px rgba(217, 119, 6, 0.22);
+    cursor: pointer;
     transform: translate(-50%, -50%);
+}
+
+.seller-statistics-order-point:hover {
+    box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.18), 0 5px 12px rgba(217, 119, 6, 0.28);
+    transform: translate(-50%, -50%) scale(1.15);
 }
 
 .seller-statistics-order-mini {

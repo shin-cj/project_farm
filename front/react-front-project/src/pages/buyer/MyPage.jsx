@@ -6,6 +6,7 @@ import {
   DELIVERY_STATUS_LABEL,
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
+import SavedRecipePanel from "../../components/chatbot/SavedRecipePanel.jsx";
 
 function getLoginUser() {
   try {
@@ -183,26 +184,44 @@ function MyPage() {
             <MyReportSummaryCard reporterId={buyerId} />
           </div>
 
-          <div style={{ marginTop: "28px" }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            alignItems: "stretch",
+            gap: "18px",
+            marginTop: "28px" }}
+          >
+            <section
+              style={{
+                minWidth: 0,
+                overflow: "hidden",
+                border: "1px solid #dce6dd",
+                borderRadius: "8px",
+                background: "#ffffff",
+              }}
+            >
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: "12px",
-                marginBottom: "14px",
+                padding: "14px 18px",
+                marginBottom: 0,
+                borderBottom: "1px solid #edf1eb",
               }}
             >
-              <h2 style={{ margin: 0, color: "#1f2f24" }}>최근 주문</h2>
+              <h2 style={{ margin: 0, color: "#1f2f24", fontSize: "20px" }}>최근 주문</h2>
               <button
                 type="button"
                 onClick={() => navigate("/orders")}
                 style={{
-                  padding: "9px 13px",
+                  padding: "7px 11px",
                   border: "1px solid #dce6dd",
-                  borderRadius: "8px",
+                  borderRadius: "6px",
                   background: "#ffffff",
                   color: "#216b3a",
+                  fontSize: "13px",
                   fontWeight: 800,
                   cursor: "pointer",
                 }}
@@ -215,8 +234,6 @@ function MyPage() {
               <div
                 style={{
                   padding: "26px",
-                  border: "1px solid #dce6dd",
-                  borderRadius: "12px",
                   background: "#fbfdfb",
                   color: "#68756d",
                 }}
@@ -227,10 +244,7 @@ function MyPage() {
               <div
                 style={{
                   overflow: "hidden",
-                  border: "1px solid #dce6dd",
-                  borderRadius: "12px",
                   background: "#ffffff",
-                  boxShadow: "0 8px 22px rgba(31, 47, 36, 0.06)",
                 }}
               >
                 {recentOrders.map((order, index) => (
@@ -238,10 +252,10 @@ function MyPage() {
                     key={order.orderId}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "minmax(0, 1.35fr) minmax(220px, 1fr) 130px",
+                      gridTemplateColumns: "minmax(0, 1fr) auto auto",
                       alignItems: "center",
-                      gap: "16px",
-                      padding: "18px 20px",
+                      gap: "10px",
+                      padding: "15px 16px",
                       borderTop: index === 0 ? "none" : "1px solid #edf1eb",
                       cursor: "pointer",
                     }}
@@ -299,10 +313,14 @@ function MyPage() {
                 ))}
               </div>
             )}
+            </section>
+
+            <SavedRecipePanel userId={buyerId} />
           </div>
         </>
       )}
     </section>
+
   );
 }
 

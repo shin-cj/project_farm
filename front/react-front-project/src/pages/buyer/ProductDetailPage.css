@@ -210,60 +210,175 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(20, 35, 26, 0.48);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
+  animation: product-order-backdrop-in 160ms ease-out;
 }
 
 .product-order-modal {
-  width: 420px;
-  max-width: 90vw;
+  width: 460px;
+  max-width: 100%;
   background: #ffffff;
-  border-radius: 12px;
-  padding: 28px;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+  border: 1px solid #dce8df;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 28px 70px rgba(12, 35, 20, 0.28);
+  animation: product-order-modal-in 180ms ease-out;
 }
 
-.product-order-modal h2 {
-  margin: 0 0 18px;
-  font-size: 24px;
+.product-order-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf3ee;
+}
+
+.product-order-modal-header span {
+  display: block;
+  margin-bottom: 5px;
+  color: #2f7d46;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.product-order-modal-header h2 {
+  margin: 0;
+  font-size: 26px;
   color: #1f3d2b;
+  letter-spacing: 0;
 }
 
-.product-order-modal p {
-  margin: 10px 0;
-  font-size: 16px;
+.product-order-modal-header button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #f1f6f2;
+  color: #335341;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.product-order-modal-header button:hover {
+  background: #e2efe5;
+}
+
+.product-order-modal-summary {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f6faf7;
+}
+
+.product-order-modal-summary strong {
+  color: #1f2f24;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.product-order-modal-summary span {
+  color: #718076;
+  font-size: 14px;
+}
+
+.product-order-modal-info {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.product-order-modal-info div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.product-order-modal-info dt {
+  color: #708075;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.product-order-modal-info dd {
+  margin: 0;
+  color: #1f2f24;
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .product-order-modal label {
   display: block;
   margin-top: 18px;
+  color: #263d2d;
   font-weight: 700;
 }
 
 .product-order-modal input {
   width: 100%;
   margin-top: 8px;
-  padding: 12px;
+  padding: 13px 14px;
   border: 1px solid #dce6dd;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 10px;
+  color: #1f2f24;
+  font-size: 18px;
+  font-weight: 800;
+  outline: none;
+}
+
+.product-order-modal input:focus {
+  border-color: #2f7d46;
+  box-shadow: 0 0 0 3px rgba(47, 125, 70, 0.12);
+}
+
+.product-order-modal-total {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #163d27;
+  color: #ffffff;
+}
+
+.product-order-modal-total span {
+  color: #cfe4d4;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.product-order-modal-total strong {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .product-order-modal-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-top: 24px;
 }
 
 .product-order-modal-buttons button {
   flex: 1;
+  min-height: 46px;
   padding: 12px 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
 }
 
@@ -272,9 +387,37 @@
   color: white;
 }
 
+.product-order-submit:hover {
+  background: #276b3b;
+}
+
 .product-order-close {
   background: #eef4ef;
   color: #2f4f38;
+}
+
+.product-order-close:hover {
+  background: #dfece2;
+}
+
+@keyframes product-order-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes product-order-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .product-detail-farm-card {

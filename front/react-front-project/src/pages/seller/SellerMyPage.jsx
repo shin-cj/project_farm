@@ -38,6 +38,47 @@ const WITHDRAWAL_STATUS_LABEL = {
   COMPLETED: "지급 완료",
 };
 
+const MIN_WITHDRAWAL_POINT = 5000;
+
+const BANK_OPTIONS = [
+  "국민은행",
+  "신한은행",
+  "우리은행",
+  "하나은행",
+  "농협은행",
+  "기업은행",
+  "카카오뱅크",
+  "토스뱅크",
+  "케이뱅크",
+  "SC제일은행",
+  "우체국",
+  "새마을금고",
+  "신협",
+  "수협은행",
+  "부산은행",
+  "대구은행",
+  "광주은행",
+  "전북은행",
+  "경남은행",
+  "제주은행",
+];
+
+function getLoginSellerName() {
+  try {
+    const storedUser = localStorage.getItem("loginUser");
+    const loginUser = storedUser ? JSON.parse(storedUser) : null;
+
+    return loginUser?.name || loginUser?.userName || "";
+  } catch (error) {
+    console.error("로그인 판매자 이름을 읽지 못했습니다.", error);
+    return "";
+  }
+}
+
+function onlyDigits(value) {
+  return value.replace(/\D/g, "");
+}
+
 function SellerMyPage() {
   const [sellerId, setSellerId] = useState(null);
   const [summary, setSummary] = useState({
@@ -64,16 +105,28 @@ function SellerMyPage() {
   const [goalSaving, setGoalSaving] = useState(false);
   const [goalMessage, setGoalMessage] = useState("");
   const [withdrawals, setWithdrawals] = useState([]);
+  const sellerName = getLoginSellerName();
   const [withdrawalForm, setWithdrawalForm] = useState({
     withdrawalAmount: "",
     bankName: "",
     accountNumber: "",
-    accountHolder: "",
+    accountHolder: sellerName,
   });
   const [withdrawalSaving, setWithdrawalSaving] = useState(false);
   const [withdrawalMessage, setWithdrawalMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!sellerName) {
+      return;
+    }
+
+    setWithdrawalForm((prevForm) => ({
+      ...prevForm,
+      accountHolder: sellerName,
+    }));
+  }, [sellerName]);
 
   useEffect(() => {
     async function loadSellerMyPage() {
@@ -173,10 +226,21 @@ function SellerMyPage() {
 
   function handleWithdrawalFormChange(event) {
     const { name, value } = event.target;
+    let nextValue = ["withdrawalAmount", "accountNumber"].includes(name)
+      ? onlyDigits(value)
+      : value;
+
+    if (name === "withdrawalAmount") {
+      const amount = Number(nextValue);
+
+      if (Number.isFinite(amount) && amount > pointSummary.availablePoint) {
+        nextValue = String(pointSummary.availablePoint);
+      }
+    }
 
     setWithdrawalForm((prevForm) => ({
       ...prevForm,
-      [name]: value,
+      [name]: nextValue,
     }));
   }
 
@@ -190,8 +254,23 @@ function SellerMyPage() {
       return;
     }
 
-    if (!Number.isFinite(withdrawalAmount) || withdrawalAmount <= 0) {
-      setWithdrawalMessage("출금 신청 포인트를 1 이상으로 입력해주세요.");
+    if (!Number.isFinite(withdrawalAmount) || withdrawalAmount < MIN_WITHDRAWAL_POINT) {
+      setWithdrawalMessage("출금 신청은 5,000P 이상부터 가능합니다.");
+      return;
+    }
+
+    if (!withdrawalForm.bankName) {
+      setWithdrawalMessage("은행을 선택해주세요.");
+      return;
+    }
+
+    if (!withdrawalForm.accountNumber) {
+      setWithdrawalMessage("계좌번호를 숫자로 입력해주세요.");
+      return;
+    }
+
+    if (!withdrawalForm.accountHolder) {
+      setWithdrawalMessage("예금주 정보를 확인할 수 없습니다. 다시 로그인 후 시도해주세요.");
       return;
     }
 
@@ -216,7 +295,7 @@ function SellerMyPage() {
         withdrawalAmount: "",
         bankName: "",
         accountNumber: "",
-        accountHolder: "",
+        accountHolder: sellerName,
       });
       setWithdrawalMessage("출금 신청이 완료되었습니다.");
       await refreshPointAndWithdrawals(sellerId);
@@ -288,24 +367,30 @@ function SellerMyPage() {
             <label>
               <span>출금 포인트</span>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 name="withdrawalAmount"
-                min="1"
                 value={withdrawalForm.withdrawalAmount}
                 onChange={handleWithdrawalFormChange}
-                placeholder="예: 10000"
+                placeholder="5,000P 이상"
               />
             </label>
 
             <div>
               <label>
                 <span>은행명</span>
-                <input
+                <select
                   name="bankName"
                   value={withdrawalForm.bankName}
                   onChange={handleWithdrawalFormChange}
-                  placeholder="예: 국민은행"
-                />
+                >
+                  <option value="">은행을 선택하세요</option>
+                  {BANK_OPTIONS.map((bankName) => (
+                    <option key={bankName} value={bankName}>
+                      {bankName}
+                    </option>
+                  ))}
+                </select>
               </label>
 
               <label>
@@ -313,8 +398,8 @@ function SellerMyPage() {
                 <input
                   name="accountHolder"
                   value={withdrawalForm.accountHolder}
-                  onChange={handleWithdrawalFormChange}
-                  placeholder="예: 홍길동"
+                  readOnly
+                  placeholder="로그인한 판매자 이름"
                 />
               </label>
             </div>
@@ -323,9 +408,11 @@ function SellerMyPage() {
               <span>계좌번호</span>
               <input
                 name="accountNumber"
+                type="text"
+                inputMode="numeric"
                 value={withdrawalForm.accountNumber}
                 onChange={handleWithdrawalFormChange}
-                placeholder="숫자만 입력"
+                placeholder="숫자만 입력, 하이픈 제외"
               />
             </label>
 
@@ -357,6 +444,11 @@ function SellerMyPage() {
                   <span>
                     {withdrawal.bankName} · {formatDateTime(withdrawal.requestedAt)}
                   </span>
+                  {withdrawal.withdrawalStatus === "REJECTED" && (
+                    <span className="seller-withdrawal-reject-reason">
+                      반려 사유: {withdrawal.rejectReason || "사유 없음"}
+                    </span>
+                  )}
                 </div>
                 <em className={`withdrawal-status ${withdrawal.withdrawalStatus.toLowerCase()}`}>
                   {WITHDRAWAL_STATUS_LABEL[withdrawal.withdrawalStatus] || withdrawal.withdrawalStatus}
