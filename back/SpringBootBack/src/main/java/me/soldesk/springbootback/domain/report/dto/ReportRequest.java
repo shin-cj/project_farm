@@ -26,4 +26,5 @@ public class ReportRequest {
     /** 신고 처리 상태 */
     private String reportStatus;
 
+    private Long farmId;
 }
