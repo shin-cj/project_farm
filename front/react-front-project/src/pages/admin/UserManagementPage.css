@@ -1,0 +1,488 @@
+.role-content:has(.admin-user-page) {
+    min-width: 0;
+}
+
+.admin-user-page {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 28px;
+    color: #1f2933;
+}
+
+.admin-user-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #e3e8e4;
+}
+
+.admin-user-header > div:first-child {
+    flex: 1 1 180px;
+    min-width: 180px;
+}
+
+.admin-user-header h1 {
+    margin: 0;
+    color: #173226;
+    font-size: 1.65rem;
+    line-height: 1.25;
+    letter-spacing: 0;
+}
+
+.admin-user-header p {
+    margin: 8px 0 0;
+    color: #65736a;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.admin-user-header > select {
+    flex: 0 1 190px;
+    width: 190px;
+    min-width: 170px;
+    height: 42px;
+    box-sizing: border-box;
+    padding: 0 38px 0 13px;
+    border: 1px solid #cbd6ce;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #2f4036;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 750;
+    cursor: pointer;
+    transition:
+        border-color 150ms ease,
+        background-color 150ms ease,
+        box-shadow 150ms ease;
+}
+
+.admin-user-header > select:hover {
+    border-color: #8eaa96;
+    background-color: #f8faf8;
+}
+
+.admin-user-header > select:focus {
+    border-color: #39764d;
+    outline: 0;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(45, 126, 75, 0.14);
+}
+
+.admin-user-header > select option {
+    background: #ffffff;
+    color: #2f4036;
+    font-weight: 600;
+}
+
+.admin-user-search {
+    display: flex;
+    align-items: center;
+    flex: 1 1 340px;
+    width: min(100%, 460px);
+    gap: 8px;
+}
+
+.admin-user-search input {
+    min-width: 0;
+    height: 42px;
+    flex: 1;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: 1px solid #cbd6ce;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #213328;
+    font: inherit;
+    font-size: 0.9rem;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.admin-user-search input::placeholder {
+    color: #8b9790;
+}
+
+.admin-user-search input:focus {
+    border-color: #39764d;
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(45, 126, 75, 0.14);
+}
+
+.admin-user-search button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    height: 42px;
+    padding: 0 16px;
+    border: 1px solid #24653a;
+    border-radius: 6px;
+    background: #2d7e4b;
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease,
+        box-shadow 140ms ease, transform 120ms ease;
+}
+
+.admin-user-search button:hover {
+    border-color: #1e5a32;
+    background: #24653a;
+    box-shadow: 0 4px 12px rgba(36, 101, 58, 0.18);
+}
+
+.admin-user-search button:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+.admin-user-search button:focus-visible,
+.admin-user-header > select:focus-visible,
+.admin-user-filter button:focus-visible,
+.admin-user-pagination button:focus-visible {
+    outline: 3px solid rgba(45, 126, 75, 0.2);
+    outline-offset: 2px;
+}
+
+.admin-user-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 20px 0 16px;
+    padding: 4px;
+    border: 1px solid #dce4de;
+    border-radius: 7px;
+    background: #f3f6f4;
+}
+
+.admin-user-filter button {
+    min-width: 76px;
+    height: 34px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #5c6a61;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background-color 140ms ease, color 140ms ease,
+        box-shadow 140ms ease, transform 120ms ease;
+}
+
+.admin-user-filter button:hover:not(.active) {
+    background: #e8efea;
+    color: #2e4838;
+}
+
+.admin-user-filter button:active {
+    transform: translateY(1px);
+}
+
+.admin-user-filter button.active {
+    background: #ffffff;
+    color: #24653a;
+    box-shadow: 0 1px 5px rgba(28, 61, 39, 0.12);
+}
+
+.admin-user-error {
+    margin: 0 0 16px;
+    padding: 14px 16px;
+    border: 1px solid #f1c2c2;
+    border-radius: 6px;
+    background: #fff5f5;
+    color: #a12c2c;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.admin-user-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #dfe6e1;
+    border-radius: 8px;
+    background: #ffffff;
+    scrollbar-color: #aab8ae #f1f4f2;
+    scrollbar-width: thin;
+}
+
+.admin-user-table {
+    width: 100%;
+    min-width: 1320px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    background: #ffffff;
+}
+
+.admin-user-table th,
+.admin-user-table td {
+    box-sizing: border-box;
+    padding: 13px 12px;
+    border-bottom: 1px solid #e7ece8;
+    color: #314037;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.admin-user-table th {
+    background: #f3f6f4;
+    color: #536158;
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.admin-user-table tbody tr {
+    transition: background-color 150ms ease;
+}
+
+.admin-user-table tbody tr:hover {
+    background: #f7faf8;
+}
+
+.admin-user-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.admin-user-table th:nth-child(1),
+.admin-user-table td:nth-child(1) {
+    width: 82px;
+    color: #66736b;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-user-table th:nth-child(2),
+.admin-user-table td:nth-child(2) {
+    width: 78px;
+}
+
+.admin-user-table th:nth-child(3),
+.admin-user-table td:nth-child(3) {
+    width: 104px;
+}
+
+.admin-user-table th:nth-child(4),
+.admin-user-table td:nth-child(4) {
+    width: 210px;
+}
+
+.admin-user-table th:nth-child(5),
+.admin-user-table td:nth-child(5) {
+    width: 140px;
+}
+
+.admin-user-table th:nth-child(6),
+.admin-user-table td:nth-child(6) {
+    width: 220px;
+}
+
+.admin-user-table th:nth-child(7),
+.admin-user-table td:nth-child(7) {
+    width: 105px;
+}
+
+.admin-user-table th:nth-child(8),
+.admin-user-table td:nth-child(8),
+.admin-user-table th:nth-child(9),
+.admin-user-table td:nth-child(9) {
+    width: 102px;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-user-table th:nth-child(10),
+.admin-user-table td:nth-child(10) {
+    width: 116px;
+    white-space: nowrap;
+}
+
+.admin-user-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-name strong {
+    color: #20352a;
+    font-weight: 800;
+}
+
+.admin-user-email {
+    overflow: hidden;
+    color: #486156 !important;
+    text-align: left !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-table td:nth-child(6) {
+    overflow: hidden;
+    text-align: left;
+}
+
+.admin-user-table td:nth-child(6) strong,
+.admin-user-table td:nth-child(6) span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-user-table td:nth-child(6) strong {
+    color: #2a4736;
+    font-weight: 800;
+}
+
+.admin-user-table td:nth-child(6) span {
+    margin-top: 3px;
+    color: #7a867e;
+    font-size: 0.76rem;
+}
+
+.user-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 68px;
+    min-height: 27px;
+    box-sizing: border-box;
+    padding: 3px 9px;
+    border: 1px solid #d6ded8;
+    border-radius: 999px;
+    background: #f6f8f6;
+    color: #536158;
+    font-size: 0.75rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.user-status.active,
+.user-status.normal {
+    border-color: #b6d9c0;
+    background: #edf8f0;
+    color: #24653a;
+}
+
+.user-status.suspended,
+.user-status.blocked {
+    border-color: #efbcbc;
+    background: #fff1f1;
+    color: #a12c2c;
+}
+
+.user-status.inactive,
+.user-status.withdrawn {
+    border-color: #d7dce0;
+    background: #f3f5f6;
+    color: #66717a;
+}
+
+.admin-user-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.admin-user-pagination span {
+    min-width: 72px;
+    color: #536158;
+    font-size: 0.86rem;
+    font-weight: 800;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-user-pagination button {
+    min-width: 72px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid #cfd8d1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #344139;
+    font: inherit;
+    font-size: 0.84rem;
+    font-weight: 750;
+    cursor: pointer;
+    transition: background-color 130ms ease, border-color 130ms ease,
+        transform 120ms ease;
+}
+
+.admin-user-pagination button:hover:not(:disabled) {
+    border-color: #9fb5a5;
+    background: #edf4ef;
+}
+
+.admin-user-pagination button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.admin-user-pagination button:disabled {
+    border-color: #dde3df;
+    background: #f4f6f5;
+    color: #a0aaa3;
+    cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+    .admin-user-page {
+        padding: 20px 16px;
+    }
+
+    .admin-user-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .admin-user-header > div:first-child,
+    .admin-user-header > select,
+    .admin-user-search {
+        width: 100%;
+        min-width: 0;
+        flex-basis: auto;
+    }
+
+    .admin-user-header > select {
+        padding-right: 42px;
+    }
+
+    .admin-user-search {
+        width: 100%;
+    }
+
+    .admin-user-filter {
+        display: flex;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .admin-user-filter button {
+        min-width: 0;
+        flex: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-user-page *,
+    .admin-user-page *::before,
+    .admin-user-page *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

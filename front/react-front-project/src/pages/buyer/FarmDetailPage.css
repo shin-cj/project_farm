@@ -95,6 +95,25 @@
     color: #ffffff;
 }
 
+.farm-detail-sale-type {
+    display: inline-flex;
+    margin-top: 16px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.farm-detail-sale-type.retail {
+    background-color: #e8f5e3;
+    color: #2f6f1f;
+}
+
+.farm-detail-sale-type.wholesale {
+    background-color: #e6f0eb;
+    color: #075c3b;
+}
+
 .farm-detail-address {
     margin: 24px 0 0;
     color: #53635a;

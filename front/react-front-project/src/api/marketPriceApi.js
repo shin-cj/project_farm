@@ -1,4 +1,19 @@
-// marketPrice 기능의 백엔드 주소가 확정되면 이 객체에 조회·등록·수정·삭제 함수를 추가합니다.
-const marketPriceApi = {}
+import axios from 'axios'
+
+const PRICE_API_BASE_URL = 'http://localhost:8080/price-api'
+
+const marketPriceApi = {
+  getBuyerMainMonthTrend(params) {
+    return axios.get(`${PRICE_API_BASE_URL}/buyer-main/month-trend`, { params })
+  },
+
+  getBuyerMainRanking(params) {
+    return axios.get(`${PRICE_API_BASE_URL}/buyer-main/ranking`, { params })
+  },
+
+  getBuyerMainTodayPrices(params) {
+    return axios.get(`${PRICE_API_BASE_URL}/buyer-main/today-prices`, { params })
+  },
+}
 
 export default marketPriceApi

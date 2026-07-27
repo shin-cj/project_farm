@@ -90,6 +90,10 @@ public class Order {
     @Column(name = "request_message", nullable = true)
     private String requestMessage;
 
+    /** 배송 방식: COURIER=택배배송, SAME_DAY=당일배송 */
+    @Column(name = "delivery_type", nullable = false)
+    private String deliveryType = "COURIER";
+
     /** 주문 일시 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "ordered_at", nullable = false)

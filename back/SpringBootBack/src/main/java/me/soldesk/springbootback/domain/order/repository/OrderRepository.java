@@ -12,6 +12,8 @@ public interface OrderRepository extends JpaRepository<Order,Long> {
     // 결제 승인 때 toss orderId로 넘어온 orderNumber를 DB 주문 연결
     Optional<Order> findByOrderNumber(String orderNumber);
 
+    List<Order> findByOrderNumberStartingWithOrderByOrderIdAsc(String orderNumberPrefix);
+
     List<Order> findByBuyerIdOrderByOrderedAtDesc(Long buyerId);
 
     List<Order> findAllByOrderByOrderedAtDesc();

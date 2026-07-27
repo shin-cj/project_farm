@@ -34,6 +34,10 @@ public class Category {
     @Column(name = "category_name", nullable = false)
     private String categoryName;
 
+    /** 공공 시세 API의 부류 코드: 100, 200, 300, 400 */
+    @Column(name = "market_category_code", nullable = false, length = 3)
+    private String marketCategoryCode;
+
     /** 화면 표시 순서 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "display_order", nullable = false)

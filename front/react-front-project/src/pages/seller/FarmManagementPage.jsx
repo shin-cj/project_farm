@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { getFarms } from '../../api/farmApi.js'
+import { deleteFarm, getFarms } from '../../api/farmApi.js'
 import {useNavigate} from "react-router-dom";
 import './FarmManagementPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 function getApprovalStatusText(status) {
   if (status === 'PENDING') {
@@ -27,10 +28,12 @@ function getApprovalStatusText(status) {
 function FarmManagementPage() {
 
   const navigate = useNavigate();
+  const { alert, confirm } = useAppFeedback()
   const [farms, setFarms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
+  const [deletingFarmId, setDeletingFarmId] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -69,6 +72,49 @@ function FarmManagementPage() {
       ignore = true
     }
   }, [reloadKey])
+
+  async function handleDeleteFarm(farm) {
+    if (deletingFarmId !== null) {
+      return
+    }
+
+    const sellerId = getLoginSellerId()
+
+    if (sellerId === null) {
+      alert('로그인한 판매자 정보를 확인할 수 없습니다.')
+      return
+    }
+
+    const ok = await confirm({
+      title: '농장을 삭제할까요?',
+      message: `"${farm.farmName}" 농장을 삭제합니다. 등록 상품이나 주문 내역이 있으면 삭제할 수 없습니다.`,
+      confirmText: '삭제',
+      type: 'danger',
+    })
+
+    if (!ok) {
+      return
+    }
+
+    try {
+      setDeletingFarmId(farm.farmId)
+
+      await deleteFarm(farm.farmId, sellerId)
+
+      setFarms((currentFarms) =>
+          currentFarms.filter(
+              (currentFarm) => currentFarm.farmId !== farm.farmId
+          )
+      )
+
+      alert('농장이 삭제되었습니다.')
+    } catch (err) {
+      console.error(err)
+      alert(getApiErrorMessage(err, '농장 삭제에 실패했습니다.'))
+    } finally {
+      setDeletingFarmId(null)
+    }
+  }
 
   if (loading) {
     return (
@@ -143,6 +189,12 @@ function FarmManagementPage() {
 </span>
                     </div>
 
+                    <span className={`farm-management-sale-type ${
+                      farm.saleType === 'WHOLESALE' ? 'wholesale' : 'retail'
+                    }`}>
+                      {farm.saleType === 'WHOLESALE' ? '도매 상점' : '소매 상점'}
+                    </span>
+
                     <p className="farm-management-address">
                       {farm.farmAddress}
                       {farm.farmDetailAddress && ` ${farm.farmDetailAddress}`}
@@ -189,6 +241,17 @@ function FarmManagementPage() {
                           }
                       >
                         농장 수정
+                      </button>
+
+                      <button
+                          type="button"
+                          className="farm-management-delete-button"
+                          onClick={() => handleDeleteFarm(farm)}
+                          disabled={deletingFarmId !== null}
+                      >
+                        {deletingFarmId === farm.farmId
+                            ? '삭제 중...'
+                            : '농장 삭제'}
                       </button>
                     </div>
                   </article>

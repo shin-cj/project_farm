@@ -1,0 +1,423 @@
+.product-detail-page {
+  min-height: 100vh;
+  padding: 40px 20px;
+  background-color: #f6f8f4;
+}
+
+.product-detail-card {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 1fr;
+  gap: 36px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 20px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.product-detail-image-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 16px;
+  background-color: #eef6e8;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.product-detail-image-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-detail-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-detail-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.product-detail-status {
+  display: inline-flex;
+  width: fit-content;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background-color: #eef6e8;
+  color: #3f7d20;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.product-detail-back-button {
+  padding: 9px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #374151;
+  cursor: pointer;
+}
+
+.product-detail-back-button:hover {
+  background-color: #f3f4f6;
+}
+
+.product-detail-origin {
+  margin: 0 0 8px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.product-detail-info h1 {
+  margin: 0;
+  color: #243b2f;
+  font-size: 34px;
+  line-height: 1.25;
+}
+
+.product-detail-description {
+  margin: 18px 0 24px;
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.product-detail-price-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.product-detail-price-box strong {
+  color: #111827;
+  font-size: 30px;
+}
+
+.product-detail-price-box span {
+  margin-bottom: 4px;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.product-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 28px;
+}
+
+.product-detail-meta div {
+  padding: 14px;
+  border-radius: 12px;
+  background-color: #f9fafb;
+}
+
+.product-detail-meta dt {
+  margin-bottom: 6px;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.product-detail-meta dd {
+  margin: 0;
+  color: #243b2f;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.product-detail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.product-detail-cart-button,
+.product-detail-order-link {
+  flex: 1;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+
+.product-detail-cart-button {
+  border: 1px solid #3f7d20;
+  background-color: #ffffff;
+  color: #3f7d20;
+}
+
+.product-detail-order-link {
+  border: 1px solid #3f7d20;
+  background-color: #3f7d20;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.product-detail-cart-button:hover {
+  background-color: #eef6e8;
+}
+
+.product-detail-order-link:hover {
+  background-color: #326619;
+}
+
+.product-detail-message {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px;
+  border-radius: 16px;
+  background-color: #ffffff;
+  color: #6b7280;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.product-detail-message.error {
+  background-color: #fff1f2;
+  color: #be123c;
+}
+
+@media (max-width: 800px) {
+  .product-detail-card {
+    grid-template-columns: 1fr;
+  }
+
+  .product-detail-image-box {
+    min-height: 280px;
+  }
+
+  .product-detail-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .product-detail-actions {
+    flex-direction: column;
+  }
+}
+
+.product-order-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-order-modal {
+  width: 420px;
+  max-width: 90vw;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+}
+
+.product-order-modal h2 {
+  margin: 0 0 18px;
+  font-size: 24px;
+  color: #1f3d2b;
+}
+
+.product-order-modal p {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+.product-order-modal label {
+  display: block;
+  margin-top: 18px;
+  font-weight: 700;
+}
+
+.product-order-modal input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid #dce6dd;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.product-order-modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.product-order-modal-buttons button {
+  flex: 1;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.product-order-submit {
+  background: #2f7d46;
+  color: white;
+}
+
+.product-order-close {
+  background: #eef4ef;
+  color: #2f4f38;
+}
+
+/* 상품을 생산한 농장 정보를 보여주는 영역입니다. */
+.product-detail-farm-card {
+  max-width: 1100px;
+  margin: 20px auto 0;
+  padding: 24px 28px;
+  border: 1px solid #dce6dd;
+  border-left: 5px solid #3f7d20;
+  border-radius: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+/* '생산 농장'이라는 작은 안내 문구입니다. */
+.product-detail-farm-card > p:first-child {
+  margin: 0 0 8px;
+  color: #3f7d20;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 농장 이름입니다. */
+.product-detail-farm-card h2 {
+  margin: 0;
+  color: #243b2f;
+  font-size: 24px;
+}
+
+/* 지역 정보입니다. */
+.product-detail-farm-card span {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: #eef6e8;
+  color: #3f7d20;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 주소와 농장 소개 문구입니다. */
+.product-detail-farm-card p {
+  margin: 14px 0 0;
+  color: #4b5563;
+  line-height: 1.7;
+}
+
+@media (max-width: 800px) {
+  .product-detail-farm-card {
+    padding: 20px;
+  }
+}
+
+.product-detail-cart-button:disabled,
+.product-detail-order-link:disabled {
+  border-color: #d1d5db;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.product-detail-unavailable {
+  margin: 12px 0 0;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 농장 이름 상세 링크입니다. */
+.product-detail-farm-name-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.product-detail-farm-name-link:hover {
+  color: #3f7d20;
+  text-decoration: underline;
+}
+
+/* 농장 상세 페이지로 이동하는 버튼 형태의 링크입니다. */
+.product-detail-farm-view-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+  padding: 10px 16px;
+  border: 1px solid #3f7d20;
+  border-radius: 8px;
+  color: #3f7d20;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.product-detail-farm-view-link:hover {
+  background-color: #3f7d20;
+  color: #ffffff;
+}
+
+.product-detail-quantity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: #f7faf5;
+}
+
+.product-detail-quantity > span {
+  font-weight: 700;
+}
+
+.product-detail-quantity > strong {
+  margin-left: auto;
+  color: #2f6f25;
+  font-size: 18px;
+}
+
+.product-detail-quantity-control {
+  display: flex;
+  align-items: center;
+}
+
+.product-detail-quantity-control button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #d7dfd2;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.product-detail-quantity-control input {
+  width: 58px;
+  height: 36px;
+  border: solid #d7dfd2;
+  border-width: 1px 0;
+  text-align: center;
+}
+
+.product-detail-quantity-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}

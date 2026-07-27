@@ -23,6 +23,18 @@ public class DeliveryResponse {
     /** 송장번호 */
     private String trackingNumber;
 
+    /** 배송 방식 */
+    private String deliveryType;
+
+    /** 당일배송 담당자 이름 */
+    private String deliveryPersonName;
+
+    /** 당일배송 담당자 연락처 */
+    private String deliveryPersonPhone;
+
+    /** 당일배송 메모 */
+    private String deliveryMemo;
+
     /** 배송 처리 상태 */
     private String deliveryStatus;
 

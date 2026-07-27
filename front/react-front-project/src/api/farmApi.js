@@ -15,10 +15,32 @@ export async function getFarm(farmId) {
     return response.data
 }
 
+//승인 완료 농장 목록 조회
+export async function getPublicFarms(){
+    const response = await axios.get('/api/farms/public')
+
+    return response.data
+}
+
 //승인 완료 농장 한 건 조회
 export async function getPublicFarm(farmId){
     const response = await axios.get(`/api/farms/public/${farmId}`)
 
+    return response.data
+}
+
+export async function getWeeklyPopularFarms(){
+    const response = await axios.get('/api/farms/popular/weekly')
+
+    return response.data
+}
+
+export async function uploadFarmImage(imageFile){
+    const formData = new FormData()
+
+    formData.append('image', imageFile)
+
+    const response = await axios.post('/api/farms/image', formData)
     return response.data
 }
 
@@ -30,6 +52,23 @@ export async function createFarm(farmData) {
 
 export async function updateFarm(farmId, farmData) {
     const response = await axios.put(`/api/farms/${farmId}`, farmData)
+
+    return response.data
+}
+
+// 판매자 본인의 농장을 삭제합니다.
+export async function deleteFarm(farmId, sellerId) {
+    await axios.delete(`/api/farms/${farmId}`, {
+        params: { sellerId },
+    })
+}
+
+// 관리자가 농장의 승인 상태를 변경합니다.
+export async function updateFarmApprovalStatus(farmId, approvalStatus) {
+    const response = await axios.patch(
+        `/api/farms/${farmId}/approval`,
+        { approvalStatus }
+    )
 
     return response.data
 }

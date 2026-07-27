@@ -21,6 +21,8 @@ import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.sellerpoint.service.SellerPointService;
+import me.soldesk.springbootback.domain.stockhistory.service.ProductStockHistoryService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,8 @@ public class PaymentService {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final DeliveryRepository deliveryRepository;
+    private final SellerPointService sellerPointService;
+    private final ProductStockHistoryService productStockHistoryService;
 
     public PaymentService(
             RestClient.Builder restClientBuilder,
@@ -44,7 +48,9 @@ public class PaymentService {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             ProductRepository productRepository,
-            DeliveryRepository deliveryRepository) {
+            DeliveryRepository deliveryRepository,
+            SellerPointService sellerPointService,
+            ProductStockHistoryService productStockHistoryService) {
         this.restClient = restClientBuilder
                 .baseUrl("https://api.tosspayments.com")
                 .build();
@@ -54,6 +60,8 @@ public class PaymentService {
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.deliveryRepository = deliveryRepository;
+        this.sellerPointService = sellerPointService;
+        this.productStockHistoryService = productStockHistoryService;
     }
 
     @Transactional
@@ -70,18 +78,25 @@ public class PaymentService {
             throw new IllegalArgumentException("결제 금액이 올바르지 않습니다.");
         }
 
-        Order order = orderRepository.findByOrderNumber(request.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("주문 정보를 찾을 수 없습니다."));
+        List<Order> paymentOrders = findPaymentOrders(request.getOrderId());
+        Long orderTotalAmount = paymentOrders.stream()
+                .mapToLong(Order::getFinalPrice)
+                .sum();
 
-        if (!order.getFinalPrice().equals(request.getAmount())) {
+        if (!orderTotalAmount.equals(request.getAmount())) {
             throw new IllegalArgumentException("주문 금액과 결제 금액이 일치하지 않습니다.");
         }
 
-        if (!"PAYMENT_WAIT".equals(order.getOrderStatus())) {
-            throw new IllegalArgumentException("이미 결제했거나 결제할 수 없는 주문입니다.");
+        for (Order order : paymentOrders) {
+            if (!"PAYMENT_WAIT".equals(order.getOrderStatus())) {
+                throw new IllegalArgumentException("이미 결제했거나 결제할 수 없는 주문입니다.");
+            }
         }
 
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (Order order : paymentOrders) {
+            orderItems.addAll(orderItemRepository.findByOrderId(order.getOrderId()));
+        }
 
         if (orderItems.isEmpty()) {
             throw new IllegalArgumentException("주문 상품 정보가 없습니다.");
@@ -92,6 +107,8 @@ public class PaymentService {
         for (OrderItem item : orderItems) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+
+            validateMinimumOrderQuantity(product, item.getQuantity());
 
             if (product.getStockQuantity() < item.getQuantity()) {
                 throw new IllegalArgumentException(product.getProductName() + " 상품의 재고가 부족합니다.");
@@ -118,29 +135,56 @@ public class PaymentService {
             OrderItem item = orderItems.get(i);
             Product product = orderedProducts.get(i);
 
-            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+            int previousStockQuantity = product.getStockQuantity();
+            product.setStockQuantity(previousStockQuantity - item.getQuantity());
 
-            if (product.getStockQuantity() == 0 && "ON_SALE".equals(product.getProductStatus())) {
+            if (product.getStockQuantity() < getMinimumOrderQuantity(product)
+                    && "ON_SALE".equals(product.getProductStatus())) {
                 product.setProductStatus("SOLD_OUT");
             }
 
             productRepository.save(product);
+            productStockHistoryService.record(
+                    product.getProductId(),
+                    item.getOrderId(),
+                    "PAYMENT_DEDUCTION",
+                    previousStockQuantity,
+                    product.getStockQuantity(),
+                    "주문 결제 완료에 따른 재고 차감"
+            );
         }
 
-        Payment payment = new Payment();
-        payment.setOrderId(order.getOrderId());
-        payment.setPaymentAmount(request.getAmount());
-        payment.setPgPaymentId(request.getPaymentKey());
-        payment.setPaymentStatus(String.valueOf(tossResponse.get("status")));
-        payment.setPaymentMethod(String.valueOf(tossResponse.get("method")));
-        payment.setPaidAt(LocalDateTime.now());
-        paymentRepository.save(payment);
+        for (Order order : paymentOrders) {
+            Payment payment = new Payment();
+            payment.setOrderId(order.getOrderId());
+            payment.setPaymentAmount(order.getFinalPrice());
+            payment.setPgPaymentId(request.getPaymentKey());
+            payment.setPaymentStatus(String.valueOf(tossResponse.get("status")));
+            payment.setPaymentMethod(String.valueOf(tossResponse.get("method")));
+            payment.setPaidAt(LocalDateTime.now());
+            paymentRepository.save(payment);
 
-        updateOrderReceiverInfo(order, request);
-        order.setOrderStatus("PAID");
-        orderRepository.save(order);
+            updateOrderReceiverInfo(order, request);
+            order.setOrderStatus("PAID");
+            orderRepository.save(order);
+            sellerPointService.earnPoint(order);
+        }
 
         return tossResponse;
+    }
+
+    private List<Order> findPaymentOrders(String tossOrderId) {
+        return orderRepository.findByOrderNumber(tossOrderId)
+                .map(List::of)
+                .orElseGet(() -> {
+                    List<Order> groupedOrders = orderRepository.findByOrderNumberStartingWithOrderByOrderIdAsc(tossOrderId + "-");
+
+                    if (groupedOrders.isEmpty()) {
+                        throw new IllegalArgumentException("주문 정보를 찾을 수 없습니다.");
+                    }
+
+                    return groupedOrders;
+                });
     }
 
     @Transactional
@@ -180,7 +224,10 @@ public class PaymentService {
         Map<String, Object> tossResponse = restClient.post()
                 .uri("/v1/payments/{paymentKey}/cancel", payment.getPgPaymentId())
                 .header("Authorization", authorization)
-                .body(Map.of("cancelReason", cancelReason))
+                .body(Map.of(
+                        "cancelReason", cancelReason,
+                        "cancelAmount", payment.getPaymentAmount()
+                ))
                 .retrieve()
                 .body(Map.class);
 
@@ -190,13 +237,23 @@ public class PaymentService {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
 
-            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+            int previousStockQuantity = product.getStockQuantity();
+            product.setStockQuantity(previousStockQuantity + item.getQuantity());
 
-            if (product.getStockQuantity() > 0 && "SOLD_OUT".equals(product.getProductStatus())) {
+            if (product.getStockQuantity() >= getMinimumOrderQuantity(product)
+                    && "SOLD_OUT".equals(product.getProductStatus())) {
                 product.setProductStatus("ON_SALE");
             }
 
             productRepository.save(product);
+            productStockHistoryService.record(
+                    product.getProductId(),
+                    item.getOrderId(),
+                    "PAYMENT_CANCEL_RESTORE",
+                    previousStockQuantity,
+                    product.getStockQuantity(),
+                    "결제 취소에 따른 재고 복구"
+            );
         }
 
         order.setOrderStatus("CANCELED");
@@ -208,6 +265,7 @@ public class PaymentService {
         payment.setRefundedAt(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
+        sellerPointService.markCanceled(orderId);
 
         return tossResponse;
     }
@@ -232,6 +290,24 @@ public class PaymentService {
 
     private boolean hasText(String value) {
         return value != null && !value.isBlank();
+    }
+
+    private void validateMinimumOrderQuantity(Product product, int quantity) {
+        int minimumOrderQuantity = getMinimumOrderQuantity(product);
+
+        if (quantity < minimumOrderQuantity) {
+            throw new IllegalArgumentException(
+                    product.getProductName() + " 상품의 최소 주문 수량은 "
+                            + minimumOrderQuantity + "개입니다."
+            );
+        }
+    }
+
+    private int getMinimumOrderQuantity(Product product) {
+        Integer minimumOrderQuantity = product.getMinOrderQuantity();
+        return minimumOrderQuantity == null || minimumOrderQuantity < 1
+                ? 1
+                : minimumOrderQuantity;
     }
 
     @Transactional
@@ -293,7 +369,10 @@ public class PaymentService {
         Map<String, Object> tossResponse = restClient.post()
                 .uri("/v1/payments/{paymentKey}/cancel", payment.getPgPaymentId())
                 .header("Authorization", authorization)
-                .body(Map.of("cancelReason", refundReason))
+                .body(Map.of(
+                        "cancelReason", refundReason,
+                        "cancelAmount", payment.getPaymentAmount()
+                ))
                 .retrieve()
                 .body(Map.class);
 
@@ -306,6 +385,7 @@ public class PaymentService {
         payment.setRefundedAt(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
         paymentRepository.save(payment);
+        sellerPointService.markRefunded(orderId);
 
         return tossResponse;
     }

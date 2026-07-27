@@ -41,6 +41,10 @@ public class Product {
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
+    /** 공공 농산물 시세 API에서 이 상품을 식별하는 품목 코드 */
+    @Column(name = "market_item_code", length = 10)
+    private String marketItemCode;
+
     /** 상품 이름 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "product_name", nullable = false)
@@ -67,6 +71,10 @@ public class Product {
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "unit", nullable = false)
     private String unit;
+
+    /** 한 번 주문할 때 필요한 최소 주문 수량 */
+    @Column(name = "min_order_quantity", nullable = false)
+    private Integer minOrderQuantity = 1;
 
     /** 원산지 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
@@ -102,5 +110,8 @@ public class Product {
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Column(name = "same_day_delivery",nullable = false)
+    private String sameDayDelivery = "N";
 
 }

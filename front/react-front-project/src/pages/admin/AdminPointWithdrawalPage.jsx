@@ -1,0 +1,465 @@
+import { useEffect, useState } from "react";
+import {
+  getAdminSellerPointWithdrawals,
+  updateAdminSellerPointWithdrawalStatus,
+} from "../../api/salesApi.js";
+
+const WITHDRAWAL_STATUS_LABEL = {
+  REQUESTED: "신청 완료",
+  APPROVED: "승인 완료",
+  REJECTED: "반려",
+  COMPLETED: "지급 완료",
+};
+
+const filterOptions = [
+  { value: "ALL", label: "전체" },
+  { value: "REQUESTED", label: "신청 완료" },
+  { value: "APPROVED", label: "승인 완료" },
+  { value: "COMPLETED", label: "지급 완료" },
+  { value: "REJECTED", label: "반려" },
+];
+
+const statusStyle = {
+  REQUESTED: { background: "#fff7ed", color: "#c2410c" },
+  APPROVED: { background: "#e5f4ea", color: "#216b3a" },
+  COMPLETED: { background: "#eef2ff", color: "#3730a3" },
+  REJECTED: { background: "#fee2e2", color: "#b91c1c" },
+};
+
+function formatPoint(value) {
+  return `${Number(value || 0).toLocaleString()}P`;
+}
+
+function formatDateTime(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Date(value).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function AdminPointWithdrawalPage() {
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [filter, setFilter] = useState("ALL");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [rejectReason, setRejectReason] = useState("");
+
+  async function fetchWithdrawals() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await getAdminSellerPointWithdrawals();
+      setWithdrawals(response.data);
+    } catch (error) {
+      console.error(error);
+      setError("출금 신청 목록을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchWithdrawals();
+  }, []);
+
+  async function handleChangeStatus(withdrawalId, withdrawalStatus, reason = "") {
+    try {
+      setMessage("");
+      setError("");
+
+      await updateAdminSellerPointWithdrawalStatus(withdrawalId, withdrawalStatus, reason);
+      setMessage("출금 상태가 변경되었습니다.");
+      await fetchWithdrawals();
+    } catch (error) {
+      console.error(error);
+      setError(error.response?.data?.message || "출금 상태 변경에 실패했습니다.");
+    }
+  }
+
+  function openRejectModal(withdrawal) {
+    setRejectTarget(withdrawal);
+    setRejectReason("");
+    setMessage("");
+    setError("");
+  }
+
+  async function submitReject() {
+    if (!rejectReason.trim()) {
+      setError("반려 사유를 입력해주세요.");
+      return;
+    }
+
+    const target = rejectTarget;
+    setRejectTarget(null);
+    await handleChangeStatus(target.withdrawalId, "REJECTED", rejectReason.trim());
+  }
+
+  const visibleWithdrawals = withdrawals.filter((withdrawal) => {
+    if (filter === "ALL") {
+      return true;
+    }
+
+    return withdrawal.withdrawalStatus === filter;
+  });
+
+  const requestedCount = withdrawals.filter((withdrawal) => withdrawal.withdrawalStatus === "REQUESTED").length;
+  const approvedCount = withdrawals.filter((withdrawal) => withdrawal.withdrawalStatus === "APPROVED").length;
+  const completedPoint = withdrawals
+    .filter((withdrawal) => withdrawal.withdrawalStatus === "COMPLETED")
+    .reduce((sum, withdrawal) => sum + Number(withdrawal.withdrawalAmount || 0), 0);
+  const waitingPoint = withdrawals
+    .filter((withdrawal) => ["REQUESTED", "APPROVED"].includes(withdrawal.withdrawalStatus))
+    .reduce((sum, withdrawal) => sum + Number(withdrawal.withdrawalAmount || 0), 0);
+
+  return (
+    <section className="page-card" style={{ display: "grid", gap: "22px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "14px", alignItems: "flex-start" }}>
+        <div>
+          <p style={{ margin: "0 0 8px", color: "#3f7d20", fontWeight: 900 }}>
+            Point Withdrawal
+          </p>
+          <h1 style={{ margin: 0 }}>출금 신청 관리</h1>
+          <p style={{ margin: "8px 0 0", color: "#68756d" }}>
+            판매자 포인트 출금 신청을 확인하고 승인, 반려, 지급 완료 처리합니다.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={fetchWithdrawals}
+          style={{
+            padding: "10px 14px",
+            border: "1px solid #b9d5c0",
+            borderRadius: "8px",
+            background: "#ffffff",
+            color: "#216b3a",
+            fontWeight: 800,
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          새로고침
+        </button>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "12px" }}>
+        <SummaryCard label="신청 대기" value={`${requestedCount}건`} />
+        <SummaryCard label="승인 대기 지급" value={`${approvedCount}건`} />
+        <SummaryCard label="처리 대기 포인트" value={formatPoint(waitingPoint)} />
+        <SummaryCard label="지급 완료 포인트" value={formatPoint(completedPoint)} />
+      </div>
+
+      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        {filterOptions.map((option) => {
+          const isActive = filter === option.value;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setFilter(option.value)}
+              style={{
+                padding: "9px 13px",
+                border: isActive ? "1px solid #216b3a" : "1px solid #dce6dd",
+                borderRadius: "999px",
+                background: isActive ? "#216b3a" : "#ffffff",
+                color: isActive ? "#ffffff" : "#405348",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {message && (
+        <p style={{ padding: "12px 14px", borderRadius: "10px", background: "#e5f4ea", color: "#216b3a", fontWeight: 800 }}>
+          {message}
+        </p>
+      )}
+      {error && (
+        <p style={{ padding: "12px 14px", borderRadius: "10px", background: "#fff1f2", color: "#b91c1c", fontWeight: 800 }}>
+          {error}
+        </p>
+      )}
+      {loading && <p style={{ color: "#68756d" }}>출금 신청 목록을 불러오는 중입니다.</p>}
+
+      <div style={{ display: "grid", gap: "12px" }}>
+        {visibleWithdrawals.length === 0 && !loading && (
+          <article
+            style={{
+              padding: "24px",
+              border: "1px solid #e1e8df",
+              borderRadius: "12px",
+              background: "#ffffff",
+              color: "#6b7280",
+              fontWeight: 800,
+            }}
+          >
+            표시할 출금 신청 내역이 없습니다.
+          </article>
+        )}
+
+        {visibleWithdrawals.map((withdrawal) => {
+          const status = statusStyle[withdrawal.withdrawalStatus] || statusStyle.REQUESTED;
+          const canApproveOrReject = withdrawal.withdrawalStatus === "REQUESTED";
+          const canComplete = withdrawal.withdrawalStatus === "APPROVED";
+
+          return (
+            <article
+              key={withdrawal.withdrawalId}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr) 300px",
+                gap: "14px",
+                padding: "16px",
+                border: "1px solid #e1e8df",
+                borderRadius: "12px",
+                background: "#ffffff",
+                boxShadow: "0 8px 22px rgba(36, 59, 47, 0.06)",
+              }}
+            >
+              <div style={{ display: "grid", gap: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "flex-start" }}>
+                  <div>
+                    <span style={{ color: "#68756d", fontWeight: 800 }}>
+                      출금 신청 번호 #{withdrawal.withdrawalId}
+                    </span>
+                    <strong style={{ display: "block", marginTop: "4px", color: "#213328", fontSize: "1.45rem" }}>
+                      {formatPoint(withdrawal.withdrawalAmount)}
+                    </strong>
+                  </div>
+
+                  <strong
+                    style={{
+                      padding: "7px 12px",
+                      borderRadius: "999px",
+                      background: status.background,
+                      color: status.color,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {WITHDRAWAL_STATUS_LABEL[withdrawal.withdrawalStatus] || withdrawal.withdrawalStatus}
+                  </strong>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <InfoBox title="판매자 정보">
+                    <span>판매자: {withdrawal.sellerName || "판매자 정보 없음"}</span>
+                    <span>전화번호: {withdrawal.sellerPhone || "전화번호 정보 없음"}</span>
+                    <span>이메일: {withdrawal.sellerEmail || "이메일 정보 없음"}</span>
+                  </InfoBox>
+
+                  <InfoBox title="입금 계좌">
+                    <span>은행: {withdrawal.bankName}</span>
+                    <span>예금주: {withdrawal.accountHolder}</span>
+                    <span>계좌번호: {withdrawal.accountNumber}</span>
+                  </InfoBox>
+                </div>
+
+                <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", color: "#68756d" }}>
+                  <span>신청일: {formatDateTime(withdrawal.requestedAt)}</span>
+                  {withdrawal.approvedAt && <span>승인일: {formatDateTime(withdrawal.approvedAt)}</span>}
+                  {withdrawal.completedAt && <span>지급일: {formatDateTime(withdrawal.completedAt)}</span>}
+                </div>
+
+                {withdrawal.rejectReason && (
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "8px",
+                      background: "#fff1f2",
+                      color: "#b91c1c",
+                      fontWeight: 800,
+                    }}
+                  >
+                    반려 사유: {withdrawal.rejectReason}
+                  </div>
+                )}
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: "10px",
+                  alignContent: "center",
+                  padding: "12px",
+                  border: "1px solid #edf2ed",
+                  borderRadius: "10px",
+                  background: "#fbfdfb",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleChangeStatus(withdrawal.withdrawalId, "APPROVED")}
+                  disabled={!canApproveOrReject}
+                  style={getButtonStyle(canApproveOrReject, "#216b3a")}
+                >
+                  승인
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openRejectModal(withdrawal)}
+                  disabled={!canApproveOrReject}
+                  style={getButtonStyle(canApproveOrReject, "#b91c1c")}
+                >
+                  반려
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChangeStatus(withdrawal.withdrawalId, "COMPLETED")}
+                  disabled={!canComplete}
+                  style={getButtonStyle(canComplete, "#4c1d95")}
+                >
+                  지급 완료
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {rejectTarget && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            display: "grid",
+            placeItems: "center",
+            padding: "24px",
+            background: "rgba(15, 23, 42, 0.34)",
+            zIndex: 1000,
+          }}
+          onClick={() => setRejectTarget(null)}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "460px",
+              padding: "22px",
+              borderRadius: "14px",
+              background: "#ffffff",
+              boxShadow: "0 24px 70px rgba(15, 23, 42, 0.24)",
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p style={{ margin: "0 0 8px", color: "#b91c1c", fontWeight: 900 }}>
+              출금 반려
+            </p>
+            <h2 style={{ margin: "0 0 12px", color: "#213328", fontSize: "1.35rem" }}>
+              반려 사유를 입력해주세요
+            </h2>
+            <textarea
+              value={rejectReason}
+              onChange={(event) => setRejectReason(event.target.value)}
+              placeholder="예: 계좌 정보가 일치하지 않습니다."
+              style={{
+                width: "100%",
+                minHeight: "110px",
+                padding: "12px",
+                border: "1px solid #dce6dd",
+                borderRadius: "8px",
+                resize: "vertical",
+                boxSizing: "border-box",
+                font: "inherit",
+              }}
+            />
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "14px" }}>
+              <button type="button" onClick={() => setRejectTarget(null)} style={modalCancelButtonStyle}>
+                취소
+              </button>
+              <button type="button" onClick={submitReject} style={modalDangerButtonStyle}>
+                반려 처리
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SummaryCard({ label, value }) {
+  return (
+    <article
+      style={{
+        padding: "16px",
+        border: "1px solid #e1e8df",
+        borderRadius: "12px",
+        background: "#ffffff",
+      }}
+    >
+      <span style={{ color: "#68756d", fontWeight: 800 }}>{label}</span>
+      <strong style={{ display: "block", marginTop: "8px", color: "#213328", fontSize: "1.35rem" }}>
+        {value}
+      </strong>
+    </article>
+  );
+}
+
+function InfoBox({ title, children }) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gap: "5px",
+        padding: "10px",
+        border: "1px solid #edf2ed",
+        borderRadius: "9px",
+        background: "#fbfdfb",
+        color: "#405348",
+        lineHeight: 1.45,
+      }}
+    >
+      <strong style={{ color: "#213328" }}>{title}</strong>
+      {children}
+    </div>
+  );
+}
+
+function getButtonStyle(enabled, background) {
+  return {
+    width: "100%",
+    padding: "10px 12px",
+    border: "none",
+    borderRadius: "8px",
+    background: enabled ? background : "#d1d5db",
+    color: "#ffffff",
+    fontWeight: 900,
+    cursor: enabled ? "pointer" : "not-allowed",
+  };
+}
+
+const modalCancelButtonStyle = {
+  padding: "10px 14px",
+  border: "1px solid #dce6dd",
+  borderRadius: "8px",
+  background: "#ffffff",
+  color: "#405348",
+  fontWeight: 800,
+  cursor: "pointer",
+};
+
+const modalDangerButtonStyle = {
+  padding: "10px 14px",
+  border: "none",
+  borderRadius: "8px",
+  background: "#b91c1c",
+  color: "#ffffff",
+  fontWeight: 900,
+  cursor: "pointer",
+};
+
+export default AdminPointWithdrawalPage;

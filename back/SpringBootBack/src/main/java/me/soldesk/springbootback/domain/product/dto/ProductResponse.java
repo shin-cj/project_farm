@@ -21,6 +21,9 @@ public class ProductResponse {
     /** 상품 카테고리 번호 */
     private Long categoryId;
 
+    /** 공공 농산물 시세 API 품목 코드 */
+    private String marketItemCode;
+
     /** 상품 이름 */
     private String productName;
 
@@ -35,6 +38,12 @@ public class ProductResponse {
 
     /** 판매 단위 */
     private String unit;
+
+    /** 상품을 판매하는 농장의 판매 방식: RETAIL(소매), WHOLESALE(도매) */
+    private String saleType;
+
+    /** 최소 주문 수량 */
+    private Integer minOrderQuantity;
 
     /** 원산지 */
     private String origin;
@@ -59,5 +68,7 @@ public class ProductResponse {
 
     //상품을 판매하는 농장 이름
     private String farmName;
+
+    private String sameDayDelivery;
 
 }

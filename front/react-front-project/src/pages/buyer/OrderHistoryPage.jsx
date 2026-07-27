@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
 import { cancelPayment, requestRefund } from "../../api/paymentApi.js";
+import {
+  DELIVERY_STATUS_LABEL,
+  ORDER_STATUS_LABEL,
+} from "../../constants/statusLabels.js";
+import { useAppFeedback } from "../../context/AppFeedbackContext.jsx";
 
 function getLoginUser() {
   try {
@@ -30,20 +35,6 @@ function formatDate(value) {
     minute: "2-digit",
   });
 }
-
-const orderStatusLabel = {
-  PAYMENT_WAIT: "결제 대기",
-  PAID: "결제 완료",
-  CANCELED: "주문 취소",
-  REFUND_REQUESTED: "환불 요청",
-  REFUNDED: "환불 완료",
-};
-
-const deliveryStatusLabel = {
-  READY: "배송 준비중",
-  SHIPPING: "배송 중",
-  DELIVERED: "배송 완료",
-};
 
 function getCancelGuide(order) {
   if (order.orderStatus === "CANCELED") {
@@ -74,11 +65,13 @@ function getCancelGuide(order) {
 }
 
 function canViewDelivery(order) {
-  return order.orderStatus !== "CANCELED";
+  return !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
 }
 
 function OrderHistoryPage() {
   const navigate = useNavigate();
+  const { alert, prompt } = useAppFeedback();
+  const location = useLocation();
   const loginUser = getLoginUser();
   const buyerId = loginUser?.userId;
 
@@ -87,8 +80,24 @@ function OrderHistoryPage() {
   const [error, setError] = useState("");
   const [cancelingOrderId, setCancelingOrderId] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [orderFilter, setOrderFilter] = useState("ALL");
 
   const ordersPerPage = 3;
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const type = params.get("type");
+
+    if (type === "delivery") {
+      setOrderFilter("DELIVERY");
+    } else if (type === "cancel") {
+      setOrderFilter("CANCEL");
+    } else {
+      setOrderFilter("ALL");
+    }
+
+    setCurrentPage(1);
+  }, [location.search]);
 
   async function fetchOrders() {
     if (!buyerId) {
@@ -101,7 +110,7 @@ function OrderHistoryPage() {
       setLoading(true);
       setError("");
       const response = await orderApi.getOrdersByBuyer(buyerId);
-      setOrders(response.data);
+      setOrders(response.data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
       setCurrentPage(1);
     } catch {
       setError("주문 내역을 불러오지 못했습니다.");
@@ -122,7 +131,15 @@ function OrderHistoryPage() {
       return;
     }
 
-    const cancelReason = window.prompt("취소 사유를 입력해주세요.", "구매자 요청");
+    const cancelReason = await prompt({
+      title: "주문을 취소할까요?",
+      message: `${order.orderNumber} 주문의 취소 사유를 입력해주세요.`,
+      inputLabel: "취소 사유",
+      placeholder: "예: 구매자 요청",
+      initialValue: "구매자 요청",
+      confirmText: "취소 요청",
+      type: "danger",
+    });
     if (cancelReason === null) {
       return;
     }
@@ -145,7 +162,15 @@ function OrderHistoryPage() {
       return;
     }
 
-    const refundReason = window.prompt("환불 사유를 입력해주세요.", "상품 하자");
+    const refundReason = await prompt({
+      title: "환불을 요청할까요?",
+      message: `${order.orderNumber} 주문의 환불 사유를 입력해주세요.`,
+      inputLabel: "환불 사유",
+      placeholder: "예: 상품 하자",
+      initialValue: "상품 하자",
+      confirmText: "환불 요청",
+      type: "danger",
+    });
     if (refundReason === null) {
       return;
     }
@@ -159,9 +184,21 @@ function OrderHistoryPage() {
     }
   }
 
-  const totalPages = Math.ceil(orders.length / ordersPerPage);
+  const filteredOrders = orders.filter((order) => {
+    if (orderFilter === "DELIVERY") {
+      return !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+    }
+
+    if (orderFilter === "CANCEL") {
+      return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+    }
+
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
-  const currentOrders = orders.slice(startIndex, startIndex + ordersPerPage);
+  const currentOrders = filteredOrders.slice(startIndex, startIndex + ordersPerPage);
 
   return (
     <section style={{ maxWidth: "1120px", margin: "0 auto", padding: "42px 20px 70px" }}>
@@ -190,9 +227,40 @@ function OrderHistoryPage() {
       {loading && <p style={{ color: "#5f6f64" }}>주문 내역을 불러오는 중입니다.</p>}
       {error && <p style={{ color: "crimson", fontWeight: 700 }}>{error}</p>}
 
-      {!loading && !error && orders.length === 0 && (
+      {!loading && !error && orders.length > 0 && (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "18px" }}>
+          {[
+            { value: "ALL", label: "전체 주문", path: "/orders" },
+            { value: "DELIVERY", label: "배송 주문", path: "/orders?type=delivery" },
+            { value: "CANCEL", label: "취소/환불", path: "/orders?type=cancel" },
+          ].map((option) => {
+            const isActive = orderFilter === option.value;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => navigate(option.path)}
+                style={{
+                  padding: "10px 14px",
+                  border: isActive ? "1px solid #216b3a" : "1px solid #dce6dd",
+                  borderRadius: "999px",
+                  background: isActive ? "#216b3a" : "#ffffff",
+                  color: isActive ? "#ffffff" : "#405348",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {!loading && !error && filteredOrders.length === 0 && (
         <div style={{ padding: "34px", border: "1px solid #dce6dd", borderRadius: "10px", background: "#fbfdfb" }}>
-          아직 주문 내역이 없습니다.
+          표시할 주문 내역이 없습니다.
         </div>
       )}
 
@@ -219,16 +287,67 @@ function OrderHistoryPage() {
               <div>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
                   <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#e5f4ea", color: "#216b3a", fontWeight: 800 }}>
-                    {orderStatusLabel[order.orderStatus] || order.orderStatus}
+                    {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
                   </span>
                   <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontWeight: 800 }}>
-                    {deliveryStatusLabel[order.deliveryStatus] || "배송 준비중"}
+                    {DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
                   </span>
                 </div>
 
-                <h2 style={{ margin: "0 0 10px", fontSize: "22px", color: "#1f2f24" }}>
-                  {order.orderName || "주문 상품"}
-                </h2>
+                {order.orderItems?.length > 0 && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "8px",
+                      margin: "0 0 14px",
+                      padding: "12px",
+                      border: "1px solid #edf2ed",
+                      borderRadius: "8px",
+                      background: "#fbfdfb",
+                    }}
+                  >
+                    {order.orderItems.map((item) => (
+                      <div
+                        key={item.orderItemId}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "1fr auto",
+                          gap: "12px",
+                          color: "#405348",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        <span>
+                          <small
+                            style={{
+                              display: "inline-flex",
+                              marginRight: "8px",
+                              padding: "3px 7px",
+                              borderRadius: "999px",
+                              background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                              color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                              fontSize: "12px",
+                              fontWeight: 900,
+                            }}
+                          >
+                            {item.saleType === "WHOLESALE" ? "도매" : "소매"}
+                          </small>
+                          {item.productName}
+                          <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
+                            {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`].filter(Boolean).join(" ")}
+                          </strong>
+                        </span>
+                        <strong>{formatPrice(item.itemTotalPrice)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {(!order.orderItems || order.orderItems.length === 0) && (
+                  <h2 style={{ margin: "0 0 10px", fontSize: "22px", color: "#1f2f24" }}>
+                    {order.orderName || "주문 상품"}
+                  </h2>
+                )}
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px 20px", color: "#3f4f44", lineHeight: 1.7 }}>
                   <span>주문번호: {order.orderNumber}</span>

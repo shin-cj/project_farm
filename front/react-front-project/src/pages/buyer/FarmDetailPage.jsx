@@ -179,28 +179,12 @@ function ProductDetailPage() {
         }
     }
 
-    if (loading) return <CatalogPageState title="상품 정보 불러오는 중" message="선택한 상품의 상세 정보를 확인하고 있습니다." />
-    if (error) return <CatalogPageState title="상품 정보를 불러오지 못했습니다" message={error} actionLabel="다시 시도" onAction={() => setReloadKey(v => v + 1)} />
-    if (!product) return <main className="product-detail-page"><div className="product-detail-message">상품이 없습니다.</div></main>
-
-    const isPurchasable = product.productStatus === 'ON_SALE' && Number(product.stockQuantity) > 0
-    const numericQuantity = Number(quantity)
-    const isValidQuantity = Number.isInteger(numericQuantity) && numericQuantity >= 1 && numericQuantity <= Number(product.stockQuantity)
-    const unavailableMessage = Number(product.stockQuantity) <= 0 || product.productStatus === 'SOLD_OUT' ? '품절된 상품입니다.' : '현재 구매할 수 없는 상품입니다.'
-
-    function handleDirectOrder() {
-        if (!isPurchasable) { alert(unavailableMessage); return; }
-        if (!userid) { alert('로그인이 필요한 기능입니다.'); navigate('/login'); return; }
-        navigate('/order', {
-            state: {
-                purchaseType: 'DIRECT',
-                buyerId: userid,
-                items: [{ product_id: product.productId, product_price: product.price, productName: product.productName, productImageUrl: product.productImageUrl, quantity: Number(quantity) }]
-            }
-        })
-    }
-
-    const sortedQnaList = [...qnaList].sort((a, b) => Number(b.qnaId) - Number(a.qnaId))
+                <div className="farm-detail-info">
+                    <div className="farm-detail-title-row">
+                        <div>
+            <span className="farm-detail-region">
+              {farm.region}
+            </span>
 
     return (
         <main className="product-detail-page">
@@ -239,6 +223,26 @@ function ProductDetailPage() {
                         <AddCartButton productId={product.productId} userid={userid} quantity={numericQuantity} disabled={!isPurchasable || !isValidQuantity} className="product-detail-cart-button" />
                         <button type="button" className="product-detail-order-link" onClick={() => setIsOrderModalOpen(true)} disabled={!isPurchasable || !isValidQuantity}>바로 주문하기</button>
                     </div>
+
+                    <span className={`farm-detail-sale-type ${
+                        farm.saleType === 'WHOLESALE' ? 'wholesale' : 'retail'
+                    }`}>
+                        {farm.saleType === 'WHOLESALE'
+                            ? '도매 대량구매 농장'
+                            : '소매 장보기 농장'}
+                    </span>
+
+                    <p className="farm-detail-address">
+                        {farm.farmAddress}
+                        {farm.farmDetailAddress
+                            ? ` ${farm.farmDetailAddress}`
+                            : ''}
+                    </p>
+
+                    <p className="farm-detail-description">
+                        {farm.farmDescription
+                            || '등록된 농장 소개가 없습니다.'}
+                    </p>
                 </div>
             </section>
 
@@ -335,4 +339,4 @@ function ProductDetailPage() {
     )
 }
 
-export default ProductDetailPage
+export default FarmDetailPage

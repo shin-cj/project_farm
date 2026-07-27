@@ -1,7 +1,7 @@
 /* 판매자 메뉴와 실제 페이지를 좌우로 배치합니다. */
 .seller-layout {
     display: grid;
-    grid-template-columns: 260px minmax(0, 1fr);
+    grid-template-columns: 248px minmax(0, 1fr);
     min-height: 100vh;
     background-color: #f6f8f4;
 }
@@ -14,169 +14,203 @@
     flex-direction: column;
     box-sizing: border-box;
     height: 100vh;
-    padding: 28px 20px;
+    padding: 22px 18px 18px;
+    overflow-y: auto;
     border-right: 1px solid #e1e8df;
     background-color: #ffffff;
 }
 
-/* 농부링크 로고 영역입니다. */
+/* 서비스 로고 영역입니다. */
 .seller-sidebar-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 0 8px 24px;
-    color: #216b3a;
+    justify-content: center;
+    min-height: 70px;
+    padding: 0 0 14px;
     text-decoration: none;
 }
 
-.seller-sidebar-logo {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    background-color: #eef6e8;
-    font-size: 25px;
+.seller-sidebar-brand-image {
+    display: block;
+    width: 132px;
+    height: auto;
 }
 
-.seller-sidebar-brand div {
+/* 로그인한 판매자 정보를 간단하게 보여주는 카드입니다. */
+.seller-sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 14px;
+    border: 1px solid #e0e8dd;
+    border-radius: 14px;
+    background-color: #fbfcfa;
+}
+
+.seller-sidebar-avatar {
+    display: flex;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #eaf3e7;
+    color: #2f741b;
+}
+
+.seller-sidebar-avatar .seller-sidebar-icon {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.9;
+}
+
+.seller-sidebar-profile > div:last-child {
+    min-width: 0;
+}
+
+.seller-sidebar-profile strong,
+.seller-sidebar-profile span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seller-sidebar-profile strong {
+    color: #183d2b;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.seller-sidebar-profile span {
+    margin-top: 3px;
+    color: #7b867f;
+    font-size: 11px;
+}
+
+/* 판매자 메뉴를 기능별로 구분합니다. */
+.seller-sidebar-menu {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 20px;
 }
 
-.seller-sidebar-brand strong {
-    font-size: 21px;
-}
-
-.seller-sidebar-brand small {
-    color: #6d9c6f;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-/* 이전 화면과 사이트 홈 버튼입니다. */
-.seller-sidebar-navigation {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    padding-bottom: 22px;
-    border-bottom: 1px solid #edf1eb;
-}
-
-.seller-sidebar-navigation button,
-.seller-sidebar-navigation a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 38px;
-    box-sizing: border-box;
-    border: 1px solid #dce6dd;
-    border-radius: 9px;
-    background-color: #ffffff;
-    color: #5f6f64;
-    font: inherit;
-    font-size: 13px;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.seller-sidebar-navigation button:hover,
-.seller-sidebar-navigation a:hover {
-    border-color: #9cbd8c;
-    background-color: #f4f8f1;
-    color: #3f7d20;
-}
-
-.seller-sidebar-title {
-    margin: 24px 10px 12px;
-    color: #9ca3af;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-}
-
-/* 판매자 메뉴 목록입니다. */
-.seller-sidebar-menu {
+.seller-sidebar-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
 }
 
+.seller-sidebar-title {
+    margin: 0 12px 4px;
+    color: #9aa39d;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+}
+
+.seller-sidebar-group-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .seller-sidebar-link {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 13px;
-    min-height: 48px;
+    gap: 12px;
+    min-height: 44px;
     box-sizing: border-box;
-    padding: 0 15px;
-    border-radius: 11px;
-    color: #516058;
-    font-size: 15px;
+    padding: 0 13px;
+    overflow: hidden;
+    border-radius: 10px;
+    color: #56635b;
+    font-size: 14px;
     font-weight: 700;
     text-decoration: none;
-    transition:
-            background-color 0.2s ease,
-            color 0.2s ease,
-            transform 0.2s ease;
+    transition: background-color 0.18s ease, color 0.18s ease;
 }
 
-.seller-sidebar-link > span {
+.seller-sidebar-icon {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    color: #7c8880;
+    transition: color 0.18s ease;
+}
+
+.seller-sidebar-link:hover {
+    background-color: #f2f6f0;
+    color: #245f3b;
+}
+
+.seller-sidebar-link:hover .seller-sidebar-icon {
+    color: #397b4d;
+}
+
+/* 현재 접속 중인 메뉴는 연한 배경과 왼쪽 표시선으로 구분합니다. */
+.seller-sidebar-link.active {
+    background-color: #eaf3e7;
+    color: #175c37;
+}
+
+.seller-sidebar-link.active::before {
+    position: absolute;
+    top: 7px;
+    bottom: 7px;
+    left: 0;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background-color: #175c37;
+    content: '';
+}
+
+.seller-sidebar-link.active .seller-sidebar-icon {
+    color: #175c37;
+}
+
+/* 메뉴 하단 계정 동작 영역입니다. */
+.seller-sidebar-footer {
+    margin-top: auto;
+    padding: 22px 0 14px;
+}
+
+.seller-sidebar-logout {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 24px;
-    color: #7b8a80;
-    font-size: 20px;
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 13px;
+    border: 1px solid #dde5da;
+    border-radius: 10px;
+    background-color: #ffffff;
+    color: #56635b;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
 }
 
-/* 마우스를 올린 메뉴입니다. */
-.seller-sidebar-link:hover {
-    background-color: #f0f6ec;
-    color: #3f7d20;
-    transform: translateX(2px);
+.seller-sidebar-logout:hover {
+    border-color: #b8cdb5;
+    background-color: #f5f8f3;
+    color: #175c37;
 }
 
-/* 현재 접속 중인 메뉴입니다. */
-.seller-sidebar-link.active {
-    background-color: #3f7d20;
-    color: #ffffff;
-    box-shadow: 0 7px 16px rgba(63, 125, 32, 0.2);
+.seller-sidebar-logout:hover .seller-sidebar-icon {
+    color: #175c37;
 }
 
-.seller-sidebar-link.active > span {
-    color: #ffffff;
-}
-
-/* 메뉴 하단 농부링크 안내 카드입니다. */
-.seller-sidebar-message {
-    margin-top: auto;
-    padding: 18px;
-    overflow: hidden;
-    border: 1px solid #dce8d7;
-    border-radius: 14px;
-    background:
-            linear-gradient(
-                    145deg,
-                    #ffffff 0%,
-                    #f2f8ed 55%,
-                    #dcebd4 100%
-            );
-}
-
-.seller-sidebar-message strong {
-    color: #345c38;
-    font-size: 13px;
-    line-height: 1.5;
-}
-
-.seller-sidebar-message p {
-    margin: 8px 0 0;
-    color: #758078;
-    font-size: 12px;
-    line-height: 1.5;
+.seller-sidebar-footer > p {
+    margin: 14px 0 0;
+    color: #929b95;
+    font-size: 11px;
+    text-align: center;
 }
 
 /* 오른쪽에 판매자 페이지가 표시되는 영역입니다. */
@@ -194,40 +228,60 @@
     .seller-sidebar {
         position: static;
         height: auto;
-        padding: 20px;
+        padding: 16px 20px;
+        overflow: visible;
     }
 
     .seller-sidebar-brand {
-        padding-bottom: 18px;
+        min-height: 0;
+        padding: 0 4px 12px;
     }
 
-    .seller-sidebar-title {
-        margin-top: 18px;
+    .seller-sidebar-brand-image {
+        width: 116px;
+    }
+
+    .seller-sidebar-profile,
+    .seller-sidebar-title,
+    .seller-sidebar-footer {
+        display: none;
     }
 
     .seller-sidebar-menu {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
     }
 
-    .seller-sidebar-message {
-        display: none;
+    .seller-sidebar-group,
+    .seller-sidebar-group-menu {
+        display: contents;
+    }
+
+    .seller-sidebar-link {
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 10px;
     }
 }
 
 /* 휴대폰에서는 메뉴를 2열로 표시합니다. */
 @media (max-width: 600px) {
+    .seller-sidebar {
+        padding: 14px;
+    }
+
     .seller-sidebar-menu {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .seller-sidebar-link {
-        justify-content: center;
-        padding: 0 10px;
+        gap: 8px;
         font-size: 13px;
     }
 
-    .seller-sidebar-navigation {
-        grid-template-columns: 1fr;
+    .seller-sidebar-icon {
+        width: 18px;
+        height: 18px;
     }
 }

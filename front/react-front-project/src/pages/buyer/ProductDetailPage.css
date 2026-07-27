@@ -44,10 +44,12 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
   margin-bottom: 18px;
 }
 
-.product-detail-status {
+.product-detail-status,
+.product-detail-same-day-badge {
   display: inline-flex;
   width: fit-content;
   padding: 7px 12px;
@@ -58,7 +60,13 @@
   font-weight: 800;
 }
 
+.product-detail-same-day-badge {
+  background-color: #e5f4ea;
+  color: #216b3a;
+}
+
 .product-detail-back-button {
+  margin-left: auto;
   padding: 9px 14px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -379,4 +387,21 @@
   border: solid #d7dfd2;
   border-width: 1px 0;
   text-align: center;
+}
+
+/* 상품 상세 수량 입력창의 브라우저 기본 증감 화살표만 숨깁니다. */
+.product-detail-quantity-control input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.product-detail-quantity-control input[type="number"]::-webkit-inner-spin-button,
+.product-detail-quantity-control input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.product-detail-quantity-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }

@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
 
 export function SuccessPage() {
+    const navigate = useNavigate();
     const [isConfirmed, setIsConfirmed] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState("");
+    const hasRequestedConfirm = useRef(false);
 
     const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
     const paymentKey = searchParams.get("paymentKey");
@@ -16,19 +18,29 @@ export function SuccessPage() {
     const receiverPhone = searchParams.get("receiverPhone") || "";
     const receiverAddress = searchParams.get("receiverAddress") || "";
     const receiverDetailAddress = searchParams.get("receiverDetailAddress") || "";
-    const cartItemIds = (searchParams.get("cartItemIds") || "")
-        .split(",")
-        .filter(id => id !== "")
-        .map(Number)
-        .filter(Number.isFinite);
+    const cartItemIds = useMemo(() => (
+        (searchParams.get("cartItemIds") || "")
+            .split(",")
+            .filter(id => id !== "")
+            .map(Number)
+            .filter(Number.isFinite)
+    ), [searchParams]);
 
     const formattedAmount = Number(amount || 0).toLocaleString("ko-KR");
 
-    async function confirmPayment() {
+    const confirmPayment = useCallback(async () => {
+        if (isConfirmed) {
+            return;
+        }
+
         setIsLoading(true);
         setErrorMessage("");
 
         try {
+            if (!paymentKey || !orderId || !amount) {
+                throw new Error("결제 승인에 필요한 정보가 없습니다.");
+            }
+
             const response = await fetch("/api/payments/confirm", {
                 method: "POST",
                 headers: {
@@ -67,7 +79,26 @@ export function SuccessPage() {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [
+        amount,
+        cartItemIds,
+        isConfirmed,
+        orderId,
+        paymentKey,
+        receiverAddress,
+        receiverDetailAddress,
+        receiverName,
+        receiverPhone
+    ]);
+
+    useEffect(() => {
+        if (hasRequestedConfirm.current) {
+            return;
+        }
+
+        hasRequestedConfirm.current = true;
+        confirmPayment();
+    }, [confirmPayment]);
 
     const pageStyle = {
         minHeight: "calc(100vh - 120px)",
@@ -95,8 +126,8 @@ export function SuccessPage() {
         alignItems: "center",
         justifyContent: "center",
         borderRadius: "50%",
-        background: isConfirmed ? "#e5f4ea" : "#eef3ee",
-        color: "#216b3a",
+        background: isConfirmed ? "#e5f4ea" : errorMessage ? "#fff1f2" : "#eef3ee",
+        color: errorMessage ? "#b42318" : "#216b3a",
         fontSize: "34px",
         fontWeight: 800
     };
@@ -119,19 +150,48 @@ export function SuccessPage() {
         fontWeight: 700
     };
 
+    const backButtonStyle = {
+        height: "42px",
+        padding: "0 15px",
+        border: "1px solid #dce6dd",
+        borderRadius: "8px",
+        background: "#ffffff",
+        color: "#216b3a",
+        fontSize: "16px",
+        fontWeight: 800,
+        cursor: "pointer"
+    };
+
     return (
         <main style={pageStyle}>
             <section style={cardStyle}>
-                <div style={iconStyle}>{isConfirmed ? "✓" : "!"}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+                    <button type="button" onClick={() => navigate(-1)} style={backButtonStyle}>
+                        ← 뒤로가기
+                    </button>
+                    <span
+                        style={{
+                            padding: "7px 11px",
+                            borderRadius: "999px",
+                            background: isConfirmed ? "#e5f4ea" : errorMessage ? "#fff1f2" : "#eef3ee",
+                            color: errorMessage ? "#b42318" : "#216b3a",
+                            fontSize: "13px",
+                            fontWeight: 900
+                        }}
+                    >
+                        {isConfirmed ? "저장 완료" : isLoading ? "확인 중" : "확인 필요"}
+                    </span>
+                </div>
+
+                <div style={{ ...iconStyle, marginTop: "26px" }}>{isConfirmed ? "✓" : isLoading ? "…" : "!"}</div>
 
                 <p style={{
                     margin: "24px 0 0",
                     color: "#2f8550",
-                    fontSize: "13px",
+                    fontSize: "14px",
                     fontWeight: 800,
-                    letterSpacing: "0.08em"
                 }}>
-                    {isConfirmed ? "PAYMENT COMPLETE" : "PAYMENT READY"}
+                    {isConfirmed ? "결제 완료" : isLoading ? "결제 확인 중" : "결제 확인 필요"}
                 </p>
 
                 <h2 style={{
@@ -140,7 +200,7 @@ export function SuccessPage() {
                     fontSize: "30px",
                     lineHeight: 1.25
                 }}>
-                    {isConfirmed ? "결제가 완료되었습니다" : "결제 승인만 남았어요"}
+                    {isConfirmed ? "결제가 완료되었습니다" : isLoading ? "결제를 확인하고 있습니다" : "결제 확인이 필요합니다"}
                 </h2>
 
                 <p style={{
@@ -151,7 +211,9 @@ export function SuccessPage() {
                 }}>
                     {isConfirmed
                         ? "주문 정보가 정상적으로 저장되었습니다."
-                        : "토스 결제 요청은 성공했고, 아래 버튼을 누르면 서버에서 최종 승인합니다."}
+                        : isLoading
+                            ? "결제 결과를 서버에 저장하는 중입니다. 잠시만 기다려주세요."
+                            : "자동 확인에 실패했습니다. 아래 버튼으로 다시 시도할 수 있습니다."}
                 </p>
 
                 <div style={{
@@ -174,14 +236,14 @@ export function SuccessPage() {
                         <strong style={{ color: "#213328", textAlign: "right", wordBreak: "break-word" }}>{orderId}</strong>
                     </div>
                     <div style={rowStyle}>
+                        <span style={{ color: "#68756d", fontWeight: 700 }}>주문자</span>
+                        <strong style={{ color: "#213328", textAlign: "right" }}>{receiverName || "-"}</strong>
+                    </div>
+                    <div style={rowStyle}>
                         <span style={{ color: "#68756d", fontWeight: 700 }}>배송지</span>
                         <strong style={{ color: "#213328", textAlign: "right" }}>
-                            {receiverAddress} {receiverDetailAddress}
+                            {[receiverAddress, receiverDetailAddress].filter(Boolean).join(" ") || "-"}
                         </strong>
-                    </div>
-                    <div style={{ ...rowStyle, borderBottom: 0 }}>
-                        <span style={{ color: "#68756d", fontWeight: 700 }}>결제 키</span>
-                        <strong style={{ color: "#213328", textAlign: "right", wordBreak: "break-word" }}>{paymentKey}</strong>
                     </div>
                 </div>
 
@@ -214,7 +276,7 @@ export function SuccessPage() {
                                 홈으로
                             </Link>
                         </>
-                    ) : (
+                    ) : errorMessage ? (
                         <>
                             <button
                                 className="btn primary"
@@ -223,12 +285,21 @@ export function SuccessPage() {
                                 onClick={confirmPayment}
                                 disabled={isLoading}
                             >
-                                {isLoading ? "승인 중..." : "결제 승인하기"}
+                                {isLoading ? "확인 중..." : "다시 확인하기"}
                             </button>
                             <Link className="btn" style={buttonStyle} to="/cart">
                                 장바구니로
                             </Link>
                         </>
+                    ) : (
+                        <button
+                            className="btn primary"
+                            style={{ ...buttonStyle, gridColumn: "1 / -1", cursor: "wait" }}
+                            type="button"
+                            disabled
+                        >
+                            결제 결과 확인 중...
+                        </button>
                     )}
                 </div>
             </section>
