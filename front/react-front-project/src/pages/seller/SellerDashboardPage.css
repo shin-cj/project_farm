@@ -162,7 +162,8 @@
     font-weight: 800;
 }
 
-.seller-withdrawal-form input {
+.seller-withdrawal-form input,
+.seller-withdrawal-form select {
     width: 100%;
     box-sizing: border-box;
     padding: 12px 14px;
@@ -171,6 +172,17 @@
     color: #243b2f;
     font: inherit;
     font-weight: 700;
+}
+
+.seller-withdrawal-form select {
+    background-color: #ffffff;
+    cursor: pointer;
+}
+
+.seller-withdrawal-form input[readonly] {
+    background-color: #f4f8f5;
+    color: #4b5f50;
+    cursor: default;
 }
 
 .seller-withdrawal-form button {

@@ -76,7 +76,7 @@ public class DeliveryService {
 
         if ("SAME_DAY".equals(deliveryType)) {
             if (isBlank(deliveryRequest.getDeliveryPersonName()) || isBlank(deliveryRequest.getDeliveryPersonPhone())) {
-                throw new IllegalArgumentException("당일배송 담당자 이름과 연락처를 입력해주세요.");
+                throw new IllegalArgumentException("당일배송 라이더 이름과 전화번호를 입력해주세요.");
             }
 
             delivery.setCourierName(null);

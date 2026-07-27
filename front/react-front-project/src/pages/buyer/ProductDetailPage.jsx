@@ -332,6 +332,7 @@ function ProductDetailPage() {
     navigate('/order', {
       state: {
         purchaseType: 'DIRECT',
+        orderView: 'MODAL',
         buyerId: userid,
         directProduct: {
           productId: product.productId,
@@ -730,20 +731,51 @@ function ProductDetailPage() {
       </section>
 
       {isOrderModalOpen && (
-        <div className="product-order-modal-backdrop">
+        <div className="product-order-modal-backdrop" onClick={() => setIsOrderModalOpen(false)}>
           <div
             className="product-order-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="product-order-modal-title"
+            onClick={(event) => event.stopPropagation()}
           >
-            <h2 id="product-order-modal-title">바로 주문하기</h2>
-            <p>상품명: {product.productName}</p>
-            <p>가격: {product.price.toLocaleString()}원</p>
-            <p>남은 재고: {stockQuantity}개</p>
-            <p>판매 방식: {product.saleType === 'WHOLESALE' ? '도매' : '소매'}</p>
-            <p>배송 방식: {product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}</p>
-            <p>최소 주문 수량: {minimumOrderQuantity}개</p>
+            <div className="product-order-modal-header">
+              <div>
+                <span>Order</span>
+                <h2 id="product-order-modal-title">바로 주문하기</h2>
+              </div>
+              <button type="button" onClick={() => setIsOrderModalOpen(false)} aria-label="바로 주문 닫기">
+                x
+              </button>
+            </div>
+
+            <div className="product-order-modal-summary">
+              <strong>{product.productName}</strong>
+              <span>{product.origin || '원산지 미등록'}</span>
+            </div>
+
+            <dl className="product-order-modal-info">
+              <div>
+                <dt>상품 가격</dt>
+                <dd>{product.price.toLocaleString()}원</dd>
+              </div>
+              <div>
+                <dt>남은 재고</dt>
+                <dd>{stockQuantity}개</dd>
+              </div>
+              <div>
+                <dt>판매 방식</dt>
+                <dd>{product.saleType === 'WHOLESALE' ? '도매' : '소매'}</dd>
+              </div>
+              <div>
+                <dt>배송 방식</dt>
+                <dd>{product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}</dd>
+              </div>
+              <div>
+                <dt>최소 주문</dt>
+                <dd>{minimumOrderQuantity}개</dd>
+              </div>
+            </dl>
 
             <label>
               수량
@@ -756,7 +788,10 @@ function ProductDetailPage() {
               />
             </label>
 
-            <p>총 결제 금액: {(Number(product.price || 0) * orderQuantity).toLocaleString()}원</p>
+            <div className="product-order-modal-total">
+              <span>총 결제 금액</span>
+              <strong>{(Number(product.price || 0) * orderQuantity).toLocaleString()}원</strong>
+            </div>
 
             <div className="product-order-modal-buttons">
               <button type="button" className="product-order-submit" onClick={handleDirectOrder}>
