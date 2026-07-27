@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.marketprice.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.marketprice.dto.BuyerMainRankingItemResponse;
 import me.soldesk.springbootback.domain.marketprice.dto.BuyerMainRankingResponse;
@@ -27,6 +28,12 @@ public class MarketPriceController {
         marketPriceService.fetchRecent();
         marketPriceService.fetchPriceSequel();
         return ResponseEntity.ok("시세 데이터 수동 업데이트 성공!");
+    }
+
+    @GetMapping("/sequel")
+    public ResponseEntity<MarketPriceSearchResponse> searchPriceProduct(String keyword, String saleType){
+        MarketPriceSearchResponse data = marketPriceService.getPriceSequelJson(keyword, saleType);
+        return ResponseEntity.ok(data);
     }
 
     @GetMapping("/status")

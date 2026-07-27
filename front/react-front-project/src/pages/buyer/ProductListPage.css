@@ -1,7 +1,27 @@
 .product-list-page {
+    position: relative; /* 🌟 오른쪽에 떠있을 위젯의 기준점 */
     min-height: 100vh;
+    max-width: 1240px;
+    margin: 0 auto;
     padding: 8px 20px 48px;
     background-color: #f6f8f4;
+}
+
+/* 🌟 [오른쪽 배치] 1240px 메인 박스 오른쪽 바깥 공간에 위치 */
+.floating-widget-container {
+    position: absolute;
+    top: 535px; /* 상품 목록 시작 위치 높이에 맞춰 조정 (필요시 숫자로 변경) */
+    left: 100%; /* 🌟 핵심: 1240px 메인 박스의 오른쪽 끝 바깥으로 이동 */
+    margin-left: 20px; /* 메인 박스 오른쪽과의 간격 */
+    height: calc(100% - 520px); /* 스크롤이 내려가는 세로 범위 */
+    z-index: 100;
+}
+
+/* 스크롤 시 상단 90px 지점에 고정되어 따라오는 영역 */
+.sticky-widget-inner {
+    position: sticky;
+    top: 90px;
+    width: 280px;
 }
 
 .product-mode-switch {
@@ -518,7 +538,7 @@
     height: 40px;
     padding: 0 11px;
     border: 1px solid #d5ddd2;
-    border-radius: 9px;
+    border-radius: 99px; /*9px 에서 99px로 수정됨*/
     background-color: #ffffff;
     color: #46534a;
     font-weight: 700;
@@ -539,6 +559,22 @@
 .product-page-button:disabled {
     opacity: 0.42;
     cursor: not-allowed;
+}
+
+/* 📱 반응형 미디어 쿼리 설정 */
+@media (max-width: 1300px) {
+    /* 화면이 좁아지면 바깥으로 튕겨나가지 않게 메인 내부 우측 상단으로 안전 배치 */
+    .floating-widget-container {
+        position: static;
+        width: 100%;
+        height: auto;
+        margin-left: 0;
+        margin-bottom: 20px;
+    }
+    .sticky-widget-inner {
+        position: static;
+        width: 100%;
+    }
 }
 
 @media (max-width: 900px) {
@@ -604,6 +640,14 @@
 
     .product-search-form {
         min-width: 100%;
+    }
+
+    .product-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-card {
+        max-width: 100%;
     }
 
     .product-grid {
