@@ -117,6 +117,14 @@ function DeliveryManagementPage() {
     return DELIVERY_STATUS_LABEL[status] || "배송 준비중";
   }
 
+  function getOrderDeliveryStatusLabel(order) {
+    if (isClosedOrder(order)) {
+      return "배송 대상 아님";
+    }
+
+    return getDeliveryStatusLabel(order.deliveryStatus);
+  }
+
   function getDeliveryTypeLabel(deliveryType) {
     return deliveryType === "SAME_DAY" ? "당일배송" : "택배배송";
   }
@@ -601,7 +609,7 @@ function DeliveryManagementPage() {
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>농장명: {order.farmName || "농장 정보 없음"}</p>
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>구매한 날짜: {formatDateTime(order.orderedAt)}</p>
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>결제수단: {order.paymentMethod || "결제 전"}</p>
-                <p style={{ margin: "6px 0 0", color: "#68756d" }}>배송 상태: {getDeliveryStatusLabel(order.deliveryStatus)}</p>
+                <p style={{ margin: "6px 0 0", color: "#68756d" }}>배송 상태: {getOrderDeliveryStatusLabel(order)}</p>
                 {(order.courierName || order.trackingNumber) && (
                   <p style={{ margin: "6px 0 0" }}>
                     택배 정보: {order.courierName || "택배사 미등록"} / {order.trackingNumber || "송장번호 미등록"}
@@ -682,7 +690,7 @@ function DeliveryManagementPage() {
                   whiteSpace: "nowrap",
                 }}
               >
-                {selectedOrder ? getDeliveryStatusLabel(selectedOrder.deliveryStatus) : "주문 선택 전"}
+                {selectedOrder ? getOrderDeliveryStatusLabel(selectedOrder) : "주문 선택 전"}
               </span>
             </div>
             <div style={{ minHeight: "38px" }} />
@@ -716,7 +724,7 @@ function DeliveryManagementPage() {
                 <InfoLine label="구매일" value={formatDateTime(selectedOrder.orderedAt)} />
                 <InfoLine label="결제수단" value={selectedOrder.paymentMethod || "결제 전"} />
                 <InfoLine label="배송 방식" value={getDeliveryTypeLabel(selectedOrder.deliveryType)} />
-                <InfoLine label="배송 상태" value={getDeliveryStatusLabel(selectedOrder.deliveryStatus)} />
+                <InfoLine label="배송 상태" value={getOrderDeliveryStatusLabel(selectedOrder)} />
               </div>
 
               <div

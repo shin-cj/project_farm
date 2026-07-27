@@ -34,6 +34,18 @@ function formatDate(value) {
   });
 }
 
+function isClosedOrder(order) {
+  return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+}
+
+function getOrderDeliveryLabel(order) {
+  if (isClosedOrder(order)) {
+    return "배송 대상 아님";
+  }
+
+  return DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중";
+}
+
 function MyPage() {
   const navigate = useNavigate();
   const loginUser = getLoginUser();
@@ -67,9 +79,7 @@ function MyPage() {
     fetchOrders();
   }, [buyerId]);
 
-  const activeOrders = orders.filter(
-    (order) => !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus)
-  );
+  const activeOrders = orders.filter((order) => !isClosedOrder(order));
   const canceledOrders = orders.filter((order) => order.orderStatus === "CANCELED");
   const refundRequestedOrders = orders.filter((order) => order.orderStatus === "REFUND_REQUESTED");
   const refundedOrders = orders.filter((order) => order.orderStatus === "REFUNDED");
@@ -302,7 +312,7 @@ function MyPage() {
                           fontWeight: 800,
                         }}
                       >
-                        {DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
+                        {getOrderDeliveryLabel(order)}
                       </span>
                     </div>
 
