@@ -83,10 +83,7 @@ function ReportButton({
         }catch (e){
             console.error(e)
 
-            setError(
-                e.response?.data?.message ||
-                e.response.data || "신고를 접수하지 못했습니다."
-            )
+            setError("신고를 접수하지 못했습니다. 잠시 후 다시 시도해주세요.")
         }finally {
             setSubmitting(false)
         }

@@ -37,7 +37,7 @@ export function SuccessPage() {
                 // 백엔드에서 DB 저장 후 돌려준 결제 정보를 화면에 표시합니다.
                 setPaymentResult(data);
             } catch (error) {
-                setErrorMessage(error.message);
+                setErrorMessage('결제 승인에 실패했습니다. 결제 내역을 확인해주세요.');
             }
         }
 

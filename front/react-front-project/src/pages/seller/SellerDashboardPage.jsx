@@ -77,7 +77,7 @@ function SellerDashboardPage() {
         setRecentProducts(sortedProducts)
       } catch (err) {
         console.error(err)
-        setError(err.message || '대시보드 정보를 불러오지 못했습니다.')
+        setError('대시보드 정보를 불러오지 못했습니다.')
       } finally {
         setLoading(false)
       }

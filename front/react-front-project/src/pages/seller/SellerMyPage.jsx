@@ -174,7 +174,7 @@ function SellerMyPage() {
         setWithdrawals(withdrawalResponse.data);
       } catch (error) {
         console.error(error);
-        setError(error.message || "판매자 마이페이지 정보를 불러오지 못했습니다.");
+        setError("판매자 마이페이지 정보를 불러오지 못했습니다.");
       } finally {
         setLoading(false);
       }
@@ -301,7 +301,7 @@ function SellerMyPage() {
       await refreshPointAndWithdrawals(sellerId);
     } catch (error) {
       console.error(error);
-      setWithdrawalMessage(error.response?.data?.message || "출금 신청에 실패했습니다.");
+      setWithdrawalMessage("출금 신청에 실패했습니다.");
     } finally {
       setWithdrawalSaving(false);
     }

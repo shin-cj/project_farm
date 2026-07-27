@@ -82,7 +82,7 @@ function AdminPointWithdrawalPage() {
       await fetchWithdrawals();
     } catch (error) {
       console.error(error);
-      setError(error.response?.data?.message || "출금 상태 변경에 실패했습니다.");
+      setError("출금 상태 변경에 실패했습니다.");
     }
   }
 
