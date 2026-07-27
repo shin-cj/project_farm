@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {useNavigate, useParams} from 'react-router-dom'
+import {useLocation, useNavigate, useParams} from 'react-router-dom'
 import {
     getProduct,
     updateProduct,
@@ -19,6 +19,8 @@ function ProductEditPage() {
     const {productId} = useParams()
 
     const navigate = useNavigate()
+    const location = useLocation()
+    const returnTo = location.state?.returnTo || '/seller/products'
     const { alert, confirm } = useAppFeedback()
 
     const [categories, setCategories] = useState([])
@@ -356,7 +358,7 @@ function ProductEditPage() {
             }
         }
 
-        navigate('/seller/products')
+        navigate(returnTo)
     }
 
     if (loading) {

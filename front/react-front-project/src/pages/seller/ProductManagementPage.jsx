@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   deleteProduct,
   getProducts,
@@ -19,6 +19,8 @@ import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 function ProductManagementPage() {
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = `${location.pathname}${location.search}`
   const { alert, confirm } = useAppFeedback()
   const [searchParams] = useSearchParams()
   const requestedFarmId = searchParams.get('farmId') ?? ''
@@ -437,7 +439,9 @@ function ProductManagementPage() {
           <button
               type="button"
               className="seller-product-create-button"
-              onClick={() => navigate('/seller/products/new')}
+              onClick={() => navigate('/seller/products/new', {
+                state : {returnTo},
+              })}
           >
             상품 등록
           </button>
@@ -676,9 +680,10 @@ function ProductManagementPage() {
                             상세
                           </Link>
 
-                          <Link to={
-                            `/seller/products/${product.productId}/edit`
-                          }>
+                          <Link
+                              to={`/seller/products/${product.productId}/edit`}
+                              state={{ returnTo }}
+                          >
                             수정
                           </Link>
 

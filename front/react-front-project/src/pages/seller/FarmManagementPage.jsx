@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { deleteFarm, getFarms } from '../../api/farmApi.js'
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useLocation} from "react-router-dom";
 import './FarmManagementPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
@@ -28,6 +28,8 @@ function getApprovalStatusText(status) {
 function FarmManagementPage() {
 
   const navigate = useNavigate();
+  const location = useLocation()
+  const returnTo = `${location.pathname}${location.search}`
   const { alert, confirm } = useAppFeedback()
   const [farms, setFarms] = useState([])
   const [loading, setLoading] = useState(true)
@@ -232,7 +234,9 @@ function FarmManagementPage() {
                       <button
                           type="button"
                           onClick={() =>
-                              navigate(`/seller/products/new?farmId=${farm.farmId}`)
+                              navigate(`/seller/products/new?farmId=${farm.farmId}`, {
+                                state: { returnTo },
+                              })
                           }
                           disabled={farm.approvalStatus !== 'APPROVED'}
                           title={

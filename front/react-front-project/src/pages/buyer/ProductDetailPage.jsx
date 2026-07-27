@@ -33,6 +33,18 @@ function getMinimumOrderQuantity(product) {
     : 2
 }
 
+function getProductStatusLabel(productStatus) {
+  const statusLabels = {
+    ON_SALE: '판매 중',
+    SOLD_OUT: '품절',
+    PENDING: '승인 대기',
+    REJECTED: '승인 거절',
+    HIDDEN: '판매 중지',
+  }
+
+  return statusLabels[productStatus] || '상태 확인 필요'
+}
+
 function ProductDetailPage() {
   const { productId } = useParams()
   const navigate = useNavigate()
@@ -371,25 +383,25 @@ function ProductDetailPage() {
           <CatalogImage src={product.productImageUrl} alt={product.productName} />
         </div>
 
+        <div className="product-detail-top">
+          <span className="product-detail-status">
+            {getProductStatusLabel(product.productStatus)}
+          </span>
+
+          {product.sameDayDelivery === 'Y' && (
+            <span className="product-detail-same-day-badge">오늘 도착 가능</span>
+          )}
+
+          <button
+            type="button"
+            className="product-detail-back-button"
+            onClick={() => navigate(productListPath)}
+          >
+            목록으로
+          </button>
+        </div>
+
         <div className="product-detail-info">
-          <div className="product-detail-top">
-            <span className="product-detail-status">
-              {product.productStatus || '판매 상태 미등록'}
-            </span>
-
-            {product.sameDayDelivery === 'Y' && (
-              <span className="product-detail-same-day-badge">오늘 도착 가능</span>
-            )}
-
-            <button
-              type="button"
-              className="product-detail-back-button"
-              onClick={() => navigate(productListPath)}
-            >
-              목록으로
-            </button>
-          </div>
-
           <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
           <h1>{product.productName}</h1>
           <p className="product-detail-description">
@@ -401,6 +413,9 @@ function ProductDetailPage() {
             <span>{product.unit || '단위 미등록'}</span>
           </div>
 
+        </div>
+
+        <div className="product-detail-purchase-panel">
           <dl className="product-detail-meta">
             <div>
               <dt>재고</dt>
@@ -426,47 +441,48 @@ function ProductDetailPage() {
               <dt>최소 주문</dt>
               <dd>{minimumOrderQuantity}개</dd>
             </div>
-            <div>
-              <dt>배송 방식</dt>
-              <dd>{product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}</dd>
-            </div>
           </dl>
 
           <div className="product-detail-quantity">
-            <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
 
-            <div className="product-detail-quantity-control">
-              <button
-                type="button"
-                onClick={handleDecreaseQuantity}
-                disabled={numericQuantity <= minimumOrderQuantity}
-                aria-label="수량 줄이기"
-              >
-                -
-              </button>
+            <div className="product-detail-quantity-row">
+              <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
 
-              <input
-                type="number"
-                min={minimumOrderQuantity}
-                max={stockQuantity}
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-                aria-label="구매 수량"
-              />
+              <div className="product-detail-quantity-control">
+                <button
+                    type="button"
+                    onClick={handleDecreaseQuantity}
+                    disabled={numericQuantity <= minimumOrderQuantity}
+                >
+                  -
+                </button>
 
-              <button
-                type="button"
-                onClick={handleIncreaseQuantity}
-                disabled={numericQuantity >= stockQuantity}
-                aria-label="수량 늘리기"
-              >
-                +
-              </button>
+                <input
+                    type="number"
+                    min={minimumOrderQuantity}
+                    max={stockQuantity}
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                />
+
+                <button
+                    type="button"
+                    onClick={handleIncreaseQuantity}
+                    disabled={numericQuantity >= stockQuantity}
+                >
+                  +
+                </button>
+              </div>
             </div>
 
-            <strong>
-              총 {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}원
-            </strong>
+            <div className="product-detail-total-row">
+              <span>총 금액</span>
+
+              <strong>
+                {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}원
+              </strong>
+            </div>
+
           </div>
 
           <div className="product-detail-actions">
@@ -529,9 +545,6 @@ function ProductDetailPage() {
           background: '#fff',
           borderRadius: '8px',
           border: '1px solid #e0e0e0',
-          maxWidth: '1100px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -664,9 +677,6 @@ function ProductDetailPage() {
           background: '#fff',
           borderRadius: '8px',
           border: '1px solid #e0e0e0',
-          maxWidth: '1100px',
-          marginLeft: 'auto',
-          marginRight: 'auto',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -756,8 +766,10 @@ function ProductDetailPage() {
 
             <dl className="product-order-modal-info">
               <div>
-                <dt>상품 가격</dt>
-                <dd>{product.price.toLocaleString()}원</dd>
+                <strong>
+                  {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}
+                  <small>원</small>
+                </strong>
               </div>
               <div>
                 <dt>남은 재고</dt>

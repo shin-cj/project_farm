@@ -66,7 +66,7 @@
 
 .seller-dashboard-summary {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 24px;
 }
@@ -78,6 +78,23 @@
     border-radius: 16px;
     background-color: #ffffff;
     box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
+}
+
+.seller-dashboard-summary .seller-dashboard-expiration-summary {
+    border-color: #e8d8a7;
+    background-color: #fffbeb;
+}
+
+.seller-dashboard-expiration-summary strong {
+    color: #b7791f;
+}
+
+.seller-dashboard-expiration-summary small {
+    display: block;
+    margin-top: 6px;
+    color: #8a6d1d;
+    font-size: 12px;
+    font-weight: 700;
 }
 
 .seller-dashboard-summary article {
@@ -487,7 +504,22 @@
 .seller-dashboard-content {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+    grid-template-areas:
+        "recent expiring"
+        "recent order";
     gap: 24px;
+}
+
+.seller-dashboard-recent {
+    grid-area: recent;
+}
+
+.seller-dashboard-expiring {
+    grid-area: expiring;
+}
+
+.seller-dashboard-order {
+    grid-area: order;
 }
 
 .seller-dashboard-recent,
@@ -551,6 +583,15 @@
     font-size: 14px;
     font-weight: 700;
     text-decoration: none;
+}
+
+.seller-dashboard-recent li .seller-expiration-info {
+    color: #b7791f;
+    font-weight: 800;
+}
+
+.seller-dashboard-recent li .seller-expiration-info.urgent {
+    color: #c2410c;
 }
 
 .seller-dashboard-order {
@@ -619,6 +660,10 @@
 
     .seller-dashboard-content {
         grid-template-columns: 1fr;
+        grid-template-areas:
+        "recent"
+        "expiring"
+        "order";
     }
 }
 
