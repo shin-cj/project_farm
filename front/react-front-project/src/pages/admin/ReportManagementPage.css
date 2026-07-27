@@ -40,7 +40,7 @@
 .report-count {
   flex: 0 0 auto;
   color: #65736a;
-  font-size: 0.9rem;
+  font-size: 0.96rem;
   font-weight: 700;
 }
 
@@ -56,7 +56,7 @@
   background: #fff9ed;
   color: #6c4d18;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
   transition: border-color 150ms ease, background-color 150ms ease,
@@ -90,7 +90,7 @@
 .report-toolbar label,
 .report-modal-footer label {
   color: #4b5c51;
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   font-weight: 800;
 }
 
@@ -103,6 +103,7 @@
   background: #ffffff;
   color: #213328;
   font: inherit;
+  font-size: 0.92rem;
   cursor: pointer;
 }
 
@@ -123,6 +124,7 @@
   border-radius: 6px;
   background: #f8faf8;
   color: #59675e;
+  font-size: 0.94rem;
   text-align: center;
 }
 
@@ -153,14 +155,14 @@
   border-style: solid;
   border-color: #e7ece8;
   color: #314037;
-  font-size: 0.86rem;
+  font-size: 0.91rem;
   vertical-align: middle;
 }
 
 .report-management-page .manage-table th {
   background: #f3f6f4;
   color: #536158;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -198,7 +200,7 @@
   border-radius: 999px;
   background: #f6f8f6;
   color: #47564c;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -243,7 +245,7 @@
   border: 1px solid transparent;
   border-radius: 6px;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -265,7 +267,7 @@
   background: #2d7e4b;
   color: #ffffff;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
@@ -293,6 +295,23 @@
   color: #849087;
   cursor: not-allowed;
   opacity: 1;
+}
+
+.report-status-badgge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  min-height: 27px;
+  box-sizing: border-box;
+  padding: 3px 9px;
+  border: 1px solid #d6ded8;
+  border-radius: 999px;
+  background: #f6f8f6;
+  color: #536158;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
 .report-status-pending {
@@ -333,6 +352,7 @@
   border-radius: 6px;
   background: #ffffff;
   color: #344139;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: transform 120ms ease, background-color 120ms ease;
 }
@@ -451,7 +471,7 @@
 .report-detail-grid dt {
   margin-bottom: 5px;
   color: #718078;
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
@@ -459,7 +479,7 @@
   margin: 0;
   overflow-wrap: anywhere;
   color: #26342b;
-  font-size: 0.92rem;
+  font-size: 0.98rem;
   font-weight: 700;
 }
 
@@ -470,7 +490,7 @@
 .report-detail-reason h3 {
   margin: 0 0 9px;
   color: #435047;
-  font-size: 0.88rem;
+  font-size: 0.94rem;
   letter-spacing: 0;
 }
 
@@ -482,6 +502,7 @@
   border-radius: 6px;
   background: #f8faf8;
   color: #2d3931;
+  font-size: 0.95rem;
   line-height: 1.75;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -497,7 +518,7 @@
   display: block;
   margin: 0 0 9px;
   color: #435047;
-  font-size: 0.88rem;
+  font-size: 0.94rem;
   font-weight: 800;
 }
 
@@ -512,6 +533,7 @@
   background: #ffffff;
   color: #2d3931;
   font: inherit;
+  font-size: 0.95rem;
   line-height: 1.75;
   overflow-wrap: anywhere;
   resize: vertical;
@@ -551,7 +573,7 @@
 
 .report-admin-reply-footer > span {
   color: #78857d;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -567,7 +589,7 @@
   background: #2d7e4b;
   color: #ffffff;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 800;
   white-space: nowrap;
   cursor: pointer;
@@ -604,7 +626,7 @@
 .report-admin-reply > p {
   margin: 10px 0 0;
   color: #78857d;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   text-align: right;
 }
 
@@ -629,7 +651,7 @@
   display: block;
   margin: 15px 0 8px;
   color: #435047;
-  font-size: 0.86rem;
+  font-size: 0.92rem;
   font-weight: 800;
 }
 
@@ -678,7 +700,7 @@
   border-radius: 6px;
   background: #fff9ed;
   color: #73551e;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   line-height: 1.55;
 }
 
@@ -686,7 +708,7 @@
   display: block;
   margin-top: 7px;
   color: #78857d;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }

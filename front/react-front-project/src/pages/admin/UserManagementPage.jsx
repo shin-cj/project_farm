@@ -4,6 +4,12 @@ import "./UserManagementPage.css";
 
 const PAGE_SIZE = 20;
 
+const USER_STATUS_LABELS = {
+    ACTIVE: "정상",
+    SUSPENDED: "이용 정지",
+    WITHDRAWN: "탈퇴",
+};
+
 function formatDate(value) {
     if (!value) return "-";
     return new Date(value).toLocaleDateString("ko-KR");
@@ -220,7 +226,7 @@ function UserManagementPage() {
                                         <span
                                             className={`user-status ${user.status?.toLowerCase()}`}
                                         >
-                                            {user.status}
+                                            {USER_STATUS_LABELS[user.status] ?? "상태 미확인"}
                                         </span>
                                 </td>
 

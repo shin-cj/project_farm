@@ -22,6 +22,7 @@ public class ChatbotService {
 
     //DB내 categories 테이블의 categories_id 값 기준 1 = 채소류
     private static final String SELLIING_STATUS = "ON_SALE";
+    private static final List<String> SALE_TYPES = List.of("RETAIL","WHOLESALE");
     private final OpenAiRecipeClient openAiRecipeClient;
     private final ProductRepository productRepository;
     private final ChatbotRepository chatbotRepository;
@@ -84,31 +85,34 @@ public class ChatbotService {
                 continue;
             }
 
+            for (String saleType : SALE_TYPES){
+                Optional<Product> productOptional  =
+                        productRepository.findLowestPriceProductByKeyword(
+                                keyword,
+                                SELLIING_STATUS,
+                                0,
+                                saleType
+                        );
 
-            Optional<Product> productOptional  =
-                    productRepository.findLowestPriceProductByKeyword(
-                            keyword,
-                            SELLIING_STATUS,
-                            0
-                    );
+                System.out.println("검색 keyword = "+keyword);
+                System.out.println("검색 결과 존재 여부 = " + productOptional.isPresent());
+                if (productOptional .isEmpty()) {
+                    continue;
+                }
 
-            System.out.println("검색 keyword = "+keyword);
-            System.out.println("검색 결과 존재 여부 = " + productOptional.isPresent());
-            if (productOptional .isEmpty()) {
-                continue;
+                Product product  = productOptional .get();
+
+                RecommendedProductResponse recommended = new RecommendedProductResponse();
+                recommended.setIngredientName(keyword);
+                recommended.setProductId(product .getProductId());
+                recommended.setProductName(product .getProductName());
+                recommended.setPrice(product .getPrice());
+                recommended.setUnit(product .getUnit());
+                recommended.setProductImageUrl(product.getProductImageUrl());
+                recommended.setSaleType(saleType);
+                result.add(recommended);
+
             }
-
-            Product product  = productOptional .get();
-
-            RecommendedProductResponse recommended = new RecommendedProductResponse();
-            recommended.setIngredientName(keyword);
-            recommended.setProductId(product .getProductId());
-            recommended.setProductName(product .getProductName());
-            recommended.setPrice(product .getPrice());
-            recommended.setUnit(product .getUnit());
-            recommended.setProductImageUrl(product.getProductImageUrl());
-
-            result.add(recommended);
         }
 
         return result;

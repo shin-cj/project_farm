@@ -140,6 +140,7 @@ function ReportManagementPage() {
 
     if (isFinalStatus && !adminId) {
       setError("관리자 로그인 정보가 없습니다.");
+      alert("관리자 로그인 정보가 없습니다.")
       return;
     }
 
@@ -148,17 +149,20 @@ function ReportManagementPage() {
         !selectedReport.adminReply?.trim()
     ) {
       setError("최종 처리 전에 관리자 답변을 먼저 등록해 주세요.");
+      alert("최종 처리 전에 관리자 답변을 먼저 등록해 주세요.")
       return;
     }
 
     if (selectedStatus === "RESOLVED") {
       if (!penaltyType) {
         setError("페널티 유형을 선택해 주세요.");
+        alert("페널티 유형을 선택해 주세요.")
         return;
       }
 
       if (!penaltyReason.trim()) {
         setError("페널티 사유를 입력해 주세요.");
+        alert("페널티 사유를 입력해 주세요.")
         return;
       }
     }
@@ -239,6 +243,8 @@ function ReportManagementPage() {
           requestError.response?.data?.message ||
           "신고 상태를 변경하지 못했습니다."
       );
+      alert(requestError.response?.data?.message ||
+            "신고 상태를 변경하지 못했습니다.")
     } finally {
       setUpdatingId(null);
     }
@@ -249,6 +255,7 @@ function ReportManagementPage() {
 
     if (!trimmedReply){
       setError("답변 내용을 입력해주세요.")
+      alert("답변 내용을 입력해주세요.")
       return
     }
 
@@ -258,6 +265,7 @@ function ReportManagementPage() {
 
     if(!adminId){
       setError("관리자 로그인 정보가 없습니다.")
+      alert("관리자 로그인 정보가 없습니다.")
       return
     }
 
@@ -304,6 +312,7 @@ function ReportManagementPage() {
       setError(
           e.response?.data?.message || "답변을 등록하지 못했습니다."
       )
+      alert(e.response?.data?.message || "답변을 등록하지 못했습니다.")
     }finally {
       setReplyingId(null)
     }
@@ -327,6 +336,9 @@ function ReportManagementPage() {
           e.response?.data?.message ||
           "페널티 처리 내역을 불러오지 못했습니다."
       )
+
+      alert(e.response?.data?.message ||
+            "페널티 처리 내역을 불러오지 못했습니다.")
     }finally {
       setPenaltyLoading(false)
     }
