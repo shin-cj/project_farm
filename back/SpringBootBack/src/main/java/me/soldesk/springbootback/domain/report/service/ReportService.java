@@ -1,6 +1,7 @@
 package me.soldesk.springbootback.domain.report.service;
 
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.report.dto.*;
@@ -76,42 +77,75 @@ public class ReportService {
     @Transactional
     public ReportResponse createReport(ReportRequest request){
 
-        if(request.getProductId() == null){
-           throw new IllegalArgumentException("신고할 상품 정보가 없습니다.");
-       }
+        if (request.getReporterId() == null){
+            throw new IllegalArgumentException("로그인이 필요한 기능입니다.");
+        }
 
-        Long reportedUserId =
-                reportRepository
-                        .findSellerIdByProductId(request.getProductId())
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "상품의 판매자 정보를 찾을 수 없습니다."
-                                )
-                        );
+        if(request.getReportReason() == null || request.getReportReason().isBlank()){
+            throw new IllegalArgumentException("신고 사유를 입력해주세요.");
+        }
 
-       if(request.getReporterId() == null){
-           throw new IllegalArgumentException("로그인이 필요한 기능입니다.");
-       }
+        if(request.getReportType() == null || request.getReportType().isBlank()){
+            throw new IllegalArgumentException("신고 유형이 없습니다.");
+        }
 
-       if(request.getReporterId().equals(reportedUserId)){
-           throw new IllegalArgumentException("자신을 신고할 수 없습니다.");
-       }
-       if(request.getReportReason() == null || request.getReportReason().isBlank()){
-           throw new IllegalArgumentException("신고 사유를 입력해주세요.");
-       }
+        String reportType =
+                request.getReportType().trim().toUpperCase();
 
-       Report report = new Report();
+        Long reportedUserId;
+        Long productId = null;
+        Long farmId = null;
 
-       report.setProductId((request.getProductId()));
-       report.setReporterId(request.getReporterId());
-       report.setReportedUserId(reportedUserId);
-       report.setReportType("PRODUCT");
-       report.setReportReason(request.getReportReason().trim());
-       report.setReportStatus("PENDING");
+        if("PRODUCT".equals(reportType)){
 
-       Report savedReport = reportRepository.saveAndFlush(report);
+            if(request.getProductId() == null){
+                throw new IllegalArgumentException("신고할 상품 정보가 없습니다.");
+            }
 
-       return getComplerteResponse(savedReport.getReportId());
+
+            productId = request.getProductId();
+
+            reportedUserId = reportRepository
+                    .findSellerIdByProductId(productId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("상품의 판매자 정보를 찾을 수 없습니다."));
+
+        }else if("FARM".equals(reportType)){
+            if(request.getFarmId() == null){
+                throw new IllegalArgumentException("신고할 농장 정보가 없습니다.");
+            }
+
+            farmId = request.getFarmId();
+
+            Farm farm = farmRepository
+                    .findById(farmId)
+                    .orElseThrow(() ->
+                            new IllegalArgumentException("신고할 농장을 찾을 수 없습니다."));
+
+            reportedUserId = farm.getSellerId();
+        }else {
+            throw new IllegalArgumentException("지원하지 않는 신고 유형입니다.");
+        }
+
+        if (request.getReporterId().equals(reportedUserId)){
+            throw new IllegalArgumentException("자신을 신고 할 수 없습니다.");
+        }
+
+        Report report = new Report();
+
+        report.setProductId(productId);
+        report.setFarmId(farmId);
+        report.setReporterId(request.getReporterId());
+        report.setReportedUserId(reportedUserId);
+        report.setReportType(reportType);
+        report.setReportReason(request.getReportReason().trim());
+        report.setReportStatus("PENDING");
+
+        Report savedReport =
+                reportRepository.saveAndFlush(report);
+
+        return getComplerteResponse(savedReport.getReportId());
+
     }
 
 
@@ -132,6 +166,12 @@ public class ReportService {
         response.setAdminReply(view.getAdminReply());
         response.setRepliedAt(view.getRepliedAt());
         response.setRepliedBy(view.getRepliedBy());
+        response.setReportedUserId(view.getReportedUserId());
+        response.setFarmId(view.getFarmId());
+        response.setReportedFarmName(view.getReportedFarmName());
+        response.setProductId(view.getProductId());
+        response.setProductName(view.getProductName());
+
 
         return response;
 
