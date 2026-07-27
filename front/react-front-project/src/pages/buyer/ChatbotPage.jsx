@@ -275,7 +275,9 @@ function ChatbotPage() {
         user_id: userid,
         obj1:recipeResult.obj1,
         recipeTitle:recipeResult.recipeTitle,
-        recipe:recipeResult.recipe,
+        recipe: recipeResult.recipeSteps?.length
+            ? recipeResult.recipeSteps.join("\n")
+            : recipeResult.recipe,
         remark:recipeResult.remark,
       })
       alert('레시피가 저장되었습니다.')

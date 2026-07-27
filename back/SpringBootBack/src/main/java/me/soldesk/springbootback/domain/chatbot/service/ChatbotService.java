@@ -8,8 +8,10 @@ import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.external.openai.OpenAiRecipeClient;
 import me.soldesk.springbootback.external.openai.dto.OpenAiRecipeResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -166,5 +168,16 @@ public class ChatbotService {
 
     }
 
+    @Transactional
+    public void deleteSavedRecipe(Long userId, Long chatbotId) {
+        Chatbot chatbot = chatbotRepository
+                .findByChatbotIdAndUserId(chatbotId, userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "저장한 레시피를 찾을 수 없습니다."
+                ));
+
+        chatbotRepository.delete(chatbot);
+    }
 
 }

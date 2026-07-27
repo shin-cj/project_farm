@@ -1,0 +1,314 @@
+.saved-recipe-panel {
+    overflow: hidden;
+    border: 1px solid #dce6dd;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.saved-recipe-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px;
+    border-bottom: 1px solid #edf1eb;
+}
+
+.saved-recipe-header h2 {
+    margin: 0;
+    color: #1f2f24;
+    font-size: 20px;
+}
+
+.saved-recipe-list {
+    max-height: 285px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.saved-recipe-item {
+    display: grid;
+    width: 100%;
+    gap: 5px;
+    padding: 13px;
+    border: 0;
+    border-bottom: 1px solid #edf1eb;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 160ms ease, transform 100ms ease;
+}
+
+.saved-recipe-item:hover {
+    background: #f1f7f2;
+}
+
+.saved-recipe-item:active {
+    transform: translateY(1px);
+}
+
+.saved-recipe-item:focus-visible {
+    outline: 2px solid #7fb58d;
+    outline-offset: -2px;
+}
+
+.saved-recipe-item strong {
+    color: #1f2f24;
+}
+
+.saved-recipe-item span,
+.saved-recipe-item small {
+    color: #68756d;
+}
+
+body:has(.saved-recipe-backdrop) {
+    overflow: hidden;
+}
+
+.saved-recipe-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    overflow: hidden;
+    background: rgba(25, 39, 29, 0.46);
+    backdrop-filter: blur(3px);
+    overscroll-behavior: contain;
+    animation: saved-recipe-backdrop-enter 160ms ease-out;
+}
+
+.saved-recipe-modal {
+    position: relative;
+    width: min(720px, 100%);
+    max-height: min(82vh, 760px);
+    overflow-y: auto;
+    padding: 24px;
+    border: 1px solid #dce6dd;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgba(24, 39, 29, 0.24);
+    color: #1f2f24;
+    overscroll-behavior: contain;
+    animation: saved-recipe-modal-enter 180ms ease-out;
+}
+
+.saved-recipe-modal > h2 {
+    margin: 0;
+    padding: 0 52px 14px 0;
+    border-bottom: 1px solid #e4e9e5;
+    color: #1f2f24;
+    font-size: 22px;
+    line-height: 1.35;
+}
+
+.saved-recipe-modal > h3 {
+    margin: 22px 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e6ebe7;
+    color: #1f2f24;
+    font-size: 15px;
+}
+
+.saved-recipe-modal > p {
+    margin: 0;
+    color: #3f4f45;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.saved-recipe-modal > h3:first-of-type + p {
+    padding: 12px 14px;
+    border: 1px solid #e2e9e4;
+    border-radius: 6px;
+    background: #f3f6f3;
+    color: #526057;
+}
+
+.saved-recipe-content {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.saved-recipe-steps {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: saved-recipe-step;
+}
+
+.saved-recipe-step {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    align-items: start;
+    gap: 9px;
+    margin: 0;
+    color: #3f4f45;
+    font-size: 13px;
+    line-height: 1.7;
+    counter-increment: saved-recipe-step;
+}
+
+.saved-recipe-step::before {
+    display: inline-grid;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    place-items: center;
+    border-radius: 50%;
+    background: #216b3a;
+    color: #ffffff;
+    content: counter(saved-recipe-step);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.saved-recipe-step > p {
+    margin: 0;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+}
+
+.saved-recipe-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e6ebe7;
+}
+
+.saved-recipe-delete {
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid #c95b50;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #a13f34;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        border-color 160ms ease,
+        background-color 160ms ease,
+        color 160ms ease,
+        transform 100ms ease;
+}
+
+.saved-recipe-delete:hover:not(:disabled) {
+    border-color: #a13f34;
+    background: #fff2f0;
+}
+
+.saved-recipe-delete:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.saved-recipe-delete:focus-visible {
+    outline: 2px solid #d98a82;
+    outline-offset: 2px;
+}
+
+.saved-recipe-delete:disabled {
+    border-color: #d8c4c1;
+    background: #f7f3f2;
+    color: #a98c88;
+    cursor: default;
+}
+
+.saved-recipe-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    display: grid;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    place-items: center;
+    border: 1px solid #dce6dd;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #526357;
+    font: inherit;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        border-color 160ms ease,
+        background-color 160ms ease,
+        color 160ms ease,
+        transform 100ms ease;
+}
+
+.saved-recipe-close:hover {
+    border-color: #8db99a;
+    background: #eef6f0;
+    color: #216b3a;
+}
+
+.saved-recipe-close:active {
+    transform: translateY(1px);
+}
+
+.saved-recipe-close:focus-visible {
+    outline: 2px solid #7fb58d;
+    outline-offset: 2px;
+}
+
+@keyframes saved-recipe-backdrop-enter {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes saved-recipe-modal-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-width: 640px) {
+    .saved-recipe-backdrop {
+        padding: 12px;
+    }
+
+    .saved-recipe-modal {
+        width: 100%;
+        max-height: 90vh;
+        padding: 20px 16px;
+    }
+
+    .saved-recipe-modal > h2 {
+        padding-right: 44px;
+        font-size: 20px;
+    }
+
+    .saved-recipe-close {
+        top: 14px;
+        right: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .saved-recipe-backdrop,
+    .saved-recipe-modal,
+    .saved-recipe-item,
+    .saved-recipe-close {
+        animation: none;
+        transition: none;
+    }
+}
