@@ -4,21 +4,28 @@ import me.soldesk.springbootback.domain.cartitem.entity.CartItem;
 import me.soldesk.springbootback.domain.cartitem.repository.CartItemRepository;
 import me.soldesk.springbootback.domain.delivery.entity.Delivery;
 import me.soldesk.springbootback.domain.delivery.repository.DeliveryRepository;
+import me.soldesk.springbootback.domain.farm.entity.Farm;
+import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.order.dto.OrderRequest;
 import me.soldesk.springbootback.domain.order.dto.OrderResponse;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
+import me.soldesk.springbootback.domain.orderitem.dto.OrderItemResponse;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
 import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.user.entity.User;
+import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -30,6 +37,8 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final PaymentRepository paymentRepository;
     private final DeliveryRepository deliveryRepository;
+    private final FarmRepository farmRepository;
+    private final UserRepository userRepository;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -37,7 +46,9 @@ public class OrderService {
             CartItemRepository cartItemRepository,
             ProductRepository productRepository,
             PaymentRepository paymentRepository,
-            DeliveryRepository deliveryRepository
+            DeliveryRepository deliveryRepository,
+            FarmRepository farmRepository,
+            UserRepository userRepository
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -45,6 +56,8 @@ public class OrderService {
         this.productRepository = productRepository;
         this.paymentRepository = paymentRepository;
         this.deliveryRepository = deliveryRepository;
+        this.farmRepository = farmRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -66,74 +79,106 @@ public class OrderService {
                         .orElseThrow(() -> new IllegalArgumentException("장바구니 상품이 없습니다.")))
                 .toList();
 
+        Map<Long, Product> productByCartItemId = new LinkedHashMap<>();
+        Map<Long, List<CartItem>> cartItemsByFarmId = new LinkedHashMap<>();
         Long totalPrice = 0L;
-        Long farmId = null;
-        String orderName = null;
+        String representativeOrderName = null;
 
         for (CartItem cartItem : cartItems) {
             Product product = productRepository.findById(cartItem.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+
+            validateMinimumOrderQuantity(product, cartItem.getQuantity());
 
             if (product.getStockQuantity() < cartItem.getQuantity()) {
                 throw new IllegalArgumentException("상품 재고가 부족합니다.");
             }
 
-            if (farmId == null) {
-                farmId = product.getFarmId();
+            if (representativeOrderName == null) {
+                representativeOrderName = product.getProductName();
             }
 
-            if (orderName == null) {
-                orderName = product.getProductName();
-            }
-
+            productByCartItemId.put(cartItem.getCartItemId(), product);
+            cartItemsByFarmId
+                    .computeIfAbsent(product.getFarmId(), farmId -> new ArrayList<>())
+                    .add(cartItem);
             totalPrice += product.getPrice() * cartItem.getQuantity();
         }
 
         if (cartItems.size() > 1) {
-            orderName = orderName + " 외 " + (cartItems.size() - 1) + "건";
+            representativeOrderName = representativeOrderName + " 외 " + (cartItems.size() - 1) + "건";
         }
 
-        Long deliveryFee = 0L;
-        Long finalPrice = totalPrice + deliveryFee;
+        String checkoutOrderNumber = "ORDER-" + System.currentTimeMillis();
+        boolean hasMultipleFarms = cartItemsByFarmId.size() > 1;
+        List<Order> savedOrders = new ArrayList<>();
+        int orderSequence = 1;
 
-        Order order = new Order();
-        order.setOrderNumber("ORDER-" + System.currentTimeMillis());
-        order.setBuyerId(request.getBuyerId());
-        order.setFarmId(farmId);
-        order.setTotalProductPrice(totalPrice);
-        order.setDeliveryFee(deliveryFee);
-        order.setFinalPrice(finalPrice);
-        order.setOrderStatus("PAYMENT_WAIT");
-        order.setReceiverName(request.getReceiverName());
-        order.setReceiverPhone(request.getReceiverPhone());
-        order.setReceiverAddress(request.getReceiverAddress());
-        order.setReceiverDetailAddress(request.getReceiverDetailAddress());
-        order.setRequestMessage(request.getRequestMessage());
+        for (Map.Entry<Long, List<CartItem>> farmEntry : cartItemsByFarmId.entrySet()) {
+            Long farmId = farmEntry.getKey();
+            List<CartItem> farmCartItems = farmEntry.getValue();
+            Long farmTotalPrice = 0L;
+            boolean allSameDayDelivery = true;
 
-        Order savedOrder = orderRepository.save(order);
+            for (CartItem cartItem : farmCartItems) {
+                Product product = productByCartItemId.get(cartItem.getCartItemId());
+                farmTotalPrice += product.getPrice() * cartItem.getQuantity();
 
-        for (CartItem cartItem : cartItems) {
-            Product product = productRepository.findById(cartItem.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+                if (!"Y".equals(product.getSameDayDelivery())) {
+                    allSameDayDelivery = false;
+                }
+            }
 
-            Long itemTotalPrice = product.getPrice() * cartItem.getQuantity();
+            Long deliveryFee = 0L;
+            Long finalPrice = farmTotalPrice + deliveryFee;
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrderId(savedOrder.getOrderId());
-            orderItem.setProductId(product.getProductId());
-            orderItem.setProductName(product.getProductName());
-            orderItem.setUnitPrice(product.getPrice());
-            orderItem.setQuantity(cartItem.getQuantity());
-            orderItem.setItemTotalPrice(itemTotalPrice);
+            Order order = new Order();
+            order.setOrderNumber(hasMultipleFarms ? checkoutOrderNumber + "-" + orderSequence : checkoutOrderNumber);
+            order.setBuyerId(request.getBuyerId());
+            order.setFarmId(farmId);
+            order.setTotalProductPrice(farmTotalPrice);
+            order.setDeliveryFee(deliveryFee);
+            order.setFinalPrice(finalPrice);
+            order.setOrderStatus("PAYMENT_WAIT");
+            order.setReceiverName(request.getReceiverName());
+            order.setReceiverPhone(request.getReceiverPhone());
+            order.setReceiverAddress(request.getReceiverAddress());
+            order.setReceiverDetailAddress(request.getReceiverDetailAddress());
+            order.setRequestMessage(request.getRequestMessage());
+            order.setDeliveryType(allSameDayDelivery ? "SAME_DAY" : "COURIER");
 
-            orderItemRepository.save(orderItem);
+            Order savedOrder = orderRepository.save(order);
+            savedOrders.add(savedOrder);
+
+            for (CartItem cartItem : farmCartItems) {
+                Product product = productByCartItemId.get(cartItem.getCartItemId());
+                Long itemTotalPrice = product.getPrice() * cartItem.getQuantity();
+
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrderId(savedOrder.getOrderId());
+                orderItem.setProductId(product.getProductId());
+                orderItem.setProductName(product.getProductName());
+                orderItem.setUnitPrice(product.getPrice());
+                orderItem.setQuantity(cartItem.getQuantity());
+                orderItem.setItemTotalPrice(itemTotalPrice);
+
+                orderItemRepository.save(orderItem);
+            }
+
+            orderSequence++;
         }
 
+        Order firstSavedOrder = savedOrders.get(0);
         OrderResponse response = new OrderResponse();
-        response.setOrderId(savedOrder.getOrderId());
-        response.setOrderNumber(savedOrder.getOrderNumber());
-        response.setOrderName(orderName);
-        response.setFinalPrice(finalPrice);
+        response.setOrderId(firstSavedOrder.getOrderId());
+        response.setOrderNumber(hasMultipleFarms ? checkoutOrderNumber : firstSavedOrder.getOrderNumber());
+        response.setOrderName(representativeOrderName);
+        response.setFinalPrice(totalPrice);
+        response.setDeliveryType(cartItemsByFarmId.size() == 1 ? firstSavedOrder.getDeliveryType() : "MIXED");
+        response.setOrderItems(savedOrders.stream()
+                .flatMap(order -> orderItemRepository.findByOrderId(order.getOrderId()).stream())
+                .map(this::toOrderItemResponse)
+                .toList());
 
         return response;
     }
@@ -148,6 +193,8 @@ public class OrderService {
         if (orderQuantity <= 0) {
             throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
         }
+
+        validateMinimumOrderQuantity(product, orderQuantity);
 
         if (product.getStockQuantity() < orderQuantity) {
             throw new IllegalArgumentException("상품 재고가 부족합니다.");
@@ -170,6 +217,7 @@ public class OrderService {
         order.setReceiverAddress(request.getReceiverAddress());
         order.setReceiverDetailAddress(request.getReceiverDetailAddress());
         order.setRequestMessage(request.getRequestMessage());
+        order.setDeliveryType("Y".equals(product.getSameDayDelivery()) ? "SAME_DAY" : "COURIER");
 
         Order savedOrder = orderRepository.save(order);
 
@@ -188,6 +236,8 @@ public class OrderService {
         response.setOrderNumber(savedOrder.getOrderNumber());
         response.setOrderName(product.getProductName());
         response.setFinalPrice(finalPrice);
+        response.setDeliveryType(savedOrder.getDeliveryType());
+        response.setOrderItems(List.of(toOrderItemResponse(orderItem)));
 
         return response;
     }
@@ -220,13 +270,29 @@ public class OrderService {
 
         Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
         Optional<Delivery> deliveryOptional = deliveryRepository.findByOrderId(order.getOrderId());
+        Optional<Farm> farmOptional = farmRepository.findById(order.getFarmId());
+        Optional<User> sellerOptional = farmOptional
+                .map(Farm::getSellerId)
+                .flatMap(userRepository::findById);
 
         OrderResponse response = new OrderResponse();
         response.setOrderId(order.getOrderId());
         response.setOrderNumber(order.getOrderNumber());
         response.setOrderName(orderName);
+        response.setOrderItems(orderItems.stream()
+                .map(this::toOrderItemResponse)
+                .toList());
         response.setBuyerId(order.getBuyerId());
         response.setFarmId(order.getFarmId());
+        response.setSellerId(farmOptional.map(Farm::getSellerId).orElse(null));
+        response.setSellerName(sellerOptional.map(User::getName).orElse("판매자 정보 없음"));
+        response.setSellerPhone(sellerOptional.map(User::getPhone).orElse(null));
+        response.setSellerEmail(sellerOptional.map(User::getEmail).orElse(null));
+        response.setFarmName(farmOptional.map(Farm::getFarmName).orElse("농장 정보 없음"));
+        response.setFarmRegion(farmOptional.map(Farm::getRegion).orElse(null));
+        response.setFarmAddress(farmOptional.map(Farm::getFarmAddress).orElse(null));
+        response.setFarmDetailAddress(farmOptional.map(Farm::getFarmDetailAddress).orElse(null));
+        response.setSaleType(farmOptional.map(Farm::getSaleType).orElse("RETAIL"));
         response.setTotalProductPrice(order.getTotalProductPrice());
         response.setDeliveryFee(order.getDeliveryFee());
         response.setFinalPrice(order.getFinalPrice());
@@ -241,12 +307,63 @@ public class OrderService {
         response.setPaymentStatus(paymentOptional.map(Payment::getPaymentStatus).orElse(null));
         response.setPaymentMethod(paymentOptional.map(Payment::getPaymentMethod).orElse(null));
         response.setDeliveryStatus(deliveryOptional.map(Delivery::getDeliveryStatus).orElse("READY"));
+        response.setDeliveryType(deliveryOptional.map(Delivery::getDeliveryType).orElse(order.getDeliveryType()));
         response.setDeliveryId(deliveryOptional.map(Delivery::getDeliveryId).orElse(null));
         response.setCourierName(deliveryOptional.map(Delivery::getCourierName).orElse(null));
         response.setTrackingNumber(deliveryOptional.map(Delivery::getTrackingNumber).orElse(null));
+        response.setDeliveryPersonName(deliveryOptional.map(Delivery::getDeliveryPersonName).orElse(null));
+        response.setDeliveryPersonPhone(deliveryOptional.map(Delivery::getDeliveryPersonPhone).orElse(null));
+        response.setDeliveryMemo(deliveryOptional.map(Delivery::getDeliveryMemo).orElse(null));
         response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
         response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 
         return response;
+    }
+
+    private OrderItemResponse toOrderItemResponse(OrderItem orderItem) {
+        OrderItemResponse response = new OrderItemResponse();
+        response.setOrderItemId(orderItem.getOrderItemId());
+        response.setOrderId(orderItem.getOrderId());
+        response.setProductId(orderItem.getProductId());
+        response.setProductName(orderItem.getProductName());
+        response.setSaleType(getOrderItemSaleType(orderItem.getProductId()));
+        response.setUnit(getOrderItemUnit(orderItem.getProductId()));
+        response.setUnitPrice(orderItem.getUnitPrice());
+        response.setQuantity(orderItem.getQuantity());
+        response.setItemTotalPrice(orderItem.getItemTotalPrice());
+        response.setCreatedAt(orderItem.getCreatedAt());
+
+        return response;
+    }
+
+    private String getOrderItemSaleType(Long productId) {
+        return productRepository.findById(productId)
+                .flatMap(product -> farmRepository.findById(product.getFarmId()))
+                .map(Farm::getSaleType)
+                .orElse("RETAIL");
+    }
+
+    private String getOrderItemUnit(Long productId) {
+        return productRepository.findById(productId)
+                .map(Product::getUnit)
+                .orElse(null);
+    }
+
+    private void validateMinimumOrderQuantity(Product product, int quantity) {
+        int minimumOrderQuantity = getMinimumOrderQuantity(product);
+
+        if (quantity < minimumOrderQuantity) {
+            throw new IllegalArgumentException(
+                    product.getProductName() + " 상품의 최소 주문 수량은 "
+                            + minimumOrderQuantity + "개입니다."
+            );
+        }
+    }
+
+    private int getMinimumOrderQuantity(Product product) {
+        Integer minimumOrderQuantity = product.getMinOrderQuantity();
+        return minimumOrderQuantity == null || minimumOrderQuantity < 1
+                ? 1
+                : minimumOrderQuantity;
     }
 }

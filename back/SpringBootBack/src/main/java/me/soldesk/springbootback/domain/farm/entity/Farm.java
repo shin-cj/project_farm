@@ -72,6 +72,10 @@ public class Farm {
     @Column(name = "farm_image_url", nullable = true)
     private String farmImageUrl;
 
+    /** 농장의 판매 방식: RETAIL=소매, WHOLESALE=도매 */
+    @Column(name = "sale_type", nullable = false)
+    private String saleType = "RETAIL";
+
     /** 농장 승인 상태 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "approval_status", nullable = false)

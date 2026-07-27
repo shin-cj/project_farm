@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
+import { useAppFeedback } from "../../context/AppFeedbackContext.jsx";
 
 function isPurchasableCartItem(item){
   return(
@@ -19,6 +20,7 @@ function CartPage() {
   const [quantityInputs, setQuantityInputs] = useState({});
   const [warningItemId, setWarningItemId] = useState(null);
   const navigate = useNavigate();
+  const { alert, confirm } = useAppFeedback();
 
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
@@ -42,7 +44,14 @@ function CartPage() {
   }, [loadCartItems])
 
   const handleDelete = async (cartItemId) => {
-    if (!confirm("이 상품을 장바구니에서 삭제할까요?")) {
+    const confirmed = await confirm({
+      title: "장바구니 상품을 삭제할까요?",
+      message: "삭제한 상품은 장바구니에서 바로 사라집니다.",
+      confirmText: "삭제",
+      type: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -62,7 +71,14 @@ function CartPage() {
       return
     }
 
-    if(!confirm(`선택한 ${selectedItems.length}개 상품을 삭제 할까요?`)){
+    const confirmed = await confirm({
+      title: "선택 상품을 삭제할까요?",
+      message: `선택한 ${selectedItems.length}개 상품을 장바구니에서 삭제합니다.`,
+      confirmText: "삭제",
+      type: "danger",
+    });
+
+    if(!confirmed){
       return
     }
 
@@ -95,7 +111,14 @@ function CartPage() {
       return;
     }
 
-    if (!confirm("장바구니 상품을 모두 삭제할까요?")) {
+    const confirmed = await confirm({
+      title: "장바구니를 비울까요?",
+      message: "장바구니에 담긴 모든 상품이 삭제됩니다.",
+      confirmText: "전체 삭제",
+      type: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -339,56 +362,100 @@ function CartPage() {
                                          {isPurchasable ? "cart-item-row" : "cart-item-row unavailable"}
                                      key={item.cart_item_id}>
                               <input
+                                className="cart-item-check"
                                 type="checkbox"
                                 checked={selectedIds.includes(item.cart_item_id)}
                                 onChange={() => toggleItem(item.cart_item_id)}
                               />
 
-                              <img src={item.productImageUrl} alt={item.productName} />
+                              <img
+                                  className="cart-item-image"
+                                  src={item.productImageUrl}
+                                  alt={item.productName}
+                              />
 
-                              <div>
+                              <div className="cart-item-info">
                                 <h2><button
                                     type="button"
                                     className="cart-product-name-button"
                                     onClick={() => setSelectedItem(item)}>{item.productName}</button></h2>
-                                <p>{item.productDescription}</p>
+                                <p className="cart-item-description">
+                                  {item.productDescription}
+                                </p>
                                 {!isPurchasableCartItem(item) && (
                                     <small className="cart-unavailable-message">
                                       품절되었거나 판매가 중지된 상품입니다.
                                     </small>
                                 )}
-                                <small>재고{item.stockQuantity}개</small>
+                                <small className="cart-stock">
+                                  재고 {item.stockQuantity}개
+                                </small>
                               </div>
 
-                              <strong>{item.product_price.toLocaleString()}원</strong>
+                              <div className="cart-unit-price">
+                                <span>상품가</span>
+                                <strong>{item.product_price.toLocaleString()}원</strong>
+                              </div>
 
-                              <label className="cart-quantity">
+                              <div className="cart-quantity">
                                 <span>수량</span>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    step="1"
-                                    disabled={!isPurchasable}
-                                    aria-label={`${item.productName} 수량`}
-                                    value={quantityInputs[item.cart_item_id] ?? item.quantity}
-                                    onChange={(event) =>
-                                        handleQuantityInput(item, event.target.value)
-                                    }
-                                    onBlur={() => submitQuantityInput(item)}
-                                    onKeyDown={(event) => {
-                                      if (event.key === "Enter") {
-                                        event.currentTarget.blur();
+                                <div className="cart-quantity-control">
+                                  <button
+                                      type="button"
+                                      aria-label={`${item.productName} 수량 줄이기`}
+                                      disabled={!isPurchasable || getDisplayQuantity(item) <= 1}
+                                      onClick={() =>
+                                          saveQuantity(item, getDisplayQuantity(item) - 1)
                                       }
-                                    }}
-                                />
-                              </label>
+                                  >
+                                    −
+                                  </button>
+                                  <input
+                                      type="number"
+                                      min="1"
+                                      step="1"
+                                      disabled={!isPurchasable}
+                                      aria-label={`${item.productName} 수량`}
+                                      value={quantityInputs[item.cart_item_id] ?? item.quantity}
+                                      onChange={(event) =>
+                                          handleQuantityInput(item, event.target.value)
+                                      }
+                                      onBlur={() => submitQuantityInput(item)}
+                                      onKeyDown={(event) => {
+                                        if (event.key === "Enter") {
+                                          event.currentTarget.blur();
+                                        }
+                                      }}
+                                  />
+                                  <button
+                                      type="button"
+                                      aria-label={`${item.productName} 수량 늘리기`}
+                                      disabled={
+                                        !isPurchasable ||
+                                        getDisplayQuantity(item) >= item.stockQuantity
+                                      }
+                                      onClick={() =>
+                                          saveQuantity(item, getDisplayQuantity(item) + 1)
+                                      }
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                              </div>
 
-                              <strong>
-                                {(item.product_price *
-                                   getDisplayQuantity(item)).toLocaleString()}원
-                              </strong>
+                              <div className="cart-item-total">
+                                <span>합계</span>
+                                <strong>
+                                  {(item.product_price *
+                                     getDisplayQuantity(item)).toLocaleString()}원
+                                </strong>
+                              </div>
 
-                              <button onClick={() => handleDelete(item.cart_item_id)}>
+                              <button
+                                  type="button"
+                                  className="cart-item-delete"
+                                  onClick={() => handleDelete(item.cart_item_id)}
+                              >
                                 삭제
                               </button>
                             </article>

@@ -8,9 +8,12 @@ import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
+import me.soldesk.springbootback.domain.orderitem.dto.OrderItemResponse;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
 import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
+import me.soldesk.springbootback.domain.product.entity.Product;
+import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,17 +27,20 @@ public class SellerOrderInfoService {
     private final PaymentRepository paymentRepository;
     private final DeliveryRepository deliveryRepository;
     private final FarmRepository farmRepository;
+    private final ProductRepository productRepository;
 
     public SellerOrderInfoService(SellerOrderInfoRepository sellerOrderInfoRepository,
                                   OrderItemRepository orderItemRepository,
                                   PaymentRepository paymentRepository,
                                   DeliveryRepository deliveryRepository,
-                                  FarmRepository farmRepository) {
+                                  FarmRepository farmRepository,
+                                  ProductRepository productRepository) {
         this.sellerOrderInfoRepository = sellerOrderInfoRepository;
         this.orderItemRepository = orderItemRepository;
         this.paymentRepository = paymentRepository;
         this.deliveryRepository = deliveryRepository;
         this.farmRepository = farmRepository;
+        this.productRepository = productRepository;
     }
 
     public List<SellerOrderInfoResponse> getSellerOrders(Long sellerId, Long farmId) {
@@ -103,10 +109,26 @@ public class SellerOrderInfoService {
         String trackingNumber = deliveryOptional
                 .map(Delivery::getTrackingNumber)
                 .orElse(null);
+        String deliveryType = deliveryOptional
+                .map(Delivery::getDeliveryType)
+                .orElse(order.getDeliveryType());
+        String deliveryPersonName = deliveryOptional
+                .map(Delivery::getDeliveryPersonName)
+                .orElse(null);
+        String deliveryPersonPhone = deliveryOptional
+                .map(Delivery::getDeliveryPersonPhone)
+                .orElse(null);
+        String deliveryMemo = deliveryOptional
+                .map(Delivery::getDeliveryMemo)
+                .orElse(null);
 
-        String farmName = farmRepository.findById(order.getFarmId())
+        Optional<Farm> farmOptional = farmRepository.findById(order.getFarmId());
+        String farmName = farmOptional
                 .map(Farm::getFarmName)
                 .orElse("농장 정보 없음");
+        String saleType = farmOptional
+                .map(Farm::getSaleType)
+                .orElse("RETAIL");
 
         Optional<Payment> paymentOptional = paymentRepository.findByOrderId(order.getOrderId());
 
@@ -115,7 +137,11 @@ public class SellerOrderInfoService {
         response.setOrderNumber(order.getOrderNumber());
         response.setFarmId(order.getFarmId());
         response.setFarmName(farmName);
+        response.setSaleType(saleType);
         response.setOrderName(orderName);
+        response.setOrderItems(orderItems.stream()
+                .map(this::toOrderItemResponse)
+                .toList());
         response.setReceiverName(order.getReceiverName());
         response.setReceiverAddress(order.getReceiverAddress());
         response.setReceiverPhone(order.getReceiverPhone());
@@ -126,11 +152,44 @@ public class SellerOrderInfoService {
         response.setOrderedAt(order.getOrderedAt());
         response.setPaymentMethod(paymentMethod);
         response.setDeliveryStatus(deliveryStatus);
+        response.setDeliveryType(deliveryType);
         response.setCourierName(courierName);
         response.setTrackingNumber(trackingNumber);
+        response.setDeliveryPersonName(deliveryPersonName);
+        response.setDeliveryPersonPhone(deliveryPersonPhone);
+        response.setDeliveryMemo(deliveryMemo);
         response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
         response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 
         return response;
+    }
+
+    private OrderItemResponse toOrderItemResponse(OrderItem orderItem) {
+        OrderItemResponse response = new OrderItemResponse();
+        response.setOrderItemId(orderItem.getOrderItemId());
+        response.setOrderId(orderItem.getOrderId());
+        response.setProductId(orderItem.getProductId());
+        response.setProductName(orderItem.getProductName());
+        response.setSaleType(getOrderItemSaleType(orderItem.getProductId()));
+        response.setUnit(getOrderItemUnit(orderItem.getProductId()));
+        response.setUnitPrice(orderItem.getUnitPrice());
+        response.setQuantity(orderItem.getQuantity());
+        response.setItemTotalPrice(orderItem.getItemTotalPrice());
+        response.setCreatedAt(orderItem.getCreatedAt());
+
+        return response;
+    }
+
+    private String getOrderItemSaleType(Long productId) {
+        return productRepository.findById(productId)
+                .flatMap(product -> farmRepository.findById(product.getFarmId()))
+                .map(Farm::getSaleType)
+                .orElse("RETAIL");
+    }
+
+    private String getOrderItemUnit(Long productId) {
+        return productRepository.findById(productId)
+                .map(Product::getUnit)
+                .orElse(null);
     }
 }

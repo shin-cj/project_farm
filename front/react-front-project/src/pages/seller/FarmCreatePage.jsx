@@ -1,16 +1,25 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createFarm } from '../../api/farmApi.js'
+import {
+    createFarm,
+    uploadFarmImage,
+} from '../../api/farmApi.js'
 import './FarmCreatePage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import SellerFormModal from '../../components/common/SellerFormModal.jsx'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 
 function FarmCreatePage() {
     const navigate = useNavigate()
+    const { alert, confirm } = useAppFeedback()
     const loginSellerId = getLoginSellerId()
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
+    const [selectedImageFile, setSelectedImageFile] = useState(null)
+    const [imagePreviewUrl, setImagePreviewUrl] = useState('')
 
     const [form, setForm] = useState({
         sellerId: loginSellerId ?? '',
@@ -21,16 +30,128 @@ function FarmCreatePage() {
         farmDetailAddress: '',
         farmDescription: '',
         farmImageUrl: '',
-        approvalStatus: 'PENDING',
+        saleType: 'RETAIL',
     })
+
+    useEffect(() => {
+        return () => {
+            if (imagePreviewUrl) {
+                URL.revokeObjectURL(imagePreviewUrl)
+            }
+        }
+    }, [imagePreviewUrl])
+
+    function  handleImageChange(event){
+        const imageFile = event.target.files?.[0] ?? null
+
+        if(!imageFile) {
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            return
+        }
+
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ]
+
+        if(!allowedTypes.includes(imageFile.type)) {
+            alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        if (imageFile.size > 5 * 1024 * 1024) {
+            alert('농장 이미지는 5MB 이하만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        setIsDirty(true)
+        setSelectedImageFile(imageFile)
+        setImagePreviewUrl(URL.createObjectURL(imageFile))
+    }
 
     function handleChange(event) {
         const { name, value } = event.target
+
+        setIsDirty(true)
 
         setForm({
             ...form,
             [name]: value,
         })
+    }
+
+    function handleAddressSearch() {
+        if (!window.kakao?.Postcode) {
+            alert('주소 검색 서비스를 불러오지 못했습니다.')
+            return
+        }
+
+        const popupWidth = 500
+        const popupHeight = 600
+
+        const popupLeft =
+            window.screenX + (window.outerWidth - popupWidth) / 2
+
+        const popupTop =
+            window.screenY + (window.outerHeight - popupHeight) / 2
+
+        new window.kakao.Postcode({
+            width: popupWidth,
+            height: popupHeight,
+
+            oncomplete(data) {
+                const selectedAddress =
+                    data.roadAddress || data.jibunAddress
+
+                const selectedRegion = [
+                    data.sido,
+                    data.sigungu,
+                ].filter(Boolean).join(' ')
+
+                setIsDirty(true)
+
+                setForm((currentForm) => ({
+                    ...currentForm,
+                    farmAddress: selectedAddress,
+                    farmDetailAddress: '',
+                    region: selectedRegion,
+                }))
+            },
+        }).open({
+            left: Math.round(popupLeft),
+            top: Math.round(popupTop),
+            popupTitle: '농장 주소 검색',
+            popupKey: 'farm-address-search',
+        })
+    }
+
+    async function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = await confirm({
+                title: '농장 등록을 닫을까요?',
+                message: '작성 중인 농장 정보가 사라집니다.',
+                confirmText: '닫기',
+                type: 'danger',
+            })
+
+            if (!confirmed) {
+                return
+            }
+        }
+
+        navigate('/seller/farms')
     }
 
     async function handleSubmit(event) {
@@ -62,14 +183,47 @@ function FarmCreatePage() {
             return
         }
 
+        if (form.saleType !== 'RETAIL'
+            && form.saleType !== 'WHOLESALE') {
+            alert('농장 판매 방식을 선택해주세요.')
+            return
+        }
+
+        const businessNumber = form.businessNumber.trim()
+
+        if (!businessNumber) {
+            alert('사업자등록번호를 입력해주세요.')
+            return
+        }
+
+        if (!/^\d{3}-?\d{2}-?\d{5}$/.test(businessNumber)) {
+            alert('사업자등록번호는 123-45-67890 형식으로 입력해주세요.')
+            return
+        }
+
+
         const farmData = {
             ...form,
             sellerId,
+            businessNumber,
         }
 
         try {
             setSubmitting(true)
-            await createFarm(farmData)
+
+            let farmImageUrl = ''
+
+            if (selectedImageFile) {
+                const uploadResult =
+                    await uploadFarmImage(selectedImageFile)
+
+                farmImageUrl = uploadResult.imageUrl
+            }
+
+            await createFarm({
+                ...farmData,
+                farmImageUrl,
+            })
 
             alert('농장이 등록되었습니다.')
             navigate('/seller/farms')
@@ -82,7 +236,11 @@ function FarmCreatePage() {
     }
 
     return (
-        <main className="farm-create-page">
+        <SellerFormModal
+            ariaLabel="농장 등록"
+            onClose={handleClose}
+        >
+            <main className="farm-create-page">
             <section className="farm-create-header">
                 <p className="farm-create-label">Seller Farm</p>
                 <h1>농장 등록</h1>
@@ -121,12 +279,29 @@ function FarmCreatePage() {
                         </label>
 
                         <label className="farm-create-field">
+                            <span>판매 방식</span>
+                            <select
+                                name="saleType"
+                                value={form.saleType}
+                                onChange={handleChange}
+                                required
+                            >
+                                <option value="RETAIL">소매 상점</option>
+                                <option value="WHOLESALE">도매 상점</option>
+                            </select>
+                            <small>
+                                등록 후 승인된 농장의 판매 방식은 변경할 수 없습니다.
+                            </small>
+                        </label>
+
+                        <label className="farm-create-field">
                             <span>사업자등록번호</span>
                             <input
                                 name="businessNumber"
                                 value={form.businessNumber}
                                 onChange={handleChange}
                                 placeholder="예: 123-45-67890"
+                                required
                             />
                         </label>
 
@@ -141,16 +316,26 @@ function FarmCreatePage() {
                             />
                         </label>
 
-                        <label className="farm-create-field wide">
+                        <div className="farm-create-field wide">
                             <span>농장 주소</span>
-                            <input
-                                name="farmAddress"
-                                value={form.farmAddress}
-                                onChange={handleChange}
-                                placeholder="기본 주소"
-                                required
-                            />
-                        </label>
+
+                            <div className="farm-address-search">
+                                <input
+                                    name="farmAddress"
+                                    value={form.farmAddress}
+                                    placeholder="주소 검색 버튼을 눌러주세요"
+                                    readOnly
+                                    required
+                                />
+
+                                <button
+                                    type="button"
+                                    onClick={handleAddressSearch}
+                                >
+                                    주소 검색
+                                </button>
+                            </div>
+                        </div>
 
                         <label className="farm-create-field wide">
                             <span>상세 주소</span>
@@ -174,20 +359,24 @@ function FarmCreatePage() {
                         </label>
 
                         <label className="farm-create-field wide">
-                            <span>농장 이미지 주소</span>
+                            <span>농장 대표 이미지</span>
+
                             <input
-                                name="farmImageUrl"
-                                value={form.farmImageUrl}
-                                onChange={handleChange}
-                                placeholder="이미지 URL"
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                onChange={handleImageChange}
                             />
+
+                            <small>
+                                JPG, JPEG, PNG, WEBP 형식의 5MB 이하 이미지를 선택해주세요.
+                            </small>
                         </label>
-                        {form.farmImageUrl.trim() && (
+                        {imagePreviewUrl && (
                             <div className="farm-create-image-preview">
                                 <p>농장 대표 이미지 미리보기</p>
 
                                 <CatalogImage
-                                    src={form.farmImageUrl}
+                                    src={imagePreviewUrl}
                                     alt="등록할 농장 미리보기"
                                     fallbackText="이미지를 불러올 수 없습니다."
                                     fallbackClassName="farm-create-image-fallback"
@@ -200,7 +389,7 @@ function FarmCreatePage() {
                         <button
                             type="button"
                             className="farm-create-cancel"
-                            onClick={() => navigate('/seller/farms')}
+                            onClick={handleClose}
                             disabled={submitting}
                         >
                             취소
@@ -217,6 +406,7 @@ function FarmCreatePage() {
                 </div>
             </form>
         </main>
+     </SellerFormModal>
     )
 }
 

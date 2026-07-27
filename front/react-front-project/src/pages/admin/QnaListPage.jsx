@@ -1,8 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+﻿import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import UiIcon from '../../components/common/UiIcon.jsx';
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx';
 
 function QnaListPage() {
+    const { confirm } = useAppFeedback();
     const { productId } = useParams();
     const navigate = useNavigate();
 
@@ -15,8 +18,8 @@ function QnaListPage() {
     const fetchQnas = useCallback(async () => {
         try {
             const url = productId
-                ? `http://localhost:8080/api/qna/${productId}`
-                : `http://localhost:8080/api/qna/all`;
+                ? `/api/qna/${productId}`
+                : `/api/qna/all`;
 
             const response = await axios.get(url);
             setQnaList(response.data);
@@ -37,15 +40,24 @@ function QnaListPage() {
 
     // 2. QnA 삭제 핸들러
     const handleDelete = async (qnaId) => {
-        if (window.confirm("정말 이 문의를 삭제하시겠습니까?")) {
-            try {
-                await axios.delete(`http://localhost:8080/api/qna/${qnaId}`);
-                alert("삭제 완료되었습니다.");
-                await fetchQnas();
-            } catch (error) {
-                console.error("삭제 실패:", error);
-                alert("삭제 중 오류가 발생했습니다.");
-            }
+        const confirmed = await confirm({
+            title: '문의글을 삭제할까요?',
+            message: '삭제한 문의글은 복구할 수 없습니다.',
+            confirmText: '삭제',
+            type: 'danger',
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await axios.delete(`/api/qna/${qnaId}`);
+            alert("삭제 완료되었습니다.");
+            await fetchQnas();
+        } catch (error) {
+            console.error("삭제 실패:", error);
+            alert("삭제 중 오류가 발생했습니다.");
         }
     };
 
@@ -65,7 +77,7 @@ function QnaListPage() {
         const currentTime = new Date().toISOString(); // 현재 실시간 시각 생성
 
         try {
-            await axios.put(`http://localhost:8080/api/qna/${qnaId}/answer`, {
+            await axios.put(`/api/qna/${qnaId}/answer`, {
                 answerContent: content,
                 adminId: 1
             });
@@ -132,7 +144,11 @@ function QnaListPage() {
                                 [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
                             </span>
                             <div>
-                                {qna.isSecret === 1 && <span style={{ marginRight: '10px' }}>🔒 비밀글</span>}
+                                {qna.isSecret === 1 && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginRight: '10px' }}>
+                                        <UiIcon name="lock" size={16} /> 비밀글
+                                    </span>
+                                )}
                                 <small style={{ color: '#888' }}>
                                     작성일: {qna.createdAt ? new Date(qna.createdAt).toLocaleString() : ''}
                                 </small>

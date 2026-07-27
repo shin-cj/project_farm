@@ -5,6 +5,11 @@ spring:
   application:
     name: SpringBootBack
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
     url: jdbc:oracle:thin:@localhost:1521:xe
@@ -29,5 +34,13 @@ openai:
   api-key: ${OPENAI_API_KEY}
   model: gpt-5.4-mini
 
+
+app:
+  upload:
+    root-directory: ${AGROLINK_UPLOAD_ROOT:../../uploads}
+    product-directory: ${app.upload.root-directory}/product
+    farm-directory: ${app.upload.root-directory}/farm
+
 tosspayments:
   secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
+

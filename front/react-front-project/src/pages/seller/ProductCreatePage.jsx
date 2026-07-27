@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createProduct } from '../../api/productApi.js'
+import { createProduct, uploadProductImage } from '../../api/productApi.js'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
@@ -8,11 +8,14 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import SellerFormModal from '../../components/common/SellerFormModal.jsx'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 
 
 function ProductCreatePage() {
     const navigate = useNavigate()
+    const { alert, confirm } = useAppFeedback()
     const [searchParams] = useSearchParams()
     const requestedFarmId = searchParams.get('farmId') ?? ''
 
@@ -20,6 +23,9 @@ function ProductCreatePage() {
     const [farms, setFarms] = useState([])
     const [registeredFarmCount, setRegisteredFarmCount] = useState(0)
     const [submitting, setSubmitting] = useState(false)
+    const [isDirty, setIsDirty] = useState(false)
+    const [selectedImageFile, setSelectedImageFile] = useState(null)
+    const [imagePreviewUrl, setImagePreviewUrl] = useState('')
     const [formLoading, setFormLoading] = useState(true)
     const [formError, setFormError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
@@ -27,17 +33,23 @@ function ProductCreatePage() {
     const [form, setForm] = useState({
         farmId: '',
         categoryId: '',
+        marketItemCode: '',
         productName: '',
         description: '',
         price: '',
         stockQuantity: '',
         unit: '',
+        minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
         expirationDate: '',
         productImageUrl: '',
-        productStatus: 'PENDING',
+        sameDayDelivery: 'N',
     })
+
+    const selectedFarm = farms.find(
+        (farm) => String(farm.farmId) === String(form.farmId)
+    )
 
 
     useEffect(() => {
@@ -81,6 +93,10 @@ function ProductCreatePage() {
                         setForm((currentForm) => ({
                             ...currentForm,
                             farmId: String(requestedFarm.farmId),
+                            minOrderQuantity:
+                                requestedFarm.saleType === 'WHOLESALE'
+                                    ? '2'
+                                    : '1',
                         }))
                     }
                 }
@@ -106,14 +122,77 @@ function ProductCreatePage() {
         }
     }, [reloadKey, requestedFarmId])
 
+    useEffect(() => {
+        return () => {
+            if (imagePreviewUrl) {
+                URL.revokeObjectURL(imagePreviewUrl)
+            }
+        }
+    }, [imagePreviewUrl])
+
+    function handleImageChange(event) {
+        const imageFile = event.target.files?.[0] ?? null
+
+        if (!imageFile) {
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            return
+        }
+
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+        ]
+
+        if (!allowedTypes.includes(imageFile.type)) {
+            alert('JPG, JPEG, PNG, WEBP 이미지만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        if (imageFile.size > 5 * 1024 * 1024) {
+            alert('상품 이미지는 5MB 이하만 선택할 수 있습니다.')
+            setSelectedImageFile(null)
+            setImagePreviewUrl('')
+            event.target.value = ''
+            return
+        }
+
+        setIsDirty(true)
+        setSelectedImageFile(imageFile)
+        setImagePreviewUrl(URL.createObjectURL(imageFile))
+    }
 
     function handleChange(event) {
-        const { name, value } = event.target
+        const {name, value} = event.target
 
-        setForm({
-            ...form,
+        setIsDirty(true)
+
+        if (name === 'farmId') {
+            const nextFarm = farms.find(
+                (farm) => String(farm.farmId) === value
+            )
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                farmId: value,
+                minOrderQuantity:
+                    nextFarm?.saleType === 'WHOLESALE' ? '2' : '1',
+                sameDayDelivery:
+                    nextFarm?.saleType === 'WHOLESALE'
+                        ? 'N'
+                        : currentForm.sameDayDelivery,
+            }))
+            return
+        }
+
+        setForm((currentForm) => ({
+            ...currentForm,
             [name]: value,
-        })
+        }))
     }
 
     async function handleSubmit(event) {
@@ -132,9 +211,15 @@ function ProductCreatePage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const minOrderQuantity = Number(form.minOrderQuantity)
 
         if (!Number.isFinite(farmId) || farmId <= 0) {
             alert('농장 번호를 올바르게 입력해주세요.')
+            return
+        }
+
+        if (!selectedFarm) {
+            alert('선택한 농장 정보를 확인할 수 없습니다.')
             return
         }
 
@@ -163,17 +248,55 @@ function ProductCreatePage() {
             return
         }
 
+        if (!Number.isInteger(minOrderQuantity)
+            || minOrderQuantity < 1) {
+            alert('최소 주문 수량은 1개 이상 입력해주세요.')
+            return
+        }
+
+        if (selectedFarm.saleType === 'RETAIL'
+            && minOrderQuantity !== 1) {
+            alert('소매 농장의 상품은 1개부터 주문할 수 있습니다.')
+            return
+        }
+
+        if (selectedFarm.saleType === 'WHOLESALE'
+            && minOrderQuantity < 2) {
+            alert('도매 농장의 상품은 최소 주문 수량이 2개 이상이어야 합니다.')
+            return
+        }
+
+        if (selectedFarm.saleType === 'WHOLESALE'
+            && form.sameDayDelivery === 'Y') {
+            alert('도매 상품은 당일배송으로 등록할 수 없습니다.')
+            return
+        }
+
         const productData = {
             ...form,
             farmId: farmId,
             categoryId: categoryId,
             price: price,
             stockQuantity: stockQuantity,
+            minOrderQuantity: minOrderQuantity,
         }
 
         try {
             setSubmitting(true)
-            await createProduct(productData)
+
+            let productImageUrl = ''
+
+            if (selectedImageFile) {
+                const uploadResult =
+                    await uploadProductImage(selectedImageFile)
+
+                productImageUrl = uploadResult.imageUrl
+            }
+
+            await createProduct({
+                ...productData,
+                productImageUrl,
+            })
 
             alert('상품이 등록되었습니다.')
             navigate('/seller/products')
@@ -184,30 +307,66 @@ function ProductCreatePage() {
             setSubmitting(false)
         }
     }
+
+    async function handleClose() {
+        if (submitting) {
+            return
+        }
+
+        if (isDirty) {
+            const confirmed = await confirm({
+                title: '상품 등록을 닫을까요?',
+                message: '작성 중인 상품 정보가 사라집니다.',
+                confirmText: '닫기',
+                type: 'danger',
+            })
+
+            if (!confirmed) {
+                return
+            }
+        }
+
+        navigate('/seller/products')
+    }
+
     const formReady = farms.length > 0 && categories.length > 0
 
     if (formLoading) {
         return (
-            <CatalogPageState
-                title="상품 등록 준비 중"
-                message="농장과 카테고리 정보를 불러오고 있습니다."
-            />
+            <SellerFormModal
+                ariaLabel="상품 등록 준비 중"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="상품 등록 준비 중"
+                    message="농장과 카테고리 정보를 불러오고 있습니다."
+                />
+            </SellerFormModal>
         )
     }
 
     if (formError) {
         return (
-            <CatalogPageState
-                title="상품 등록 준비 실패"
-                message={formError}
-                actionLabel="다시 시도"
-                onAction={() => setReloadKey((value) => value + 1)}
-            />
+            <SellerFormModal
+                ariaLabel="상품 등록 준비 실패"
+                onClose={handleClose}
+            >
+                <CatalogPageState
+                    title="상품 등록 준비 실패"
+                    message={formError}
+                    actionLabel="다시 시도"
+                    onAction={() => setReloadKey((value) => value + 1)}
+                />
+            </SellerFormModal>
         )
     }
 
     return (
-        <main className="product-create-page">
+        <SellerFormModal
+            ariaLabel="상품 등록"
+            onClose={handleClose}
+        >
+            <main className="product-create-page">
             <section className="product-create-card">
                 <div className="product-create-header">
                     <h1 className="product-create-title">상품 등록</h1>
@@ -279,7 +438,11 @@ function ProductCreatePage() {
                                         key={farm.farmId}
                                         value={farm.farmId}
                                     >
-                                        {farm.farmName} - {farm.region}
+                                        {farm.farmName} - {farm.region} · {
+                                            farm.saleType === 'WHOLESALE'
+                                                ? '도매'
+                                                : '소매'
+                                        }
                                     </option>
                                 ))}
                             </select>
@@ -300,6 +463,17 @@ function ProductCreatePage() {
                                     </option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div className="product-create-field">
+                            <label>공공 시세 품목 코드</label>
+                            <input
+                                name="marketItemCode"
+                                value={form.marketItemCode}
+                                onChange={handleChange}
+                                placeholder="예: 411 (선택 입력)"
+                                maxLength="10"
+                            />
                         </div>
                     </div>
 
@@ -362,6 +536,68 @@ function ProductCreatePage() {
                             />
                         </div>
                     </div>
+                        <div className="product-create-row">
+                            <div className="product-create-field">
+                                <label>판매 방식</label>
+
+                                <input
+                                    value={
+                                        selectedFarm?.saleType === 'WHOLESALE'
+                                            ? '도매'
+                                            : selectedFarm ? '소매' : '농장을 먼저 선택해주세요.'
+                                    }
+                                    readOnly
+                                />
+                                <small>판매 방식은 선택한 농장을 따릅니다.</small>
+                            </div>
+
+                            <div className="product-create-field">
+                                <label>최소 주문 수량</label>
+
+                                <input
+                                    type="number"
+                                    name="minOrderQuantity"
+                                    value={form.minOrderQuantity}
+                                    onChange={handleChange}
+                                    min={selectedFarm?.saleType === 'WHOLESALE' ? 2 : 1}
+                                    step="1"
+                                    disabled={
+                                        !selectedFarm
+                                        || selectedFarm.saleType !== 'WHOLESALE'
+                                    }
+                                    required
+                                />
+
+                                <small>
+                                    {selectedFarm?.saleType === 'WHOLESALE'
+                                        ? '도매 농장의 최소 주문 수량을 입력해주세요.'
+                                        : '소매 농장의 상품은 1개부터 주문할 수 있습니다.'}
+                                </small>
+                            </div>
+
+                            <div className="product-create-field">
+                                <label>배송 방식</label>
+
+                                <select
+                                    name="sameDayDelivery"
+                                    value={form.sameDayDelivery}
+                                    onChange={handleChange}
+                                    disabled={
+                                        !selectedFarm
+                                        || selectedFarm.saleType === 'WHOLESALE'
+                                    }
+                                >
+                                    <option value="N">일반배송</option>
+                                    <option value="Y">당일배송 가능</option>
+                                </select>
+
+                                <small>
+                                    {selectedFarm?.saleType === 'WHOLESALE'
+                                        ? '도매 상품은 일반배송만 선택할 수 있습니다.'
+                                        : '소매 상품은 당일배송 가능 여부를 선택할 수 있습니다.'}
+                                </small>
+                            </div>
+                        </div>
 
                     <div className="product-create-row">
                         <div className="product-create-field">
@@ -395,22 +631,26 @@ function ProductCreatePage() {
                         </div>
                     </div>
 
-                    <div className="product-create-field">
-                        <label>이미지 주소</label>
-                        <input
-                            name="productImageUrl"
-                            value={form.productImageUrl}
-                            onChange={handleChange}
-                            placeholder="/uploads/product.jpg"
-                        />
-                    </div>
+                        <div className="product-create-field">
+                            <label>상품 이미지</label>
 
-                    {form.productImageUrl.trim() && (
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                onChange={handleImageChange}
+                            />
+
+                            <small>
+                                JPG, JPEG, PNG, WEBP 형식의 5MB 이하 이미지를 선택해주세요.
+                            </small>
+                        </div>
+
+                        {imagePreviewUrl && (
                     <div className="product-create-image-preview">
                         <p>상품 이미지 미리보기</p>
 
                         <CatalogImage
-                            src={form.productImageUrl}
+                            src={imagePreviewUrl}
                             alt="등록할 상품 미리보기"
                             fallbackText="이미지를 불러올 수 없습니다."
                             fallbackClassName="product-create-image-fallback"
@@ -424,7 +664,7 @@ function ProductCreatePage() {
                         <button
                             type="button"
                             className="product-create-cancel-button"
-                            onClick={() => navigate('/seller/products')}
+                            onClick={handleClose}
                             disabled={submitting}
                         >
                             취소
@@ -440,7 +680,8 @@ function ProductCreatePage() {
                     </div>
                 </form>
             </section>
-        </main>
+            </main>
+        </SellerFormModal>
     )
 }
 

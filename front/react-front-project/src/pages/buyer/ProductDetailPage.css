@@ -44,10 +44,12 @@
   justify-content: space-between;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
   margin-bottom: 18px;
 }
 
-.product-detail-status {
+.product-detail-status,
+.product-detail-same-day-badge {
   display: inline-flex;
   width: fit-content;
   padding: 7px 12px;
@@ -58,7 +60,13 @@
   font-weight: 800;
 }
 
+.product-detail-same-day-badge {
+  background-color: #e5f4ea;
+  color: #216b3a;
+}
+
 .product-detail-back-button {
+  margin-left: auto;
   padding: 9px 14px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
@@ -164,6 +172,14 @@
   text-decoration: none;
 }
 
+.product-detail-cart-button:hover {
+  background-color: #eef6e8;
+}
+
+.product-detail-order-link:hover {
+  background-color: #326619;
+}
+
 .product-detail-message {
   max-width: 720px;
   margin: 0 auto;
@@ -173,6 +189,29 @@
   color: #6b7280;
   text-align: center;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+.product-detail-message.error {
+  background-color: #fff1f2;
+  color: #be123c;
+}
+
+@media (max-width: 800px) {
+  .product-detail-card {
+    grid-template-columns: 1fr;
+  }
+
+  .product-detail-image-box {
+    min-height: 280px;
+  }
+
+  .product-detail-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .product-detail-actions {
+    flex-direction: column;
+  }
 }
 
 .product-order-modal-backdrop {
@@ -246,6 +285,7 @@
   color: #2f4f38;
 }
 
+/* 상품을 생산한 농장 정보를 보여주는 영역입니다. */
 .product-detail-farm-card {
   max-width: 1100px;
   margin: 20px auto 0;
@@ -257,6 +297,7 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 
+/* '생산 농장'이라는 작은 안내 문구입니다. */
 .product-detail-farm-card > p:first-child {
   margin: 0 0 8px;
   color: #3f7d20;
@@ -264,12 +305,14 @@
   font-weight: 800;
 }
 
+/* 농장 이름입니다. */
 .product-detail-farm-card h2 {
   margin: 0;
   color: #243b2f;
   font-size: 24px;
 }
 
+/* 지역 정보입니다. */
 .product-detail-farm-card span {
   display: inline-block;
   margin-top: 8px;
@@ -281,12 +324,36 @@
   font-weight: 700;
 }
 
+/* 주소와 농장 소개 문구입니다. */
 .product-detail-farm-card p {
   margin: 14px 0 0;
   color: #4b5563;
   line-height: 1.7;
 }
 
+@media (max-width: 800px) {
+  .product-detail-farm-card {
+    padding: 20px;
+  }
+}
+
+.product-detail-cart-button:disabled,
+.product-detail-order-link:disabled {
+  border-color: #d1d5db;
+  background-color: #e5e7eb;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.product-detail-unavailable {
+  margin: 12px 0 0;
+  color: #dc2626;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* 농장 이름 상세 링크입니다. */
 .product-detail-farm-name-link {
   color: inherit;
   text-decoration: none;
@@ -297,17 +364,12 @@
   text-decoration: underline;
 }
 
-/* 농장 카드 내부 버튼들을 나란히 배치하기 위한 스타일 */
-.product-detail-farm-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-}
-
+/* 농장 상세 페이지로 이동하는 버튼 형태의 링크입니다. */
 .product-detail-farm-view-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  margin-top: 18px;
   padding: 10px 16px;
   border: 1px solid #3f7d20;
   border-radius: 8px;
@@ -320,24 +382,6 @@
 .product-detail-farm-view-link:hover {
   background-color: #3f7d20;
   color: #ffffff;
-}
-
-.product-detail-farm-qna-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  border: 1px solid #3f7d20;
-  border-radius: 8px;
-  background-color: #3f7d20;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.product-detail-farm-qna-link:hover {
-  background-color: #2f5f17;
 }
 
 .product-detail-quantity {
@@ -379,4 +423,21 @@
   border: solid #d7dfd2;
   border-width: 1px 0;
   text-align: center;
+}
+
+/* 상품 상세 수량 입력창의 브라우저 기본 증감 화살표만 숨깁니다. */
+.product-detail-quantity-control input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.product-detail-quantity-control input[type="number"]::-webkit-inner-spin-button,
+.product-detail-quantity-control input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.product-detail-quantity-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }

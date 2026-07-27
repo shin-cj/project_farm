@@ -42,7 +42,8 @@
 }
 
 .farm-create-grid:disabled input,
-.farm-create-grid:disabled textarea {
+.farm-create-grid:disabled textarea,
+.farm-create-grid:disabled select {
     background-color: #f3f4f6;
     cursor: wait;
 }
@@ -63,12 +64,19 @@
 }
 
 .farm-create-field input,
-.farm-create-field textarea {
+.farm-create-field textarea,
+.farm-create-field select {
     border: 1px solid #d1d5db;
     border-radius: 6px;
     padding: 11px 12px;
     font-size: 14px;
     font-family: inherit;
+}
+
+.farm-create-field small {
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .farm-create-field textarea {
@@ -149,4 +157,43 @@
     color: #6b7280;
     font-size: 14px;
     font-weight: 700;
+}
+
+.farm-address-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+}
+
+.farm-address-search input {
+    min-width: 0;
+    background-color: #f9fafb;
+}
+
+.farm-address-search button {
+    border: 1px solid #16a34a;
+    border-radius: 6px;
+    padding: 11px 18px;
+    background-color: #ffffff;
+    color: #15803d;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.farm-address-search button:hover {
+    background-color: #f0fdf4;
+}
+
+.farm-address-search button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+    .farm-address-search {
+        grid-template-columns: 1fr;
+    }
 }

@@ -25,6 +25,18 @@ const labelStyle = {
     fontWeight: 800,
 };
 
+const backButtonStyle = {
+    height: "42px",
+    padding: "0 15px",
+    border: "1px solid #dce6dd",
+    borderRadius: "8px",
+    background: "#ffffff",
+    color: "#216b3a",
+    fontSize: "16px",
+    fontWeight: 800,
+    cursor: "pointer",
+};
+
 export function CheckoutPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -33,18 +45,10 @@ export function CheckoutPage() {
     const orderName = searchParams.get("orderName") || "";
     const orderId = searchParams.get("orderId") || "";
 
-    const [receiverName, setReceiverName] = useState(
-        searchParams.get("receiverName") || ""
-    );
-    const [receiverPhone, setReceiverPhone] = useState(
-        searchParams.get("receiverPhone") || ""
-    );
-    const [receiverAddress, setReceiverAddress] = useState(
-        searchParams.get("receiverAddress") || ""
-    );
-    const [receiverDetailAddress, setReceiverDetailAddress] = useState(
-        searchParams.get("receiverDetailAddress") || ""
-    );
+    const receiverName = searchParams.get("receiverName") || "";
+    const receiverPhone = searchParams.get("receiverPhone") || "";
+    const receiverAddress = searchParams.get("receiverAddress") || "";
+    const receiverDetailAddress = searchParams.get("receiverDetailAddress") || "";
 
     const hasValidOrderInfo =
         orderId.trim() !== ""
@@ -52,8 +56,10 @@ export function CheckoutPage() {
         && Number.isFinite(paymentAmount)
         && paymentAmount > 0;
     const [ready, setReady] = useState(false);
+    const [isPaying, setIsPaying] = useState(false);
     const [widgets, setWidgets] = useState(null);
     const paymentMethodWidgetRef = useRef(null);
+    const [checkoutItems, setCheckoutItems] = useState([]);
 
     const orderInfo = {
         orderId,
@@ -64,6 +70,21 @@ export function CheckoutPage() {
         receiverAddress,
         receiverDetailAddress,
     };
+
+    useEffect(() => {
+        if (!orderId) {
+            setCheckoutItems([]);
+            return;
+        }
+
+        try {
+            const storedItems = sessionStorage.getItem(`checkoutItems:${orderId}`);
+            setCheckoutItems(storedItems ? JSON.parse(storedItems) : []);
+        } catch (error) {
+            console.error(error);
+            setCheckoutItems([]);
+        }
+    }, [orderId]);
 
     useEffect(() => {
         async function fetchPaymentWidgets() {
@@ -111,6 +132,10 @@ export function CheckoutPage() {
     }, [widgets, paymentAmount, hasValidOrderInfo]);
 
     const handlePayment = async () => {
+        if (isPaying) {
+            return;
+        }
+
         if (!hasValidOrderInfo) {
             alert("주문 정보가 없습니다. 상품 또는 장바구니에서 다시 주문해주세요.");
             return;
@@ -126,6 +151,8 @@ export function CheckoutPage() {
         }
 
         try {
+            setIsPaying(true);
+
             const selectedPaymentMethod =
                 await paymentMethodWidgetRef.current?.getSelectedPaymentMethod();
             console.log("selectedPaymentMethod: ", selectedPaymentMethod);
@@ -146,6 +173,7 @@ export function CheckoutPage() {
             });
         } catch (error) {
             console.error(error);
+            setIsPaying(false);
         }
     };
 
@@ -163,10 +191,10 @@ export function CheckoutPage() {
             <div
                 style={{
                     width: "100%",
-                    maxWidth: "1100px",
+                    maxWidth: "1180px",
                     display: "grid",
-                    gridTemplateColumns: "390px minmax(0, 1fr)",
-                    gap: "22px",
+                    gridTemplateColumns: "420px minmax(0, 1fr)",
+                    gap: "24px",
                     alignItems: "stretch",
                 }}
             >
@@ -176,22 +204,13 @@ export function CheckoutPage() {
                         border: "1px solid #dce6dd",
                         borderRadius: "8px",
                         background: "#ffffff",
+                        boxShadow: "0 14px 34px rgba(33, 51, 40, 0.08)",
                     }}
                 >
                     <button
                         type="button"
                         onClick={() => navigate(-1)}
-                        style={{
-                            height: "42px",
-                            padding: "0 15px",
-                            border: "1px solid #dce6dd",
-                            borderRadius: "8px",
-                            background: "#ffffff",
-                            color: "#216b3a",
-                            fontSize: "16px",
-                            fontWeight: 800,
-                            cursor: "pointer",
-                        }}
+                        style={backButtonStyle}
                     >
                         ← 뒤로가기
                     </button>
@@ -211,12 +230,102 @@ export function CheckoutPage() {
                             style={{
                                 margin: "0 0 22px",
                                 color: "#213328",
-                                fontSize: "27px",
+                                fontSize: "29px",
                                 lineHeight: 1.3,
                             }}
                         >
                             {orderInfo.orderName}
                         </h1>
+                    </div>
+
+                    <div
+                        style={{
+                            marginBottom: "20px",
+                            padding: "16px",
+                            border: "1px solid #e5ece5",
+                            borderRadius: "8px",
+                            background: "#fbfdfb",
+                        }}
+                    >
+                        <span
+                            style={{
+                                display: "inline-flex",
+                                marginBottom: "10px",
+                                padding: "5px 10px",
+                                borderRadius: "999px",
+                                background: "#e5f4ea",
+                                color: "#216b3a",
+                                fontSize: "14px",
+                                fontWeight: 900,
+                            }}
+                        >
+                            주문 상품
+                        </span>
+                        <strong
+                            style={{
+                                display: "block",
+                                color: "#213328",
+                                fontSize: "19px",
+                                lineHeight: 1.45,
+                            }}
+                        >
+                            {orderInfo.orderName || "상품 정보 없음"}
+                        </strong>
+
+                        {checkoutItems.length > 0 && (
+                            <div style={{ display: "grid", gap: "8px", marginTop: "14px" }}>
+                                {checkoutItems.map((item, index) => (
+                                    <div
+                                        key={`${item.productName}-${index}`}
+                                        style={{
+                                            display: "grid",
+                                            gridTemplateColumns: "1fr auto",
+                                            gap: "10px",
+                                            padding: "10px 0",
+                                            borderTop: index === 0 ? "1px solid #e5ece5" : "none",
+                                            color: "#405348",
+                                            fontSize: "15px",
+                                            lineHeight: 1.5,
+                                        }}
+                                    >
+                                        <span>
+                                            <small
+                                                style={{
+                                                    display: "inline-flex",
+                                                    marginRight: "8px",
+                                                    padding: "3px 7px",
+                                                    borderRadius: "999px",
+                                                    background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                                                    color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                                                    fontSize: "12px",
+                                                    fontWeight: 900,
+                                                }}
+                                            >
+                                                {item.saleType === "WHOLESALE" ? "도매" : "소매"}
+                                            </small>
+                                            {item.productName}
+                                            <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
+                                                {[item.unit, `${Number(item.quantity).toLocaleString()}개`].filter(Boolean).join(" ")}
+                                            </strong>
+                                        </span>
+                                        <strong>
+                                            {Number(item.itemTotalPrice).toLocaleString()}원
+                                        </strong>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <p
+                            style={{
+                                margin: "10px 0 0",
+                                color: "#68756d",
+                                fontSize: "14px",
+                                lineHeight: 1.55,
+                            }}
+                        >
+                            주문 정보를 확인한 뒤 결제를 진행해주세요. 배송지 정보는 결제 승인 시 주문에 반영됩니다.
+                        </p>
                     </div>
 
                     <div style={{ display: "grid", gap: "16px" }}>
@@ -235,76 +344,102 @@ export function CheckoutPage() {
                             </p>
                         </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>주문자</span>
                             <input
                                 type="text"
                                 value={receiverName}
-                                onChange={(event) => setReceiverName(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>전화번호</span>
                             <input
                                 type="text"
                                 value={receiverPhone}
-                                onChange={(event) => setReceiverPhone(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>배송지</span>
                             <input
                                 type="text"
                                 value={receiverAddress}
-                                onChange={(event) => setReceiverAddress(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
 
-                        <label>
+                        <div>
                             <span style={labelStyle}>상세 배송지</span>
                             <input
                                 type="text"
                                 value={receiverDetailAddress}
-                                onChange={(event) => setReceiverDetailAddress(event.target.value)}
-                                style={inputStyle}
+                                readOnly
+                                style={{ ...inputStyle, background: "#f3f6f3", cursor: "default" }}
                             />
-                        </label>
+                        </div>
                     </div>
 
                     <div
                         style={{
                             marginTop: "24px",
-                            paddingTop: "20px",
-                            borderTop: "1px solid #e5ece5",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "baseline",
-                            gap: "14px",
+                            padding: "18px",
+                            border: "1px solid #dce6dd",
+                            borderRadius: "8px",
+                            background: "#f6fbf7",
                         }}
                     >
-                        <span
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                            <span style={{ color: "#68756d", fontSize: "16px", fontWeight: 800 }}>
+                                상품 금액
+                            </span>
+                            <strong style={{ color: "#213328", fontSize: "17px" }}>
+                                {paymentAmount.toLocaleString()}원
+                            </strong>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "10px" }}>
+                            <span style={{ color: "#68756d", fontSize: "16px", fontWeight: 800 }}>
+                                배송비
+                            </span>
+                            <strong style={{ color: "#213328", fontSize: "17px" }}>
+                                0원
+                            </strong>
+                        </div>
+                        <div
                             style={{
-                                color: "#68756d",
-                                fontSize: "17px",
-                                fontWeight: 900,
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "baseline",
+                                gap: "14px",
+                                marginTop: "16px",
+                                paddingTop: "16px",
+                                borderTop: "1px solid #dce6dd",
                             }}
                         >
-                            총 결제금액
-                        </span>
-                        <strong
-                            style={{
-                                color: "#216b3a",
-                                fontSize: "27px",
-                                lineHeight: 1,
-                            }}
-                        >
-                            {paymentAmount.toLocaleString()}원
-                        </strong>
+                            <span
+                                style={{
+                                    color: "#213328",
+                                    fontSize: "18px",
+                                    fontWeight: 900,
+                                }}
+                            >
+                                총 결제금액
+                            </span>
+                            <strong
+                                style={{
+                                    color: "#216b3a",
+                                    fontSize: "30px",
+                                    lineHeight: 1,
+                                }}
+                            >
+                                {paymentAmount.toLocaleString()}원
+                            </strong>
+                        </div>
                     </div>
                 </aside>
 
@@ -314,6 +449,7 @@ export function CheckoutPage() {
                         border: "1px solid #dce6dd",
                         borderRadius: "8px",
                         background: "#ffffff",
+                        boxShadow: "0 14px 34px rgba(33, 51, 40, 0.08)",
                     }}
                 >
                     <div
@@ -340,7 +476,7 @@ export function CheckoutPage() {
                                 style={{
                                     margin: "6px 0 0",
                                     color: "#213328",
-                                    fontSize: "28px",
+                                    fontSize: "30px",
                                     lineHeight: 1.25,
                                 }}
                             >
@@ -362,9 +498,25 @@ export function CheckoutPage() {
                     <div id="payment-method" />
                     <div id="agreement" />
 
+                    <div
+                        style={{
+                            marginTop: "18px",
+                            padding: "14px 16px",
+                            borderRadius: "8px",
+                            background: "#f6fbf7",
+                            border: "1px solid #dce6dd",
+                            color: "#506257",
+                            fontSize: "15px",
+                            fontWeight: 700,
+                            lineHeight: 1.55,
+                        }}
+                    >
+                        결제 버튼을 누른 뒤 창을 닫거나 새로고침하지 말아주세요. 결제 완료 후 주문 상태가 자동으로 변경됩니다.
+                    </div>
+
                     <button
                         type="button"
-                        disabled={!ready}
+                        disabled={!ready || isPaying}
                         onClick={handlePayment}
                         style={{
                             width: "100%",
@@ -372,14 +524,15 @@ export function CheckoutPage() {
                             marginTop: "22px",
                             border: "none",
                             borderRadius: "8px",
-                            background: ready ? "#216b3a" : "#b8c4bb",
+                            background: ready && !isPaying ? "#216b3a" : "#b8c4bb",
                             color: "#ffffff",
                             fontSize: "19px",
                             fontWeight: 900,
-                            cursor: ready ? "pointer" : "not-allowed",
+                            cursor: ready && !isPaying ? "pointer" : "not-allowed",
+                            boxShadow: ready && !isPaying ? "0 10px 20px rgba(33, 107, 58, 0.18)" : "none",
                         }}
                     >
-                        {paymentAmount.toLocaleString()}원 결제하기
+                        {isPaying ? "결제창을 여는 중..." : `${paymentAmount.toLocaleString()}원 결제하기`}
                     </button>
                 </section>
             </div>

@@ -1,9 +1,12 @@
 package me.soldesk.springbootback.domain.farm.controller;
 
-import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
-import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
+import me.soldesk.springbootback.domain.farm.dto.*;
+import me.soldesk.springbootback.domain.farm.service.FarmImageService;
 import me.soldesk.springbootback.domain.farm.service.FarmService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -12,9 +15,11 @@ import java.util.List;
 public class FarmController {
 
     private final FarmService farmService;
+    private final FarmImageService farmImageService;
 
-    public FarmController(FarmService farmService){
+    public FarmController(FarmService farmService, FarmImageService farmImageService){
         this.farmService = farmService;
+        this.farmImageService = farmImageService;
     }
 
     @GetMapping
@@ -22,8 +27,18 @@ public class FarmController {
         return farmService.getFarms(sellerId);
     }
 
+    @GetMapping("/public")
+    public List<PublicFarmResponse> getPublicFarms(){
+        return farmService.getPublicFarms();
+    }
+
+    @GetMapping("/popular/weekly")
+    public List<PopularFarmResponse> getWeeklyPopularFarms(){
+        return farmService.getWeeklyPopularFarms();
+    }
+
     @GetMapping("/public/{farmId}")
-    public FarmResponse getPublicFarm(@PathVariable Long farmId){
+    public PublicFarmResponse  getPublicFarm(@PathVariable Long farmId){
         return farmService.getPublicFarm(farmId);
     }
 
@@ -31,6 +46,11 @@ public class FarmController {
     @GetMapping("/{farmId}")
     public FarmResponse getFarm(@PathVariable Long farmId){
         return farmService.getFarm(farmId);
+    }
+
+    @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public FarmImageUploadResponse uploadFarmImage(@RequestPart("image")MultipartFile image){
+        return farmImageService.uploadImage(image);
     }
 
     @PostMapping
@@ -41,6 +61,23 @@ public class FarmController {
     @PutMapping("/{farmId}")
     public FarmResponse updateFarm(@PathVariable Long farmId, @RequestBody FarmRequest request){
         return farmService.updateFarm(farmId, request);
+    }
+
+    @PatchMapping("/{farmId}/approval")
+    public FarmResponse updateApprovalStatus(
+            @PathVariable Long farmId,
+            @RequestBody FarmApprovalRequest request
+    ) {
+        return farmService.updateApprovalStatus(farmId, request);
+    }
+
+    @DeleteMapping("/{farmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteFarm(
+            @PathVariable Long farmId,
+            @RequestParam Long sellerId
+    ) {
+        farmService.deleteFarm(farmId, sellerId);
     }
 
 }

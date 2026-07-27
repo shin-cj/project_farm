@@ -2,7 +2,10 @@ package me.soldesk.springbootback.domain.order.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.soldesk.springbootback.domain.orderitem.dto.OrderItemResponse;
+
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** 백엔드가 프론트엔드에 응답할 데이터를 담는 DTO(데이터 전달 객체)입니다. */
 // 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
@@ -16,6 +19,8 @@ public class OrderResponse {
 
     private String orderName;
 
+    private List<OrderItemResponse> orderItems;
+
     /** 사용자에게 표시되는 주문번호 */
     private String orderNumber;
 
@@ -24,6 +29,33 @@ public class OrderResponse {
 
     /** 판매 농장 번호 */
     private Long farmId;
+
+    /** 판매자 회원 번호 */
+    private Long sellerId;
+
+    /** 판매자 이름 */
+    private String sellerName;
+
+    /** 판매자 전화번호 */
+    private String sellerPhone;
+
+    /** 판매자 이메일 */
+    private String sellerEmail;
+
+    /** 판매 농장 이름 */
+    private String farmName;
+
+    /** 판매 농장 지역 */
+    private String farmRegion;
+
+    /** 판매 농장 기본 주소 */
+    private String farmAddress;
+
+    /** 판매 농장 상세 주소 */
+    private String farmDetailAddress;
+
+    /** 농장 판매 방식 */
+    private String saleType;
 
     /** 상품 금액 합계 */
     private Long totalProductPrice;
@@ -43,11 +75,19 @@ public class OrderResponse {
 
     private String deliveryStatus;
 
+    private String deliveryType;
+
     private Long deliveryId;
 
     private String courierName;
 
     private String trackingNumber;
+
+    private String deliveryPersonName;
+
+    private String deliveryPersonPhone;
+
+    private String deliveryMemo;
 
     /** 수령인 이름 */
     private String receiverName;

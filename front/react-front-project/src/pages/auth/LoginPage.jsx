@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -11,7 +11,7 @@ function LoginPage() {
     event.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:8080/api/auth/login", {
+      const response = await axios.post("/api/auth/login", {
         email,
         passwordHash,
       });
@@ -22,10 +22,12 @@ function LoginPage() {
 
       alert(`${user.name}님 환영합니다.`);
 
-      if (user.roleId === 1) {
+      const roleId = Number(user.roleId);
+
+      if (roleId === 1) {
         navigate("/admin");
-      } else if (user.roleId === 3) {
-        navigate("/seller");
+      } else if (roleId === 3) {
+        navigate("/seller", { replace: true });
       } else {
         navigate("/");
       }
