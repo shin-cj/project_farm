@@ -477,7 +477,7 @@ function BuyerHomePage() {
 
           <div className="buyer-home-hero-actions">
             <button type="button" onClick={() => navigate('/market-prices')}>
-              지역 시세 보기
+              시세 보기
             </button>
             <button type="button" className="secondary" onClick={() => navigate('/products')}>
               상품 보러가기

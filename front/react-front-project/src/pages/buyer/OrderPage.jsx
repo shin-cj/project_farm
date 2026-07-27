@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
 import userApi from "../../api/userApi.js";
+import "./OrderPage.css";
 
 const roleLabel = {
   1: "관리자",
@@ -19,6 +20,7 @@ function OrderPage() {
   const purchaseType = location.state?.purchaseType || "CART";
   const directProduct = location.state?.directProduct || null;
   const isDirectOrder = purchaseType === "DIRECT";
+  const isDirectOrderModal = isDirectOrder && location.state?.orderView === "MODAL";
 
   const [user, setUser] = useState(null);
   const [receiverName, setReceiverName] = useState("");
@@ -178,7 +180,19 @@ function OrderPage() {
   }
 
   return (
-    <section className="page-card">
+    <div className={isDirectOrderModal ? "order-modal-backdrop" : "order-page-shell"}>
+    <section className={isDirectOrderModal ? "page-card order-modal-card" : "page-card"}>
+      {isDirectOrderModal && (
+        <button
+          type="button"
+          className="order-modal-close"
+          onClick={() => navigate(-1)}
+          aria-label="주문 정보 확인 닫기"
+        >
+          x
+        </button>
+      )}
+
       <h1>주문 정보 확인</h1>
 
       {userLoading && (
@@ -387,6 +401,7 @@ function OrderPage() {
         {submitting ? "주문 생성 중..." : "결제하러 가기"}
       </button>
     </section>
+    </div>
   );
 }
 
