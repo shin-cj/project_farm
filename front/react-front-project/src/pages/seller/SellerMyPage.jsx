@@ -444,6 +444,11 @@ function SellerMyPage() {
                   <span>
                     {withdrawal.bankName} · {formatDateTime(withdrawal.requestedAt)}
                   </span>
+                  {withdrawal.withdrawalStatus === "REJECTED" && (
+                    <span className="seller-withdrawal-reject-reason">
+                      반려 사유: {withdrawal.rejectReason || "사유 없음"}
+                    </span>
+                  )}
                 </div>
                 <em className={`withdrawal-status ${withdrawal.withdrawalStatus.toLowerCase()}`}>
                   {WITHDRAWAL_STATUS_LABEL[withdrawal.withdrawalStatus] || withdrawal.withdrawalStatus}
