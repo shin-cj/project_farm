@@ -59,6 +59,7 @@ function ProgressCard({status}){
 
 function ChatbotPage() {
   const { confirm } = useAppFeedback()
+  const [productSaleType, setProductSaleType] = useState('RETAIL')
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
   const storageKey = `chatbotConversation-${userid ?? "guest"}`;
@@ -74,6 +75,10 @@ function ChatbotPage() {
   const [previousResponseId, setPreviousResponseId] = useState(firstConversation.previousResponseId ?? null)
   const [isHistoryVisible, setIsHistoryVisible] = useState(true)
   const chatScrollRef  = useRef(null);
+
+  const displayedProducts = (recipeResult?.matchedProducts ?? []).filter(
+      product => (product.saleType ?? 'RETAIL') === productSaleType
+  )
 
   useEffect(() => {
     const chatArea = chatScrollRef.current
@@ -174,6 +179,7 @@ function ChatbotPage() {
         )
       )
       if(data.responseType === 'RECIPE'){
+        setProductSaleType('RETAIL')
         setRecipeResult(data)
       }
 
@@ -252,6 +258,7 @@ function ChatbotPage() {
     setActiveConversationId(conversation.id)
     setChatItems([])
     setRecipeResult(null)
+    setProductSaleType('RETAIL')
     setPreviousResponseId(null)
     setMessage('')
     setError('')
@@ -282,6 +289,7 @@ function ChatbotPage() {
         hour: '2-digit',
         minute: '2-digit'
       })
+
 
 
   return (
@@ -472,11 +480,33 @@ function ChatbotPage() {
           </main>
         {/*오른쪽 추천 상품*/}
         <aside className="recipe-product-panel">
-          <h2>추천 상품</h2>
+          <div className="recipe-product-header">
+            <h2>추천 상품</h2>
 
-          {recipeResult?.matchedProducts?.length > 0
-          ? recipeResult.matchedProducts.map((product) => (
-              <div className="chatbot-product-card" key={product.productId}>
+            <div className="recipe-sale-tabs" role="group" aria-label="판매 유형">
+              <button
+                  type="button"
+                  className={productSaleType === 'RETAIL' ? 'active' : ''}
+                  aria-pressed={productSaleType === 'RETAIL'}
+                  onClick={() => setProductSaleType('RETAIL')}>
+                소매
+              </button>
+
+              <button
+                  type="button"
+                  className={productSaleType === 'WHOLESALE' ? 'active' : ''}
+                  aria-pressed={productSaleType === 'WHOLESALE'}
+                  onClick={() => setProductSaleType('WHOLESALE')}>
+                도매
+              </button>
+            </div>
+          </div>
+
+          {displayedProducts.length > 0
+          ? displayedProducts.map((product) => (
+              <div
+                  className="chatbot-product-card"
+                  key={`${product.saleType ?? 'RETAIL'}-${product.productId}-${product.ingredientName}`}>
                 {product.productImageUrl && (
                     <img src = {product.productImageUrl} alt = {product.productName} />
                 )}
@@ -490,7 +520,13 @@ function ChatbotPage() {
                 />
               </div>
               ))
-            : <p className="empty-products">연결된 판매 상품이 없습니다.</p>
+            : (
+                <p className="empty-products">
+                  {productSaleType === 'RETAIL'
+                      ? '추천 가능한 소매 상품이 없습니다.'
+                      : '추천 가능한 도매 상품이 없습니다.'}
+                </p>
+              )
           }
         </aside>
         </div>

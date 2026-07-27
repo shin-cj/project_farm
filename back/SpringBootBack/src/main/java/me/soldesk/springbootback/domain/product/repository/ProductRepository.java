@@ -21,14 +21,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     WHERE p.product_name LIKE '%' || :keyword || '%'
       AND p.product_status = :status
       AND p.stock_quantity > :stockQuantity
-      AND f.sale_type = 'RETAIL'
+      AND f.sale_type = :saleType
     ORDER BY p.price ASC
     FETCH FIRST 1 ROWS ONLY
     """, nativeQuery = true)
     Optional<Product> findLowestPriceProductByKeyword(
             @Param("keyword") String productName,
             @Param("status") String productStatus,
-            @Param("stockQuantity") Integer stockQuantity
+            @Param("stockQuantity") Integer stockQuantity,
+            @Param("saleType") String saleType
     );
 
     List<Product> findByFarmId(Long farmId);

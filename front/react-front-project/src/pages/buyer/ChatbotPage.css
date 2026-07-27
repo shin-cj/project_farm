@@ -807,11 +807,68 @@
     padding: 18px;
 }
 
-.recipe-product-panel > h2 {
-    margin: 0 0 14px;
+.recipe-product-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
     padding-bottom: 12px;
     border-bottom: 1px solid #e4e9e5;
+}
+
+.recipe-product-header > h2 {
+    margin: 0;
     font-size: 15px;
+}
+
+.recipe-sale-tabs {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(44px, 1fr));
+    flex: 0 0 auto;
+    padding: 3px;
+    border: 1px solid #d4ded7;
+    border-radius: 6px;
+    background: #f2f6f3;
+}
+
+.recipe-sale-tabs > button {
+    min-width: 44px;
+    height: 30px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #617067;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease,
+        box-shadow 160ms ease,
+        transform 100ms ease;
+}
+
+.recipe-sale-tabs > button:hover {
+    color: #1f6f3d;
+    background: #e7f1e9;
+}
+
+.recipe-sale-tabs > button:active {
+    transform: translateY(1px);
+}
+
+.recipe-sale-tabs > button.active {
+    color: #fff;
+    background: #237a43;
+    box-shadow: 0 1px 4px rgba(31, 111, 61, 0.2);
+}
+
+.recipe-sale-tabs > button:focus-visible {
+    outline: 2px solid #7fb58d;
+    outline-offset: 2px;
 }
 
 .chatbot-product-card {

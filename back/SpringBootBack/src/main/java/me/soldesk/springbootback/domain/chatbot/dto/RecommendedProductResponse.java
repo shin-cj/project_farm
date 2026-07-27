@@ -18,4 +18,6 @@ public class RecommendedProductResponse {
     private String unit;
 
     private String productImageUrl;
+
+    private String saleType;
 }
