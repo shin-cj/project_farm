@@ -46,5 +46,13 @@ public class ChatbotController {
         );
     }
 
+    @DeleteMapping("/users/{userId}/recipes/{chatbotId}")
+    public ResponseEntity<Void> deleteSavedRecipe(
+            @PathVariable Long userId,
+            @PathVariable Long chatbotId
+    ) {
+        chatbotService.deleteSavedRecipe(userId, chatbotId);
+        return ResponseEntity.noContent().build();
+    }
 
 }
