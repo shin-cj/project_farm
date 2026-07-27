@@ -5,11 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import me.soldesk.springbootback.domain.marketprice.dto.DailyAvgPriceDto;
-import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchRequest;
-import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchResponse;
-import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchResult;
+import me.soldesk.springbootback.domain.marketprice.dto.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -20,6 +18,10 @@ import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -44,10 +46,209 @@ public class MarketPriceService {
         this.restClient = restClientBuilder.build();
     }
 
+    private MarketPriceSearchResponse searchRecentPrice(MarketPriceSearchRequest request) throws Exception {
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("https://apis.data.go.kr/B552845/recent/price")
+                .queryParam("serviceKey",apikey)
+                .queryParam("pageNo",1)
+                .queryParam("numOfRows",1)
+                .queryParam("returnType", "JSON");
+
+        addQueryParam(builder,"cond%5Bse_cd%3A%3AEQ%5D",request.getSeCd());
+        addQueryParam(builder, "cond%5Bctgry_cd%3A%3AEQ%5D", request.getCtgryCd());
+        addQueryParam(builder, "cond%5Bitem_cd%3A%3AEQ%5D", request.getItemCd());
+        addQueryParam(builder, "cond%5Bvrty_cd%3A%3AEQ%5D", request.getVrtyCd());
+        addQueryParam(builder, "cond%5Bgrd_cd%3A%3AEQ%5D", request.getGrdCd());
+
+        URI uri = builder.build(true).toUri();
+
+        Object apiResponse = searchJsonApi(uri);
+        JsonNode root = objectMapper.convertValue(apiResponse,JsonNode.class);
+
+        checkCommonApiError(root);
+
+        JsonNode itemNode = root.path("response").path("body").path("items").path("item");
+
+        if(itemNode.isEmpty()){
+            throw new RuntimeException("최근 시세 데이터가 없습니다.");
+        }
+
+        List<MarketPriceSearchResponse> list = objectMapper.readValue(
+                itemNode.toString(),new TypeReference<>() {}
+        );
+
+        return list.get(0);
+
+    }
+
+    private Long parsePrice(String price){
+        if(!StringUtils.hasText(price)){
+            return 0L;
+        }
+
+        try {
+            return Long.parseLong(price.replace(",","").trim());
+        }catch (NumberFormatException e){
+            return 0L;
+        }
+    }
+
+    private String calculateChangeRate(Long currentPrice, Long previousPrice) {
+        if (currentPrice == null || previousPrice == null || previousPrice <= 0) {
+            return "0";
+        }
+
+        double rate = ((double) (currentPrice - previousPrice) / previousPrice) * 100;
+        return String.valueOf(Math.round(rate * 100) / 100.0);
+    }
+
+    private String defaultChangeRate(String apiChangeRate, Long currentPrice, Long previousPrice) {
+        if (StringUtils.hasText(apiChangeRate)) {
+            return apiChangeRate;
+        }
+
+        return calculateChangeRate(currentPrice, previousPrice);
+    }
+
+    private Double calculateChangeRateNumber(Long currentPrice, Long previousPrice) {
+        if (currentPrice == null || previousPrice == null || previousPrice <= 0) {
+            return 0.0;
+        }
+
+        double rate = ((double) (currentPrice - previousPrice) / previousPrice) * 100;
+        return Math.round(rate * 100) / 100.0;
+    }
+
+    private List<MarketPriceSearchResponse> readRecentPriceFile() throws Exception {
+        File file = new File(filePath + "api_recent.json");
+
+        if (!file.exists()) {
+            fetchRecent();
+        }
+
+        JsonNode root = objectMapper.readTree(file);
+        JsonNode itemNode = root.path("response").path("body").path("items").path("item");
+
+        if (itemNode.isEmpty()) {
+            throw new RuntimeException("최근 시세 랭킹 데이터가 없습니다.");
+        }
+
+        return objectMapper.readValue(
+                itemNode.toString(),
+                new TypeReference<>() {}
+        );
+    }
+
+    private BuyerMainRankingItemResponse toRankingItem(MarketPriceSearchResponse item, Long previousPrice) {
+        Long currentPrice = parsePrice(item.getExmnDdCnvsPrc());
+
+        Long changeAmount = currentPrice - previousPrice;
+        Double changeRate = calculateChangeRateNumber(currentPrice, previousPrice);
+
+        return new BuyerMainRankingItemResponse(
+                item.getItemNm(),
+                item.getVrtyNm(),
+                item.getCtgryNm(),
+                item.getSeNm(),
+                "kg",
+                currentPrice,
+                previousPrice,
+                changeAmount,
+                changeRate
+        );
+    }
+
+    private List<BuyerMainRankingItemResponse> createTopRanking(
+            List<MarketPriceSearchResponse> recentList,
+            String period,
+            boolean isUp,
+            int limit
+    ) {
+        return recentList.stream()
+                .map(item -> {
+                    Long previousPrice = switch (period) {
+                        case "DAY" -> parsePrice(item.getDd1BfrCnvsPrc());
+                        case "WEEK" -> parsePrice(item.getWw1BfrCnvsPrc());
+                        case "MONTH" -> parsePrice(item.getMm1BfrCnvsPrc());
+                        default -> 0L;
+                    };
+
+                    return toRankingItem(item, previousPrice);
+                })
+                .filter(item -> item.getCurrentPrice() > 0 && item.getPreviousPrice() > 0)
+                .filter(item -> isUp ? item.getChangeRate() > 0 : item.getChangeRate() < 0)
+                .collect(Collectors.toMap(
+                        item -> item.getItemName() + "|"
+                                + item.getVarietyName() + "|"
+                                + item.getSaleTypeName() + "|"
+                                + item.getUnit(),
+                        item -> item,
+                        (first, second) -> Math.abs(first.getChangeRate()) >= Math.abs(second.getChangeRate())
+                                ? first
+                                : second
+                ))
+                .values()
+                .stream()
+                .sorted(isUp
+                        ? Comparator.comparing(BuyerMainRankingItemResponse::getChangeRate).reversed()
+                        : Comparator.comparing(BuyerMainRankingItemResponse::getChangeRate))
+                .limit(limit)
+                .toList();
+    }
+
+    private List<MarketPriceSearchResponse> filterRecentList(
+            List<MarketPriceSearchResponse> recentList,
+            MarketPriceSearchRequest request
+    ) {
+        return recentList.stream()
+                .filter(item -> !"500".equals(item.getCtgryCd()))
+                .filter(item -> !"600".equals(item.getCtgryCd()))
+                .filter(item -> !StringUtils.hasText(request.getSeCd())
+                        || request.getSeCd().equals(item.getSeCd()))
+                .filter(item -> !StringUtils.hasText(request.getCtgryCd())
+                        || request.getCtgryCd().equals(item.getCtgryCd()))
+                .filter(item -> !StringUtils.hasText(request.getItemCd())
+                        || request.getItemCd().equals(item.getItemCd()))
+                .toList();
+    }
+
+    private LocalDate parseApiDate(String dateText) {
+        if (!StringUtils.hasText(dateText)) {
+            return LocalDate.now();
+        }
+
+        try {
+            return LocalDate.parse(dateText, DateTimeFormatter.ofPattern("yyyyMMdd"));
+        } catch (Exception e) {
+            return LocalDate.now();
+        }
+    }
+
     @Value("${external.api01.api-key}")
     private String apikey;
 
     String filePath = "./src/main/java/me/soldesk/springbootback/domain/marketprice/api/";
+
+    public BuyerMainRankingResponse getBuyerMainRanking(MarketPriceSearchRequest request) throws Exception {
+        List<MarketPriceSearchResponse> recentList = filterRecentList(readRecentPriceFile(), request);
+        int rankingLimit = request.getLimit() == null || request.getLimit() <= 0 ? 5 : request.getLimit();
+
+        String baseDate = recentList.stream()
+                .map(MarketPriceSearchResponse::getExmnYmd)
+                .filter(StringUtils::hasText)
+                .max(String::compareTo)
+                .orElse("");
+
+        return new BuyerMainRankingResponse(
+                baseDate,
+                createTopRanking(recentList, "DAY", true, rankingLimit),
+                createTopRanking(recentList, "DAY", false, rankingLimit),
+                createTopRanking(recentList, "WEEK", true, rankingLimit),
+                createTopRanking(recentList, "WEEK", false, rankingLimit),
+                createTopRanking(recentList, "MONTH", true, rankingLimit),
+                createTopRanking(recentList, "MONTH", false, rankingLimit)
+        );
+    }
 
     // 가격 추이 정보 조회(조회일 기준 1~4주전 평균 가격 제공)-7월 16일 기준 이전 데이터 모두 업데이트 됨, 업데이트 주기는 모르겠음
     // 최근 4주 가격 추이 미니 차트 제작용 - 소비자 제공
@@ -186,10 +387,16 @@ public class MarketPriceService {
                 .collect(Collectors.groupingBy(
                         MarketPriceSearchResponse::getExmnYmd,
                         Collectors.averagingDouble(item -> {
+                            String cnvsAvgPrc = item.getExmnDdCnvsAvgPrc();
+                            String avgPrc = item.getExmnDdAvgPrc();
                             String cnvsPrc = item.getExmnDdCnvsPrc();
                             String ddPrc = item.getExmnDdPrc();
 
-                            String priceStr = (StringUtils.hasText(cnvsPrc))
+                            String priceStr = StringUtils.hasText(cnvsAvgPrc)
+                                    ? cnvsAvgPrc
+                                    : StringUtils.hasText(avgPrc)
+                                    ? avgPrc
+                                    : StringUtils.hasText(cnvsPrc)
                                     ? cnvsPrc
                                     : ddPrc;
                             if (!StringUtils.hasText(priceStr)) {
@@ -197,7 +404,7 @@ public class MarketPriceService {
                             }
 
                             try {
-                                return Double.parseDouble(priceStr.trim());
+                                return Double.parseDouble(priceStr.replace(",", "").trim());
                             } catch (NumberFormatException e) {
                                 return 0.0;
                             }
@@ -378,6 +585,62 @@ public class MarketPriceService {
             }
             return executeSearchAndConvert(builder);
         }
+    }
+
+    public BuyerMainPriceTrendResponse getBuyerMainMonthTrend(MarketPriceSearchRequest request) throws Exception{
+
+        if(request.getPageNo() == null){
+            request.setPageNo(1);
+        }
+
+        if(request.getNumOfRows() == null){
+            request.setNumOfRows(1000);
+        }
+
+        // 등락률용: 공공데이터 recent API
+        MarketPriceSearchResponse recentData = searchRecentPrice(request);
+
+        LocalDate latestDate = parseApiDate(recentData.getExmnYmd());
+        LocalDate oneMonthAgo = latestDate.minusDays(29);
+
+        request.setExmnYmdLte(latestDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+        request.setExmnYmdGte(oneMonthAgo.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+
+        // 그래프용: 지역이 선택되면 지역별 API, 없으면 전국 일별 API를 사용합니다.
+        MarketPriceSearchResult dayResult = StringUtils.hasText(request.getSggCd())
+                ? searchPerRegion(request)
+                : searchPerDay(request);
+
+        Long currentPrice = parsePrice(recentData.getExmnDdAvgPrc());
+        Long oneMonthAgoPrice = parsePrice(recentData.getMm1BfrPrc());
+
+        List<DailyAvgPriceDto> dailyAvgList = dayResult.getDailyAvgList();
+
+        if (!dailyAvgList.isEmpty()) {
+            DailyAvgPriceDto firstDay = dailyAvgList.get(0);
+            DailyAvgPriceDto lastDay = dailyAvgList.get(dailyAvgList.size() - 1);
+
+            if (StringUtils.hasText(request.getSggCd()) || currentPrice == 0L) {
+                currentPrice = lastDay.getTodayAvgPrice();
+            }
+
+            if (StringUtils.hasText(request.getSggCd()) || oneMonthAgoPrice == 0L) {
+                oneMonthAgoPrice = firstDay.getTodayAvgPrice();
+            }
+        }
+
+        return new BuyerMainPriceTrendResponse(
+                recentData.getItemNm(),
+                recentData.getUnit(),
+                currentPrice,
+                oneMonthAgoPrice,
+                defaultChangeRate(recentData.getDd1BfrCmprRafrt(), currentPrice, oneMonthAgoPrice),
+                defaultChangeRate(recentData.getWw1BfrCmprRafrt(), currentPrice, oneMonthAgoPrice),
+                defaultChangeRate(recentData.getMm1BfrCmprRafrt(), currentPrice, oneMonthAgoPrice),
+                defaultChangeRate(recentData.getYy1BfrCmprRafrt(), currentPrice, oneMonthAgoPrice),
+                dailyAvgList
+        );
+
     }
 
 }
