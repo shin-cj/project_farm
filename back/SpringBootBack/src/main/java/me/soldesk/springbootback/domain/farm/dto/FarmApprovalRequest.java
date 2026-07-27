@@ -10,4 +10,7 @@ public class FarmApprovalRequest {
 
     /** APPROVED=승인, REJECTED=거절 */
     private String approvalStatus;
+
+    /** 관리자가 농장 거절 시 작성한 사유 */
+    private String rejectionReason;
 }

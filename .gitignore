@@ -29,6 +29,7 @@ dist/
 
 # Gradle / Spring Boot build output
 .gradle/
+.gradle-codex-check/
 build/
 
 # IDE / OS

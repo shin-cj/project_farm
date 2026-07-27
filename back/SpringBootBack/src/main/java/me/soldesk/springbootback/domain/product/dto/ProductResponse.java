@@ -60,6 +60,9 @@ public class ProductResponse {
     /** 상품 판매 상태 */
     private String productStatus;
 
+    /*거절 사유*/
+    private String rejectionReason;
+
     /** 상품 등록 일시 */
     private LocalDateTime createdAt;
 
