@@ -73,6 +73,13 @@ public class ChatbotService {
         return response;
     }
 
+    @Transactional(readOnly = true)
+    public List<RecommendedProductResponse> refreshMatchedProducts(
+            List<String> searchIngredients
+    ){
+        return findLowestPriceVegetableProducts(searchIngredients);
+    }
+
     private List<RecommendedProductResponse> findLowestPriceVegetableProducts(List<String> ingredients) {
         List<RecommendedProductResponse> result = new ArrayList<>();
 
@@ -112,6 +119,8 @@ public class ChatbotService {
                 recommended.setUnit(product .getUnit());
                 recommended.setProductImageUrl(product.getProductImageUrl());
                 recommended.setSaleType(saleType);
+                recommended.setMinOrderQuantity(product.getMinOrderQuantity());
+                recommended.setStockQuantity(product.getStockQuantity());
                 result.add(recommended);
 
             }
