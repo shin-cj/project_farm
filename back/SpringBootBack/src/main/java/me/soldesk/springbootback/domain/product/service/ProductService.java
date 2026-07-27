@@ -285,6 +285,8 @@ public class ProductService {
         // 관리자가 다시 확인할 수 있도록 승인 대기 상태로 변경합니다.
         product.setProductStatus("PENDING");
 
+        product.setRejectionReason(null);
+
         applyStockStatus(product);
 
         //상품을 수정한 현재 시간으로 변경
@@ -401,6 +403,7 @@ public class ProductService {
         }
 
         product.setProductStatus("ON_SALE");
+        product.setRejectionReason(null);
 
         applyStockStatus(product);
 
@@ -412,7 +415,7 @@ public class ProductService {
     }
 
     // 관리자가 승인 대기 상품을 거절
-    public ProductResponse rejectProduct(Long productId) {
+    public ProductResponse rejectProduct(Long productId, ProductStatusRequest request) {
 
         Product product = productRepository
                 .findById(productId)
@@ -428,7 +431,27 @@ public class ProductService {
             );
         }
 
+        if (request == null
+                || request.getRejectionReason() == null
+                || request.getRejectionReason().isBlank()) {
+
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 거절 사유를 입력해주세요."
+            );
+        }
+
+        String rejectionReason = request.getRejectionReason().trim();
+
+        if (rejectionReason.length() > 500) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 거절 사유는 500자 이하로 입력해주세요."
+            );
+        }
+
         product.setProductStatus("REJECTED");
+        product.setRejectionReason(rejectionReason);
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
@@ -575,6 +598,7 @@ public class ProductService {
         response.setExpirationDate(product.getExpirationDate());
         response.setProductImageUrl(product.getProductImageUrl());
         response.setProductStatus(product.getProductStatus());
+        response.setRejectionReason(product.getRejectionReason());
         response.setCreatedAt(product.getCreatedAt());
         response.setUpdatedAt(product.getUpdatedAt());
         response.setSameDayDelivery(product.getSameDayDelivery());

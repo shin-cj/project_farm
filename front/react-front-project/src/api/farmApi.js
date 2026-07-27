@@ -64,10 +64,17 @@ export async function deleteFarm(farmId, sellerId) {
 }
 
 // 관리자가 농장의 승인 상태를 변경합니다.
-export async function updateFarmApprovalStatus(farmId, approvalStatus) {
+export async function updateFarmApprovalStatus(
+    farmId,
+    approvalStatus,
+    rejectionReason = null
+) {
     const response = await axios.patch(
         `/api/farms/${farmId}/approval`,
-        { approvalStatus }
+        {
+            approvalStatus,
+            rejectionReason,
+        }
     )
 
     return response.data

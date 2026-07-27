@@ -215,6 +215,8 @@ public class FarmService {
 
         farm.setApprovalStatus("PENDING");
 
+        farm.setRejectionReason(null);
+
         farm.setUpdatedAt(LocalDateTime.now());
 
         Farm savedFarm = farmRepository.save(farm);
@@ -256,6 +258,24 @@ public class FarmService {
             );
         }
 
+        String rejectionReason = null;
+
+        if("REJECTED".equals(nextStatus)){
+            if(request.getRejectionReason() == null || request.getRejectionReason().isBlank()){
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "농장 거절 사유를 입력해주세요."
+                );
+            }
+
+            rejectionReason = request.getRejectionReason().trim();
+            
+            if(rejectionReason.length() > 500){
+                throw  new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "농장 거절 사유는 500자 이하로 입력해주세요"
+                );
+            }
+        }
+
         Farm farm = farmRepository
                 .findById(farmId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -264,6 +284,7 @@ public class FarmService {
                 ));
 
         farm.setApprovalStatus(nextStatus);
+        farm.setRejectionReason(rejectionReason);
         farm.setUpdatedAt(LocalDateTime.now());
 
         Farm savedFarm = farmRepository.save(farm);
@@ -374,6 +395,7 @@ public class FarmService {
         response.setFarmImageUrl(farm.getFarmImageUrl());
         response.setSaleType(farm.getSaleType());
         response.setApprovalStatus(farm.getApprovalStatus());
+        response.setRejectionReason(farm.getRejectionReason());
         response.setCreatedAt(farm.getCreatedAt());
         response.setUpdatedAt(farm.getUpdatedAt());
 
