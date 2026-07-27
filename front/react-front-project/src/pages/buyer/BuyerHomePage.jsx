@@ -200,7 +200,7 @@ function BuyerHomePage() {
         setRankingData(response.data)
       } catch (error) {
         setRankingData(null)
-        setErrorMessage(error.response?.data?.message || '시세 랭킹을 불러오지 못했습니다.')
+        setErrorMessage('시세 랭킹을 불러오지 못했습니다.')
       } finally {
         setIsLoading(false)
       }
@@ -222,7 +222,7 @@ function BuyerHomePage() {
         setTodayRankingData(response.data)
       } catch (error) {
         setTodayRankingData(null)
-        setTodayErrorMessage(error.response?.data?.message || '오늘의 시세를 불러오지 못했습니다.')
+        setTodayErrorMessage('오늘의 시세를 불러오지 못했습니다.')
       } finally {
         setIsTodayLoading(false)
       }
@@ -477,7 +477,7 @@ function BuyerHomePage() {
 
           <div className="buyer-home-hero-actions">
             <button type="button" onClick={() => navigate('/market-prices')}>
-              지역 시세 보기
+              시세 보기
             </button>
             <button type="button" className="secondary" onClick={() => navigate('/products')}>
               상품 보러가기

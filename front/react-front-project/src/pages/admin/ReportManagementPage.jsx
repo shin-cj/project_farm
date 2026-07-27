@@ -239,12 +239,8 @@ function ReportManagementPage() {
     } catch (requestError) {
       console.error(requestError);
 
-      setError(
-          requestError.response?.data?.message ||
-          "신고 상태를 변경하지 못했습니다."
-      );
-      alert(requestError.response?.data?.message ||
-            "신고 상태를 변경하지 못했습니다.")
+      setError("신고 상태를 변경하지 못했습니다.");
+      alert("신고 상태를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.")
     } finally {
       setUpdatingId(null);
     }
@@ -309,10 +305,8 @@ function ReportManagementPage() {
     }catch (e){
       console.error(e)
 
-      setError(
-          e.response?.data?.message || "답변을 등록하지 못했습니다."
-      )
-      alert(e.response?.data?.message || "답변을 등록하지 못했습니다.")
+      setError("답변을 등록하지 못했습니다.")
+      alert("답변을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.")
     }finally {
       setReplyingId(null)
     }
@@ -332,13 +326,8 @@ function ReportManagementPage() {
     }catch (e){
       console.error(e)
 
-      setPenaltyError(
-          e.response?.data?.message ||
-          "페널티 처리 내역을 불러오지 못했습니다."
-      )
-
-      alert(e.response?.data?.message ||
-            "페널티 처리 내역을 불러오지 못했습니다.")
+      setPenaltyError("페널티 처리 내역을 불러오지 못했습니다.")
+      alert("페널티 처리 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.")
     }finally {
       setPenaltyLoading(false)
     }

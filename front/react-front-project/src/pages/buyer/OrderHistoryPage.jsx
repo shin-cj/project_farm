@@ -150,7 +150,7 @@ function OrderHistoryPage() {
       alert("주문 취소가 완료되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "주문 취소에 실패했습니다.");
+      alert("주문 취소에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setCancelingOrderId(null);
     }
@@ -180,7 +180,7 @@ function OrderHistoryPage() {
       alert("환불 요청이 접수되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "환불 요청에 실패했습니다.");
+      alert("환불 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   }
 

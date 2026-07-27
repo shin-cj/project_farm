@@ -1,21 +1,3 @@
-export function getApiErrorMessage(error, fallbackMessage) {
-    const responseData = error?.response?.data
-
-    if (typeof responseData === 'string' && responseData.trim()) {
-        return responseData
-    }
-
-    if (responseData?.detail) {
-        return responseData.detail
-    }
-
-    if (responseData?.message) {
-        return responseData.message
-    }
-
-    if (!error?.response && error?.message) {
-        return error.message
-    }
-
-    return fallbackMessage
+export function getApiErrorMessage(_error, fallbackMessage) {
+    return fallbackMessage || '요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.'
 }

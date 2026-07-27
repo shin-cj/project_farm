@@ -60,7 +60,7 @@ function SalesStatisticsPage() {
         setSalesTrend(trendResponse.data);
       } catch (err) {
         console.error(err);
-        setError(err.message || "판매 통계를 불러오지 못했습니다.");
+        setError("판매 통계를 불러오지 못했습니다.");
       } finally {
         setLoading(false);
       }
@@ -270,6 +270,7 @@ function SalesStatisticsPage() {
                       onMouseEnter={(event) =>
                         setHoveredTrend({
                           ...item,
+                          type: "sales",
                           x: event.clientX,
                           y: event.clientY,
                         })
@@ -325,6 +326,26 @@ function SalesStatisticsPage() {
                       left: `${point.x}%`,
                       top: `${point.y}%`,
                     }}
+                      onMouseEnter={(event) =>
+                      setHoveredTrend({
+                        ...point,
+                        type: "orders",
+                        x: event.clientX,
+                        y: event.clientY,
+                      })
+                    }
+                    onMouseMove={(event) =>
+                      setHoveredTrend((current) =>
+                        current
+                          ? {
+                              ...current,
+                              x: event.clientX,
+                              y: event.clientY,
+                            }
+                          : current
+                      )
+                    }
+                    onMouseLeave={() => setHoveredTrend(null)}
                   />
                 ))}
               </div>
@@ -584,8 +605,11 @@ function SalesStatisticsPage() {
           }}
         >
           <strong>{hoveredTrend.date}</strong>
-          <span>매출: {hoveredTrend.sales.toLocaleString()}원</span>
-          <span>주문 수: {hoveredTrend.orderCount}건</span>
+          {hoveredTrend.type === "orders" ? (
+            <span>주문 수: {hoveredTrend.orderCount}건</span>
+          ) : (
+            <span>매출: {hoveredTrend.sales.toLocaleString()}원</span>
+          )}
         </div>
       )}
     </main>

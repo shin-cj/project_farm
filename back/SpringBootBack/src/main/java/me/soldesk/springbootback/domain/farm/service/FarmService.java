@@ -151,7 +151,7 @@ public class FarmService {
     //새로운 농장 생성
     public FarmResponse createFarm(FarmRequest request) {
 
-        validateFarmRequest(request);
+        validateFarmRequest(request, true);
 
         if(request.getBusinessNumber() != null
         && farmRepository.existsByBusinessNumber(request.getBusinessNumber())){
@@ -173,7 +173,7 @@ public class FarmService {
     //농장 수정
     public FarmResponse updateFarm(Long farmId, FarmRequest request) {
 
-        validateFarmRequest(request);
+        validateFarmRequest(request, false);
 
         if (request.getBusinessNumber() != null
                 && farmRepository.existsByBusinessNumberAndFarmIdNot(
@@ -403,7 +403,10 @@ public class FarmService {
     }
 
     //농장 등록, 수정 전에 유효성 검사 메소드
-    private void validateFarmRequest(FarmRequest request) {
+    private void validateFarmRequest(
+            FarmRequest request,
+            boolean requireCompleteRegistration
+    ) {
 
         if (request == null) {
             throw new ResponseStatusException(
@@ -474,6 +477,33 @@ public class FarmService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "농장 주소를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getFarmDetailAddress() == null
+                || request.getFarmDetailAddress().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 상세 주소를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getFarmDescription() == null
+                || request.getFarmDescription().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 소개를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getFarmImageUrl() == null
+                || request.getFarmImageUrl().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 대표 이미지를 등록해주세요."
             );
         }
 

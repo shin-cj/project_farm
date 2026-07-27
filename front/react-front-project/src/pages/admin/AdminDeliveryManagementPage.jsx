@@ -20,6 +20,10 @@ const saleTypeLabel = {
   WHOLESALE: "도매",
 };
 
+function getDeliveryTypeLabel(deliveryType) {
+  return deliveryType === "SAME_DAY" ? "당일배송" : "택배배송";
+}
+
 function formatDate(value) {
   if (!value) {
     return "-";
@@ -157,7 +161,7 @@ function AdminDeliveryManagementPage() {
       alert("환불이 승인되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "환불 승인에 실패했습니다.");
+      alert("환불 승인에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   }
 
@@ -180,7 +184,7 @@ function AdminDeliveryManagementPage() {
       alert("환불 요청이 반려되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "환불 반려에 실패했습니다.");
+      alert("환불 반려에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   }
 
@@ -284,6 +288,21 @@ function AdminDeliveryManagementPage() {
                     {ORDER_STATUS_LABEL[order.orderStatus]}
                   </span>
                 )}
+                <span
+                  style={{
+                    display: "inline-flex",
+                    marginBottom: "10px",
+                    marginLeft: isCanceled || isRefundRequested || isRefunded ? "8px" : 0,
+                    padding: "6px 10px",
+                    borderRadius: "999px",
+                    background: order.deliveryType === "SAME_DAY" ? "#fff4d6" : "#eef3ee",
+                    color: order.deliveryType === "SAME_DAY" ? "#8a4b08" : "#405348",
+                    fontWeight: 900,
+                    fontSize: "0.82rem",
+                  }}
+                >
+                  {getDeliveryTypeLabel(order.deliveryType)}
+                </span>
                 <strong style={{ display: "block", color: "#213328", fontSize: "1.05rem" }}>
                   주문번호 {order.orderNumber || order.orderId}
                 </strong>
@@ -510,8 +529,28 @@ function AdminDeliveryManagementPage() {
                     </div>
                   )}
 
+                  {(order.deliveryPersonName || order.deliveryPersonPhone || order.deliveryMemo) && (
+                    <div style={{ marginBottom: "10px", color: "#68756d" }}>
+                      {order.deliveryPersonName && (
+                        <span style={{ display: "block" }}>
+                          라이더: {order.deliveryPersonName}
+                        </span>
+                      )}
+                      {order.deliveryPersonPhone && (
+                        <span style={{ display: "block" }}>
+                          전화번호: {order.deliveryPersonPhone}
+                        </span>
+                      )}
+                      {order.deliveryMemo && (
+                        <span style={{ display: "block" }}>
+                          전달사항: {order.deliveryMemo}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <select
-                    value={order.deliveryStatus}
+                    value={order.deliveryStatus === "READY" ? "" : order.deliveryStatus}
                     onChange={(event) => handleStatusChange(order, event.target.value)}
                     disabled={!canChangeDelivery}
                     style={{
@@ -524,7 +563,7 @@ function AdminDeliveryManagementPage() {
                       cursor: canChangeDelivery ? "pointer" : "not-allowed",
                     }}
                   >
-                    <option value="READY">배송 준비중</option>
+                    <option value="" disabled>상태 선택</option>
                     <option value="SHIPPING">배송 중</option>
                     <option value="DELIVERED">배송 완료</option>
                   </select>
