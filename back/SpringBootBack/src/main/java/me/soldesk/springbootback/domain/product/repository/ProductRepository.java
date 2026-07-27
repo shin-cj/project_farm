@@ -14,18 +14,22 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByCategoryId(Long categoryId);
     @Query(value = """
-    SELECT *
-    FROM products
-    WHERE product_name LIKE '%' || :keyword || '%'
-        AND product_status = :status
-        AND stock_quantity > :stockQuantity
-    ORDER BY price ASC
+    SELECT p.*
+    FROM products p
+    JOIN farms f
+      ON f.farm_id = p.farm_id
+    WHERE p.product_name LIKE '%' || :keyword || '%'
+      AND p.product_status = :status
+      AND p.stock_quantity > :stockQuantity
+      AND f.sale_type = 'RETAIL'
+    ORDER BY p.price ASC
     FETCH FIRST 1 ROWS ONLY
     """, nativeQuery = true)
     Optional<Product> findLowestPriceProductByKeyword(
             @Param("keyword") String productName,
-            @Param("status")String productStatus,
-            @Param("stockQuantity")Integer stockQuantity);
+            @Param("status") String productStatus,
+            @Param("stockQuantity") Integer stockQuantity
+    );
 
     List<Product> findByFarmId(Long farmId);
     
