@@ -46,4 +46,6 @@ public class ReportResponse {
 
     private String productName;
 
+    private Long farmId;
+
 }

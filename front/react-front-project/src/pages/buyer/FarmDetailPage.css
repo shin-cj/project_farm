@@ -273,6 +273,29 @@
     color: #768078;
 }
 
+.farm-detail-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.farm-detail-product-link,
+.farm-detail-report-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+.farm-detail-report-button {
+    padding: 0 14px;
+    border-radius: 8px;
+}
+
 @media (max-width: 900px) {
     .farm-detail-hero {
         grid-template-columns: 1fr;
@@ -304,4 +327,15 @@
     .farm-detail-product-grid {
         grid-template-columns: 1fr;
     }
+
+    .farm-detail-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .farm-detail-product-link,
+    .farm-detail-report-button {
+        flex: 1;
+    }
+
 }

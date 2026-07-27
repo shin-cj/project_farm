@@ -6,6 +6,19 @@ import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 import './FarmDetailPage.css'
+import ReportButton from "../../components/report/ReportButton.jsx";
+
+
+function getLoginUser(){
+  try {
+    const value = localStorage.getItem("loginUser");
+    return value ? JSON.parse(value) : null;
+  } catch {
+    localStorage.removeItem("loginUser");
+    return null;
+  }
+}
+
 
 function formatPrice(value) {
   return `${Number(value || 0).toLocaleString()}원`
@@ -14,7 +27,8 @@ function formatPrice(value) {
 function FarmDetailPage() {
   const { farmId } = useParams()
   const navigate = useNavigate()
-
+  const loginUser = getLoginUser()
+  const reporterId = loginUser?.userId
   const [farm, setFarm] = useState(null)
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -118,10 +132,17 @@ function FarmDetailPage() {
 
               <h1>{farm.farmName}</h1>
             </div>
-
-            <Link className="farm-detail-product-link" to="/products">
-              상품 보러가기
-            </Link>
+            <div className="farm-detail-actions">
+                <Link className="farm-detail-product-link" to="/products">
+                  상품 보러가기
+                </Link>
+                <ReportButton
+                  farmId={farm.farmId}
+                  reporterId={reporterId}
+                  reportType="FARM"
+                  targetLabel={farm.farmName}
+                  className="farm-detail-report-button"/>
+            </div>
           </div>
 
           <span

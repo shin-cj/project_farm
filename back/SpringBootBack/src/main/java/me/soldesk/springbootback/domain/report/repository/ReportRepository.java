@@ -57,6 +57,8 @@ public interface ReportRepository extends JpaRepository<Report,Long> {
         reporter.email     AS "reporterEmail",
 
         r.reported_user_id AS "reportedUserId",
+
+        r.farm_id          AS "farmId",
         f.farm_name        AS "reportedFarmName",
 
         r.product_id       AS "productId",
@@ -80,7 +82,7 @@ public interface ReportRepository extends JpaRepository<Report,Long> {
       ON p.product_id = r.product_id
 
     LEFT JOIN farms f
-      ON f.farm_id = p.farm_id
+      ON f.farm_id = COALESCE(r.farm_id, p.farm_id)
      AND f.seller_id = r.reported_user_id
 
     WHERE (:reportId IS NULL OR r.report_id = :reportId)
