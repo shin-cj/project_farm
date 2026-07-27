@@ -71,4 +71,7 @@ public class Report {
     @Column(name = "replied_by")
     private Long repliedBy;
 
+    @Column(name = "farm_id")
+    private Long farmId;
+
 }

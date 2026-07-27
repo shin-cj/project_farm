@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ChatbotRepository extends JpaRepository<Chatbot, Long> {
 
@@ -18,5 +19,7 @@ public interface ChatbotRepository extends JpaRepository<Chatbot, Long> {
         ORDER BY c.createdAt DESC
     """)
     List<Chatbot> findSavedRecipesByUserId(@Param("userId") Long userId);
+
+    Optional<Chatbot> findByChatbotIdAndUserId(Long chatbotId, Long userId);
 
 }

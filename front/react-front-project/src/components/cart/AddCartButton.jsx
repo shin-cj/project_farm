@@ -46,9 +46,7 @@ function AddCartButton({
         } catch (e) {
             console.error(e)
 
-            const message = e.response?.data?.detail ?? e.response?.data?.message ??
-                '장바구니 담기에 실패했습니다.'
-            alert(message)
+            alert('장바구니 담기에 실패했습니다. 잠시 후 다시 시도해주세요.')
         } finally {
             setLoading(false)
         }

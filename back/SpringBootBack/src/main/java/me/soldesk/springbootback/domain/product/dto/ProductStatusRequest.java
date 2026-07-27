@@ -9,4 +9,7 @@ import lombok.Setter;
 public class ProductStatusRequest {
 
     private String productStatus;
+
+    /** 관리자가 상품 거절 시 작성한 사유 */
+    private String rejectionReason;
 }

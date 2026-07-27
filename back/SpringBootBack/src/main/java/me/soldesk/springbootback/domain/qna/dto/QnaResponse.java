@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Getter
 // 모든 필드의 setter 메서드를 Lombok이 자동 생성합니다.
 @Setter
+
 public class QnaResponse {
 
     /** 상품 문의 고유 번호 */
@@ -19,6 +20,9 @@ public class QnaResponse {
 
     /** 질문 작성자 회원 번호 */
     private Long buyerId;
+
+    /** 질문 작성자 이름 */
+    private String buyerName;
 
     /** 문의 제목 */
     private String questionTitle;

@@ -113,19 +113,10 @@ public class AdminUserService {
         boolean seller =
                 Long.valueOf(3L).equals(user.getRoleId());
 
-        if(!seller){
-            response.setFarmIds(null);
-            response.setFarmNames(null);
-            response.setFarmCount(0L);
-            response.setActivePenaltyPoints(0L);
-            response.setTotalPenaltyPoints(0L);
-            return;
-        }
-
         List<Farm> farms =
-                farmRepository.findBySellerId(
-                        user.getUserId()
-                );
+                seller ? farmRepository.findBySellerId(user.getUserId())
+                        : List.of();
+
 
         List<SellerPenalty> penalties =
                 sellerPenaltyRepository

@@ -17,8 +17,14 @@ public class QnaController {
 
     private final QnaService qnaService;
 
-    // 1. QnA 등록 API
-    @PostMapping("/create")
+    // 0. 기본 /api/qna 경로로 GET 요청이 올 때 (Method Not Allowed 방지용)
+    @GetMapping
+    public ResponseEntity<List<QnaResponse>> getAllQnaListAlt() {
+        return ResponseEntity.ok(qnaService.getAllQnas());
+    }
+
+    // 1. QnA 등록 API (POST /api/qna)
+    @PostMapping
     public ResponseEntity<String> createQna(@RequestBody QnaRequest request) {
         qnaService.createQna(request);
         return ResponseEntity.ok("문의가 등록되었습니다.");
@@ -30,7 +36,7 @@ public class QnaController {
         return ResponseEntity.ok(qnaService.getQnasByProduct(productId));
     }
 
-    // 💡 3. 전체 QnA 목록 조회 API (여기에 추가되었습니다!)
+    // 3. 전체 QnA 목록 조회 API: GET /api/qna/all
     @GetMapping("/all")
     public ResponseEntity<List<QnaResponse>> getAllQnaList() {
         return ResponseEntity.ok(qnaService.getAllQnas());

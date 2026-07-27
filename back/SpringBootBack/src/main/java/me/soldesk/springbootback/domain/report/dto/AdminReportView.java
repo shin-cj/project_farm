@@ -22,4 +22,5 @@ public interface AdminReportView {
     String getAdminReply();
     LocalDateTime getRepliedAt();
     Long getRepliedBy();
+    Long getFarmId();
 }

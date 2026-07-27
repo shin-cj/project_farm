@@ -5,6 +5,7 @@ import "./ReportButton.css"
 
 const reportTypeLabels = {
     PRODUCT: "상품 신고",
+    FARM:"농장 신고",
     USER: "회원 신고",
     REVIEW: "리뷰 신고",
     CHATBOT: "챗봇 신고",
@@ -13,6 +14,7 @@ const reportTypeLabels = {
 
 function ReportButton({
     productId,
+    farmId,
     reporterId,
     reportType="PRODUCT",
     targetLabel,
@@ -25,6 +27,8 @@ function ReportButton({
     const [reportReason, setReportReason] = useState("")
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState("")
+    const reportLabel = reportTypeLabels[reportType] || "신고"
+
 
     function openReportModal(){
         if(!reporterId){
@@ -33,7 +37,10 @@ function ReportButton({
             return
         }
 
-        if(!productId){
+        const targetId =
+            reportType === "FARM" ? farmId : productId
+
+        if(!targetId){
             alert("신고 대상 정보를 불러오지 못했습니다.")
             return
         }
@@ -66,7 +73,8 @@ function ReportButton({
             setError("")
 
             const response = await reportApi.createRort({
-                productId,
+                productId: reportType === "PRODUCT" ? productId : null,
+                farmId: reportType === "FARM" ? farmId : null,
                 reporterId,
                 reportType,
                 reportReason: trimmedReason,
@@ -83,10 +91,7 @@ function ReportButton({
         }catch (e){
             console.error(e)
 
-            setError(
-                e.response?.data?.message ||
-                e.response.data || "신고를 접수하지 못했습니다."
-            )
+            setError("신고를 접수하지 못했습니다. 잠시 후 다시 시도해주세요.")
         }finally {
             setSubmitting(false)
         }
@@ -99,7 +104,7 @@ function ReportButton({
             className={`report-open-button ${className}`.trim()}
             onClick={openReportModal}
         >
-            상품 신고
+            {reportLabel}
         </button>
 
     {isOpen && (
@@ -109,7 +114,7 @@ function ReportButton({
                 role="dialog"
                 aria-modal="true">
                 <header>
-                    <h2>상품 신고</h2>
+                    <h2>{reportLabel}</h2>
                     <button
                         type="button"
                         onClick={closeReportModal}
@@ -121,7 +126,12 @@ function ReportButton({
 
                     <form onSubmit={handleSubmit}>
                         <p>
-                            신고 대상 : {targetLabel || `상품 ${productId}번`}
+                            신고 대상 : {targetLabel || (
+                                reportType === "FARM"
+                                ? `농장${farmId}번`
+                                : `상품 ${productId}번`
+
+                        )}
                         </p>
 
                         <label htmlFor="report-type">

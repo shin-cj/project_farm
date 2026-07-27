@@ -807,11 +807,68 @@
     padding: 18px;
 }
 
-.recipe-product-panel > h2 {
-    margin: 0 0 14px;
+.recipe-product-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
     padding-bottom: 12px;
     border-bottom: 1px solid #e4e9e5;
+}
+
+.recipe-product-header > h2 {
+    margin: 0;
     font-size: 15px;
+}
+
+.recipe-sale-tabs {
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(44px, 1fr));
+    flex: 0 0 auto;
+    padding: 3px;
+    border: 1px solid #d4ded7;
+    border-radius: 6px;
+    background: #f2f6f3;
+}
+
+.recipe-sale-tabs > button {
+    min-width: 44px;
+    height: 30px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #617067;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        color 160ms ease,
+        box-shadow 160ms ease,
+        transform 100ms ease;
+}
+
+.recipe-sale-tabs > button:hover {
+    color: #1f6f3d;
+    background: #e7f1e9;
+}
+
+.recipe-sale-tabs > button:active {
+    transform: translateY(1px);
+}
+
+.recipe-sale-tabs > button.active {
+    color: #fff;
+    background: #237a43;
+    box-shadow: 0 1px 4px rgba(31, 111, 61, 0.2);
+}
+
+.recipe-sale-tabs > button:focus-visible {
+    outline: 2px solid #7fb58d;
+    outline-offset: 2px;
 }
 
 .chatbot-product-card {
@@ -851,6 +908,131 @@
     color: #38483e;
     font-size: 12px;
     font-weight: 700;
+}
+
+.chatbot-product-quantity {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px 10px;
+    margin-top: 8px;
+    padding-top: 10px;
+    align-items: center;
+    border-top: 1px solid #edf1ee;
+}
+
+.chatbot-product-quantity-label {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 6px;
+}
+
+.chatbot-product-quantity-label > strong {
+    color: #314238;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.chatbot-product-quantity-label > span {
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: #eef5f0;
+    color: #54705d;
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.chatbot-product-quantity-control {
+    display: grid;
+    grid-template-columns: 24px 44px 24px;
+    height: 28px;
+    overflow: hidden;
+    border: 1px solid #bfd0c3;
+    border-radius: 6px;
+    background: #fbfdfb;
+    box-shadow: 0 1px 3px rgba(31, 78, 45, 0.08);
+}
+
+.chatbot-product-quantity-control > button,
+.chatbot-product-quantity-control > input {
+    width: 100%;
+    min-width: 0;
+    height: 28px;
+    box-sizing: border-box;
+    border: 0;
+    background: transparent;
+    color: #2f4235;
+    font: inherit;
+    font-size: 12px;
+    text-align: center;
+}
+
+.chatbot-product-quantity-control > button {
+    padding: 0;
+    background: #edf5ef;
+    color: #28623a;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease,
+        transform 80ms ease;
+}
+
+.chatbot-product-quantity-control > button:hover:not(:disabled) {
+    background: #dcecdf;
+    color: #18592d;
+    box-shadow: inset 0 0 0 1px rgba(33, 107, 58, 0.12);
+}
+
+.chatbot-product-quantity-control > button:active:not(:disabled) {
+    background: #cce2d1;
+    box-shadow: inset 0 2px 4px rgba(31, 78, 45, 0.16);
+    transform: scale(0.9);
+}
+
+.chatbot-product-quantity-control > button:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid #4d8b60;
+    outline-offset: -2px;
+}
+
+.chatbot-product-quantity-control > button:disabled {
+    background: #f7f9f7;
+    color: #bdc6bf;
+    cursor: default;
+}
+
+.chatbot-product-quantity-control > input {
+    border-right: 1px solid #dce5de;
+    border-left: 1px solid #dce5de;
+    outline: none;
+    background: #fff;
+    color: #233b2b;
+    font-weight: 700;
+    appearance: textfield;
+}
+
+.chatbot-product-quantity-control > input::-webkit-inner-spin-button,
+.chatbot-product-quantity-control > input::-webkit-outer-spin-button {
+    margin: 0;
+    appearance: none;
+}
+
+.chatbot-product-quantity-control > input:focus {
+    background: #f5faf6;
+    box-shadow: inset 0 0 0 2px rgba(33, 107, 58, 0.12);
+}
+
+.chatbot-product-quantity > small {
+    grid-column: 1 / -1;
+    color: #7b887f;
+    font-size: 10px;
+    text-align: right;
 }
 
 .chatbot-product-card > button {

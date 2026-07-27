@@ -37,7 +37,7 @@
 .admin-user-header p {
     margin: 8px 0 0;
     color: #65736a;
-    font-size: 0.9rem;
+    font-size: 0.96rem;
     font-weight: 700;
 }
 
@@ -53,7 +53,7 @@
     background-color: #ffffff;
     color: #2f4036;
     font: inherit;
-    font-size: 0.86rem;
+    font-size: 0.92rem;
     font-weight: 750;
     cursor: pointer;
     transition:
@@ -99,7 +99,7 @@
     background: #ffffff;
     color: #213328;
     font: inherit;
-    font-size: 0.9rem;
+    font-size: 0.96rem;
     transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -125,7 +125,7 @@
     background: #2d7e4b;
     color: #ffffff;
     font: inherit;
-    font-size: 0.88rem;
+    font-size: 0.94rem;
     font-weight: 800;
     white-space: nowrap;
     cursor: pointer;
@@ -172,7 +172,7 @@
     background: transparent;
     color: #5c6a61;
     font: inherit;
-    font-size: 0.84rem;
+    font-size: 0.9rem;
     font-weight: 800;
     cursor: pointer;
     transition: background-color 140ms ease, color 140ms ease,
@@ -201,7 +201,7 @@
     border-radius: 6px;
     background: #fff5f5;
     color: #a12c2c;
-    font-size: 0.88rem;
+    font-size: 0.94rem;
     font-weight: 700;
     text-align: center;
 }
@@ -230,7 +230,7 @@
     padding: 13px 12px;
     border-bottom: 1px solid #e7ece8;
     color: #314037;
-    font-size: 0.85rem;
+    font-size: 0.91rem;
     line-height: 1.45;
     text-align: center;
     vertical-align: middle;
@@ -239,7 +239,7 @@
 .admin-user-table th {
     background: #f3f6f4;
     color: #536158;
-    font-size: 0.78rem;
+    font-size: 0.84rem;
     font-weight: 800;
     white-space: nowrap;
 }
@@ -347,14 +347,14 @@
 .admin-user-table td:nth-child(6) span {
     margin-top: 3px;
     color: #7a867e;
-    font-size: 0.76rem;
+    font-size: 0.82rem;
 }
 
 .user-status {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 68px;
+    min-width: 74px;
     min-height: 27px;
     box-sizing: border-box;
     padding: 3px 9px;
@@ -362,7 +362,7 @@
     border-radius: 999px;
     background: #f6f8f6;
     color: #536158;
-    font-size: 0.75rem;
+    font-size: 0.82rem;
     font-weight: 800;
     white-space: nowrap;
 }
@@ -399,7 +399,7 @@
 .admin-user-pagination span {
     min-width: 72px;
     color: #536158;
-    font-size: 0.86rem;
+    font-size: 0.92rem;
     font-weight: 800;
     text-align: center;
     font-variant-numeric: tabular-nums;
@@ -414,7 +414,7 @@
     background: #ffffff;
     color: #344139;
     font: inherit;
-    font-size: 0.84rem;
+    font-size: 0.9rem;
     font-weight: 750;
     cursor: pointer;
     transition: background-color 130ms ease, border-color 130ms ease,

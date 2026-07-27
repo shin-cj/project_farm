@@ -202,9 +202,7 @@ function AdminDashboardPage() {
                 title: titles[type],
                 items: [],
                 loading: false,
-                error:
-                    error.response?.data?.message ||
-                    "목록을 불러오지 못했습니다."
+                error: "목록을 불러오지 못했습니다."
             });
         }
     }

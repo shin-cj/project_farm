@@ -59,6 +59,7 @@ function ProgressCard({status}){
 
 function ChatbotPage() {
   const { confirm } = useAppFeedback()
+  const [productSaleType, setProductSaleType] = useState('RETAIL')
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
   const storageKey = `chatbotConversation-${userid ?? "guest"}`;
@@ -73,7 +74,72 @@ function ChatbotPage() {
   const [error, setError] = useState('')
   const [previousResponseId, setPreviousResponseId] = useState(firstConversation.previousResponseId ?? null)
   const [isHistoryVisible, setIsHistoryVisible] = useState(true)
+  const [productQuantities, setProductQuantities] = useState({})
   const chatScrollRef  = useRef(null);
+
+  const displayedProducts = (recipeResult?.matchedProducts ?? []).filter(
+      product => (product.saleType ?? 'RETAIL') === productSaleType
+  )
+
+  const changeProductQuantity = (product, nextQuantity) => {
+    const minimumQuantity = Math.max(1, Number(product.minOrderQuantity) || 1)
+    const stockQuantity = Math.max(
+        minimumQuantity,
+        Number(product.stockQuantity) || minimumQuantity
+    )
+    const numericQuantity = Number(nextQuantity)
+
+    if (!Number.isInteger(numericQuantity)) {
+      return
+    }
+
+    const quantity = Math.min(
+        stockQuantity,
+        Math.max(minimumQuantity, numericQuantity)
+    )
+    const quantityKey =
+        `${activeConversationId}-${product.saleType ?? 'RETAIL'}-${product.productId}`
+
+    setProductQuantities(previous => ({
+      ...previous,
+      [quantityKey]: quantity,
+    }))
+  }
+
+  const refreshRecipeProducts = async recipe => {
+    if(!recipe){
+      return null
+    }
+
+    if(!recipe.searchIngredients?.length){
+      setError('이전 대화에 상품 검색 정보가 없습니다. 새로 추천받아 주세요.')
+
+      return {
+        ...recipe,
+        matchedProducts: [],
+      }
+    }
+
+    try {
+      const {data} =
+            await chatbotApi.refreshMatchedProducts(
+                recipe.searchIngredients
+            )
+
+      return {
+        ...recipe,
+        matchedProducts: data,
+      }
+    }catch (e){
+      console.error(e)
+      setError('현재 판매 중인 상품 정보를 불러오지 못했습니다.')
+
+      return {
+        ...recipe,
+        matchedProducts: [],
+      }
+    }
+  }
 
   useEffect(() => {
     const chatArea = chatScrollRef.current
@@ -174,6 +240,7 @@ function ChatbotPage() {
         )
       )
       if(data.responseType === 'RECIPE'){
+        setProductSaleType('RETAIL')
         setRecipeResult(data)
       }
 
@@ -197,13 +264,24 @@ function ChatbotPage() {
     }
   }
 
-  const selectConversation = conversation => {
+  const selectConversation = async conversation => {
+    const savedRecipe = conversation.recipeResult ?? null
+
     setActiveConversationId(conversation.id);
     setChatItems(conversation.chatItems ?? []);
-    setRecipeResult(conversation.recipeResult ?? null);
+    setRecipeResult(savedRecipe);
     setPreviousResponseId(conversation.previousResponseId ?? null);
     setMessage('')
     setError('')
+
+    if(!savedRecipe){
+      return
+    }
+
+    const refreshedRecipe =
+        await refreshRecipeProducts(savedRecipe)
+
+    setRecipeResult(refreshedRecipe)
   };
 
   const deleteConversation = async id => {
@@ -252,6 +330,7 @@ function ChatbotPage() {
     setActiveConversationId(conversation.id)
     setChatItems([])
     setRecipeResult(null)
+    setProductSaleType('RETAIL')
     setPreviousResponseId(null)
     setMessage('')
     setError('')
@@ -268,7 +347,9 @@ function ChatbotPage() {
         user_id: userid,
         obj1:recipeResult.obj1,
         recipeTitle:recipeResult.recipeTitle,
-        recipe:recipeResult.recipe,
+        recipe: recipeResult.recipeSteps?.length
+            ? recipeResult.recipeSteps.join("\n")
+            : recipeResult.recipe,
         remark:recipeResult.remark,
       })
       alert('레시피가 저장되었습니다.')
@@ -282,6 +363,7 @@ function ChatbotPage() {
         hour: '2-digit',
         minute: '2-digit'
       })
+
 
 
   return (
@@ -399,7 +481,13 @@ function ChatbotPage() {
 
                           <button
                               className="recipe-answer"
-                              onClick={() => setRecipeResult(item.response)}
+                              onClick={async () => {
+                                setError('')
+
+                                const refreshedRecipe =
+                                    await refreshRecipeProducts(item.response)
+                                setRecipeResult(refreshedRecipe)
+                              }}
                           >
                             <strong>{item.response.recipeTitle}</strong>
                             <span>레시피와 추천 상품을 확인해보세요.</span>
@@ -472,25 +560,108 @@ function ChatbotPage() {
           </main>
         {/*오른쪽 추천 상품*/}
         <aside className="recipe-product-panel">
-          <h2>추천 상품</h2>
+          <div className="recipe-product-header">
+            <h2>추천 상품</h2>
 
-          {recipeResult?.matchedProducts?.length > 0
-          ? recipeResult.matchedProducts.map((product) => (
-              <div className="chatbot-product-card" key={product.productId}>
-                {product.productImageUrl && (
-                    <img src = {product.productImageUrl} alt = {product.productName} />
-                )}
-                <span>{product.ingredientName}</span>
-                <strong>{product.productName}</strong>
-                <p>{product.price.toLocaleString()}원 / {product.unit}</p>
+            <div className="recipe-sale-tabs" role="group" aria-label="판매 유형">
+              <button
+                  type="button"
+                  className={productSaleType === 'RETAIL' ? 'active' : ''}
+                  aria-pressed={productSaleType === 'RETAIL'}
+                  onClick={() => setProductSaleType('RETAIL')}>
+                소매
+              </button>
 
-                <AddCartButton
-                  productId={product.productId}
-                  userid={userid}
-                />
-              </div>
-              ))
-            : <p className="empty-products">연결된 판매 상품이 없습니다.</p>
+              <button
+                  type="button"
+                  className={productSaleType === 'WHOLESALE' ? 'active' : ''}
+                  aria-pressed={productSaleType === 'WHOLESALE'}
+                  onClick={() => setProductSaleType('WHOLESALE')}>
+                도매
+              </button>
+            </div>
+          </div>
+
+          {displayedProducts.length > 0
+          ? displayedProducts.map((product) => {
+              const minimumQuantity =
+                  Math.max(1, Number(product.minOrderQuantity) || 1)
+              const stockQuantity = Math.max(
+                  minimumQuantity,
+                  Number(product.stockQuantity) || minimumQuantity
+              )
+              const quantityKey =
+                  `${activeConversationId}-${product.saleType ?? 'RETAIL'}-${product.productId}`
+              const quantity =
+                  productQuantities[quantityKey] ?? minimumQuantity
+
+              return (
+                  <div
+                      className="chatbot-product-card"
+                      key={`${product.saleType ?? 'RETAIL'}-${product.productId}-${product.ingredientName}`}>
+                    {product.productImageUrl && (
+                        <img src = {product.productImageUrl} alt = {product.productName} />
+                    )}
+                    <span>{product.ingredientName}</span>
+                    <strong>{product.productName}</strong>
+                    <p>{product.price.toLocaleString()}원 / {product.unit}</p>
+
+                    <div className="chatbot-product-quantity">
+                      <div className="chatbot-product-quantity-label">
+                        <strong>주문 수량</strong>
+                        <span>최소 {minimumQuantity}개</span>
+                      </div>
+
+                      <div className="chatbot-product-quantity-control">
+                        <button
+                            type="button"
+                            onClick={() => changeProductQuantity(product, quantity - 1)}
+                            disabled={quantity <= minimumQuantity}
+                            aria-label={`${product.productName} 수량 감소`}>
+                          -
+                        </button>
+
+                        <input
+                            type="number"
+                            min={minimumQuantity}
+                            max={stockQuantity}
+                            value={quantity}
+                            onChange={event =>
+                                changeProductQuantity(product, event.target.value)
+                            }
+                            aria-label={`${product.productName} 주문 수량`}
+                        />
+
+                        <button
+                            type="button"
+                            onClick={() => changeProductQuantity(product, quantity + 1)}
+                            disabled={quantity >= stockQuantity}
+                            aria-label={`${product.productName} 수량 증가`}>
+                          +
+                        </button>
+                      </div>
+
+                      <small>재고 {stockQuantity}개</small>
+                    </div>
+
+                    <AddCartButton
+                      productId={product.productId}
+                      userid={userid}
+                      quantity={quantity}
+                      disabled={
+                        quantity < minimumQuantity || quantity > stockQuantity
+                      }
+                    />
+                  </div>
+              )
+            })
+            : (
+                <p className="empty-products">
+                  {productSaleType === 'RETAIL'
+                      ? '추천 가능한 소매 상품이 없습니다.'
+                      : '추천 가능한 도매 상품이 없습니다.'}
+                </p>
+              )
           }
         </aside>
         </div>
