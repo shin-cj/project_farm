@@ -242,6 +242,18 @@ function ProductListPage() {
 
     return (
         <main className="product-list-page">
+
+            {/* 👈 좌측 (또는 우측) : 스크롤을 따라다닐 위젯 */}
+            {!loading && !error && appliedKeyword !== '' && (
+                <div className="floating-widget-container">
+                    <div className="sticky-widget-inner">
+                        <ProductListWidget
+                            keyword={appliedKeyword}
+                            saleType={saleTypeFilter}
+                        />
+                    </div>
+                </div>
+            )}
             <section
                 className={
                     wholesaleMode
@@ -576,8 +588,7 @@ function ProductListPage() {
                     </nav>
                 )}
             </section>
-            {!loading && !error && appliedKeyword != null && <ProductListWidget
-            keyword="appliedKeyword"/>}
+
         </main>
     )
 }

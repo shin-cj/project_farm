@@ -31,8 +31,8 @@ public class MarketPriceController {
     }
 
     @GetMapping("/sequel")
-    public ResponseEntity<MarketPriceSearchResponse> searchPriceProduct(){
-        MarketPriceSearchResponse data = marketPriceService.getPriceSequelJson();
+    public ResponseEntity<MarketPriceSearchResponse> searchPriceProduct(String keyword, String saleType){
+        MarketPriceSearchResponse data = marketPriceService.getPriceSequelJson(keyword, saleType);
         return ResponseEntity.ok(data);
     }
 
