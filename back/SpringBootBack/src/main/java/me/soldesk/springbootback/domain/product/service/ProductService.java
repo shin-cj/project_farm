@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -237,7 +238,7 @@ public class ProductService {
     public ProductResponse createProduct(ProductRequest request) {
 
         //유효성  검사 추가
-        validateProductRequest(request);
+        validateProductRequest(request, true);
 
         Product product = new Product();
 
@@ -267,7 +268,7 @@ public class ProductService {
     @Transactional
     public ProductResponse updateProduct(Long productId, ProductRequest request) {
 
-        validateProductRequest(request);
+        validateProductRequest(request, false);
 
         Product product = productRepository
                 .findById(productId)
@@ -607,7 +608,10 @@ public class ProductService {
     }
 
     // 상품 등록과 수정 전에 요청값을 검사합니다.
-    private void validateProductRequest(ProductRequest request) {
+    private void validateProductRequest(
+            ProductRequest request,
+            boolean requireCompleteRegistration
+    ) {
 
         // 요청 데이터 자체가 없는지 확인합니다.
         if (request == null) {
@@ -622,6 +626,15 @@ public class ProductService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "농장을 선택해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getMarketItemCode() == null
+                || request.getMarketItemCode().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "공공 시세 품목을 선택해주세요."
             );
         }
 
@@ -674,6 +687,15 @@ public class ProductService {
             );
         }
 
+        if (requireCompleteRegistration
+                && (request.getDescription() == null
+                || request.getDescription().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 설명을 입력해주세요."
+            );
+        }
+
         // 가격이 비어 있거나 0원 이하인지 확인합니다.
         if (request.getPrice() == null
                 || request.getPrice() <= 0) {
@@ -698,6 +720,58 @@ public class ProductService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "판매 단위를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getOrigin() == null
+                || request.getOrigin().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "원산지를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && request.getHarvestDate() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "수확일을 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && request.getExpirationDate() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "유통기한을 입력해주세요."
+            );
+        }
+
+        LocalDate minimumExpirationDate = LocalDate.now().plusDays(7);
+
+        if (requireCompleteRegistration
+                && request.getExpirationDate().isBefore(minimumExpirationDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "유통기한은 오늘부터 7일 이후여야 합니다."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && request.getHarvestDate().isAfter(request.getExpirationDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "수확일은 유통기한보다 늦을 수 없습니다."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getProductImageUrl() == null
+                || request.getProductImageUrl().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 이미지를 등록해주세요."
             );
         }
 

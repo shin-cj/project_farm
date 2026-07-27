@@ -23,7 +23,7 @@ function PenaltyRecoveryModal({ open, onClose }) {
             const response = await penaltyApi.getAdminList(status);
             setPenalties(response.data || []);
         } catch (e) {
-            setError(e.response?.data?.message || "제재 목록을 불러오지 못했습니다.");
+            setError("제재 목록을 불러오지 못했습니다.");
         } finally {
             setLoading(false);
         }
@@ -49,7 +49,7 @@ function PenaltyRecoveryModal({ open, onClose }) {
             setReason("");
             await loadPenalties();
         } catch (e) {
-            setError(e.response?.data?.message || "제재 복구에 실패했습니다.");
+            setError("제재 복구에 실패했습니다.");
         }
     }
 

@@ -1,0 +1,22 @@
+.market-item-code-picker { display: grid; gap: 7px; }
+.market-item-code-picker > label { color: #385343; font-size: 0.88rem; font-weight: 800; }
+.market-item-code-picker-control { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.market-item-code-picker-control input { min-width: 0; height: 42px; padding: 0 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; }
+.market-item-code-picker-control button { padding: 0 13px; border: 1px solid #2f7d32; border-radius: 9px; background: #fff; color: #236527; font-weight: 800; cursor: pointer; }
+.market-item-code-picker-control button:hover:not(:disabled) { background: #eef6e8; }
+.market-item-code-picker-control button:disabled { cursor: not-allowed; opacity: 0.55; }
+.market-item-code-picker > small { color: #728177; font-size: 0.75rem; }
+.market-item-code-picker-backdrop { position: fixed; z-index: 2100; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(19, 35, 28, 0.42); }
+.market-item-code-picker-modal { width: min(100%, 520px); max-height: min(680px, calc(100vh - 40px)); display: flex; flex-direction: column; padding: 24px; border: 1px solid #dce8d9; border-radius: 18px; background: #fff; box-shadow: 0 20px 55px rgba(19, 35, 28, 0.22); }
+.market-item-code-picker-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.market-item-code-picker-header p { margin: 0 0 5px; color: #438544; font-size: 0.78rem; font-weight: 800; }
+.market-item-code-picker-header h2 { margin: 0; color: #173c2a; font-size: 1.3rem; }
+.market-item-code-picker-close { width: 34px; height: 34px; border: 0; border-radius: 50%; background: #f2f6f0; color: #45604e; font-size: 1.4rem; cursor: pointer; }
+.market-item-code-picker-search { width: 100%; margin-top: 20px; padding: 12px 13px; border: 1px solid #cadac8; border-radius: 10px; outline-color: #438544; }
+.market-item-code-picker-guide { margin: 9px 0 13px; color: #728177; font-size: 0.84rem; }
+.market-item-code-picker-list { display: grid; gap: 8px; overflow-y: auto; padding-right: 2px; }
+.market-item-code-picker-list > button { display: grid; gap: 3px; padding: 12px 13px; border: 1px solid #e1e8dd; border-radius: 10px; background: #fff; color: #254131; text-align: left; cursor: pointer; }
+.market-item-code-picker-list > button:hover { border-color: #82ad7e; background: #f4f9f1; }
+.market-item-code-picker-list span { font-weight: 800; }
+.market-item-code-picker-list small { color: #718076; }
+.market-item-code-picker-empty { margin: 18px 0; color: #728177; text-align: center; }

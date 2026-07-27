@@ -60,7 +60,7 @@ function SalesStatisticsPage() {
         setSalesTrend(trendResponse.data);
       } catch (err) {
         console.error(err);
-        setError(err.message || "판매 통계를 불러오지 못했습니다.");
+        setError("판매 통계를 불러오지 못했습니다.");
       } finally {
         setLoading(false);
       }

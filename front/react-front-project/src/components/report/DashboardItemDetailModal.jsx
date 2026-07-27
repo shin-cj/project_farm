@@ -115,10 +115,7 @@ function DashboardItemDetailModal({
                 }
             } catch (requestError) {
                 if (active) {
-                    setError(
-                        requestError.response?.data?.message ||
-                        "상세 정보를 불러오지 못했습니다."
-                    );
+                    setError("상세 정보를 불러오지 못했습니다.");
                 }
             } finally {
                 if (active) {
