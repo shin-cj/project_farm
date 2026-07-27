@@ -60,10 +60,7 @@ function UserManagementPage() {
                 if (!active) return;
 
                 console.error("회원 목록 조회 실패", err);
-                setError(
-                    err.response?.data?.message ??
-                    "회원 목록을 불러오지 못했습니다."
-                );
+                setError("회원 목록을 불러오지 못했습니다.");
             } finally {
                 if (active) setLoading(false);
             }

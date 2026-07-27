@@ -161,7 +161,7 @@ function AdminDeliveryManagementPage() {
       alert("환불이 승인되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "환불 승인에 실패했습니다.");
+      alert("환불 승인에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   }
 
@@ -184,7 +184,7 @@ function AdminDeliveryManagementPage() {
       alert("환불 요청이 반려되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "환불 반려에 실패했습니다.");
+      alert("환불 반려에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   }
 

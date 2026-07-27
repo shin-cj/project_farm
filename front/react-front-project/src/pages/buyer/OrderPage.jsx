@@ -173,7 +173,7 @@ function OrderPage() {
       navigate(`/sandbox?${params.toString()}`);
     } catch (error) {
       console.error(error);
-      setError(error.response?.data?.message || "주문 생성에 실패했습니다.");
+      setError("주문 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setSubmitting(false);
     }

@@ -183,6 +183,21 @@ function FarmCreatePage() {
             return
         }
 
+        if (!form.farmDetailAddress.trim()) {
+            alert('상세 주소를 입력해주세요.')
+            return
+        }
+
+        if (!form.farmDescription.trim()) {
+            alert('농장 소개를 입력해주세요.')
+            return
+        }
+
+        if (!selectedImageFile) {
+            alert('농장 대표 이미지를 선택해주세요.')
+            return
+        }
+
         if (form.saleType !== 'RETAIL'
             && form.saleType !== 'WHOLESALE') {
             alert('농장 판매 방식을 선택해주세요.')
@@ -344,6 +359,7 @@ function FarmCreatePage() {
                                 value={form.farmDetailAddress}
                                 onChange={handleChange}
                                 placeholder="상세 주소"
+                                required
                             />
                         </label>
 
@@ -355,6 +371,7 @@ function FarmCreatePage() {
                                 onChange={handleChange}
                                 placeholder="농장 소개를 입력해주세요."
                                 rows={5}
+                                required
                             />
                         </label>
 
@@ -365,6 +382,7 @@ function FarmCreatePage() {
                                 type="file"
                                 accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                                 onChange={handleImageChange}
+                                required
                             />
 
                             <small>

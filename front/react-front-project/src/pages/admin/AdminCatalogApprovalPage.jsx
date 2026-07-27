@@ -57,11 +57,7 @@ function AdminCatalogApprovalPage() {
                 seller: sellerResponse.data,
             })
         } catch (err) {
-            setDetailError(
-                err.response?.data?.message
-                || err.message
-                || '판매자 정보를 불러오지 못했습니다.'
-            )
+            setDetailError('판매자 정보를 불러오지 못했습니다.')
         } finally {
             setDetailLoading(false)
         }
@@ -88,11 +84,7 @@ function AdminCatalogApprovalPage() {
                 seller: sellerResponse.data,
             })
         } catch (err) {
-            setDetailError(
-                err.response?.data?.message
-                || err.message
-                || '농장 또는 판매자 정보를 불러오지 못했습니다.'
-            )
+            setDetailError('농장 또는 판매자 정보를 불러오지 못했습니다.')
         } finally {
             setDetailLoading(false)
         }
@@ -131,11 +123,7 @@ function AdminCatalogApprovalPage() {
                     return
                 }
 
-                setError(
-                    err.response?.data?.message
-                    || err.message
-                    || '승인 대기 목록을 불러오지 못했습니다.'
-                )
+                setError('승인 대기 목록을 불러오지 못했습니다.')
             })
             .finally(() => {
                 if (!cancelled) {
@@ -195,10 +183,7 @@ function AdminCatalogApprovalPage() {
 
             return true
         } catch (err) {
-            const message =
-                err.response?.data?.message
-                || err.message
-                || `농장 ${actionText}에 실패했습니다.`
+            const message = `농장 ${actionText}에 실패했습니다. 잠시 후 다시 시도해주세요.`
 
             setError(message)
             setDetailError(message)
@@ -260,10 +245,7 @@ function AdminCatalogApprovalPage() {
 
             return true
         } catch (err) {
-            const message =
-                err.response?.data?.message
-                || err.message
-                || `상품 ${actionText}에 실패했습니다.`
+            const message = `상품 ${actionText}에 실패했습니다. 잠시 후 다시 시도해주세요.`
 
             setError(message)
             setDetailError(message)

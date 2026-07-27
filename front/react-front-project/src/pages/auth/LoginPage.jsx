@@ -32,8 +32,7 @@ function LoginPage() {
         navigate("/");
       }
     } catch (error) {
-      const errorMsg = error.response?.data || "로그인 중 오류가 발생했습니다.";
-      alert(errorMsg);
+      alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
     }
   };
 
