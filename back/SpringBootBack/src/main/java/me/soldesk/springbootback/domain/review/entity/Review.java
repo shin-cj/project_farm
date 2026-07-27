@@ -3,20 +3,19 @@ package me.soldesk.springbootback.domain.review.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor; // 👈 1. 이 임포트를 추가하시고
 import lombok.Setter;
 import java.time.LocalDateTime;
+import lombok.Builder;
 
-/** reviews 테이블의 한 행을 Java 객체로 표현하는 Entity(엔티티)입니다. */
-// 이 클래스가 JPA에서 관리하는 Entity임을 표시합니다.
 @Entity
-// 연결할 실제 Oracle 테이블 이름을 지정합니다.
 @Table(name = "reviews")
-// 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
 @Getter
-// 모든 필드의 setter 메서드를 Lombok이 자동 생성합니다.
 @Setter
-// JPA가 객체를 만들 때 필요한 기본 생성자를 Lombok이 자동 생성합니다.
 @NoArgsConstructor
+@AllArgsConstructor // 👈 2. 이 어노테이션을 꼭 추가해 주세요!
+@Builder
+
 public class Review {
 
     /** 리뷰 고유 번호 */
@@ -42,7 +41,7 @@ public class Review {
 
     /** 실제 구매한 주문 상품 번호 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "order_item_id", nullable = false)
+    @Column(name = "order_item_id", nullable = true)
     private Long orderItemId;
 
     /** 평점: 1점부터 5점 */
@@ -61,13 +60,17 @@ public class Review {
     private String imageUrl;
 
     /** 리뷰 작성 일시 */
-    // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "created_at", nullable = true) // 일단 안전하게 true로 열어두기
+    private LocalDateTime createdAt;
 
     /** 리뷰 수정 일시 */
-    // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "updated_at", nullable = true) // 일단 안전하게 true로 열어두기
+    private LocalDateTime updatedAt;
 
+    // 💡 이 부분을 추가해 주세요! (저장 직전에 자동으로 날짜를 넣어줌)
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = this.createdAt == null ? LocalDateTime.now() : this.createdAt;
+        this.updatedAt = this.updatedAt == null ? LocalDateTime.now() : this.updatedAt;
+    }
 }

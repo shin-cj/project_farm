@@ -15,6 +15,25 @@
    - DDL은 Oracle에서 자동 COMMIT되므로 실행 전 백업이 필요하다.
    ========================================================= */
 
+/* products.sale_type 컬럼이 없을 때만 추가 */
+DECLARE
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*)
+      INTO v_count
+      FROM user_tab_columns
+     WHERE table_name = 'PRODUCTS'
+       AND column_name = 'SALE_TYPE';
+
+    IF v_count = 0 THEN
+        EXECUTE IMMEDIATE
+            'ALTER TABLE products ADD (' ||
+            'sale_type VARCHAR2(20) DEFAULT ''RETAIL'' NOT NULL)';
+    END IF;
+END;
+/
+
+ALTER TABLE reviews MODIFY order_item_id NULL;
 /* products.min_order_quantity 컬럼이 없을 때만 추가 */
 DECLARE
     v_count NUMBER;
@@ -109,3 +128,5 @@ SELECT table_name,
            'FK_REPORTS_PRODUCT_ID'
        )
  ORDER BY table_name, constraint_name;
+SELECT * FROM users;
+ALTER TABLE qna DROP CONSTRAINT FK_QNA_ANSWERED_BY;
