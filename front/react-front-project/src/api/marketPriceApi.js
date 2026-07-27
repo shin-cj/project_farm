@@ -10,6 +10,10 @@ const marketPriceApi = {
   getBuyerMainRanking(params) {
     return axios.get(`${PRICE_API_BASE_URL}/buyer-main/ranking`, { params })
   },
+
+  getBuyerMainTodayPrices(params) {
+    return axios.get(`${PRICE_API_BASE_URL}/buyer-main/today-prices`, { params })
+  },
 }
 
 export default marketPriceApi

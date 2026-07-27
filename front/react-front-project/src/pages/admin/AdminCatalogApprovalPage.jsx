@@ -12,8 +12,10 @@ import {
 
 } from '../../api/productApi.js'
 import './AdminCatalogApprovalPage.css'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 function AdminCatalogApprovalPage() {
+    const { confirm } = useAppFeedback()
     const [pendingFarms, setPendingFarms] = useState([])
     const [pendingProducts, setPendingProducts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -150,7 +152,14 @@ function AdminCatalogApprovalPage() {
         const actionText =
             approvalStatus === 'APPROVED' ? '승인' : '거절'
 
-        if (!window.confirm(`이 농장을 ${actionText}하시겠습니까?`)) {
+        const confirmed = await confirm({
+            title: `농장을 ${actionText}할까요?`,
+            message: `선택한 농장의 승인 상태가 ${actionText}으로 변경됩니다.`,
+            confirmText: actionText,
+            type: approvalStatus === 'REJECTED' ? 'danger' : 'info',
+        })
+
+        if (!confirmed) {
             return false
         }
 
@@ -181,7 +190,14 @@ function AdminCatalogApprovalPage() {
         const actionText =
             approvalStatus === 'APPROVED' ? '승인' : '거절'
 
-        if (!window.confirm(`이 상품을 ${actionText}하시겠습니까?`)) {
+        const confirmed = await confirm({
+            title: `상품을 ${actionText}할까요?`,
+            message: `선택한 상품의 승인 상태가 ${actionText}으로 변경됩니다.`,
+            confirmText: actionText,
+            type: approvalStatus === 'REJECTED' ? 'danger' : 'info',
+        })
+
+        if (!confirmed) {
             return false
         }
 

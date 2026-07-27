@@ -27,6 +27,21 @@ CREATE SEQUENCE products_seq
     INCREMENT BY 1
     NOCACHE;
 
+CREATE SEQUENCE product_stock_histories_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE seller_points_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE seller_point_goals_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
 CREATE SEQUENCE carts_seq
     START WITH 1
     INCREMENT BY 1

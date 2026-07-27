@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.marketprice.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.marketprice.dto.BuyerMainRankingItemResponse;
 import me.soldesk.springbootback.domain.marketprice.dto.BuyerMainRankingResponse;
 import me.soldesk.springbootback.domain.marketprice.dto.BuyerMainPriceTrendResponse;
 import me.soldesk.springbootback.domain.marketprice.dto.MarketPriceSearchRequest;
@@ -11,6 +12,7 @@ import me.soldesk.springbootback.domain.marketprice.service.MarketPriceService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 
@@ -66,6 +68,14 @@ public class MarketPriceController {
             MarketPriceSearchRequest request
     ) throws Exception {
         BuyerMainRankingResponse data = marketPriceService.getBuyerMainRanking(request);
+        return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/buyer-main/today-prices")
+    public ResponseEntity<List<BuyerMainRankingItemResponse>> getBuyerMainTodayPrices(
+            MarketPriceSearchRequest request
+    ) throws Exception {
+        List<BuyerMainRankingItemResponse> data = marketPriceService.getBuyerMainTodayPrices(request);
         return ResponseEntity.ok(data);
     }
 }

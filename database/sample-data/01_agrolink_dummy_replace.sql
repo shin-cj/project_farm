@@ -39,6 +39,9 @@ BEGIN
           SELECT 'CARTS' FROM dual UNION ALL
           SELECT 'CART_ITEMS' FROM dual UNION ALL
           SELECT 'ORDERS' FROM dual UNION ALL
+          SELECT 'PRODUCT_STOCK_HISTORIES' FROM dual UNION ALL
+          SELECT 'SELLER_POINTS' FROM dual UNION ALL
+          SELECT 'SELLER_POINT_GOALS' FROM dual UNION ALL
           SELECT 'ORDER_ITEMS' FROM dual UNION ALL
           SELECT 'PAYMENTS' FROM dual UNION ALL
           SELECT 'DELIVERIES' FROM dual UNION ALL
@@ -59,6 +62,9 @@ BEGIN
           SELECT 'CATEGORIES_SEQ' FROM dual UNION ALL
           SELECT 'FARMS_SEQ' FROM dual UNION ALL
           SELECT 'PRODUCTS_SEQ' FROM dual UNION ALL
+          SELECT 'PRODUCT_STOCK_HISTORIES_SEQ' FROM dual UNION ALL
+          SELECT 'SELLER_POINTS_SEQ' FROM dual UNION ALL
+          SELECT 'SELLER_POINT_GOALS_SEQ' FROM dual UNION ALL
           SELECT 'CARTS_SEQ' FROM dual UNION ALL
           SELECT 'CART_ITEMS_SEQ' FROM dual UNION ALL
           SELECT 'ORDERS_SEQ' FROM dual UNION ALL
@@ -192,6 +198,8 @@ DELETE FROM reviews;
 DELETE FROM qna;
 DELETE FROM deliveries;
 DELETE FROM payments;
+DELETE FROM seller_points;
+DELETE FROM product_stock_histories;
 DELETE FROM order_items;
 DELETE FROM cart_items;
 DELETE FROM orders;
@@ -199,6 +207,7 @@ DELETE FROM carts;
 DELETE FROM products;
 DELETE FROM market_prices;
 DELETE FROM farms;
+DELETE FROM seller_point_goals;
 DELETE FROM users;
 DELETE FROM categories;
 
@@ -250,20 +259,25 @@ WHEN NOT MATCHED THEN
    3. 카테고리 5개
    ========================================================= */
 
-INSERT INTO categories (category_id, category_name, display_order)
-VALUES (categories_seq.NEXTVAL, '과일', 1);
+INSERT INTO categories (
+    category_id, category_name, market_category_code, display_order
+)
+VALUES (categories_seq.NEXTVAL, '식량작물', '100', 1);
 
-INSERT INTO categories (category_id, category_name, display_order)
-VALUES (categories_seq.NEXTVAL, '곡물', 2);
+INSERT INTO categories (
+    category_id, category_name, market_category_code, display_order
+)
+VALUES (categories_seq.NEXTVAL, '채소류', '200', 2);
 
-INSERT INTO categories (category_id, category_name, display_order)
-VALUES (categories_seq.NEXTVAL, '버섯', 3);
+INSERT INTO categories (
+    category_id, category_name, market_category_code, display_order
+)
+VALUES (categories_seq.NEXTVAL, '특용작물', '300', 3);
 
-INSERT INTO categories (category_id, category_name, display_order)
-VALUES (categories_seq.NEXTVAL, '견과류', 4);
-
-INSERT INTO categories (category_id, category_name, display_order)
-VALUES (categories_seq.NEXTVAL, '채소', 5);
+INSERT INTO categories (
+    category_id, category_name, market_category_code, display_order
+)
+VALUES (categories_seq.NEXTVAL, '과일류', '400', 4);
 
 
 /* =========================================================
@@ -521,7 +535,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '햇살 부사사과 3kg', '아삭한 식감과 균형 잡힌 단맛이 특징인 부사사과입니다.',
     18000, 50, '3kg 박스', 1,
     '경상북도 청송', TRUNC(SYSDATE) - 3, TRUNC(SYSDATE) + 20,
@@ -537,7 +551,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '아삭 신고배 3kg', '시원한 과즙이 풍부한 신고배 선물용 상품입니다.',
     22000, 35, '3kg 박스', 1,
     '경상북도 청송', TRUNC(SYSDATE) - 4, TRUNC(SYSDATE) + 18,
@@ -553,7 +567,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '새콤 자두 1kg', '새콤달콤한 제철 자두입니다.',
     9000, 0, '1kg 팩', 1,
     '경상북도 청송', TRUNC(SYSDATE) - 6, TRUNC(SYSDATE) + 5,
@@ -569,7 +583,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '못난이 사과 5kg', '모양은 고르지 않지만 맛과 신선도는 좋은 실속 상품입니다.',
     16000, 20, '5kg 박스', 1,
     '경상북도 청송', TRUNC(SYSDATE) - 5, TRUNC(SYSDATE) + 15,
@@ -585,7 +599,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '제철 복숭아 2kg', '판매 승인을 기다리는 제철 복숭아 상품입니다.',
     21000, 18, '2kg 박스', 1,
     '경상북도 청송', TRUNC(SYSDATE) - 2, TRUNC(SYSDATE) + 7,
@@ -601,7 +615,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '유기농 상추 500g', '당일 수확하여 발송하는 부드러운 유기농 상추입니다.',
     4500, 80, '500g 봉지', 1,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 1, TRUNC(SYSDATE) + 5,
@@ -617,7 +631,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '하우스 토마토 2kg', '완숙 상태로 수확한 달콤한 하우스 토마토입니다.',
     12000, 45, '2kg 박스', 1,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 2, TRUNC(SYSDATE) + 8,
@@ -633,7 +647,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '강원 햇감자 3kg', '포슬포슬한 식감이 좋은 강원도 햇감자입니다.',
     11000, 70, '3kg 박스', 1,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 5, TRUNC(SYSDATE) + 30,
@@ -649,7 +663,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '흙당근 2kg', '흙이 묻은 상태로 신선도를 유지한 당근입니다.',
     9000, 0, '2kg 봉지', 1,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 7, TRUNC(SYSDATE) + 20,
@@ -665,7 +679,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '애호박 3개', '찌개와 볶음 요리에 활용하기 좋은 애호박입니다.',
     6000, 60, '3개 묶음', 1,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 1, TRUNC(SYSDATE) + 6,
@@ -681,7 +695,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '황금들녘농장'),
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '신동진 쌀 10kg', '윤기와 찰기가 좋은 당해 연도 신동진 쌀입니다.',
     32000, 90, '10kg 포대', 1,
     '전라북도 김제', TRUNC(SYSDATE) - 30, TRUNC(SYSDATE) + 180,
@@ -697,7 +711,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '황금들녘농장'),
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '찰보리 2kg', '밥에 섞어 먹기 좋은 구수한 찰보리입니다.',
     8500, 55, '2kg 봉지', 1,
     '전라북도 김제', TRUNC(SYSDATE) - 40, TRUNC(SYSDATE) + 150,
@@ -713,7 +727,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '황금들녘농장'),
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '서리태 1kg', '고소한 맛이 진한 국산 서리태입니다.',
     14000, 25, '1kg 봉지', 1,
     '전라북도 김제', TRUNC(SYSDATE) - 50, TRUNC(SYSDATE) + 160,
@@ -729,7 +743,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '숲향기농원'),
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '생표고버섯 500g', '향이 진하고 육질이 탄탄한 원목 표고버섯입니다.',
     9800, 40, '500g 팩', 1,
     '충청남도 부여', TRUNC(SYSDATE) - 1, TRUNC(SYSDATE) + 7,
@@ -745,7 +759,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '숲향기농원'),
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '볶음 아몬드 500g', '첨가물 없이 고소하게 볶은 아몬드입니다.',
     12000, 65, '500g 봉지', 1,
     '충청남도 부여', TRUNC(SYSDATE) - 20, TRUNC(SYSDATE) + 120,
@@ -762,7 +776,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '사과 도매 10kg', '식당과 소매점 납품용 사과 대용량 상품입니다.',
     48000, 30, '10kg 박스', 3,
     '경상북도 청송', TRUNC(SYSDATE) - 3, TRUNC(SYSDATE) + 20,
@@ -778,7 +792,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '배 도매 15kg', '단체 급식과 매장 납품용 신고배 대용량 상품입니다.',
     65000, 12, '15kg 박스', 3,
     '경상북도 청송', TRUNC(SYSDATE) - 4, TRUNC(SYSDATE) + 18,
@@ -794,7 +808,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '햇살과수원 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '복숭아 도매 8kg', '카페와 디저트 매장용 복숭아 도매 상품입니다.',
     60000, 0, '8kg 박스', 3,
     '경상북도 청송', TRUNC(SYSDATE) - 3, TRUNC(SYSDATE) + 7,
@@ -810,7 +824,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '토마토 도매 10kg', '식당과 주스 매장 납품용 완숙 토마토입니다.',
     42000, 25, '10kg 박스', 5,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 2, TRUNC(SYSDATE) + 8,
@@ -826,7 +840,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '감자 도매 20kg', '급식소와 식당용으로 선별한 햇감자 대용량 상품입니다.',
     38000, 40, '20kg 박스', 5,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 5, TRUNC(SYSDATE) + 30,
@@ -842,7 +856,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '푸른채소농장 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '양파 도매 20kg', '매장과 식당에서 사용하기 좋은 양파 대용량 상품입니다.',
     32000, 30, '20kg 망', 5,
     '강원특별자치도 평창', TRUNC(SYSDATE) - 6, TRUNC(SYSDATE) + 35,
@@ -858,7 +872,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '황금들녘농장 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '쌀 도매 20kg', '식당과 급식소 납품용 신동진 쌀입니다.',
     56000, 18, '20kg 포대', 3,
     '전라북도 김제', TRUNC(SYSDATE) - 30, TRUNC(SYSDATE) + 180,
@@ -874,7 +888,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '숲향기농원 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '표고버섯 도매 5kg', '식당 납품용으로 크기를 선별한 생표고버섯입니다.',
     70000, 10, '5kg 박스', 3,
     '충청남도 부여', TRUNC(SYSDATE) - 1, TRUNC(SYSDATE) + 7,
@@ -890,7 +904,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '숲향기농원 도매센터'),
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '호두 도매 5kg', '베이커리와 카페 납품용 국산 호두입니다.',
     75000, 0, '5kg 박스', 3,
     '충청남도 부여', TRUNC(SYSDATE) - 25, TRUNC(SYSDATE) + 120,
@@ -906,7 +920,7 @@ INSERT INTO products (
 ) VALUES (
     products_seq.NEXTVAL,
     (SELECT farm_id FROM farms WHERE farm_name = '새봄체험농장'),
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '새봄 대량 꾸러미 10kg', '농장 승인 후 판매할 도매용 제철 채소 꾸러미입니다.',
     50000, 10, '10kg 박스', 10,
     '충청남도 공주', TRUNC(SYSDATE) - 1, TRUNC(SYSDATE) + 7,
@@ -1649,38 +1663,38 @@ INSERT INTO reviews (
 -- 과일: 사과, 배
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '사과', '1kg', '전국 도소매 평균', 4200, 5000, 6200,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '사과', '1kg', '전국 도소매 평균', 4300, 5100, 6300,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '사과', '1kg', '전국 도소매 평균', 4400, 5200, 6500,
     TRUNC(SYSDATE), SYSDATE
 );
 
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '배', '1kg', '전국 도소매 평균', 4800, 5600, 6800,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '배', '1kg', '전국 도소매 평균', 4900, 5700, 6900,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '과일'),
+    (SELECT category_id FROM categories WHERE category_name = '과일류'),
     '배', '1kg', '전국 도소매 평균', 5000, 5900, 7100,
     TRUNC(SYSDATE), SYSDATE
 );
@@ -1688,38 +1702,38 @@ INSERT INTO market_prices VALUES (
 -- 곡물: 쌀, 찰보리
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '쌀', '20kg', '전국 도소매 평균', 52000, 57000, 63000,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '쌀', '20kg', '전국 도소매 평균', 52500, 57500, 63500,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '쌀', '20kg', '전국 도소매 평균', 53000, 58000, 64000,
     TRUNC(SYSDATE), SYSDATE
 );
 
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '찰보리', '1kg', '전국 도소매 평균', 3000, 3800, 4500,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '찰보리', '1kg', '전국 도소매 평균', 3100, 3900, 4600,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '곡물'),
+    (SELECT category_id FROM categories WHERE category_name = '식량작물'),
     '찰보리', '1kg', '전국 도소매 평균', 3200, 4000, 4700,
     TRUNC(SYSDATE), SYSDATE
 );
@@ -1727,38 +1741,38 @@ INSERT INTO market_prices VALUES (
 -- 버섯: 표고버섯, 느타리버섯
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '표고버섯', '1kg', '전국 도소매 평균', 14000, 17000, 21000,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '표고버섯', '1kg', '전국 도소매 평균', 14500, 17500, 21500,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '표고버섯', '1kg', '전국 도소매 평균', 15000, 18000, 22000,
     TRUNC(SYSDATE), SYSDATE
 );
 
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '느타리버섯', '1kg', '전국 도소매 평균', 6000, 7500, 9000,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '느타리버섯', '1kg', '전국 도소매 평균', 6200, 7700, 9200,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '버섯'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '느타리버섯', '1kg', '전국 도소매 평균', 6400, 7900, 9400,
     TRUNC(SYSDATE), SYSDATE
 );
@@ -1766,38 +1780,38 @@ INSERT INTO market_prices VALUES (
 -- 견과류: 아몬드, 호두
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '아몬드', '1kg', '전국 도소매 평균', 18000, 22000, 26000,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '아몬드', '1kg', '전국 도소매 평균', 18500, 22500, 26500,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '아몬드', '1kg', '전국 도소매 평균', 19000, 23000, 27000,
     TRUNC(SYSDATE), SYSDATE
 );
 
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '호두', '1kg', '전국 도소매 평균', 21000, 25000, 30000,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '호두', '1kg', '전국 도소매 평균', 21500, 25500, 30500,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '견과류'),
+    (SELECT category_id FROM categories WHERE category_name = '특용작물'),
     '호두', '1kg', '전국 도소매 평균', 22000, 26000, 31000,
     TRUNC(SYSDATE), SYSDATE
 );
@@ -1805,38 +1819,38 @@ INSERT INTO market_prices VALUES (
 -- 채소: 토마토, 감자
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '토마토', '1kg', '전국 도소매 평균', 4500, 5500, 6800,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '토마토', '1kg', '전국 도소매 평균', 4700, 5700, 7000,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '토마토', '1kg', '전국 도소매 평균', 4900, 5900, 7200,
     TRUNC(SYSDATE), SYSDATE
 );
 
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '감자', '1kg', '전국 도소매 평균', 2800, 3500, 4300,
     TRUNC(SYSDATE) - 2, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '감자', '1kg', '전국 도소매 평균', 2900, 3600, 4400,
     TRUNC(SYSDATE) - 1, SYSDATE
 );
 INSERT INTO market_prices VALUES (
     market_prices_seq.NEXTVAL,
-    (SELECT category_id FROM categories WHERE category_name = '채소'),
+    (SELECT category_id FROM categories WHERE category_name = '채소류'),
     '감자', '1kg', '전국 도소매 평균', 3000, 3700, 4500,
     TRUNC(SYSDATE), SYSDATE
 );

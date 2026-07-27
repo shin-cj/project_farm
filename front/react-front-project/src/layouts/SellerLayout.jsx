@@ -2,17 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import './SellerLayout.css'
 import nongdamLogo from '../assets/brand/nongdam-logo.png'
-
-// 브라우저에 저장된 로그인 사용자를 안전하게 읽습니다.
-function getStoredUser() {
-  try {
-    const storedUser = localStorage.getItem('loginUser')
-    return storedUser ? JSON.parse(storedUser) : null
-  } catch {
-    localStorage.removeItem('loginUser')
-    return null
-  }
-}
+import { clearLoginUser, getLoginUser } from '../utils/authStorage.js'
 
 // 메뉴마다 같은 굵기와 크기의 선형 아이콘을 사용합니다.
 function SidebarIcon({ name }) {
@@ -88,12 +78,12 @@ function SidebarIcon({ name }) {
 // 판매자 화면에서 공통으로 사용하는 왼쪽 메뉴와 화면 배치입니다.
 function SellerLayout() {
   const navigate = useNavigate()
-  const [loginUser, setLoginUser] = useState(() => getStoredUser())
+  const [loginUser, setLoginUser] = useState(() => getLoginUser())
   const sellerName = loginUser?.name || '판매자'
 
   useEffect(() => {
     function syncUser() {
-      setLoginUser(getStoredUser())
+      setLoginUser(getLoginUser())
     }
 
     window.addEventListener('storage', syncUser)
@@ -113,7 +103,7 @@ function SellerLayout() {
   }
 
   function handleLogout() {
-    localStorage.removeItem('loginUser')
+    clearLoginUser()
     window.dispatchEvent(new Event('authChanged'))
     setLoginUser(null)
     navigate('/', { replace: true })
@@ -131,7 +121,9 @@ function SellerLayout() {
           </NavLink>
 
           <div className="seller-sidebar-profile">
-            <div className="seller-sidebar-avatar" aria-hidden="true">🌿</div>
+            <div className="seller-sidebar-avatar" aria-hidden="true">
+              <SidebarIcon name="user" />
+            </div>
             <div>
               <strong>{sellerName} 판매자</strong>
               <span>농장·상품 운영 계정</span>

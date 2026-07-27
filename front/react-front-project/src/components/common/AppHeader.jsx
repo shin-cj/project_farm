@@ -1,24 +1,15 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import nongdamLogo from "../../assets/brand/nongdam-logo.png";
-
-function getStoredUser() {
-  try {
-    const storedUser = localStorage.getItem("loginUser");
-    return storedUser ? JSON.parse(storedUser) : null;
-  } catch  {
-    localStorage.removeItem("loginUser");
-    return null;
-  }
-}
+import { clearLoginUser, getLoginRoleId, getLoginUser } from "../../utils/authStorage.js";
 
 function AppHeader() {
   const navigate = useNavigate();
-  const [loginUser, setLoginUser] = useState(() => getStoredUser());
+  const [loginUser, setLoginUser] = useState(() => getLoginUser());
 
   useEffect(() => {
     function syncUser() {
-      setLoginUser(getStoredUser());
+      setLoginUser(getLoginUser());
     }
 
     window.addEventListener("storage", syncUser);
@@ -30,13 +21,13 @@ function AppHeader() {
     };
   }, []);
 
-  const roleId = loginUser?.roleId;
+  const roleId = getLoginRoleId(loginUser);
   const isAdmin = roleId === 1;
   const isBuyer = roleId === 2;
   const isSeller = roleId === 3;
 
   function handleLogout() {
-    localStorage.removeItem("loginUser");
+    clearLoginUser();
     window.dispatchEvent(new Event("authChanged"));
     setLoginUser(null);
     navigate("/");

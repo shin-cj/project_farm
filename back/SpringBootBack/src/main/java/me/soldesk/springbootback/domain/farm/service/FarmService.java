@@ -3,9 +3,11 @@ package me.soldesk.springbootback.domain.farm.service;
 import me.soldesk.springbootback.domain.farm.dto.FarmApprovalRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmRequest;
 import me.soldesk.springbootback.domain.farm.dto.FarmResponse;
+import me.soldesk.springbootback.domain.farm.dto.PopularFarmResponse;
 import me.soldesk.springbootback.domain.farm.dto.PublicFarmResponse;
 import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.DayOfWeek;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -61,6 +66,53 @@ public class FarmService {
 
         for(Farm farm : farms){
             responses.add(toPublicResponse(farm));
+        }
+
+        return responses;
+    }
+
+    public List<PopularFarmResponse> getWeeklyPopularFarms() {
+        LocalDate today = LocalDate.now();
+        LocalDate weekStartDate = today.with(DayOfWeek.MONDAY);
+        LocalDateTime startDate = weekStartDate.atStartOfDay();
+        LocalDateTime endDate = weekStartDate.plusWeeks(1).atStartOfDay();
+        List<String> paidOrderStatuses = Arrays.asList("PAID", "SHIPPING", "DELIVERED");
+
+        List<Object[]> popularFarmRows = farmRepository.findWeeklyPopularFarms(
+                startDate,
+                endDate,
+                paidOrderStatuses,
+                PageRequest.of(0, 3)
+        );
+
+        List<PopularFarmResponse> responses = new ArrayList<>();
+
+        for (Object[] row : popularFarmRows) {
+            Long farmId = ((Number) row[0]).longValue();
+            Long weeklyOrderCount = ((Number) row[1]).longValue();
+            Long weeklySales = ((Number) row[2]).longValue();
+
+            Farm farm = farmRepository.findById(farmId).orElse(null);
+
+            if (farm == null) {
+                continue;
+            }
+
+            responses.add(toPopularResponse(farm, weeklyOrderCount, weeklySales));
+        }
+
+        if (!responses.isEmpty()) {
+            return responses;
+        }
+
+        List<Farm> fallbackFarms = farmRepository.findByApprovalStatusOrderByFarmIdDesc("APPROVED");
+
+        for (Farm farm : fallbackFarms) {
+            if (responses.size() >= 3) {
+                break;
+            }
+
+            responses.add(toPopularResponse(farm, 0L, 0L));
         }
 
         return responses;
@@ -282,6 +334,26 @@ public class FarmService {
         response.setFarmDescription(farm.getFarmDescription());
         response.setFarmImageUrl(farm.getFarmImageUrl());
         response.setSaleType(farm.getSaleType());
+
+        return response;
+    }
+
+    private PopularFarmResponse toPopularResponse(
+            Farm farm,
+            Long weeklyOrderCount,
+            Long weeklySales
+    ) {
+        PopularFarmResponse response = new PopularFarmResponse();
+
+        response.setFarmId(farm.getFarmId());
+        response.setFarmName(farm.getFarmName());
+        response.setRegion(farm.getRegion());
+        response.setFarmAddress(farm.getFarmAddress());
+        response.setFarmDescription(farm.getFarmDescription());
+        response.setFarmImageUrl(farm.getFarmImageUrl());
+        response.setSaleType(farm.getSaleType());
+        response.setWeeklyOrderCount(weeklyOrderCount);
+        response.setWeeklySales(weeklySales);
 
         return response;
     }

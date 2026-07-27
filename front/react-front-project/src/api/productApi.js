@@ -72,6 +72,12 @@ export async function getProduct(productId, publicOnly = false) {
   return response.data
 }
 
+// 판매자 상품 상세 화면에서 재고 변경 이력을 최신순으로 가져옵니다.
+export async function getProductStockHistories(productId) {
+  const response = await axios.get(`/api/products/${productId}/stock-histories`)
+  return response.data
+}
+
 // 상품 이미지 파일을 업로드합니다.
 export async function uploadProductImage(imageFile) {
   const formData = new FormData()
@@ -109,9 +115,10 @@ export async function updateProductStatus(productId, productStatus) {
 }
 
 //상품의 재고 수량 수정
-export async function updateProductStock(productId, stockQuantity){
+export async function updateProductStock(productId, stockQuantity, changeReason){
   const response = await axios.patch(`/api/products/${productId}/stock`, {
-    stockQuantity
+    stockQuantity,
+    changeReason,
   })
   return response.data
 }

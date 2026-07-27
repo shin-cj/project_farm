@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi.js";
+import { useAppFeedback } from "../../context/AppFeedbackContext.jsx";
 
 function isPurchasableCartItem(item){
   return(
@@ -19,6 +20,7 @@ function CartPage() {
   const [quantityInputs, setQuantityInputs] = useState({});
   const [warningItemId, setWarningItemId] = useState(null);
   const navigate = useNavigate();
+  const { alert, confirm } = useAppFeedback();
 
   const loginUser = JSON.parse(localStorage.getItem("loginUser"));
   const userid = loginUser?.userId;
@@ -42,7 +44,14 @@ function CartPage() {
   }, [loadCartItems])
 
   const handleDelete = async (cartItemId) => {
-    if (!confirm("이 상품을 장바구니에서 삭제할까요?")) {
+    const confirmed = await confirm({
+      title: "장바구니 상품을 삭제할까요?",
+      message: "삭제한 상품은 장바구니에서 바로 사라집니다.",
+      confirmText: "삭제",
+      type: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -62,7 +71,14 @@ function CartPage() {
       return
     }
 
-    if(!confirm(`선택한 ${selectedItems.length}개 상품을 삭제 할까요?`)){
+    const confirmed = await confirm({
+      title: "선택 상품을 삭제할까요?",
+      message: `선택한 ${selectedItems.length}개 상품을 장바구니에서 삭제합니다.`,
+      confirmText: "삭제",
+      type: "danger",
+    });
+
+    if(!confirmed){
       return
     }
 
@@ -95,7 +111,14 @@ function CartPage() {
       return;
     }
 
-    if (!confirm("장바구니 상품을 모두 삭제할까요?")) {
+    const confirmed = await confirm({
+      title: "장바구니를 비울까요?",
+      message: "장바구니에 담긴 모든 상품이 삭제됩니다.",
+      confirmText: "전체 삭제",
+      type: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 

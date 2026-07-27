@@ -21,6 +21,9 @@ public class ProductResponse {
     /** 상품 카테고리 번호 */
     private Long categoryId;
 
+    /** 공공 농산물 시세 API 품목 코드 */
+    private String marketItemCode;
+
     /** 상품 이름 */
     private String productName;
 

@@ -22,6 +22,7 @@ import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.sellerpoint.service.SellerPointService;
+import me.soldesk.springbootback.domain.stockhistory.service.ProductStockHistoryService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public class PaymentService {
     private final ProductRepository productRepository;
     private final DeliveryRepository deliveryRepository;
     private final SellerPointService sellerPointService;
+    private final ProductStockHistoryService productStockHistoryService;
 
     public PaymentService(
             RestClient.Builder restClientBuilder,
@@ -47,7 +49,8 @@ public class PaymentService {
             OrderItemRepository orderItemRepository,
             ProductRepository productRepository,
             DeliveryRepository deliveryRepository,
-            SellerPointService sellerPointService) {
+            SellerPointService sellerPointService,
+            ProductStockHistoryService productStockHistoryService) {
         this.restClient = restClientBuilder
                 .baseUrl("https://api.tosspayments.com")
                 .build();
@@ -58,6 +61,7 @@ public class PaymentService {
         this.productRepository = productRepository;
         this.deliveryRepository = deliveryRepository;
         this.sellerPointService = sellerPointService;
+        this.productStockHistoryService = productStockHistoryService;
     }
 
     @Transactional
@@ -131,7 +135,8 @@ public class PaymentService {
             OrderItem item = orderItems.get(i);
             Product product = orderedProducts.get(i);
 
-            product.setStockQuantity(product.getStockQuantity() - item.getQuantity());
+            int previousStockQuantity = product.getStockQuantity();
+            product.setStockQuantity(previousStockQuantity - item.getQuantity());
 
             if (product.getStockQuantity() < getMinimumOrderQuantity(product)
                     && "ON_SALE".equals(product.getProductStatus())) {
@@ -139,6 +144,14 @@ public class PaymentService {
             }
 
             productRepository.save(product);
+            productStockHistoryService.record(
+                    product.getProductId(),
+                    item.getOrderId(),
+                    "PAYMENT_DEDUCTION",
+                    previousStockQuantity,
+                    product.getStockQuantity(),
+                    "주문 결제 완료에 따른 재고 차감"
+            );
         }
 
         for (Order order : paymentOrders) {
@@ -224,7 +237,8 @@ public class PaymentService {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
 
-            product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+            int previousStockQuantity = product.getStockQuantity();
+            product.setStockQuantity(previousStockQuantity + item.getQuantity());
 
             if (product.getStockQuantity() >= getMinimumOrderQuantity(product)
                     && "SOLD_OUT".equals(product.getProductStatus())) {
@@ -232,6 +246,14 @@ public class PaymentService {
             }
 
             productRepository.save(product);
+            productStockHistoryService.record(
+                    product.getProductId(),
+                    item.getOrderId(),
+                    "PAYMENT_CANCEL_RESTORE",
+                    previousStockQuantity,
+                    product.getStockQuantity(),
+                    "결제 취소에 따른 재고 복구"
+            );
         }
 
         order.setOrderStatus("CANCELED");

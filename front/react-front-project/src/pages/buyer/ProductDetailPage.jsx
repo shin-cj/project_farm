@@ -8,6 +8,7 @@ import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 import ReportButton from "../../components/report/ReportButton.jsx";
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 
 function getStoredLoginUser() {
@@ -37,6 +38,7 @@ function getMinimumOrderQuantity(product) {
 function ProductDetailPage() {
   const {productId} = useParams()
   const navigate = useNavigate()
+  const { alert } = useAppFeedback()
   const location = useLocation()
   const loginUser = getStoredLoginUser()
   const userid = loginUser?.userId;

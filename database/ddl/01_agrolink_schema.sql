@@ -54,10 +54,14 @@ CREATE TABLE users (
 CREATE TABLE categories (
     category_id NUMBER NOT NULL,              -- 카테고리 고유 번호
     category_name VARCHAR2(50) NOT NULL,      -- 카테고리 이름
+    market_category_code VARCHAR2(3) NOT NULL,-- 공공 시세 API 부류 코드: 100~400
     display_order NUMBER DEFAULT 0 NOT NULL,  -- 화면 표시 순서
 
     CONSTRAINT pk_categories PRIMARY KEY (category_id),
-    CONSTRAINT uk_categories_name UNIQUE (category_name)
+    CONSTRAINT uk_categories_name UNIQUE (category_name),
+    CONSTRAINT uk_categories_market_code UNIQUE (market_category_code),
+    CONSTRAINT ck_categories_market_code
+        CHECK (market_category_code IN ('100', '200', '300', '400'))
 );
 
 
@@ -98,6 +102,7 @@ CREATE TABLE products (
     product_id NUMBER NOT NULL,               -- 상품 고유 번호
     farm_id NUMBER NOT NULL,                  -- 상품을 판매하는 농장 번호
     category_id NUMBER NOT NULL,              -- 상품 카테고리 번호
+    market_item_code VARCHAR2(10),            -- 공공 시세 API 품목 코드
     product_name VARCHAR2(150) NOT NULL,      -- 상품 이름
     description CLOB,                         -- 상품 상세 설명
     price NUMBER(12) NOT NULL,                -- 판매 단위당 가격
@@ -111,6 +116,8 @@ CREATE TABLE products (
     product_image_url VARCHAR2(500),          -- 상품 이미지 주소
     product_status VARCHAR2(20) DEFAULT 'PENDING' NOT NULL,
                                                -- 상품 상태: PENDING, ON_SALE, SOLD_OUT, HIDDEN
+    same_day_delivery VARCHAR2(1) DEFAULT 'N' NOT NULL,
+                                               -- 당일배송 여부: Y, N
     created_at DATE DEFAULT SYSDATE NOT NULL, -- 생성 일시
     updated_at DATE DEFAULT SYSDATE NOT NULL, -- 수정 일시
 
@@ -120,12 +127,14 @@ CREATE TABLE products (
     CONSTRAINT fk_products_category
         FOREIGN KEY (category_id) REFERENCES categories(category_id),
     CONSTRAINT ck_products_min_order_qty
-        CHECK (min_order_quantity >= 1)
+        CHECK (min_order_quantity >= 1),
+    CONSTRAINT ck_products_same_day_delivery
+        CHECK (same_day_delivery IN ('Y', 'N'))
 );
 
 
 /* =========================================================
-   6. 장바구니 테이블: carts
+   7. 장바구니 테이블: carts
    회원당 장바구니 한 개를 관리한다.
    ========================================================= */
 CREATE TABLE carts (
@@ -190,6 +199,77 @@ CREATE TABLE orders (
         FOREIGN KEY (buyer_id) REFERENCES users(user_id),
     CONSTRAINT fk_orders_farm
         FOREIGN KEY (farm_id) REFERENCES farms(farm_id)
+);
+
+
+/* =========================================================
+   9. 상품 재고 이력 테이블: product_stock_histories
+   상품 등록, 판매자 수정, 결제, 결제 취소로 바뀐 재고를 기록한다.
+   ========================================================= */
+CREATE TABLE product_stock_histories (
+    stock_history_id NUMBER NOT NULL,          -- 재고 이력 고유 번호
+    product_id NUMBER NOT NULL,                -- 재고가 변경된 상품 번호
+    order_id NUMBER,                           -- 주문/결제 변동일 때 연결하는 주문 번호
+    change_type VARCHAR2(30) NOT NULL,         -- 변경 구분
+    previous_quantity NUMBER(10) NOT NULL,     -- 변경 전 재고
+    change_quantity NUMBER(10) NOT NULL,       -- 증감 수량: 증가 +, 차감 -
+    current_quantity NUMBER(10) NOT NULL,      -- 변경 후 재고
+    change_reason VARCHAR2(500),               -- 사람이 읽는 변경 사유
+    created_at DATE DEFAULT SYSDATE NOT NULL,  -- 변경 일시
+
+    CONSTRAINT pk_product_stock_histories PRIMARY KEY (stock_history_id),
+    CONSTRAINT fk_stock_histories_product
+        FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT fk_stock_histories_order
+        FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    CONSTRAINT ck_stock_histories_type
+        CHECK (change_type IN (
+            'INITIAL_STOCK',
+            'MANUAL_ADJUSTMENT',
+            'PAYMENT_DEDUCTION',
+            'PAYMENT_CANCEL_RESTORE'
+        )),
+    CONSTRAINT ck_stock_histories_quantity
+        CHECK (previous_quantity >= 0 AND current_quantity >= 0)
+);
+
+
+/* =========================================================
+   판매자 포인트 테이블: seller_points
+   주문 결제 후 판매자에게 적립되는 정산 포인트를 관리한다.
+   ========================================================= */
+CREATE TABLE seller_points (
+    point_id NUMBER NOT NULL,
+    seller_id NUMBER NOT NULL,
+    order_id NUMBER NOT NULL,
+    total_amount NUMBER NOT NULL,
+    platform_fee NUMBER NOT NULL,
+    seller_point NUMBER NOT NULL,
+    point_status VARCHAR2(20) DEFAULT 'EARNED' NOT NULL,
+    created_at DATE DEFAULT SYSDATE NOT NULL,
+    updated_at DATE DEFAULT SYSDATE NOT NULL,
+
+    CONSTRAINT pk_seller_points PRIMARY KEY (point_id),
+    CONSTRAINT fk_seller_points_order
+        FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    CONSTRAINT uk_seller_points_order UNIQUE (order_id)
+);
+
+
+/* =========================================================
+   판매자 포인트 목표 테이블: seller_point_goals
+   판매자가 날짜별로 설정한 포인트 목표를 관리한다.
+   ========================================================= */
+CREATE TABLE seller_point_goals (
+    goal_id NUMBER NOT NULL,
+    seller_id NUMBER NOT NULL,
+    goal_date DATE DEFAULT SYSDATE NOT NULL,
+    target_point NUMBER DEFAULT 10000 NOT NULL,
+    created_at DATE DEFAULT SYSDATE NOT NULL,
+    updated_at DATE DEFAULT SYSDATE NOT NULL,
+
+    CONSTRAINT pk_seller_point_goals PRIMARY KEY (goal_id),
+    CONSTRAINT uk_seller_point_goals UNIQUE (seller_id, goal_date)
 );
 
 
