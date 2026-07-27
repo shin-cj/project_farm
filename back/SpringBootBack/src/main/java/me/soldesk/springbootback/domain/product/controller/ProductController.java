@@ -103,9 +103,10 @@ public class ProductController {
 
     @PatchMapping("/{productId}/reject")
     public ProductResponse rejectProduct(
-            @PathVariable Long productId
+            @PathVariable Long productId,
+            @RequestBody ProductStatusRequest request
     ) {
-        return productService.rejectProduct(productId);
+        return productService.rejectProduct(productId, request);
     }
 
     @PatchMapping("/{productId}/stock")

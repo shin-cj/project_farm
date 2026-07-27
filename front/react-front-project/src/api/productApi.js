@@ -140,9 +140,9 @@ export async function approveProduct(productId) {
 }
 
 // 관리자가 승인 대기 중인 상품을 거절합니다.
-export async function rejectProduct(productId) {
+export async function rejectProduct(productId, rejectionReason) {
   const response = await axios.patch(
-      `/api/products/${productId}/reject`
+      `/api/products/${productId}/reject`, {rejectionReason}
   )
 
   return response.data

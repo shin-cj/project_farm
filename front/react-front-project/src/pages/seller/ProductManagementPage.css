@@ -402,3 +402,91 @@
         margin-left: 0;
     }
 }
+
+.seller-product-status-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.seller-product-rejection-button {
+    padding: 5px 8px;
+    border: 1px solid #f3c6c2;
+    border-radius: 7px;
+    background-color: #fff7f6;
+    color: #b42318;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.seller-product-rejection-button:hover {
+    background-color: #feeceb;
+}
+
+.seller-product-rejection-modal-backdrop {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background-color: rgba(19, 35, 28, 0.42);
+}
+
+.seller-product-rejection-modal {
+    width: min(100%, 460px);
+    padding: 28px;
+    border: 1px solid #ead8d5;
+    border-radius: 18px;
+    background-color: #ffffff;
+    box-shadow: 0 20px 55px rgba(19, 35, 28, 0.22);
+}
+
+.seller-product-rejection-modal-label {
+    margin: 0 0 8px;
+    color: #b42318;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.seller-product-rejection-modal h2 {
+    margin: 0;
+    color: #173c2a;
+    font-size: 1.25rem;
+}
+
+.seller-product-rejection-modal-product-name {
+    margin: 8px 0 18px;
+    color: #637066;
+    font-size: 0.9rem;
+}
+
+.seller-product-rejection-modal-content {
+    min-height: 92px;
+    margin: 0 0 20px;
+    padding: 14px;
+    border-radius: 10px;
+    background-color: #fff7f6;
+    color: #6f211b;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.seller-product-rejection-modal button {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 9px;
+    background-color: #2f7d32;
+    color: #ffffff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.seller-product-rejection-modal button:hover {
+    background-color: #256428;
+}

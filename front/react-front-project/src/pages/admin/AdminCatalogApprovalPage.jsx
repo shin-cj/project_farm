@@ -15,7 +15,7 @@ import './AdminCatalogApprovalPage.css'
 import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 function AdminCatalogApprovalPage() {
-    const { confirm } = useAppFeedback()
+    const { confirm, prompt } = useAppFeedback()
     const [pendingFarms, setPendingFarms] = useState([])
     const [pendingProducts, setPendingProducts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -152,6 +152,28 @@ function AdminCatalogApprovalPage() {
         const actionText =
             approvalStatus === 'APPROVED' ? '승인' : '거절'
 
+        let rejectionReason = null
+
+        if(approvalStatus === 'REJECTED') {
+            rejectionReason = await prompt({
+                title: '농장 거절 사유',
+                message: '판매자가 수정 후 다시 승인 요청할 수 있도록 구체적으로 작성해주세요.',
+                inputLabel: '거절 사유',
+                placeholder: '예: 사업자등록번호와 농장 주소를 다시 확인해주세요.',
+                confirmText: '사유 입력 완료',
+                type: 'danger',
+            })
+
+            if(rejectionReason === null){
+                return false
+            }
+
+            if(!rejectionReason.trim()){
+                window.alert('농장 거절 사유를 입력해주세요.')
+                return false
+            }
+        }
+
         const confirmed = await confirm({
             title: `농장을 ${actionText}할까요?`,
             message: `선택한 농장의 승인 상태가 ${actionText}으로 변경됩니다.`,
@@ -168,7 +190,7 @@ function AdminCatalogApprovalPage() {
             setError('')
             setDetailError('')
 
-            await updateFarmApprovalStatus(farmId, approvalStatus)
+            await updateFarmApprovalStatus(farmId, approvalStatus, rejectionReason)
             await loadApprovalTargets()
 
             return true
@@ -190,6 +212,28 @@ function AdminCatalogApprovalPage() {
         const actionText =
             approvalStatus === 'APPROVED' ? '승인' : '거절'
 
+        let rejectionReason = null
+
+        if (approvalStatus === 'REJECTED') {
+            rejectionReason = await prompt({
+                title: '상품 거절 사유',
+                message: '판매자가 상품 정보를 보완할 수 있도록 구체적으로 작성해주세요.',
+                inputLabel: '거절 사유',
+                placeholder: '예: 상품 이미지와 원산지 정보를 보완해주세요.',
+                confirmText: '사유 입력 완료',
+                type: 'danger',
+            })
+
+            if (rejectionReason === null) {
+                return false
+            }
+
+            if (!rejectionReason.trim()) {
+                window.alert('상품 거절 사유를 입력해주세요.')
+                return false
+            }
+        }
+
         const confirmed = await confirm({
             title: `상품을 ${actionText}할까요?`,
             message: `선택한 상품의 승인 상태가 ${actionText}으로 변경됩니다.`,
@@ -209,7 +253,7 @@ function AdminCatalogApprovalPage() {
             if (approvalStatus === 'APPROVED') {
                 await approveProduct(productId)
             } else {
-                await rejectProduct(productId)
+                await rejectProduct(productId, rejectionReason)
             }
 
             await loadApprovalTargets()

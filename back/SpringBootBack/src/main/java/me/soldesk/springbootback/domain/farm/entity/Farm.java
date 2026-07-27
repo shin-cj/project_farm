@@ -81,6 +81,10 @@ public class Farm {
     @Column(name = "approval_status", nullable = false)
     private String approvalStatus = "PENDING";
 
+    /*관리자가 거절 한 사유*/
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
     /** 농장 등록 일시 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "created_at", nullable = false)

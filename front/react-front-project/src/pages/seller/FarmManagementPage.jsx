@@ -178,15 +178,25 @@ function FarmManagementPage() {
                         <h2>{farm.farmName}</h2>
                       </div>
 
-                      <span
-                          className={
-                            `farm-management-status ${
-                                farm.approvalStatus?.toLowerCase() ?? 'unknown'
-                            }`
-                          }
-                      >
-  {getApprovalStatusText(farm.approvalStatus)}
-</span>
+                      <div className="farm-management-approval-info">
+                        <span
+                            className={
+                              `farm-management-status ${
+                                  farm.approvalStatus?.toLowerCase() ?? 'unknown'
+                              }`
+                            }
+                        >
+                          {getApprovalStatusText(farm.approvalStatus)}
+                        </span>
+
+                        {farm.approvalStatus === 'REJECTED'
+                            && farm.rejectionReason && (
+                                <p className="farm-management-rejection-reason">
+                                  <strong>거절 사유: </strong>
+                                  {farm.rejectionReason}
+                                </p>
+                            )}
+                      </div>
                     </div>
 
                     <span className={`farm-management-sale-type ${
