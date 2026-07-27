@@ -120,6 +120,26 @@ public class MarketPriceService {
     }
 
     private List<MarketPriceSearchResponse> readRecentPriceFile() throws Exception {
+        File file = new File(filePath + "api_priceSequel.json");
+
+        if (!file.exists()) {
+            fetchPriceSequel();
+        }
+
+        JsonNode root = objectMapper.readTree(file);
+        JsonNode itemNode = root.path("response").path("body").path("items").path("item");
+
+        if (itemNode.isEmpty()) {
+            throw new RuntimeException("최근 시세 랭킹 데이터가 없습니다.");
+        }
+
+        return objectMapper.readValue(
+                itemNode.toString(),
+                new TypeReference<>() {}
+        );
+    }
+
+    private List<MarketPriceSearchResponse> readTodayPriceFile() throws Exception {
         File file = new File(filePath + "api_recent.json");
 
         if (!file.exists()) {
@@ -130,7 +150,7 @@ public class MarketPriceService {
         JsonNode itemNode = root.path("response").path("body").path("items").path("item");
 
         if (itemNode.isEmpty()) {
-            throw new RuntimeException("최근 시세 랭킹 데이터가 없습니다.");
+            throw new RuntimeException("오늘 시세 데이터가 없습니다.");
         }
 
         return objectMapper.readValue(
@@ -230,7 +250,7 @@ public class MarketPriceService {
     String filePath = "./src/main/java/me/soldesk/springbootback/domain/marketprice/api/";
 
     public BuyerMainRankingResponse getBuyerMainRanking(MarketPriceSearchRequest request) throws Exception {
-        List<MarketPriceSearchResponse> recentList = filterRecentList(readRecentPriceFile(), request);
+        List<MarketPriceSearchResponse> recentList = filterRecentList(readTodayPriceFile(), request);
         int rankingLimit = request.getLimit() == null || request.getLimit() <= 0 ? 5 : request.getLimit();
 
         String baseDate = recentList.stream()
@@ -251,7 +271,7 @@ public class MarketPriceService {
     }
 
     public List<BuyerMainRankingItemResponse> getBuyerMainTodayPrices(MarketPriceSearchRequest request) throws Exception {
-        List<MarketPriceSearchResponse> recentList = filterRecentList(readRecentPriceFile(), request);
+        List<MarketPriceSearchResponse> recentList = filterRecentList(readTodayPriceFile(), request);
         int resultLimit = request.getLimit() == null || request.getLimit() <= 0 ? 200 : request.getLimit();
 
         return recentList.stream()
