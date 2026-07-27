@@ -41,6 +41,7 @@ function ProductManagementPage() {
   const [stockReasons, setStockReasons] = useState({})
   const [updatingStockId, setUpdatingStockId] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
+  const [selectedRejectionProduct, setSelectedRejectionProduct] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -651,9 +652,22 @@ function ProductManagementPage() {
                       </td>
 
                       <td>
-                  <span className="seller-product-status">
-                   {getStatusText(product.productStatus)}
-                  </span>
+                        <div className="seller-product-status-info">
+                          <span className="seller-product-status">
+                            {getStatusText(product.productStatus)}
+                          </span>
+
+                          {product.productStatus === 'REJECTED'
+                              && product.rejectionReason && (
+                                  <button
+                                      type="button"
+                                      className="seller-product-rejection-button"
+                                      onClick={() => setSelectedRejectionProduct(product)}
+                                  >
+                                    사유 보기
+                                  </button>
+                              )}
+                        </div>
                       </td>
 
                       <td>
@@ -716,6 +730,39 @@ function ProductManagementPage() {
               </table>
           )}
         </section>
+
+        {selectedRejectionProduct && (
+            <div
+                className="seller-product-rejection-modal-backdrop"
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget) {
+                    setSelectedRejectionProduct(null)
+                  }
+                }}
+            >
+              <section
+                  className="seller-product-rejection-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="seller-product-rejection-title"
+              >
+                <p className="seller-product-rejection-modal-label">승인 검토 결과</p>
+                <h2 id="seller-product-rejection-title">상품 승인 거절 사유</h2>
+                <p className="seller-product-rejection-modal-product-name">
+                  {selectedRejectionProduct.productName}
+                </p>
+                <p className="seller-product-rejection-modal-content">
+                  {selectedRejectionProduct.rejectionReason}
+                </p>
+                <button
+                    type="button"
+                    onClick={() => setSelectedRejectionProduct(null)}
+                >
+                  확인
+                </button>
+              </section>
+            </div>
+        )}
       </main>
   )
 }
