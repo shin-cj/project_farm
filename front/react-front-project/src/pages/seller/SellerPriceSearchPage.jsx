@@ -4,6 +4,7 @@ import { SE_CODES,CATEGORY_CODES,ITEM_CODES,
 import axios from "axios";
 import '../buyer/PriceSearchPage.css'
 import CustomGraphTable from '../../components/common/CustomGraphTable.jsx';
+import UiIcon from '../../components/common/UiIcon.jsx';
 
 function SellerPriceSearchPage() {
 
@@ -147,7 +148,7 @@ function SellerPriceSearchPage() {
     return (
         <section className="page-card">
         <div className="search-page-container">
-            <h2>🌾 농산물 시세 검색창</h2>
+            <h2><UiIcon name="trend" /> 농산물 시세 검색창</h2>
             <hr />
 
             <form onSubmit={handleSearchSubmit} className="search-form">
@@ -223,15 +224,15 @@ function SellerPriceSearchPage() {
                 {/* 검색 실행 버튼 */}
                 <div className="submit-button-container">
                     <button type="submit" className="search-submit-btn">
-                        {apiState.isLoading ? '조회 중...' : '시세 검색하기 🔍'}
+                        {apiState.isLoading ? '조회 중...' : <><UiIcon name="search" size={18} /> 시세 검색하기</>}
                     </button>
                 </div>
             </form>
 
             <hr style={{ margin: '30px 0' }} />
 
-            {/* 📊 결과 테이블 영역 */}
-            <h3>📊 검색 결과 {apiState.data ? `(총 ${apiState.data.totalCount}건)` : ''}</h3>
+            {/* 검색 결과 테이블 영역 */}
+            <h3><UiIcon name="chart" /> 검색 결과 {apiState.data ? `(총 ${apiState.data.totalCount}건)` : ''}</h3>
             {apiState.isLoading && <div>데이터를 불러오는 중입니다...</div>}
 
             {!apiState.isLoading && apiState.data && apiState.data.totalCount > 0 ? (

@@ -6,6 +6,7 @@ import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 function getApprovalStatusText(status) {
   if (status === 'PENDING') {
@@ -27,6 +28,7 @@ function getApprovalStatusText(status) {
 function FarmManagementPage() {
 
   const navigate = useNavigate();
+  const { alert, confirm } = useAppFeedback()
   const [farms, setFarms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -83,9 +85,12 @@ function FarmManagementPage() {
       return
     }
 
-    const ok = confirm(
-        `"${farm.farmName}" 농장을 삭제할까요?\n등록 상품이나 주문 내역이 있으면 삭제할 수 없습니다.`
-    )
+    const ok = await confirm({
+      title: '농장을 삭제할까요?',
+      message: `"${farm.farmName}" 농장을 삭제합니다. 등록 상품이나 주문 내역이 있으면 삭제할 수 없습니다.`,
+      confirmText: '삭제',
+      type: 'danger',
+    })
 
     if (!ok) {
       return

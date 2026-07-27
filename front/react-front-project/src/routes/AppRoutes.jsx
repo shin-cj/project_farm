@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import RoleRoute from './RoleRoute'
 import MainLayout from '../layouts/MainLayout'
 import SellerLayout from '../layouts/SellerLayout'
 import AdminLayout from '../layouts/AdminLayout'
@@ -33,6 +34,7 @@ import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
 import DeliveryStatusPage from "../pages/buyer/DeliveryStatusPage.jsx";
 import ProductEditPage from "../pages/seller/ProductEditPage.jsx";
+import SellerProductDetailPage from '../pages/seller/SellerProductDetailPage.jsx'
 import FarmCreatePage from '../pages/seller/FarmCreatePage'
 import FarmEditPage from '../pages/seller/FarmEditPage'
 import FarmDetailPage from '../pages/buyer/FarmDetailPage'
@@ -61,33 +63,38 @@ function AppRoutes() {
           <Route path="/deliverypage" element={<DeliveryStatusPage />} />
       </Route>
 
-      <Route path="/seller" element={<SellerLayout />}>
-        <Route index element={<SellerDashboardPage />} />
-        <Route path="mypage" element={<SellerMyPage />} />
-        <Route path="farms" element={<FarmManagementPage />} />
-        <Route path="products" element={<ProductManagementPage />} />
-        <Route path="products/new" element={<ProductCreatePage />} />
-        <Route path="orders" element={<SellerOrderPage />} />
-        <Route path="search" element={<SellerPriceSearchPage />} />
-        <Route path="deliveries" element={<Navigate to="/seller/orders" replace />} />
-        <Route path="products/:productId/edit" element={<ProductEditPage />} />
-        <Route path="statistics" element={<SalesStatisticsPage />} />
-        <Route path="farms/new" element={<FarmCreatePage />} />
-        <Route path="farms/:farmId/edit" element={<FarmEditPage />} />
+      <Route element={<RoleRoute allowedRoleIds={[3]} />}>
+        <Route path="/seller" element={<SellerLayout />}>
+          <Route index element={<SellerDashboardPage />} />
+          <Route path="mypage" element={<SellerMyPage />} />
+          <Route path="farms" element={<FarmManagementPage />} />
+          <Route path="products" element={<ProductManagementPage />} />
+          <Route path="products/new" element={<ProductCreatePage />} />
+          <Route path="orders" element={<SellerOrderPage />} />
+          <Route path="search" element={<SellerPriceSearchPage />} />
+          <Route path="deliveries" element={<Navigate to="/seller/orders" replace />} />
+          <Route path="products/:productId/edit" element={<ProductEditPage />} />
+          <Route path="products/:productId" element={<SellerProductDetailPage />} />
+          <Route path="statistics" element={<SalesStatisticsPage />} />
+          <Route path="farms/new" element={<FarmCreatePage />} />
+          <Route path="farms/:farmId/edit" element={<FarmEditPage />} />
+        </Route>
       </Route>
 
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminDashboardPage />} />
-        <Route path="users" element={<UserManagementPage />} />
+      <Route element={<RoleRoute allowedRoleIds={[1]} />}>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="users" element={<UserManagementPage />} />
           <Route
               path="approvals"
               element={<AdminCatalogApprovalPage />}
           />
-        <Route path="content" element={<ContentManagementPage />} />
-        <Route path="reports" element={<ReportManagementPage />} />
-        <Route path="deliveries" element={<AdminDeliveryManagementPage />} />
-        <Route path="point-withdrawals" element={<AdminPointWithdrawalPage />} />
-        <Route path="market-prices" element={<MarketPriceManagementPage />} />
+          <Route path="content" element={<ContentManagementPage />} />
+          <Route path="reports" element={<ReportManagementPage />} />
+          <Route path="deliveries" element={<AdminDeliveryManagementPage />} />
+          <Route path="point-withdrawals" element={<AdminPointWithdrawalPage />} />
+          <Route path="market-prices" element={<MarketPriceManagementPage />} />
+        </Route>
       </Route>
 
       <Route path="/sandbox" element={<CheckoutPage />} />

@@ -12,12 +12,14 @@ import { getCategories } from '../../api/categoryApi.js'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 
 // 상품 관리 기능을 담당하는 페이지 컴포넌트입니다.
 function ProductManagementPage() {
 
   const navigate = useNavigate()
+  const { alert, confirm } = useAppFeedback()
   const [searchParams] = useSearchParams()
   const requestedFarmId = searchParams.get('farmId') ?? ''
 
@@ -36,6 +38,7 @@ function ProductManagementPage() {
   const [changingStatusId, setChangingStatusId] = useState(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [stockInputs, setStockInputs] = useState({})
+  const [stockReasons, setStockReasons] = useState({})
   const [updatingStockId, setUpdatingStockId] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
 
@@ -181,7 +184,12 @@ function ProductManagementPage() {
         ? '이 상품을 판매중지할까요?'
         : '이 상품을 다시 판매할까요?'
 
-    const ok = confirm(message)
+    const ok = await confirm({
+      title: '판매 상태를 변경할까요?',
+      message,
+      confirmText: nextStatus === 'HIDDEN' ? '판매중지' : '판매 재개',
+      type: nextStatus === 'HIDDEN' ? 'danger' : 'info',
+    })
 
     if (!ok) {
       return
@@ -216,6 +224,13 @@ function ProductManagementPage() {
     }))
   }
 
+  function handleStockReasonChange(productId, value) {
+    setStockReasons((currentReasons) => ({
+      ...currentReasons,
+      [productId]: value,
+    }))
+  }
+
   async function handleStockSave(product) {
     if (updatingStockId !== null) {
       return
@@ -244,13 +259,21 @@ function ProductManagementPage() {
       return
     }
 
+    const changeReason = (stockReasons[product.productId] ?? '').trim()
+
+    if (!changeReason) {
+      alert('재고 변경 사유를 입력해주세요.')
+      return
+    }
+
     try {
       setUpdatingStockId(product.productId)
 
       const updatedProduct =
           await updateProductStock(
               product.productId,
-              stockQuantity
+              stockQuantity,
+              changeReason,
           )
 
       setProducts((currentProducts) =>
@@ -265,6 +288,11 @@ function ProductManagementPage() {
         ...currentInputs,
         [product.productId]:
             String(updatedProduct.stockQuantity),
+      }))
+
+      setStockReasons((currentReasons) => ({
+        ...currentReasons,
+        [product.productId]: '',
       }))
 
       alert('재고가 변경되었습니다.')
@@ -294,9 +322,12 @@ function ProductManagementPage() {
       return
     }
 
-    const ok = confirm(
-        `"${product.productName}" 상품을 삭제할까요?\n연결된 주문이나 장바구니가 있으면 삭제할 수 없습니다.`
-    )
+    const ok = await confirm({
+      title: '상품을 삭제할까요?',
+      message: `"${product.productName}" 상품을 삭제합니다. 연결된 주문이나 장바구니가 있으면 삭제할 수 없습니다.`,
+      confirmText: '삭제',
+      type: 'danger',
+    })
 
     if (!ok) {
       return
@@ -318,6 +349,12 @@ function ProductManagementPage() {
         const nextInputs = { ...currentInputs }
         delete nextInputs[product.productId]
         return nextInputs
+      })
+
+      setStockReasons((currentReasons) => {
+        const nextReasons = { ...currentReasons }
+        delete nextReasons[product.productId]
+        return nextReasons
       })
 
       alert('상품이 삭제되었습니다.')
@@ -565,6 +602,7 @@ function ProductManagementPage() {
                       <td>
                         <div className="seller-product-stock-control">
                           <input
+                              className="seller-product-stock-quantity-input"
                               type="number"
                               min="0"
                               step="1"
@@ -579,6 +617,21 @@ function ProductManagementPage() {
                                   )
                               }
                               aria-label={`${product.productName} 재고 수량`}
+                          />
+
+                          <input
+                              className="seller-product-stock-reason-input"
+                              type="text"
+                              value={stockReasons[product.productId] ?? ''}
+                              onChange={(event) =>
+                                  handleStockReasonChange(
+                                      product.productId,
+                                      event.target.value,
+                                  )
+                              }
+                              placeholder="변경 사유 입력"
+                              maxLength="500"
+                              aria-label={`${product.productName} 재고 변경 사유`}
                           />
 
                           <button
@@ -605,16 +658,9 @@ function ProductManagementPage() {
 
                       <td>
                         <div className="seller-product-actions">
-                          {(
-                              product.productStatus === 'ON_SALE'
-                              || product.productStatus === 'SOLD_OUT'
-                          ) && (
-                              <Link to={`/products/${product.productId}`}
-                                    state = {{ from: '/seller/products'}}
-                                    >
-                                상세
-                              </Link>
-                          )}
+                          <Link to={`/seller/products/${product.productId}`}>
+                            상세
+                          </Link>
 
                           <Link to={
                             `/seller/products/${product.productId}/edit`

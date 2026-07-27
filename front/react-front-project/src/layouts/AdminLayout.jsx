@@ -2,17 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import './AdminLayout.css'
 import nongdamLogo from '../assets/brand/nongdam-logo.png'
-
-// 브라우저에 저장된 로그인 사용자 정보를 안전하게 읽습니다.
-function getStoredUser() {
-  try {
-    const storedUser = localStorage.getItem('loginUser')
-    return storedUser ? JSON.parse(storedUser) : null
-  } catch {
-    localStorage.removeItem('loginUser')
-    return null
-  }
-}
+import { clearLoginUser, getLoginUser } from '../utils/authStorage.js'
 
 // 관리자 메뉴에서 공통으로 사용하는 선 모양 아이콘입니다.
 function AdminSidebarIcon({ name }) {
@@ -107,12 +97,12 @@ function AdminSidebarIcon({ name }) {
 
 function AdminLayout() {
   const navigate = useNavigate()
-  const [loginUser, setLoginUser] = useState(() => getStoredUser())
+  const [loginUser, setLoginUser] = useState(() => getLoginUser())
   const adminName = loginUser?.name || '관리자'
 
   useEffect(() => {
     function syncUser() {
-      setLoginUser(getStoredUser())
+      setLoginUser(getLoginUser())
     }
 
     window.addEventListener('storage', syncUser)
@@ -131,7 +121,7 @@ function AdminLayout() {
   }
 
   function handleLogout() {
-    localStorage.removeItem('loginUser')
+    clearLoginUser()
     window.dispatchEvent(new Event('authChanged'))
     setLoginUser(null)
     navigate('/', { replace: true })
