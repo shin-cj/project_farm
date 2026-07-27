@@ -48,49 +48,6 @@ const formatRate = (value) => {
   return `${sign}${number.toFixed(2)}%`
 }
 
-const formatDate = (value) => {
-  if (!value || value.length !== 8) {
-    return value || '-'
-  }
-
-  return `${value.slice(0, 4)}.${value.slice(4, 6)}.${value.slice(6, 8)}`
-}
-
-const CHART_TYPE_OPTIONS = [
-  { label: '상승률 TOP 10', value: 'up' },
-  { label: '하락률 TOP 10', value: 'down' },
-]
-
-const PRODUCT_IMAGE_MAP = {
-  감자: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=500&q=80',
-  고구마: 'https://images.unsplash.com/photo-1596097635121-14b63b7a0c19?auto=format&fit=crop&w=500&q=80',
-  당근: 'https://images.unsplash.com/photo-1447175008436-054170c2e979?auto=format&fit=crop&w=500&q=80',
-  배추: 'https://images.unsplash.com/photo-1594282486552-05a18f72f2b2?auto=format&fit=crop&w=500&q=80',
-  상추: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a1?auto=format&fit=crop&w=500&q=80',
-  시금치: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=500&q=80',
-  양파: 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=500&q=80',
-  오이: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?auto=format&fit=crop&w=500&q=80',
-  토마토: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=500&q=80',
-  호박: 'https://images.unsplash.com/photo-1570586437263-ab629fccc818?auto=format&fit=crop&w=500&q=80',
-}
-
-const FALLBACK_PRODUCT_IMAGE =
-  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80'
-
-const FARM_CARDS = [
-  {
-    name: '초록마을 농장',
-    location: '경기 양평',
-    description: '자연을 닮은 건강한 농산물을 전합니다.',
-    image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=700&q=80',
-  },
-  {
-    name: '햇살 과수원',
-    location: '충남 예산',
-    description: '정직한 재배로 신선한 농산물을 만듭니다.',
-    image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=700&q=80',
-  },
-]
 
 const TRUST_ITEMS = [
   { title: '산지 직거래', description: '중간 유통 없이 산지에서 바로' },
@@ -99,32 +56,9 @@ const TRUST_ITEMS = [
   { title: '신선 배송', description: '가까운 산지에서 빠르게 배송' },
 ]
 
-const REGION_PRICE_ITEMS = [
-  { region: '경기', price: 2980, rate: -1.3 },
-  { region: '강원', price: 3120, rate: 2.1 },
-  { region: '충북', price: 2860, rate: -0.7 },
-  { region: '충남', price: 2940, rate: -1.1 },
-  { region: '전북', price: 3050, rate: 0.8 },
-  { region: '전남', price: 3020, rate: 1.2 },
-  { region: '경북', price: 2850, rate: -0.8 },
-  { region: '경남', price: 2990, rate: 0.4 },
-]
 
-const CATEGORY_PRICE_MODIFIER = {
-  '': 1,
-  100: 1.08,
-  200: 1,
-  300: 1.14,
-  400: 1.22,
-}
 
-const SALE_TYPE_PRICE_MODIFIER = {
-  '': 1,
-  '01': 1,
-  '02': 0.82,
-}
-
-function ChartCard({ title, description, items, tone, chartType, onChartTypeChange }) {
+function ChartCard({ title, description, items, tone }) {
   const chartItems = (items || []).filter((item, index, itemList) => {
     const itemKey = `${item.itemName}-${item.varietyName}-${item.saleTypeName}-${item.unit}-${item.tone}`
 
@@ -145,17 +79,6 @@ function ChartCard({ title, description, items, tone, chartType, onChartTypeChan
           <p>{description}</p>
           <h2>{title}</h2>
         </div>
-
-        <label className="buyer-change-chart-select">
-          <span>그래프 선택</span>
-          <select value={chartType} onChange={(event) => onChartTypeChange(event.target.value)}>
-            {CHART_TYPE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
       <div className="buyer-change-chart">
@@ -202,21 +125,26 @@ function ChartCard({ title, description, items, tone, chartType, onChartTypeChan
 }
 
 function ChangeRateChart({ upItems, downItems, periodLabel }) {
-  const [chartType, setChartType] = useState('up')
-  const isUpChart = chartType === 'up'
-
   return (
     <section className="buyer-change-chart-grid">
       <ChartCard
-        title={`${periodLabel} ${isUpChart ? '상승' : '하락'} 그래프`}
-        description={isUpChart ? '상승률 TOP 10' : '하락률 TOP 10'}
-        items={(isUpChart ? upItems || [] : downItems || []).map((item) => ({
+        title={`${periodLabel} 상승 그래프`}
+        description="상승률 TOP 5"
+        items={(upItems || []).slice(0, 5).map((item) => ({
           ...item,
-          tone: chartType,
+          tone: 'up',
         }))}
-        tone={chartType}
-        chartType={chartType}
-        onChartTypeChange={setChartType}
+        tone="up"
+      />
+
+      <ChartCard
+        title={`${periodLabel} 하락 그래프`}
+        description="하락률 TOP 5"
+        items={(downItems || []).slice(0, 5).map((item) => ({
+          ...item,
+          tone: 'down',
+        }))}
+        tone="down"
       />
     </section>
   )
@@ -465,38 +393,19 @@ function BuyerHomePage() {
     .sort((firstItem, secondItem) => (
       Math.abs(Number(secondItem.changeRate || 0)) - Math.abs(Number(firstItem.changeRate || 0))
     ))
-  const selectedCategoryLabel = FARM_CATEGORY_CODES.find(
-    (category) => category.value === filters.ctgryCd
-  )?.label || '전체'
-  const selectedSaleTypeLabel = SALE_TYPE_OPTIONS.find(
-    (saleType) => saleType.value === filters.seCd
-  )?.label || '전체'
-  const regionPriceModifier =
-    (CATEGORY_PRICE_MODIFIER[filters.ctgryCd] || 1)
-    * (SALE_TYPE_PRICE_MODIFIER[filters.seCd] || 1)
-  const regionPriceItems = REGION_PRICE_ITEMS.map((item, index) => ({
-    ...item,
-    price: Math.round(item.price * regionPriceModifier + index * 7),
-  }))
-  const regionAveragePrice = Math.round(
-    regionPriceItems.reduce((sum, item) => sum + item.price, 0) / regionPriceItems.length
-  )
-  const lowestRegion = regionPriceItems.reduce((lowestItem, item) => (
-    item.price < lowestItem.price ? item : lowestItem
-  ), regionPriceItems[0])
-  const highestRegion = regionPriceItems.reduce((highestItem, item) => (
-    item.price > highestItem.price ? item : highestItem
-  ), regionPriceItems[0])
-
-  const getProductImage = (itemName) => PRODUCT_IMAGE_MAP[itemName]
 
   const getProductName = (product) => product.productName || product.name || product.itemName || '상품명 없음'
   const getProductPrice = (product) => Number(product.price || product.productPrice || product.finalPrice || 0)
   const getProductUnit = (product) => product.unit || product.productUnit || '단위'
   const getProductFarmName = (product) => product.farmName || product.farmname || '농장 정보'
-  const getProductImageUrl = (product) => (
-    product.productImageUrl || product.imageUrl || getProductImage(getProductName(product))
-  )
+  const getProductImageUrl = (product) => {
+    const imageUrl = product.productImageUrl || product.imageUrl || ''
+
+    return imageUrl.startsWith('/uploads/')
+      ? `http://localhost:8080${imageUrl}`
+      : imageUrl
+  }
+
   const normalizeText = (value) => String(value || '').replace(/\s/g, '').toLowerCase()
   const getTodayMarketAveragePrice = (productName) => {
     const normalizedProductName = normalizeText(productName)
@@ -823,53 +732,6 @@ function BuyerHomePage() {
             downItems={selectedPeriod.downItems}
             periodLabel={selectedPeriod.label}
           />
-
-          <section className="buyer-region-price-card">
-            <div className="buyer-section-header">
-              <div>
-                <p className="buyer-home-label">지역 시세</p>
-                <h2>전국 8도 가격 흐름</h2>
-              </div>
-              <button type="button" onClick={() => navigate('/market-prices')}>
-                자세히 보기
-              </button>
-            </div>
-
-            <div className="buyer-region-price-content">
-              <div className="buyer-region-summary">
-                <strong>오늘 평균가</strong>
-                <span>전국 8도 {selectedSaleTypeLabel} · {selectedCategoryLabel}</span>
-                <b>{formatPrice(regionAveragePrice)}</b>
-                <p>
-                  가장 낮은 지역은 {lowestRegion.region}, 가장 높은 지역은 {highestRegion.region}이에요.
-                </p>
-              </div>
-
-              <div className="buyer-region-bars">
-                <h3>지역별 {selectedCategoryLabel} {selectedSaleTypeLabel}가격</h3>
-                {regionPriceItems.map((item) => {
-                  const maxPrice = Math.max(...regionPriceItems.map((region) => region.price))
-                  const barWidth = Math.max((item.price / maxPrice) * 100, 12)
-
-                  return (
-                    <article key={item.region}>
-                      <div>
-                        <strong>{item.region}</strong>
-                        <span className={item.rate >= 0 ? 'up' : 'down'}>{formatRate(item.rate)}</span>
-                      </div>
-                      <div className="buyer-region-bar-track">
-                        <span style={{ width: `${barWidth}%` }} />
-                      </div>
-                      <b>{formatPrice(item.price)}</b>
-                    </article>
-                  )
-                })}
-                <p>
-                  전국 8도 기준으로 가격과 등락률을 빠르게 비교할 수 있어요.
-                </p>
-              </div>
-            </div>
-          </section>
         </section>
       )}
 
