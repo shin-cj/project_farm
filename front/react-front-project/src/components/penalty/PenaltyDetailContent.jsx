@@ -12,6 +12,18 @@ const penaltyStatusLabels = {
     REVOKED: "취소됨",
 };
 
+function getPenaltyTypeLabel(penalty) {
+    if (
+        penalty.penaltyType === "WARNING" &&
+        Number(penalty.penaltyPoints) === 3
+    ) {
+        return "강한 경고";
+    }
+
+    return penaltyTypeLabels[penalty.penaltyType] ||
+        penalty.penaltyType;
+}
+
 function formatDate(value) {
     if (!value) {
         return "-";
@@ -32,9 +44,7 @@ function PenaltyDetailContent({
         );
     }
 
-    const penaltyTypeLabel =
-        penaltyTypeLabels[penalty.penaltyType] ||
-        penalty.penaltyType;
+    const penaltyTypeLabel = getPenaltyTypeLabel(penalty);
 
     const penaltyStatusLabel =
         penaltyStatusLabels[penalty.penaltyStatus] ||
@@ -72,7 +82,9 @@ function PenaltyDetailContent({
                     <dt>관련 상품</dt>
                     <dd>
                         {penalty.productName ||
-                            `상품 #${penalty.productId}`}
+                            (penalty.productId
+                                ? `상품 #${penalty.productId}`
+                                : "관련 상품 없음")}
                     </dd>
                 </div>
 
