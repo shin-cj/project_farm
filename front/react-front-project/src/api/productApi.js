@@ -35,6 +35,8 @@ export async function getProducts(
 // 구매자 상품 목록을 판매 방식, 검색, 정렬, 페이지 조건으로 조회합니다.
 export async function getPublicProductPage({
   categoryId = null,
+  marketCategoryCode = '',
+  marketItemCode = '',
   saleType = 'RETAIL',
   keyword = '',
   sameDayOnly = false,
@@ -52,6 +54,14 @@ export async function getPublicProductPage({
 
   if (categoryId !== null) {
     params.categoryId = categoryId
+  }
+
+  if (marketCategoryCode.trim()) {
+    params.marketCategoryCode = marketCategoryCode.trim()
+  }
+
+  if (marketItemCode.trim()) {
+    params.marketItemCode = marketItemCode.trim()
   }
 
   if (keyword.trim()) {

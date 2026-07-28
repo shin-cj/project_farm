@@ -47,6 +47,7 @@ function ProductEditPage() {
         price: '',
         stockQuantity: '',
         unit: '',
+        packageWeightGrams: '',
         minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
@@ -118,6 +119,7 @@ function ProductEditPage() {
                     price: productData.price ?? '',
                     stockQuantity: productData.stockQuantity ?? '',
                     unit: productData.unit ?? '',
+                    packageWeightGrams: productData.packageWeightGrams ?? '',
                     minOrderQuantity: String(
                         productData.minOrderQuantity ?? 1
                     ),
@@ -235,6 +237,8 @@ function ProductEditPage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const packageWeightGrams =
+            Number(form.packageWeightGrams)
         const minOrderQuantity =
             Number(form.minOrderQuantity)
 
@@ -274,6 +278,12 @@ function ProductEditPage() {
             return
         }
 
+        if (!Number.isFinite(packageWeightGrams)
+            || packageWeightGrams <= 0) {
+            alert('판매 단위의 총중량을 g 단위로 입력해주세요.')
+            return
+        }
+
         if (!Number.isInteger(minOrderQuantity)
             || minOrderQuantity < 1) {
             alert('최소 주문 수량은 1개 이상 입력해주세요.')
@@ -305,6 +315,7 @@ function ProductEditPage() {
             categoryId,
             price,
             stockQuantity,
+            packageWeightGrams,
             minOrderQuantity,
 
             // 날짜를 지웠다면 빈 문자열 대신 null을 보냅니다.
@@ -532,6 +543,22 @@ function ProductEditPage() {
                                 placeholder="예: 5kg"
                                 required
                             />
+                        </div>
+
+                        <div className="product-create-field">
+                            <label>판매 단위 총중량(g)</label>
+
+                            <input
+                                type="number"
+                                name="packageWeightGrams"
+                                value={form.packageWeightGrams}
+                                onChange={handleChange}
+                                placeholder="예: 1박스가 5kg이면 5000"
+                                min="0.01"
+                                step="0.01"
+                                required
+                            />
+                            <small>오늘의 kg 시세와 비교할 때 사용됩니다.</small>
                         </div>
                     </div>
 

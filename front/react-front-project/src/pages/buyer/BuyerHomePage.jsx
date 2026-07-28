@@ -240,6 +240,8 @@ function BuyerHomePage() {
         const [productResponse, marketResponse] = await Promise.all([
           getPublicProductPage({
             saleType: lowPriceFilters.saleType,
+            marketCategoryCode: lowPriceFilters.ctgryCd,
+            marketItemCode: lowPriceFilters.itemCd,
             keyword: lowPriceKeyword,
             sortOption: 'PRICE_LOW',
             page: 0,
@@ -397,6 +399,26 @@ function BuyerHomePage() {
   const getProductName = (product) => product.productName || product.name || product.itemName || '상품명 없음'
   const getProductPrice = (product) => Number(product.price || product.productPrice || product.finalPrice || 0)
   const getProductUnit = (product) => product.unit || product.productUnit || '단위'
+  const getPackageWeightGrams = (product) => {
+    const savedWeight = Number(product.packageWeightGrams || 0)
+
+    if (savedWeight > 0) {
+      return savedWeight
+    }
+
+    const unitMatch = String(getProductUnit(product))
+      .trim()
+      .match(/^(\d+(?:\.\d+)?)\s*(kg|g)$/i)
+
+    if (!unitMatch) {
+      return 0
+    }
+
+    const weight = Number(unitMatch[1])
+    return unitMatch[2].toLowerCase() === 'kg'
+      ? weight * 1000
+      : weight
+  }
   const getProductFarmName = (product) => product.farmName || product.farmname || '농장 정보'
   const getProductImageUrl = (product) => {
     const imageUrl = product.productImageUrl || product.imageUrl || ''
@@ -407,39 +429,102 @@ function BuyerHomePage() {
   }
 
   const normalizeText = (value) => String(value || '').replace(/\s/g, '').toLowerCase()
-  const getTodayMarketAveragePrice = (productName) => {
-    const normalizedProductName = normalizeText(productName)
-    const matchedItems = lowPriceMarketItems.filter((item) => {
-      const marketName = normalizeText(`${item.itemName || ''}${item.varietyName || ''}`)
-      return normalizedProductName && marketName && (
-        normalizedProductName.includes(normalizeText(item.itemName))
-        || normalizedProductName.includes(normalizeText(item.varietyName))
-        || marketName.includes(normalizedProductName)
-      )
-    })
+  const getTodayMarketPriceInfo = (product) => {
+    const marketItemCode = String(product.marketItemCode || '').trim()
+    const normalizedProductName = normalizeText(getProductName(product))
+
+    let matchedItems = marketItemCode
+      ? lowPriceMarketItems.filter(
+          (item) => String(item.itemCode || '').trim() === marketItemCode
+        )
+      : []
 
     if (matchedItems.length === 0) {
-      return 0
+      const varietyMatches = lowPriceMarketItems.filter((item) => {
+        const varietyName = normalizeText(item.varietyName)
+        return varietyName && normalizedProductName.includes(varietyName)
+      })
+
+      matchedItems = varietyMatches.length > 0
+        ? varietyMatches
+        : lowPriceMarketItems.filter((item) => {
+            const itemName = normalizeText(item.itemName)
+            return itemName && normalizedProductName.includes(itemName)
+          })
+    }
+
+    if (matchedItems.length === 0) {
+      return {
+        price: 0,
+        unit: '',
+      }
     }
 
     const totalPrice = matchedItems.reduce((sum, item) => sum + Number(item.currentPrice || 0), 0)
-    return Math.round(totalPrice / matchedItems.length)
+    return {
+      price: Math.round(totalPrice / matchedItems.length),
+      unit: matchedItems[0]?.unit || '',
+    }
   }
-  const getLowPriceComparisonText = (product) => {
+  const getLowPriceComparison = (product) => {
     const productPrice = getProductPrice(product)
-    const marketAveragePrice = getTodayMarketAveragePrice(getProductName(product))
+    const packageWeightGrams = getPackageWeightGrams(product)
+    const marketPriceInfo = getTodayMarketPriceInfo(product)
+    const marketAveragePrice = marketPriceInfo.price
 
     if (!marketAveragePrice || productPrice <= 0) {
-      return '오늘 시세 비교 준비 중'
+      return {
+        label: '오늘 시세 정보 없음',
+        marketAveragePrice: 0,
+        productPrice,
+        productUnit: getProductUnit(product),
+        marketUnit: marketPriceInfo.unit,
+        sitePricePerKg: 0,
+        packageWeightGrams,
+        changeRate: 0,
+        hasMarketPrice: false,
+        hasComparison: false,
+      }
     }
 
-    const differenceRate = ((marketAveragePrice - productPrice) / marketAveragePrice) * 100
-
-    if (differenceRate <= 0) {
-      return '오늘 시세와 비슷해요'
+    if (packageWeightGrams <= 0) {
+      return {
+        label: '단위 환산 정보 없음',
+        marketAveragePrice,
+        productPrice,
+        productUnit: getProductUnit(product),
+        marketUnit: marketPriceInfo.unit,
+        sitePricePerKg: 0,
+        packageWeightGrams: 0,
+        changeRate: 0,
+        hasMarketPrice: true,
+        hasComparison: false,
+      }
     }
 
-    return `오늘 시세보다 ${formatRate(differenceRate)} 저렴`
+    const sitePricePerKg = (productPrice * 1000) / packageWeightGrams
+    const changeRate = ((sitePricePerKg - marketAveragePrice) / marketAveragePrice) * 100
+
+    let label = '오늘 시세와 비슷해요'
+
+    if (changeRate <= -1) {
+      label = `오늘 시세보다 ${formatRate(changeRate)} 저렴해요`
+    } else if (changeRate >= 1) {
+      label = `오늘 시세보다 ${formatRate(changeRate)} 높아요`
+    }
+
+    return {
+      label,
+      marketAveragePrice,
+      productPrice,
+      productUnit: getProductUnit(product),
+      marketUnit: marketPriceInfo.unit,
+      sitePricePerKg,
+      packageWeightGrams,
+      changeRate,
+      hasMarketPrice: true,
+      hasComparison: true,
+    }
   }
   const handleCardKeyDown = (event, callback) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -600,30 +685,65 @@ function BuyerHomePage() {
               {!isLowPriceLoading && !lowPriceErrorMessage && lowPriceProducts.length === 0 && (
                 <p className="buyer-card-state">조건에 맞는 상품이 없습니다.</p>
               )}
-              {!isLowPriceLoading && !lowPriceErrorMessage && lowPriceProducts.map((product) => (
-                <article
-                  key={product.productId || `${getProductName(product)}-${getProductPrice(product)}`}
-                  className={product.productId ? 'clickable' : ''}
-                  role={product.productId ? 'button' : undefined}
-                  tabIndex={product.productId ? 0 : undefined}
-                  onClick={() => {
-                    if (product.productId) {
-                      navigate(`/products/${product.productId}`)
-                    }
-                  }}
-                  onKeyDown={(event) => {
-                    if (product.productId) {
-                      handleCardKeyDown(event, () => navigate(`/products/${product.productId}`))
-                    }
-                  }}
-                >
-                  {getProductImageUrl(product) && <img src={getProductImageUrl(product)} alt="" />}
-                  <strong>{getProductName(product)}</strong>
-                  <span>{getProductFarmName(product)} · {getProductUnit(product)}</span>
-                  <b>{formatPrice(getProductPrice(product))}</b>
-                  <em>{getLowPriceComparisonText(product)}</em>
-                </article>
-              ))}
+              {!isLowPriceLoading && !lowPriceErrorMessage && lowPriceProducts.map((product) => {
+                const comparison = getLowPriceComparison(product)
+
+                return (
+                  <article
+                    key={product.productId || `${getProductName(product)}-${getProductPrice(product)}`}
+                    className={product.productId ? 'clickable' : ''}
+                    role={product.productId ? 'button' : undefined}
+                    tabIndex={product.productId ? 0 : undefined}
+                    onClick={() => {
+                      if (product.productId) {
+                        navigate(`/products/${product.productId}`)
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (product.productId) {
+                        handleCardKeyDown(event, () => navigate(`/products/${product.productId}`))
+                      }
+                    }}
+                  >
+                    {getProductImageUrl(product) && <img src={getProductImageUrl(product)} alt="" />}
+                    <strong>{getProductName(product)}</strong>
+                    <span>{getProductFarmName(product)} · {getProductUnit(product)}</span>
+                    <b>{formatPrice(getProductPrice(product))}</b>
+                    <em className="buyer-low-price-comparison">
+                      {comparison.label}
+                      {comparison.hasMarketPrice && (
+                        <span className="buyer-low-price-tooltip" role="tooltip">
+                          <strong>
+                            오늘 시세 {formatPriceWithUnit(
+                              comparison.marketAveragePrice,
+                              comparison.marketUnit
+                            )}
+                          </strong>
+                          <span>
+                            상품 가격 {formatPriceWithUnit(
+                              comparison.productPrice,
+                              comparison.productUnit
+                            )}
+                          </span>
+                          {comparison.hasComparison ? (
+                            <>
+                              <span>
+                                kg 환산가 {formatPriceWithUnit(
+                                  Math.round(comparison.sitePricePerKg),
+                                  'kg'
+                                )}
+                              </span>
+                              <span>변동률 {formatRate(comparison.changeRate)}</span>
+                            </>
+                          ) : (
+                            <span>총중량을 등록하면 비교할 수 있습니다.</span>
+                          )}
+                        </span>
+                      )}
+                    </em>
+                  </article>
+                )
+              })}
             </div>
           </div>
 

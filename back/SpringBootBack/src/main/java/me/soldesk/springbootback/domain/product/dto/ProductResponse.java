@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.product.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -38,6 +39,9 @@ public class ProductResponse {
 
     /** 판매 단위 */
     private String unit;
+
+    /** 판매 단위 하나의 총중량(g) */
+    private BigDecimal packageWeightGrams;
 
     /** 상품을 판매하는 농장의 판매 방식: RETAIL(소매), WHOLESALE(도매) */
     private String saleType;

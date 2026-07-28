@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class BuyerMainRankingItemResponse {
 
+    private String itemCode;
     private String itemName;
     private String varietyName;
     private String categoryName;
