@@ -2,10 +2,17 @@ import { useEffect, useState } from "react";
 import penaltyApi from "../../api/penaltyApi.js";
 import "./PenaltyRecoveryModal.css"
 
+const SUSPENSION_THRESHOLD = 15;
+
 const typeLabels = {
     WARNING: "경고",
-    PRODUCT_SUSPENSION: "상품 판매 중지",
-    SELLER_SUSPENSION: "판매자 이용 정지",
+    PRODUCT_SUSPENSION: "상품 판매 정지",
+    SELLER_SUSPENSION: "중징계",
+};
+
+const statusLabels = {
+    ACTIVE: "제재 중",
+    REVOKED: "복구 완료",
 };
 
 function PenaltyRecoveryModal({ open, onClose }) {
@@ -16,13 +23,15 @@ function PenaltyRecoveryModal({ open, onClose }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+
     async function loadPenalties() {
         try {
             setLoading(true);
             setError("");
-            const response = await penaltyApi.getAdminList(status);
+            const response = await penaltyApi.getAdminList("ALL");
             setPenalties(response.data || []);
         } catch (e) {
+            console.error(e);
             setError("제재 목록을 불러오지 못했습니다.");
         } finally {
             setLoading(false);
@@ -31,7 +40,36 @@ function PenaltyRecoveryModal({ open, onClose }) {
 
     useEffect(() => {
         if (open) loadPenalties();
-    }, [open, status]);
+    }, [open]);
+
+    const activePointsBySeller = penalties.reduce((pointsBySeller, penalty) => {
+        if (penalty.penaltyStatus !== "ACTIVE") {
+            return pointsBySeller;
+        }
+
+        const sellerId = penalty.sellerId;
+        pointsBySeller[sellerId] =
+            (pointsBySeller[sellerId] || 0) +
+            Number(penalty.penaltyPoints || 0);
+
+        return pointsBySeller;
+    }, {});
+
+    const visiblePenalties = penalties
+        .filter((penalty) =>
+            status === "ALL" || penalty.penaltyStatus === status
+        )
+        .sort((first, second) => {
+            const pointDifference =
+                (activePointsBySeller[second.sellerId] || 0) -
+                (activePointsBySeller[first.sellerId] || 0);
+
+            if (pointDifference !== 0) {
+                return pointDifference;
+            }
+
+            return new Date(second.createdAt) - new Date(first.createdAt);
+        });
 
     async function handleRevoke() {
         const loginUser = JSON.parse(localStorage.getItem("loginUser") || "null");
@@ -66,23 +104,86 @@ function PenaltyRecoveryModal({ open, onClose }) {
                     <button type="button" onClick={onClose}>×</button>
                 </header>
 
-                <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                    <option value="ACTIVE">제재 중</option>
-                    <option value="REVOKED">복구 완료</option>
-                    <option value="ALL">전체</option>
-                </select>
+                <div className="penalty-recovery-toolbar">
+                    <label htmlFor="penalty-status-filter">처리 상태</label>
+                    <select
+                        id="penalty-status-filter"
+                        className="penalty-recovery-status-select"
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                    >
+                        <option value="ACTIVE">제재 중</option>
+                        <option value="REVOKED">복구 완료</option>
+                        <option value="ALL">전체</option>
+                    </select>
+                </div>
 
                 {error && <p className="penalty-recovery-error">{error}</p>}
                 {loading && <p>불러오는 중입니다.</p>}
 
                 <div className="penalty-recovery-list">
-                    {penalties.map((penalty) => (
+                    {!loading && visiblePenalties.length === 0 && (
+                        <p className="penalty-recovery-empty">
+                            해당 상태의 제재 내역이 없습니다.
+                        </p>
+                    )}
+
+                    {visiblePenalties.map((penalty) => {
+                        const activePoints =
+                            activePointsBySeller[penalty.sellerId] || 0;
+                        const thresholdReached =
+                            activePoints >= SUSPENSION_THRESHOLD;
+
+                        return (
                         <article key={penalty.penaltyId}>
-                            <div>
-                                <strong>판매자 #{penalty.sellerId}</strong>
-                                <span>{typeLabels[penalty.penaltyType]}</span>
-                                <span>{penalty.productName || "연결 상품 없음"}</span>
-                                <span>{penalty.penaltyPoints}점</span>
+                            <div className="penalty-recovery-item-main">
+                                <div className="penalty-recovery-seller">
+                                    <strong>판매자 #{penalty.sellerId}</strong>
+                                    <span
+                                        className={`penalty-recovery-status ${
+                                            penalty.penaltyStatus?.toLowerCase()
+                                        }`}
+                                    >
+                                        {statusLabels[penalty.penaltyStatus] ||
+                                            penalty.penaltyStatus}
+                                    </span>
+                                </div>
+
+                                <div className="penalty-recovery-meta">
+                                    <span>
+                                        {typeLabels[penalty.penaltyType] ||
+                                            penalty.penaltyType}
+                                    </span>
+                                    <span>
+                                        {penalty.productName ||
+                                            "연결 상품 없음"}
+                                    </span>
+                                </div>
+
+                                <div className="penalty-recovery-scores">
+                                    <span>
+                                        개별 제재
+                                        <strong>{penalty.penaltyPoints}점</strong>
+                                    </span>
+                                    <span
+                                        className={
+                                            thresholdReached
+                                                ? "penalty-recovery-total threshold"
+                                                : "penalty-recovery-total"
+                                        }
+                                    >
+                                        유효 누적
+                                        <strong>
+                                            {activePoints}점 /{" "}
+                                            {SUSPENSION_THRESHOLD}점
+                                        </strong>
+                                    </span>
+                                    {thresholdReached && (
+                                        <span className="penalty-threshold-reached">
+                                            이용 정지 기준 도달
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             {penalty.penaltyStatus === "ACTIVE" && (
@@ -91,7 +192,8 @@ function PenaltyRecoveryModal({ open, onClose }) {
                                 </button>
                             )}
                         </article>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {selected && (

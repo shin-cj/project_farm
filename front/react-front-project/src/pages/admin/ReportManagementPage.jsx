@@ -23,8 +23,8 @@ const typeLabels = {
 
 const penaltyDescriptions = {
   WARNING: "경고 이력과 페널티 1점이 부여됩니다.",
-  PRODUCT_SUSPENSION: "페널티 점수 3점이 부여됩니다.",
-  SELLER_SUSPENSION: "페널티 점수 5점이 부여됩니다.",
+  PRODUCT_SUSPENSION: "해당 상품의 판매가 중지되고 페널티 5점이 부여됩니다.",
+  SELLER_SUSPENSION: "중징계 5점이 부여되며 누적 15점 이상이면 이용이 정지됩니다.",
 }
 
 function formatDate(value) {
@@ -611,12 +611,12 @@ function ReportManagementPage() {
                             }
                         >
                           <option value="">페널티 점수를 선택하세요</option>
-                          <option value="WARNING">페널티 1점</option>
+                          <option value="WARNING">경고 1점</option>
                           <option value="PRODUCT_SUSPENSION">
-                            페널티 3점
+                            상품 판매 정지 5점
                           </option>
                           <option value="SELLER_SUSPENSION">
-                            페널티 5점
+                            중징계 5점
                           </option>
                         </select>
 

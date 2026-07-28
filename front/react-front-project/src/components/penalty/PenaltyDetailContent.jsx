@@ -2,8 +2,8 @@ import "./PenaltyDetailContent.css";
 
 const penaltyTypeLabels = {
     WARNING: "경고",
-    PRODUCT_SUSPENSION: "상품 판매 중지",
-    SELLER_SUSPENSION: "판매자 이용 정지",
+    PRODUCT_SUSPENSION: "상품 판매 정지",
+    SELLER_SUSPENSION: "중징계",
 };
 
 const penaltyStatusLabels = {

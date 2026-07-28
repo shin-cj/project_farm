@@ -59,7 +59,7 @@ public class SellerPenaltyService {
         penalty.setCreatedBy(request.getAdminId());
         penalty.setCreatedAt(LocalDateTime.now());
 
-        SellerPenalty savedPenalty = sellerPenaltyRepository.save(penalty);
+        SellerPenalty savedPenalty = sellerPenaltyRepository.saveAndFlush(penalty);
 
         long activePenaltyPoints =
                 sellerPenaltyRepository.sumActivePenaltyPoints(
@@ -99,7 +99,7 @@ public class SellerPenaltyService {
     private int getPenaltyPoints(String penaltyType){
         return switch (penaltyType){
             case "WARNING" -> 1;
-            case "PRODUCT_SUSPENSION" -> 3;
+            case "PRODUCT_SUSPENSION" -> 5;
             case "SELLER_SUSPENSION" -> 5;
             default -> throw new IllegalArgumentException("올바르지 않은 페널티 유형입니다.");
         };
@@ -108,7 +108,7 @@ public class SellerPenaltyService {
     private void applyPenaltyAction(Report report, String penaltyType){
         switch (penaltyType){
             case "WARNING" -> {}
-            case "PRODUCT_SUSPENSION" -> {}
+            case "PRODUCT_SUSPENSION" -> {suspendProduct(report);}
 
             case "SELLER_SUSPENSION" -> {}
             default -> throw new IllegalArgumentException("처리 할 수 없는 페널티 유형입니다.");
