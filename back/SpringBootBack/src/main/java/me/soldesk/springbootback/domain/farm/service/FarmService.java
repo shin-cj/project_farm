@@ -43,9 +43,12 @@ public class FarmService {
         List<Farm> farms;
 
         if (sellerId == null) {
-            farms = farmRepository.findAll();
+            farms = farmRepository.findByApprovalStatusNot("DELETED");
         } else {
-            farms = farmRepository.findBySellerId(sellerId);
+            farms = farmRepository.findBySellerIdAndApprovalStatusNot(
+                    sellerId,
+                    "DELETED"
+            );
         }
 
         List<FarmResponse> responses = new ArrayList<>();
@@ -126,6 +129,8 @@ public class FarmService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "농장을 찾을 수 없습니다."
                 ));
+        validateNotDeletedFarm(farm);
+
         return toResponse(farm);
     }
 
@@ -193,6 +198,8 @@ public class FarmService {
                         HttpStatus.NOT_FOUND,
                         "농장을 찾을 수 없습니다."
                 ));
+
+        validateNotDeletedFarm(farm);
 
         if (!farm.getSellerId().equals(request.getSellerId())) {
             throw new ResponseStatusException(
@@ -283,6 +290,8 @@ public class FarmService {
                         "농장을 찾을 수 없습니다."
                 ));
 
+        validateNotDeletedFarm(farm);
+
         farm.setApprovalStatus(nextStatus);
         farm.setRejectionReason(rejectionReason);
         farm.setUpdatedAt(LocalDateTime.now());
@@ -308,6 +317,8 @@ public class FarmService {
                         "농장을 찾을 수 없습니다."
                 ));
 
+        validateNotDeletedFarm(farm);
+
         if (!sellerId.equals(farm.getSellerId())) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
@@ -315,11 +326,25 @@ public class FarmService {
             );
         }
 
-        String farmImageUrl = farm.getFarmImageUrl();
-
         try {
-            farmRepository.delete(farm);
-            farmRepository.flush();
+            if (farmRepository.countActiveProductsByFarmId(farmId) > 0) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "등록된 상품이 남아 있는 농장은 삭제할 수 없습니다. 모든 상품을 먼저 삭제해 주세요."
+                );
+            }
+
+            if (farmRepository.countActiveOrdersByFarmId(farmId) > 0) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "진행 중인 주문이 연결된 농장은 삭제할 수 없습니다. 모든 주문이 배송 완료, 취소 또는 환불 완료된 뒤 다시 시도해 주세요."
+                );
+            }
+
+            // Keep product, order, report, and payment references intact.
+            farm.setApprovalStatus("DELETED");
+            farm.setUpdatedAt(LocalDateTime.now());
+            farmRepository.save(farm);
         } catch (DataIntegrityViolationException exception) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -327,10 +352,18 @@ public class FarmService {
             );
         }
 
-        farmImageService.deleteStoredImage(farmImageUrl);
     }
 
     //request 값을 엔터티에 적용하는 공통 메서드
+    private void validateNotDeletedFarm(Farm farm) {
+        if ("DELETED".equals(farm.getApprovalStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "농장을 찾을 수 없습니다."
+            );
+        }
+    }
+
     private void applyRequestToFarm(Farm farm, FarmRequest request) {
         farm.setSellerId(request.getSellerId());
         farm.setFarmName(request.getFarmName());

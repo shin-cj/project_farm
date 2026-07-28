@@ -43,12 +43,34 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     WHERE (:categoryId IS NULL OR p.categoryId = :categoryId)
       AND (:farmId IS NULL OR p.farmId = :farmId)
       AND (:productStatus IS NULL OR p.productStatus = :productStatus)
+      AND p.productStatus <> 'DELETED'
     """)
     List<Product> findProducts(
             @Param("categoryId") Long categoryId,
             @Param("farmId") Long farmId,
             @Param("productStatus") String productStatus
     );
+
+    /**
+     * 취소·환불 완료 또는 배송 완료가 아닌 주문은 상품 삭제를 막습니다.
+     */
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM order_items oi
+    JOIN orders o
+      ON o.order_id = oi.order_id
+    LEFT JOIN deliveries d
+      ON d.order_id = o.order_id
+    WHERE oi.product_id = :productId
+      AND NOT (
+          o.order_status IN ('CANCELED', 'REFUNDED')
+          OR (
+              o.order_status = 'PAID'
+              AND d.delivery_status = 'DELIVERED'
+          )
+      )
+    """, nativeQuery = true)
+    long countActiveOrdersByProductId(@Param("productId") Long productId);
 
     @Query("""
     SELECT p
@@ -72,11 +94,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query(
             value = """
             SELECT p
-            FROM Product p, Farm f
+            FROM Product p, Farm f, Category c
             WHERE p.farmId = f.farmId
+              AND p.categoryId = c.categoryId
               AND f.approvalStatus = 'APPROVED'
               AND p.productStatus IN ('ON_SALE', 'SOLD_OUT')
               AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+              AND (:marketCategoryCode IS NULL OR c.marketCategoryCode = :marketCategoryCode)
+              AND (
+                    :marketItemCode IS NULL
+                    OR p.marketItemCode = :marketItemCode
+                    OR (
+                        p.marketItemCode IS NULL
+                        AND :keyword IS NOT NULL
+                        AND LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))
+                            LIKE CONCAT('%', :keyword, '%')
+                    )
+              )
               AND f.saleType = :saleType
               AND (
                     :sameDayDelivery IS NULL
@@ -93,11 +127,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """,
             countQuery = """
             SELECT COUNT(p)
-            FROM Product p, Farm f
+            FROM Product p, Farm f, Category c
             WHERE p.farmId = f.farmId
+              AND p.categoryId = c.categoryId
               AND f.approvalStatus = 'APPROVED'
               AND p.productStatus IN ('ON_SALE', 'SOLD_OUT')
               AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+              AND (:marketCategoryCode IS NULL OR c.marketCategoryCode = :marketCategoryCode)
+              AND (
+                    :marketItemCode IS NULL
+                    OR p.marketItemCode = :marketItemCode
+                    OR (
+                        p.marketItemCode IS NULL
+                        AND :keyword IS NOT NULL
+                        AND LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))
+                            LIKE CONCAT('%', :keyword, '%')
+                    )
+              )
               AND f.saleType = :saleType
               AND (
                             :sameDayDelivery IS NULL
@@ -115,6 +161,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     )
     Page<Product> findPublicProductPage(
             @Param("categoryId") Long categoryId,
+            @Param("marketCategoryCode") String marketCategoryCode,
+            @Param("marketItemCode") String marketItemCode,
             @Param("saleType") String saleType,
             @Param("sameDayDelivery") String sameDayDelivery,
             @Param("keyword") String keyword,

@@ -23,6 +23,11 @@ public class AuthService {
         }else if(!user.getPasswordHash().equals(request.getPasswordHash())){
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
+
+        if("SUSPENDED".equals(user.getStatus())){
+            throw new IllegalStateException("사용 정지된 계정입니다.");
+        }
+
         return user;
     }
 

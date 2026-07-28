@@ -17,6 +17,8 @@ DECLARE
             IF SQLCODE != -942 THEN RAISE; END IF;
     END;
 BEGIN
+    drop_table_if_exists('seller_penalties');
+    drop_table_if_exists('seller_point_withdrawals');
     drop_table_if_exists('reports');
     drop_table_if_exists('chatbot');
     drop_table_if_exists('reviews');
@@ -56,6 +58,8 @@ BEGIN
     drop_sequence_if_exists('product_stock_histories_seq');
     drop_sequence_if_exists('seller_points_seq');
     drop_sequence_if_exists('seller_point_goals_seq');
+    drop_sequence_if_exists('seller_point_withdrawals_seq');
+    drop_sequence_if_exists('seller_penalties_seq');
     drop_sequence_if_exists('carts_seq');
     drop_sequence_if_exists('cart_items_seq');
     drop_sequence_if_exists('orders_seq');
@@ -156,6 +160,7 @@ CREATE TABLE farms (
                                                -- 판매 방식: RETAIL, WHOLESALE
     approval_status VARCHAR2(20) DEFAULT 'PENDING' NOT NULL,
                                                -- 승인 상태: PENDING, APPROVED, REJECTED
+    rejection_reason VARCHAR2(500),            -- 관리자 승인 거절 사유
     created_at DATE DEFAULT SYSDATE NOT NULL, -- 생성 일시
     updated_at DATE DEFAULT SYSDATE NOT NULL, -- 수정 일시
 
@@ -181,6 +186,7 @@ CREATE TABLE products (
     price NUMBER(12) NOT NULL,                -- 판매 단위당 가격
     stock_quantity NUMBER DEFAULT 0 NOT NULL, -- 현재 재고 수량
     unit VARCHAR2(30) NOT NULL,               -- 판매 단위: kg, 박스, 개 등
+    package_weight_grams NUMBER(10,2),        -- 판매 단위 하나의 총중량(g)
     min_order_quantity NUMBER(10) DEFAULT 1 NOT NULL,
                                                -- 최소 주문 수량
     origin VARCHAR2(100),                     -- 원산지
@@ -189,6 +195,7 @@ CREATE TABLE products (
     product_image_url VARCHAR2(500),          -- 상품 이미지 주소
     product_status VARCHAR2(20) DEFAULT 'PENDING' NOT NULL,
                                                -- 상품 상태: PENDING, ON_SALE, SOLD_OUT, HIDDEN
+    rejection_reason VARCHAR2(500),            -- 관리자 승인 거절 사유
     same_day_delivery VARCHAR2(1) DEFAULT 'N' NOT NULL,
                                                -- 당일배송 여부: Y, N
     created_at DATE DEFAULT SYSDATE NOT NULL, -- 생성 일시
@@ -201,6 +208,8 @@ CREATE TABLE products (
         FOREIGN KEY (category_id) REFERENCES categories(category_id),
     CONSTRAINT ck_products_min_order_qty
         CHECK (min_order_quantity >= 1),
+    CONSTRAINT ck_products_package_weight
+        CHECK (package_weight_grams IS NULL OR package_weight_grams > 0),
     CONSTRAINT ck_products_same_day_delivery
         CHECK (same_day_delivery IN ('Y', 'N'))
 );
@@ -263,6 +272,8 @@ CREATE TABLE orders (
     receiver_address VARCHAR2(255) NOT NULL,  -- 배송 기본 주소
     receiver_detail_address VARCHAR2(255),    -- 배송 상세 주소
     request_message VARCHAR2(500),            -- 배송 요청사항
+    delivery_type VARCHAR2(20) DEFAULT 'COURIER' NOT NULL,
+                                               -- 배송 방식: COURIER, SAME_DAY
     ordered_at DATE DEFAULT SYSDATE NOT NULL, -- 주문 일시
     updated_at DATE DEFAULT SYSDATE NOT NULL, -- 수정 일시
 
@@ -271,7 +282,9 @@ CREATE TABLE orders (
     CONSTRAINT fk_orders_buyer
         FOREIGN KEY (buyer_id) REFERENCES users(user_id),
     CONSTRAINT fk_orders_farm
-        FOREIGN KEY (farm_id) REFERENCES farms(farm_id)
+        FOREIGN KEY (farm_id) REFERENCES farms(farm_id),
+    CONSTRAINT ck_orders_delivery_type
+        CHECK (delivery_type IN ('COURIER', 'SAME_DAY'))
 );
 
 
@@ -323,6 +336,8 @@ CREATE TABLE seller_points (
     updated_at DATE DEFAULT SYSDATE NOT NULL,
 
     CONSTRAINT pk_seller_points PRIMARY KEY (point_id),
+    CONSTRAINT fk_seller_points_seller
+        FOREIGN KEY (seller_id) REFERENCES users(user_id),
     CONSTRAINT fk_seller_points_order
         FOREIGN KEY (order_id) REFERENCES orders(order_id),
     CONSTRAINT uk_seller_points_order UNIQUE (order_id)
@@ -342,7 +357,38 @@ CREATE TABLE seller_point_goals (
     updated_at DATE DEFAULT SYSDATE NOT NULL,
 
     CONSTRAINT pk_seller_point_goals PRIMARY KEY (goal_id),
-    CONSTRAINT uk_seller_point_goals UNIQUE (seller_id, goal_date)
+    CONSTRAINT uk_seller_point_goals UNIQUE (seller_id, goal_date),
+    CONSTRAINT fk_point_goals_seller
+        FOREIGN KEY (seller_id) REFERENCES users(user_id)
+);
+
+
+/* =========================================================
+   판매자 포인트 출금 신청 테이블: seller_point_withdrawals
+   판매자의 출금 계좌와 처리 상태를 관리한다.
+   ========================================================= */
+CREATE TABLE seller_point_withdrawals (
+    withdrawal_id NUMBER NOT NULL,
+    seller_id NUMBER NOT NULL,
+    withdrawal_amount NUMBER NOT NULL,
+    bank_name VARCHAR2(255) NOT NULL,
+    account_number VARCHAR2(255) NOT NULL,
+    account_holder VARCHAR2(255) NOT NULL,
+    withdrawal_status VARCHAR2(20) DEFAULT 'REQUESTED' NOT NULL,
+    reject_reason VARCHAR2(255),
+    requested_at DATE NOT NULL,
+    approved_at DATE,
+    completed_at DATE,
+    created_at DATE NOT NULL,
+    updated_at DATE NOT NULL,
+
+    CONSTRAINT pk_point_withdrawals PRIMARY KEY (withdrawal_id),
+    CONSTRAINT fk_withdrawals_seller
+        FOREIGN KEY (seller_id) REFERENCES users(user_id),
+    CONSTRAINT ck_withdrawals_amount
+        CHECK (withdrawal_amount >= 5000),
+    CONSTRAINT ck_withdrawals_status
+        CHECK (withdrawal_status IN ('REQUESTED', 'APPROVED', 'REJECTED', 'COMPLETED'))
 );
 
 
@@ -400,8 +446,13 @@ CREATE TABLE payments (
 CREATE TABLE deliveries (
     delivery_id NUMBER NOT NULL,              -- 배송 고유 번호
     order_id NUMBER NOT NULL,                 -- 배송 대상 주문 번호
+    delivery_type VARCHAR2(20) DEFAULT 'COURIER' NOT NULL,
+                                               -- 배송 방식: COURIER, SAME_DAY
     courier_name VARCHAR2(50),                -- 택배사 이름
     tracking_number VARCHAR2(100),            -- 송장번호
+    delivery_person_name VARCHAR2(255),       -- 당일배송 기사 이름
+    delivery_person_phone VARCHAR2(255),      -- 당일배송 기사 연락처
+    delivery_memo VARCHAR2(255),              -- 배송 메모
     delivery_status VARCHAR2(20) DEFAULT 'READY' NOT NULL,
                                                -- 배송 상태: READY, SHIPPING, DELIVERED
     shipped_at DATE,                          -- 배송 시작 일시
@@ -412,7 +463,9 @@ CREATE TABLE deliveries (
     CONSTRAINT pk_deliveries PRIMARY KEY (delivery_id),
     CONSTRAINT uk_deliveries_order UNIQUE (order_id),
     CONSTRAINT fk_deliveries_order
-        FOREIGN KEY (order_id) REFERENCES orders(order_id)
+        FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    CONSTRAINT ck_deliveries_type
+        CHECK (delivery_type IN ('COURIER', 'SAME_DAY'))
 );
 
 
@@ -454,7 +507,7 @@ CREATE TABLE reviews (
     review_id NUMBER NOT NULL,                -- 리뷰 고유 번호
     product_id NUMBER NOT NULL,               -- 리뷰 대상 상품 번호
     buyer_id NUMBER NOT NULL,                 -- 리뷰 작성 구매자 번호
-    order_item_id NUMBER NOT NULL,            -- 실제 구매한 주문 상품 번호
+    order_item_id NUMBER,                     -- 실제 구매한 주문 상품 번호(연결 전에는 NULL 가능)
     rating NUMBER(1) NOT NULL,                -- 평점: 1점부터 5점
     content VARCHAR2(500) NOT NULL,           -- 리뷰 내용
     image_url VARCHAR2(500),                  -- 리뷰 이미지 주소
@@ -531,6 +584,10 @@ CREATE TABLE reports (
     report_reason VARCHAR2(500) NOT NULL,     -- 신고 사유
     report_status VARCHAR2(20) DEFAULT 'PENDING',
                                                -- 처리 상태
+    admin_reply VARCHAR2(255),                -- 관리자 처리 답변
+    replied_at DATE,                          -- 관리자 답변 일시
+    replied_by NUMBER,                        -- 답변한 관리자 번호
+    farm_id NUMBER,                           -- 신고 대상 농장 번호
     created_at DATE DEFAULT SYSDATE,          -- 신고 일시
 
     CONSTRAINT pk_reports PRIMARY KEY (report_id),
@@ -539,7 +596,52 @@ CREATE TABLE reports (
     CONSTRAINT fk_reports_reported_user
         FOREIGN KEY (reported_user_id) REFERENCES users(user_id),
     CONSTRAINT fk_reports_product_id
-        FOREIGN KEY (product_id) REFERENCES products(product_id)
+        FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT fk_reports_replied_by
+        FOREIGN KEY (replied_by) REFERENCES users(user_id),
+    CONSTRAINT fk_reports_farm
+        FOREIGN KEY (farm_id) REFERENCES farms(farm_id)
+);
+
+
+/* =========================================================
+   판매자 제재 테이블: seller_penalties
+   처리된 신고를 근거로 판매자와 상품에 적용한 제재를 관리한다.
+   ========================================================= */
+CREATE TABLE seller_penalties (
+    penalty_id NUMBER NOT NULL,
+    report_id NUMBER NOT NULL,
+    seller_id NUMBER NOT NULL,
+    product_id NUMBER,
+    penalty_type VARCHAR2(30) NOT NULL,
+    penalty_points NUMBER DEFAULT 0 NOT NULL,
+    penalty_reason VARCHAR2(1000) NOT NULL,
+    penalty_status VARCHAR2(20) DEFAULT 'ACTIVE' NOT NULL,
+    created_by NUMBER NOT NULL,
+    created_at DATE NOT NULL,
+    expires_at DATE,
+    revoked_by NUMBER,
+    revoked_at DATE,
+    revoke_reason VARCHAR2(1000),
+
+    CONSTRAINT pk_seller_penalties PRIMARY KEY (penalty_id),
+    CONSTRAINT uk_penalties_report UNIQUE (report_id),
+    CONSTRAINT fk_penalties_report
+        FOREIGN KEY (report_id) REFERENCES reports(report_id),
+    CONSTRAINT fk_penalties_seller
+        FOREIGN KEY (seller_id) REFERENCES users(user_id),
+    CONSTRAINT fk_penalties_product
+        FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT fk_penalties_creator
+        FOREIGN KEY (created_by) REFERENCES users(user_id),
+    CONSTRAINT fk_penalties_revoker
+        FOREIGN KEY (revoked_by) REFERENCES users(user_id),
+    CONSTRAINT ck_penalties_type
+        CHECK (penalty_type IN ('WARNING', 'PRODUCT_SUSPENSION', 'SELLER_SUSPENSION')),
+    CONSTRAINT ck_penalties_status
+        CHECK (penalty_status IN ('ACTIVE', 'REVOKED')),
+    CONSTRAINT ck_penalties_points
+        CHECK (penalty_points >= 0)
 );
 
 
@@ -584,6 +686,11 @@ CREATE SEQUENCE seller_points_seq
     NOCACHE;
 
 CREATE SEQUENCE seller_point_goals_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE seller_point_withdrawals_seq
     START WITH 1
     INCREMENT BY 1
     NOCACHE;
@@ -639,6 +746,11 @@ CREATE SEQUENCE chatbot_seq
     NOCACHE;
 
 CREATE SEQUENCE reports_seq
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+CREATE SEQUENCE seller_penalties_seq
     START WITH 1
     INCREMENT BY 1
     NOCACHE;

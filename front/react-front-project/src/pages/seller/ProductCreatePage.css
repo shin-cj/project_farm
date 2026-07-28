@@ -79,6 +79,24 @@
     box-shadow: 0 0 0 3px rgba(63, 125, 32, 0.12);
 }
 
+.product-market-unit-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 8px;
+}
+
+.product-market-unit-input input,
+.product-market-unit-input select {
+    width: 100%;
+    min-width: 0;
+}
+
+.product-package-weight-help {
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
 .product-create-actions {
     display: flex;
     justify-content: flex-end;

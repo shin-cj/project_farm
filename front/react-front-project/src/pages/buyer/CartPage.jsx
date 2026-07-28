@@ -167,15 +167,6 @@ function CartPage() {
     moveToOrder([item]);
   };
 
-  const handleBuyAll = () => {
-    if (cartItems.length === 0) {
-      alert("장바구니가 비어 있습니다.");
-      return;
-    }
-
-    moveToOrder(cartItems);
-  };
-
   const updateQuantityOnScreen = (cartItemId, quantity) => {
     setCartItems((items) =>
         items.map((item) =>
