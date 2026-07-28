@@ -29,6 +29,8 @@ const PRODUCT_SALE_TYPE_OPTIONS = [
   { label: '도매', value: 'WHOLESALE' },
 ]
 
+const TICKER_VISIBLE_COUNT = 5
+
 const FARM_CATEGORY_CODES = CATEGORY_CODES.filter(
   (category) => category.value !== '500' && category.value !== '600'
 )
@@ -153,7 +155,7 @@ function ChangeRateChart({ upItems, downItems, periodLabel }) {
 function BuyerHomePage() {
   const navigate = useNavigate()
   const [rankingData, setRankingData] = useState(null)
-  const [todayRankingData, setTodayRankingData] = useState(null)
+  const [todayPriceData, setTodayPriceData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isTodayLoading, setIsTodayLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -220,25 +222,25 @@ function BuyerHomePage() {
   }, [filters])
 
   useEffect(() => {
-    async function fetchTodayRanking() {
+    async function fetchTodayPrices() {
       setIsTodayLoading(true)
       setTodayErrorMessage('')
 
       try {
-        const response = await marketPriceApi.getBuyerMainRanking({
-          seCd: todaySaleType,
-          limit: 50,
+        const response = await marketPriceApi.getBuyerMainTodayPrices({
+          seCd: todaySaleType || undefined,
+          limit: 1000,
         })
-        setTodayRankingData(response.data)
+        setTodayPriceData(Array.isArray(response.data) ? response.data : [])
       } catch (error) {
-        setTodayRankingData(null)
+        setTodayPriceData([])
         setTodayErrorMessage('오늘의 시세를 불러오지 못했습니다.')
       } finally {
         setIsTodayLoading(false)
       }
     }
 
-    fetchTodayRanking()
+    fetchTodayPrices()
   }, [todaySaleType])
 
   useEffect(() => {
@@ -466,26 +468,7 @@ function BuyerHomePage() {
   }
 
   const selectedPeriod = periodMap[period]
-  const todayPriceItems = [
-    ...(todayRankingData?.dayDownTop5 || []),
-    ...(todayRankingData?.dayUpTop5 || []),
-  ]
-    .reduce((uniqueItems, item) => {
-      const savedItem = uniqueItems.get(item.itemName)
-      const savedRate = Math.abs(Number(savedItem?.changeRate || 0))
-      const currentRate = Math.abs(Number(item.changeRate || 0))
-
-      if (!savedItem || currentRate > savedRate) {
-        uniqueItems.set(item.itemName, item)
-      }
-
-      return uniqueItems
-    }, new Map())
-
-  const todayPriceList = Array.from(todayPriceItems.values())
-    .sort((firstItem, secondItem) => (
-      Math.abs(Number(secondItem.changeRate || 0)) - Math.abs(Number(firstItem.changeRate || 0))
-    ))
+  const todayPriceList = todayPriceData
 
   const getProductName = (product) => product.productName || product.name || product.itemName || '상품명 없음'
   const getProductPrice = (product) => Number(product.price || product.productPrice || product.finalPrice || 0)
@@ -700,14 +683,16 @@ function BuyerHomePage() {
   }
 
   useEffect(() => {
-    if (todayPriceList.length <= 4) {
+    if (todayPriceList.length <= TICKER_VISIBLE_COUNT) {
       setTodaySlideIndex(0)
       return undefined
     }
 
     const timerId = window.setInterval(() => {
       setTodaySlideIndex((currentIndex) => (
-        currentIndex >= todayPriceList.length - 4 ? 0 : currentIndex + 1
+        currentIndex >= todayPriceList.length - TICKER_VISIBLE_COUNT
+          ? 0
+          : currentIndex + 1
       ))
     }, 2600)
 
@@ -737,7 +722,7 @@ function BuyerHomePage() {
         </div>
       </section>
 
-      {!isTodayLoading && !todayErrorMessage && todayRankingData && (
+      {!isTodayLoading && !todayErrorMessage && todayPriceList.length > 0 && (
         <section className="buyer-price-strip">
           <div className="buyer-price-strip-heading">
             <h2>오늘의 시세</h2>
@@ -757,14 +742,21 @@ function BuyerHomePage() {
             <div
               className="buyer-price-strip-track"
               style={{
-                width: `${Math.max(todayPriceList.length, 5) * 20}%`,
-                transform: `translateX(-${todaySlideIndex * (100 / Math.max(todayPriceList.length, 5))}%)`,
+                width: `${Math.max(todayPriceList.length, TICKER_VISIBLE_COUNT) * 20}%`,
+                transform: `translateX(-${
+                  todaySlideIndex
+                  * (100 / Math.max(todayPriceList.length, TICKER_VISIBLE_COUNT))
+                }%)`,
               }}
             >
               {todayPriceList.map((item, index) => (
                 <article
-                  key={`${item.itemName}-${item.varietyName}-${index}`}
-                  style={{ flexBasis: `${100 / Math.max(todayPriceList.length, 5)}%` }}
+                  key={`${item.itemCode}-${item.varietyName}-${item.saleTypeName}-${item.unit}-${index}`}
+                  style={{
+                    flexBasis: `${
+                      100 / Math.max(todayPriceList.length, TICKER_VISIBLE_COUNT)
+                    }%`,
+                  }}
                   tabIndex={0}
                 >
                   <div>
