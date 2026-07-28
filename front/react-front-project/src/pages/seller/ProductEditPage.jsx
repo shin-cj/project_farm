@@ -14,6 +14,8 @@ import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 import SellerFormModal from '../../components/common/SellerFormModal.jsx'
 import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
+import MarketItemCodePicker from '../../components/seller/MarketItemCodePicker.jsx'
+import { calculatePackageWeightGrams } from '../../utils/productWeight.js'
 
 function ProductEditPage() {
     const {productId} = useParams()
@@ -218,9 +220,31 @@ function ProductEditPage() {
             return
         }
 
+        if (name === 'unit') {
+            const calculatedWeight = calculatePackageWeightGrams(value)
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                unit: value,
+                packageWeightGrams:
+                    calculatedWeight === null
+                        ? ''
+                        : String(calculatedWeight),
+            }))
+            return
+        }
+
         setForm((currentForm) => ({
             ...currentForm,
             [name]: value,
+        }))
+    }
+
+    function handleMarketItemCodeSelect(marketItemCode) {
+        setIsDirty(true)
+        setForm((currentForm) => ({
+            ...currentForm,
+            marketItemCode,
         }))
     }
 
@@ -473,16 +497,12 @@ function ProductEditPage() {
                             </select>
                         </div>
 
-                        <div className="product-create-field">
-                            <label>공공 시세 품목 코드</label>
-                            <input
-                                name="marketItemCode"
-                                value={form.marketItemCode}
-                                onChange={handleChange}
-                                placeholder="예: 411 (선택 입력)"
-                                maxLength="10"
-                            />
-                        </div>
+                        <MarketItemCodePicker
+                            value={form.marketItemCode}
+                            onSelect={handleMarketItemCodeSelect}
+                            disabled={submitting}
+                            required={false}
+                        />
                     </div>
 
                     <div className="product-create-field">
@@ -550,15 +570,17 @@ function ProductEditPage() {
 
                             <input
                                 type="number"
+                                className="product-package-weight-input"
                                 name="packageWeightGrams"
                                 value={form.packageWeightGrams}
                                 onChange={handleChange}
-                                placeholder="예: 1박스가 5kg이면 5000"
                                 min="0.01"
                                 step="0.01"
                                 required
                             />
-                            <small>오늘의 kg 시세와 비교할 때 사용됩니다.</small>
+                            <small className="product-package-weight-help">
+                                예: 1박스가 5kg이면 5000g입니다. kg·g가 없는 단위는 직접 입력해주세요.
+                            </small>
                         </div>
                     </div>
 
