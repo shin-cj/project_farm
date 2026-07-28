@@ -79,15 +79,16 @@
     box-shadow: 0 0 0 3px rgba(63, 125, 32, 0.12);
 }
 
-.product-package-weight-input {
-    appearance: textfield;
-    -moz-appearance: textfield;
+.product-market-unit-input {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 96px;
+    gap: 8px;
 }
 
-.product-package-weight-input::-webkit-inner-spin-button,
-.product-package-weight-input::-webkit-outer-spin-button {
-    margin: 0;
-    -webkit-appearance: none;
+.product-market-unit-input input,
+.product-market-unit-input select {
+    width: 100%;
+    min-width: 0;
 }
 
 .product-package-weight-help {
