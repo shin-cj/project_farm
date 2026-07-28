@@ -6,8 +6,9 @@ const SUSPENSION_THRESHOLD = 15;
 
 const typeLabels = {
     WARNING: "경고",
-    PRODUCT_SUSPENSION: "상품 판매 정지",
-    SELLER_SUSPENSION: "중징계",
+    STRONG_WARNING: "강한 경고",
+    PRODUCT_SUSPENSION: "상품 판매 정지 (기존)",
+    SELLER_SUSPENSION: "중징계 · 상품 판매 정지",
 };
 
 const statusLabels = {

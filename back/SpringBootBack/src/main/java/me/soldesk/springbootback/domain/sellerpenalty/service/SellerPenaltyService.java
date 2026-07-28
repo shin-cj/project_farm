@@ -99,18 +99,18 @@ public class SellerPenaltyService {
     private int getPenaltyPoints(String penaltyType){
         return switch (penaltyType){
             case "WARNING" -> 1;
-            case "PRODUCT_SUSPENSION" -> 5;
+            case "STRONG_WARNING" -> 3;
             case "SELLER_SUSPENSION" -> 5;
+            case "PRODUCT_SUSPENSION" -> 5;
             default -> throw new IllegalArgumentException("올바르지 않은 페널티 유형입니다.");
         };
     }
 
     private void applyPenaltyAction(Report report, String penaltyType){
         switch (penaltyType){
-            case "WARNING" -> {}
-            case "PRODUCT_SUSPENSION" -> {suspendProduct(report);}
+            case "WARNING","STRONG_WARNING" -> {}
+            case "PRODUCT_SUSPENSION","SELLER_SUSPENSION" -> {suspendProduct(report);}
 
-            case "SELLER_SUSPENSION" -> {}
             default -> throw new IllegalArgumentException("처리 할 수 없는 페널티 유형입니다.");
         }
     }
@@ -306,14 +306,13 @@ public class SellerPenaltyService {
     private void restorePenaltyAction(SellerPenalty penalty){
 
         switch (penalty.getPenaltyType()){
-            case "WARNING" -> {
+            case "WARNING","STRONG_WARNING" -> {
 
             }
 
-            case "PRODUCT_SUSPENSION" ->
+            case "PRODUCT_SUSPENSION","SELLER_SUSPENSION" ->
                 restoreProduct(penalty);
 
-            case "SELLER_SUSPENSION" -> {}
 
             default ->
                 throw new IllegalArgumentException("복구할 수 없는 페널티 유형입니다.");
