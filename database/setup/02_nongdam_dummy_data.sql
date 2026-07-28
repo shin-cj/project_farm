@@ -2512,4 +2512,914 @@ SELECT seller_point_goals_seq.NEXTVAL,
 FROM dual
 CONNECT BY LEVEL <= 4;
 
+/* CODEX_REALISTIC_PRODUCT_DATA_START */
+/*
+   공공 가격 API의 2026-07-27 조사값을 기준으로 상품 가격과 판매 단위를 현실화합니다.
+   - 소매: API 소매 조사 가격을 기준으로 상품별 소폭 차등
+   - 도매: API 중도매 조사 가격 범위 안에서 대표 단가 적용
+   - API에 직접 없는 품목은 유사 품목과 일반적인 포장 규격을 기준으로 조정
+   - 상품/농장/카테고리 ID와 주문 연결 관계는 유지
+*/
+UPDATE products
+SET product_name = '햇살 부사사과 3kg', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 3kg 박스 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 25600, unit = '3kg 박스', product_image_url = '/images/retail/retail-busa-apple-01.jpg', updated_at = SYSDATE
+WHERE product_id = 1;
+
+UPDATE products
+SET product_name = '아삭 신고배 3kg', description = '산지에서 당도와 신선도를 확인해 선별한 신고배입니다. 3kg 박스 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 30600, unit = '3kg 박스', product_image_url = '/images/retail/retail-singo-pear-01.jpg', updated_at = SYSDATE
+WHERE product_id = 2;
+
+UPDATE products
+SET product_name = '새콤 자두 1kg', description = '산지에서 당도와 신선도를 확인해 선별한 자두입니다. 1kg 팩 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9700, unit = '1kg 팩', product_image_url = '/images/retail/retail-plum-01.jpg', updated_at = SYSDATE
+WHERE product_id = 3;
+
+UPDATE products
+SET product_name = '가정용 부사사과 5kg', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 5kg 박스 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 45200, unit = '5kg 박스', product_image_url = '/images/retail/retail-ugly-apple-01.jpg', updated_at = SYSDATE
+WHERE product_id = 4;
+
+UPDATE products
+SET product_name = '백도복숭아 2kg', description = '산지에서 당도와 신선도를 확인해 선별한 백도복숭아입니다. 2kg 박스 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 18000, unit = '2kg 박스', product_image_url = '/images/retail/retail-peach-01.jpg', updated_at = SYSDATE
+WHERE product_id = 5;
+
+UPDATE products
+SET product_name = '유기농 청상추 500g', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 청상추입니다. 500g 봉지 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 7400, unit = '500g 봉지', product_image_url = '/images/retail/retail-lettuce-01.jpg', updated_at = SYSDATE
+WHERE product_id = 6;
+
+UPDATE products
+SET product_name = '하우스 완숙토마토 2kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 완숙토마토입니다. 2kg 박스 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 7400, unit = '2kg 박스', product_image_url = '/images/retail/retail-tomato-01.jpg', updated_at = SYSDATE
+WHERE product_id = 7;
+
+UPDATE products
+SET product_name = '강원 수미감자 3kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 수미감자입니다. 3kg 박스 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9500, unit = '3kg 박스', product_image_url = '/images/retail/retail-potato-01.jpg', updated_at = SYSDATE
+WHERE product_id = 8;
+
+UPDATE products
+SET product_name = '국산 흙당근 2kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 흙당근입니다. 2kg 봉지 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 7300, unit = '2kg 봉지', product_image_url = '/images/retail/retail-carrot-01.jpg', updated_at = SYSDATE
+WHERE product_id = 9;
+
+UPDATE products
+SET product_name = '애호박 3개', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 애호박입니다. 3개 묶음 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 3400, unit = '3개 묶음', product_image_url = '/images/retail/retail-zucchini-01.jpg', updated_at = SYSDATE
+WHERE product_id = 10;
+
+UPDATE products
+SET product_name = '신동진쌀 10kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 신동진쌀입니다. 10kg 포대 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 34800, unit = '10kg 포대', product_image_url = '/images/retail/retail-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 11;
+
+UPDATE products
+SET product_name = '찰보리 2kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찰보리입니다. 2kg 봉지 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8600, unit = '2kg 봉지', product_image_url = '/images/retail/retail-glutinous-barley-01.jpg', updated_at = SYSDATE
+WHERE product_id = 12;
+
+UPDATE products
+SET product_name = '서리태 1kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 서리태입니다. 1kg 봉지 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 14500, unit = '1kg 봉지', product_image_url = '/images/retail/retail-black-soybean-01.jpg', updated_at = SYSDATE
+WHERE product_id = 13;
+
+UPDATE products
+SET product_name = '생표고버섯 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 생표고버섯입니다. 500g 팩 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 10300, unit = '500g 팩', product_image_url = '/images/retail/retail-shiitake-mushroom-01.jpg', updated_at = SYSDATE
+WHERE product_id = 14;
+
+UPDATE products
+SET product_name = '구운아몬드 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 구운아몬드입니다. 500g 봉지 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 11500, unit = '500g 봉지', product_image_url = '/images/retail/retail-almond-01.jpg', updated_at = SYSDATE
+WHERE product_id = 15;
+
+UPDATE products
+SET product_name = '부사사과 도매 10kg', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 76900, unit = '10kg', product_image_url = 'https://placehold.co/600x400?text=apple-wholesale', updated_at = SYSDATE
+WHERE product_id = 16;
+
+UPDATE products
+SET product_name = '신고배 도매 15kg', description = '산지에서 당도와 신선도를 확인해 선별한 신고배입니다. 15kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 89600, unit = '15kg', product_image_url = 'https://placehold.co/600x400?text=pear-wholesale', updated_at = SYSDATE
+WHERE product_id = 17;
+
+UPDATE products
+SET product_name = '백도복숭아 도매 4kg', description = '산지에서 당도와 신선도를 확인해 선별한 백도복숭아입니다. 4kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 18900, unit = '4kg', product_image_url = 'https://placehold.co/600x400?text=peach-wholesale', updated_at = SYSDATE
+WHERE product_id = 18;
+
+UPDATE products
+SET product_name = '완숙토마토 도매 5kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 완숙토마토입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 10800, unit = '5kg', product_image_url = 'https://placehold.co/600x400?text=tomato-wholesale', updated_at = SYSDATE
+WHERE product_id = 19;
+
+UPDATE products
+SET product_name = '수미감자 도매 20kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 수미감자입니다. 20kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 30300, unit = '20kg', product_image_url = 'https://placehold.co/600x400?text=potato-wholesale', updated_at = SYSDATE
+WHERE product_id = 20;
+
+UPDATE products
+SET product_name = '양파 도매 20kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 양파입니다. 20kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 28600, unit = '20kg', product_image_url = 'https://placehold.co/600x400?text=onion-wholesale', updated_at = SYSDATE
+WHERE product_id = 21;
+
+UPDATE products
+SET product_name = '신동진쌀 도매 20kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 신동진쌀입니다. 20kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 58900, unit = '20kg', product_image_url = 'https://placehold.co/600x400?text=rice-wholesale', updated_at = SYSDATE
+WHERE product_id = 22;
+
+UPDATE products
+SET product_name = '생표고버섯 도매 5kg', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 생표고버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 72000, unit = '5kg', product_image_url = 'https://placehold.co/600x400?text=shiitake-wholesale', updated_at = SYSDATE
+WHERE product_id = 23;
+
+UPDATE products
+SET product_name = '알호두 도매 5kg', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 132000, unit = '5kg', product_image_url = 'https://placehold.co/600x400?text=walnut-wholesale', updated_at = SYSDATE
+WHERE product_id = 24;
+
+UPDATE products
+SET product_name = '제철 채소 혼합 꾸러미 10kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 채소혼합꾸러미입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 45000, unit = '10kg', product_image_url = 'https://placehold.co/600x400?text=spring-box', updated_at = SYSDATE
+WHERE product_id = 25;
+
+UPDATE products
+SET product_name = '햇살과수원 부사사과 001호', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8500, unit = '1kg', product_image_url = '/images/retail/retail-busa-apple-02.jpg', updated_at = SYSDATE
+WHERE product_id = 26;
+
+UPDATE products
+SET product_name = '푸른채소농장 깐밤 002호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 깐밤입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 13500, unit = '1kg', product_image_url = '/images/retail/retail-peeled-chestnut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 27;
+
+UPDATE products
+SET product_name = '황금들녘농장 흑미 003호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 흑미입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 13100, unit = '2kg', product_image_url = '/images/retail/retail-black-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 28;
+
+UPDATE products
+SET product_name = '숲향기농원 흙당근 004호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 흙당근입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 3700, unit = '1kg', product_image_url = '/images/retail/retail-carrot-02.jpg', updated_at = SYSDATE
+WHERE product_id = 29;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 느타리버섯 005호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 느타리버섯입니다. 2kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 18900, unit = '2kg', product_image_url = 'https://placehold.co/800x600?text=product-005', updated_at = SYSDATE
+WHERE product_id = 30;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 부사사과 006호', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 76900, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-006', updated_at = SYSDATE
+WHERE product_id = 31;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 알호두 007호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 132000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-007', updated_at = SYSDATE
+WHERE product_id = 32;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 귀리 008호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 귀리입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 48000, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-008', updated_at = SYSDATE
+WHERE product_id = 33;
+
+UPDATE products
+SET product_name = '아침햇살농장 흙당근 009호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 흙당근입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 3700, unit = '1kg', product_image_url = '/images/retail/retail-carrot-03.jpg', updated_at = SYSDATE
+WHERE product_id = 34;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 새송이버섯 010호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 새송이버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 42500, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-010', updated_at = SYSDATE
+WHERE product_id = 35;
+
+UPDATE products
+SET product_name = '바다바람농원 신고배 011호', description = '산지에서 당도와 신선도를 확인해 선별한 신고배입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 20000, unit = '2kg', product_image_url = '/images/retail/retail-singo-pear-02.jpg', updated_at = SYSDATE
+WHERE product_id = 36;
+
+UPDATE products
+SET product_name = '바다바람도매센터 은행 012호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 은행입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 69000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-012', updated_at = SYSDATE
+WHERE product_id = 37;
+
+UPDATE products
+SET product_name = '산들고원농장 귀리 013호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 귀리입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 12000, unit = '2kg', product_image_url = '/images/retail/retail-oat-01.jpg', updated_at = SYSDATE
+WHERE product_id = 38;
+
+UPDATE products
+SET product_name = '햇살과수원 성주참외 014호', description = '산지에서 당도와 신선도를 확인해 선별한 성주참외입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 14100, unit = '2kg', product_image_url = '/images/retail/retail-oriental-melon-01.jpg', updated_at = SYSDATE
+WHERE product_id = 39;
+
+UPDATE products
+SET product_name = '푸른채소농장 알호두 015호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 18800, unit = '500g', product_image_url = '/images/retail/retail-walnut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 40;
+
+UPDATE products
+SET product_name = '황금들녘농장 찹쌀 016호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찹쌀입니다. 5kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 25000, unit = '5kg', product_image_url = '/images/retail/retail-glutinous-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 41;
+
+UPDATE products
+SET product_name = '숲향기농원 방울토마토 017호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 대추방울토마토입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 5300, unit = '1kg', product_image_url = '/images/retail/retail-tomato-02.jpg', updated_at = SYSDATE
+WHERE product_id = 42;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 생표고버섯 018호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 생표고버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 72000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-018', updated_at = SYSDATE
+WHERE product_id = 43;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 꿀수박 019호', description = '산지에서 당도와 신선도를 확인해 선별한 꿀수박입니다. 1통 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 19700, unit = '1통', product_image_url = 'https://placehold.co/800x600?text=product-019', updated_at = SYSDATE
+WHERE product_id = 44;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 구운아몬드 020호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 구운아몬드입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 98000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-020', updated_at = SYSDATE
+WHERE product_id = 45;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 찹쌀 021호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찹쌀입니다. 20kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 68500, unit = '20kg', product_image_url = 'https://placehold.co/800x600?text=product-021', updated_at = SYSDATE
+WHERE product_id = 46;
+
+UPDATE products
+SET product_name = '아침햇살농장 방울토마토 022호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 대추방울토마토입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 5300, unit = '1kg', product_image_url = '/images/retail/retail-tomato-03.jpg', updated_at = SYSDATE
+WHERE product_id = 47;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 양송이버섯 023호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 양송이버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 59000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-023', updated_at = SYSDATE
+WHERE product_id = 48;
+
+UPDATE products
+SET product_name = '바다바람농원 자두 024호', description = '산지에서 당도와 신선도를 확인해 선별한 자두입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9900, unit = '1kg', product_image_url = '/images/retail/retail-plum-02.jpg', updated_at = SYSDATE
+WHERE product_id = 49;
+
+UPDATE products
+SET product_name = '바다바람도매센터 황잣 025호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 황잣입니다. 3kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 285000, unit = '3kg', product_image_url = 'https://placehold.co/800x600?text=product-025', updated_at = SYSDATE
+WHERE product_id = 50;
+
+UPDATE products
+SET product_name = '산들고원농장 찰보리 026호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찰보리입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8400, unit = '2kg', product_image_url = '/images/retail/retail-glutinous-barley-02.jpg', updated_at = SYSDATE
+WHERE product_id = 51;
+
+UPDATE products
+SET product_name = '햇살과수원 블루베리 027호', description = '산지에서 당도와 신선도를 확인해 선별한 블루베리입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 14300, unit = '500g', product_image_url = '/images/retail/retail-blueberry-01.jpg', updated_at = SYSDATE
+WHERE product_id = 52;
+
+UPDATE products
+SET product_name = '푸른채소농장 황잣 028호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 황잣입니다. 300g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 30900, unit = '300g', product_image_url = '/images/retail/retail-pine-nut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 53;
+
+UPDATE products
+SET product_name = '황금들녘농장 신동진백미 029호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 신동진쌀입니다. 10kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 36900, unit = '10kg', product_image_url = '/images/retail/retail-white-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 54;
+
+UPDATE products
+SET product_name = '숲향기농원 애호박 030호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 애호박입니다. 2개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 2300, unit = '2개', product_image_url = '/images/retail/retail-zucchini-02.jpg', updated_at = SYSDATE
+WHERE product_id = 55;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 목이버섯 031호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 목이버섯입니다. 3kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 49500, unit = '3kg', product_image_url = 'https://placehold.co/800x600?text=product-031', updated_at = SYSDATE
+WHERE product_id = 56;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 하우스감귤 032호', description = '산지에서 당도와 신선도를 확인해 선별한 하우스감귤입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 33000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-032', updated_at = SYSDATE
+WHERE product_id = 57;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 깐밤 033호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 깐밤입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 98000, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-033', updated_at = SYSDATE
+WHERE product_id = 58;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 신동진백미 034호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 신동진쌀입니다. 20kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 58900, unit = '20kg', product_image_url = 'https://placehold.co/800x600?text=product-034', updated_at = SYSDATE
+WHERE product_id = 59;
+
+UPDATE products
+SET product_name = '아침햇살농장 흙당근 035호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 흙당근입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 3400, unit = '1kg', product_image_url = '/images/retail/retail-carrot-04.jpg', updated_at = SYSDATE
+WHERE product_id = 60;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 팽이버섯 036호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 팽이버섯입니다. 50봉 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 19800, unit = '50봉', product_image_url = 'https://placehold.co/800x600?text=product-036', updated_at = SYSDATE
+WHERE product_id = 61;
+
+UPDATE products
+SET product_name = '바다바람농원 성주참외 037호', description = '산지에서 당도와 신선도를 확인해 선별한 성주참외입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 13600, unit = '2kg', product_image_url = '/images/retail/retail-oriental-melon-02.jpg', updated_at = SYSDATE
+WHERE product_id = 62;
+
+UPDATE products
+SET product_name = '바다바람도매센터 볶음땅콩 038호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 볶음땅콩입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 92000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-038', updated_at = SYSDATE
+WHERE product_id = 63;
+
+UPDATE products
+SET product_name = '산들고원농장 현미 039호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 현미입니다. 5kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 23400, unit = '5kg', product_image_url = '/images/retail/retail-brown-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 64;
+
+UPDATE products
+SET product_name = '햇살과수원 샤인머스캣 040호', description = '산지에서 당도와 신선도를 확인해 선별한 샤인머스캣입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 12700, unit = '1kg', product_image_url = '/images/retail/retail-shine-muscat-01.jpg', updated_at = SYSDATE
+WHERE product_id = 65;
+
+UPDATE products
+SET product_name = '푸른채소농장 볶음땅콩 041호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 볶음땅콩입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 17500, unit = '500g', product_image_url = '/images/retail/retail-peanut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 66;
+
+UPDATE products
+SET product_name = '황금들녘농장 붉은팥 042호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 붉은팥입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 27400, unit = '1kg', product_image_url = '/images/retail/retail-red-bean-01.jpg', updated_at = SYSDATE
+WHERE product_id = 67;
+
+UPDATE products
+SET product_name = '숲향기농원 수미감자 043호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 수미감자입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6300, unit = '2kg', product_image_url = '/images/retail/retail-potato-02.jpg', updated_at = SYSDATE
+WHERE product_id = 68;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 느타리버섯 044호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 느타리버섯입니다. 2kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 18900, unit = '2kg', product_image_url = 'https://placehold.co/800x600?text=product-044', updated_at = SYSDATE
+WHERE product_id = 69;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 설향딸기 045호', description = '산지에서 당도와 신선도를 확인해 선별한 설향딸기입니다. 2kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 14200, unit = '2kg', product_image_url = 'https://placehold.co/800x600?text=product-045', updated_at = SYSDATE
+WHERE product_id = 70;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 알호두 046호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 132000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-046', updated_at = SYSDATE
+WHERE product_id = 71;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 녹두 047호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 녹두입니다. 40kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 486000, unit = '40kg', product_image_url = 'https://placehold.co/800x600?text=product-047', updated_at = SYSDATE
+WHERE product_id = 72;
+
+UPDATE products
+SET product_name = '아침햇살농장 방울토마토 048호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 대추방울토마토입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 5400, unit = '1kg', product_image_url = '/images/retail/retail-tomato-04.jpg', updated_at = SYSDATE
+WHERE product_id = 73;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 생표고버섯 049호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 생표고버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 72000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-049', updated_at = SYSDATE
+WHERE product_id = 74;
+
+UPDATE products
+SET product_name = '바다바람농원 블루베리 050호', description = '산지에서 당도와 신선도를 확인해 선별한 블루베리입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 13700, unit = '500g', product_image_url = '/images/retail/retail-blueberry-02.jpg', updated_at = SYSDATE
+WHERE product_id = 75;
+
+UPDATE products
+SET product_name = '바다바람도매센터 은행 051호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 은행입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 69000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-051', updated_at = SYSDATE
+WHERE product_id = 76;
+
+UPDATE products
+SET product_name = '산들고원농장 찰옥수수 052호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찰옥수수입니다. 10개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 11000, unit = '10개', product_image_url = '/images/retail/retail-sweet-corn-01.jpg', updated_at = SYSDATE
+WHERE product_id = 77;
+
+UPDATE products
+SET product_name = '햇살과수원 신고배 053호', description = '산지에서 당도와 신선도를 확인해 선별한 신고배입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 20800, unit = '2kg', product_image_url = '/images/retail/retail-singo-pear-03.jpg', updated_at = SYSDATE
+WHERE product_id = 78;
+
+UPDATE products
+SET product_name = '푸른채소농장 은행 054호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 은행입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9200, unit = '500g', product_image_url = '/images/retail/retail-ginkgo-nut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 79;
+
+UPDATE products
+SET product_name = '황금들녘농장 귀리 055호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 귀리입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 11300, unit = '2kg', product_image_url = '/images/retail/retail-oat-02.jpg', updated_at = SYSDATE
+WHERE product_id = 80;
+
+UPDATE products
+SET product_name = '숲향기농원 애호박 056호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 애호박입니다. 2개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 2300, unit = '2개', product_image_url = '/images/retail/retail-zucchini-03.jpg', updated_at = SYSDATE
+WHERE product_id = 81;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 생표고버섯 057호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 생표고버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 72000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-057', updated_at = SYSDATE
+WHERE product_id = 82;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 백도복숭아 058호', description = '산지에서 당도와 신선도를 확인해 선별한 백도복숭아입니다. 4kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 18900, unit = '4kg', product_image_url = 'https://placehold.co/800x600?text=product-058', updated_at = SYSDATE
+WHERE product_id = 83;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 구운아몬드 059호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 구운아몬드입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 98000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-059', updated_at = SYSDATE
+WHERE product_id = 84;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 서리태 060호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 서리태입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 112000, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-060', updated_at = SYSDATE
+WHERE product_id = 85;
+
+UPDATE products
+SET product_name = '아침햇살농장 애호박 061호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 애호박입니다. 2개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 2300, unit = '2개', product_image_url = '/images/retail/retail-zucchini-04.jpg', updated_at = SYSDATE
+WHERE product_id = 86;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 목이버섯 062호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 목이버섯입니다. 3kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 49500, unit = '3kg', product_image_url = 'https://placehold.co/800x600?text=product-062', updated_at = SYSDATE
+WHERE product_id = 87;
+
+UPDATE products
+SET product_name = '바다바람농원 백도복숭아 063호', description = '산지에서 당도와 신선도를 확인해 선별한 백도복숭아입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 19200, unit = '2kg', product_image_url = '/images/retail/retail-peach-02.jpg', updated_at = SYSDATE
+WHERE product_id = 88;
+
+UPDATE products
+SET product_name = '바다바람도매센터 황잣 064호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 황잣입니다. 3kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 285000, unit = '3kg', product_image_url = 'https://placehold.co/800x600?text=product-064', updated_at = SYSDATE
+WHERE product_id = 89;
+
+UPDATE products
+SET product_name = '산들고원농장 붉은팥 065호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 붉은팥입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 26300, unit = '1kg', product_image_url = '/images/retail/retail-red-bean-02.jpg', updated_at = SYSDATE
+WHERE product_id = 90;
+
+UPDATE products
+SET product_name = '햇살과수원 자두 066호', description = '산지에서 당도와 신선도를 확인해 선별한 자두입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9300, unit = '1kg', product_image_url = '/images/retail/retail-plum-03.jpg', updated_at = SYSDATE
+WHERE product_id = 91;
+
+UPDATE products
+SET product_name = '푸른채소농장 황잣 067호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 황잣입니다. 300g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 30300, unit = '300g', product_image_url = '/images/retail/retail-pine-nut-02.jpg', updated_at = SYSDATE
+WHERE product_id = 92;
+
+UPDATE products
+SET product_name = '황금들녘농장 찰보리 068호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찰보리입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8800, unit = '2kg', product_image_url = '/images/retail/retail-glutinous-barley-03.jpg', updated_at = SYSDATE
+WHERE product_id = 93;
+
+UPDATE products
+SET product_name = '숲향기농원 수미감자 069호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 수미감자입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6400, unit = '2kg', product_image_url = '/images/retail/retail-potato-03.jpg', updated_at = SYSDATE
+WHERE product_id = 94;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 팽이버섯 070호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 팽이버섯입니다. 50봉 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 19800, unit = '50봉', product_image_url = 'https://placehold.co/800x600?text=product-070', updated_at = SYSDATE
+WHERE product_id = 95;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 부사사과 071호', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 76900, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-071', updated_at = SYSDATE
+WHERE product_id = 96;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 깐밤 072호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 깐밤입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 98000, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-072', updated_at = SYSDATE
+WHERE product_id = 97;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 흑미 073호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 흑미입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 53000, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-073', updated_at = SYSDATE
+WHERE product_id = 98;
+
+UPDATE products
+SET product_name = '아침햇살농장 수미감자 074호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 수미감자입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6400, unit = '2kg', product_image_url = '/images/retail/retail-potato-04.jpg', updated_at = SYSDATE
+WHERE product_id = 99;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 느타리버섯 075호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 느타리버섯입니다. 2kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 18900, unit = '2kg', product_image_url = 'https://placehold.co/800x600?text=product-075', updated_at = SYSDATE
+WHERE product_id = 100;
+
+UPDATE products
+SET product_name = '바다바람농원 부사사과 076호', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8500, unit = '1kg', product_image_url = '/images/retail/retail-busa-apple-03.jpg', updated_at = SYSDATE
+WHERE product_id = 101;
+
+UPDATE products
+SET product_name = '바다바람도매센터 알호두 077호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 132000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-077', updated_at = SYSDATE
+WHERE product_id = 102;
+
+UPDATE products
+SET product_name = '산들고원농장 귀리 078호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 귀리입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 12000, unit = '2kg', product_image_url = '/images/retail/retail-oat-03.jpg', updated_at = SYSDATE
+WHERE product_id = 103;
+
+UPDATE products
+SET product_name = '햇살과수원 성주참외 079호', description = '산지에서 당도와 신선도를 확인해 선별한 성주참외입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 14100, unit = '2kg', product_image_url = '/images/retail/retail-oriental-melon-03.jpg', updated_at = SYSDATE
+WHERE product_id = 104;
+
+UPDATE products
+SET product_name = '푸른채소농장 볶음땅콩 080호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 볶음땅콩입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 17200, unit = '500g', product_image_url = '/images/retail/retail-peanut-02.jpg', updated_at = SYSDATE
+WHERE product_id = 105;
+
+UPDATE products
+SET product_name = '황금들녘농장 현미 081호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 현미입니다. 5kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 22000, unit = '5kg', product_image_url = '/images/retail/retail-brown-rice-02.jpg', updated_at = SYSDATE
+WHERE product_id = 106;
+
+UPDATE products
+SET product_name = '숲향기농원 파프리카 082호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 파프리카입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6300, unit = '1kg', product_image_url = '/images/retail/retail-paprika-01.jpg', updated_at = SYSDATE
+WHERE product_id = 107;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 새송이버섯 083호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 새송이버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 42500, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-083', updated_at = SYSDATE
+WHERE product_id = 108;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 성주참외 084호', description = '산지에서 당도와 신선도를 확인해 선별한 성주참외입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 25700, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-084', updated_at = SYSDATE
+WHERE product_id = 109;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 알호두 085호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 132000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-085', updated_at = SYSDATE
+WHERE product_id = 110;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 찹쌀 086호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찹쌀입니다. 20kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 68500, unit = '20kg', product_image_url = 'https://placehold.co/800x600?text=product-086', updated_at = SYSDATE
+WHERE product_id = 111;
+
+UPDATE products
+SET product_name = '아침햇살농장 파프리카 087호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 파프리카입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6300, unit = '1kg', product_image_url = '/images/retail/retail-paprika-01.jpg', updated_at = SYSDATE
+WHERE product_id = 112;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 생표고버섯 088호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 생표고버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 72000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-088', updated_at = SYSDATE
+WHERE product_id = 113;
+
+UPDATE products
+SET product_name = '바다바람농원 꿀수박 089호', description = '산지에서 당도와 신선도를 확인해 선별한 꿀수박입니다. 1통 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 24100, unit = '1통', product_image_url = '/images/retail/retail-watermelon-01.jpg', updated_at = SYSDATE
+WHERE product_id = 114;
+
+UPDATE products
+SET product_name = '바다바람도매센터 구운아몬드 090호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 구운아몬드입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 98000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-090', updated_at = SYSDATE
+WHERE product_id = 115;
+
+UPDATE products
+SET product_name = '산들고원농장 찹쌀 091호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찹쌀입니다. 5kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 25000, unit = '5kg', product_image_url = '/images/retail/retail-glutinous-rice-02.jpg', updated_at = SYSDATE
+WHERE product_id = 116;
+
+UPDATE products
+SET product_name = '햇살과수원 블루베리 092호', description = '산지에서 당도와 신선도를 확인해 선별한 블루베리입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 14300, unit = '500g', product_image_url = '/images/retail/retail-blueberry-03.jpg', updated_at = SYSDATE
+WHERE product_id = 117;
+
+UPDATE products
+SET product_name = '푸른채소농장 은행 093호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 은행입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9000, unit = '500g', product_image_url = '/images/retail/retail-ginkgo-nut-02.jpg', updated_at = SYSDATE
+WHERE product_id = 118;
+
+UPDATE products
+SET product_name = '황금들녘농장 찰옥수수 094호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찰옥수수입니다. 10개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 11400, unit = '10개', product_image_url = '/images/retail/retail-sweet-corn-02.jpg', updated_at = SYSDATE
+WHERE product_id = 119;
+
+UPDATE products
+SET product_name = '숲향기농원 꿀고구마 095호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 꿀고구마입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9200, unit = '2kg', product_image_url = '/images/retail/retail-sweet-potato-01.jpg', updated_at = SYSDATE
+WHERE product_id = 120;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 양송이버섯 096호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 양송이버섯입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 59000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-096', updated_at = SYSDATE
+WHERE product_id = 121;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 블루베리 097호', description = '산지에서 당도와 신선도를 확인해 선별한 블루베리입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 118000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-097', updated_at = SYSDATE
+WHERE product_id = 122;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 황잣 098호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 황잣입니다. 3kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 285000, unit = '3kg', product_image_url = 'https://placehold.co/800x600?text=product-098', updated_at = SYSDATE
+WHERE product_id = 123;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 신동진백미 099호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 신동진쌀입니다. 20kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 58900, unit = '20kg', product_image_url = 'https://placehold.co/800x600?text=product-099', updated_at = SYSDATE
+WHERE product_id = 124;
+
+UPDATE products
+SET product_name = '아침햇살농장 꿀고구마 100호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 꿀고구마입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9200, unit = '2kg', product_image_url = '/images/retail/retail-sweet-potato-02.jpg', updated_at = SYSDATE
+WHERE product_id = 125;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 목이버섯 101호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 목이버섯입니다. 3kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 49500, unit = '3kg', product_image_url = 'https://placehold.co/800x600?text=product-101', updated_at = SYSDATE
+WHERE product_id = 126;
+
+UPDATE products
+SET product_name = '바다바람농원 하우스감귤 102호', description = '산지에서 당도와 신선도를 확인해 선별한 하우스감귤입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8800, unit = '1kg', product_image_url = '/images/retail/retail-tangerine-01.jpg', updated_at = SYSDATE
+WHERE product_id = 127;
+
+UPDATE products
+SET product_name = '바다바람도매센터 깐밤 103호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 깐밤입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 98000, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-103', updated_at = SYSDATE
+WHERE product_id = 128;
+
+UPDATE products
+SET product_name = '산들고원농장 신동진백미 104호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 신동진쌀입니다. 10kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 36900, unit = '10kg', product_image_url = '/images/retail/retail-white-rice-02.jpg', updated_at = SYSDATE
+WHERE product_id = 129;
+
+UPDATE products
+SET product_name = '햇살과수원 백도복숭아 105호', description = '산지에서 당도와 신선도를 확인해 선별한 백도복숭아입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 18000, unit = '2kg', product_image_url = '/images/retail/retail-peach-03.jpg', updated_at = SYSDATE
+WHERE product_id = 130;
+
+UPDATE products
+SET product_name = '푸른채소농장 황잣 106호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 황잣입니다. 300g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 29700, unit = '300g', product_image_url = '/images/retail/retail-pine-nut-03.jpg', updated_at = SYSDATE
+WHERE product_id = 131;
+
+UPDATE products
+SET product_name = '황금들녘농장 붉은팥 107호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 붉은팥입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 27400, unit = '1kg', product_image_url = '/images/retail/retail-red-bean-03.jpg', updated_at = SYSDATE
+WHERE product_id = 132;
+
+UPDATE products
+SET product_name = '숲향기농원 청상추 108호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 청상추입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 7800, unit = '500g', product_image_url = '/images/retail/retail-lettuce-02.jpg', updated_at = SYSDATE
+WHERE product_id = 133;
+
+UPDATE products
+SET product_name = '햇살과수원 도매센터 팽이버섯 109호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 팽이버섯입니다. 50봉 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 19800, unit = '50봉', product_image_url = 'https://placehold.co/800x600?text=product-109', updated_at = SYSDATE
+WHERE product_id = 134;
+
+UPDATE products
+SET product_name = '푸른채소농장 도매센터 샤인머스캣 110호', description = '산지에서 당도와 신선도를 확인해 선별한 샤인머스캣입니다. 2kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 19700, unit = '2kg', product_image_url = 'https://placehold.co/800x600?text=product-110', updated_at = SYSDATE
+WHERE product_id = 135;
+
+UPDATE products
+SET product_name = '황금들녘농장 도매센터 볶음땅콩 111호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 볶음땅콩입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 92000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-111', updated_at = SYSDATE
+WHERE product_id = 136;
+
+UPDATE products
+SET product_name = '숲향기농원 도매센터 붉은팥 112호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 붉은팥입니다. 10kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 168000, unit = '10kg', product_image_url = 'https://placehold.co/800x600?text=product-112', updated_at = SYSDATE
+WHERE product_id = 137;
+
+UPDATE products
+SET product_name = '아침햇살농장 청상추 113호', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 청상추입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 7800, unit = '500g', product_image_url = '/images/retail/retail-lettuce-03.jpg', updated_at = SYSDATE
+WHERE product_id = 138;
+
+UPDATE products
+SET product_name = '아침햇살도매센터 느타리버섯 114호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 느타리버섯입니다. 2kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 18900, unit = '2kg', product_image_url = 'https://placehold.co/800x600?text=product-114', updated_at = SYSDATE
+WHERE product_id = 139;
+
+UPDATE products
+SET product_name = '바다바람농원 설향딸기 115호', description = '산지에서 당도와 신선도를 확인해 선별한 설향딸기입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 5000, unit = '500g', product_image_url = '/images/retail/retail-strawberry-01.jpg', updated_at = SYSDATE
+WHERE product_id = 140;
+
+UPDATE products
+SET product_name = '바다바람도매센터 알호두 116호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 5kg 규격으로 포장해 식당·카페·급식 등 사업자 대량 구매에 적합합니다.', price = 132000, unit = '5kg', product_image_url = 'https://placehold.co/800x600?text=product-116', updated_at = SYSDATE
+WHERE product_id = 141;
+
+UPDATE products
+SET product_name = '산들고원농장 녹두 117호', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 녹두입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 23400, unit = '1kg', product_image_url = '/images/retail/retail-mung-bean-01.jpg', updated_at = SYSDATE
+WHERE product_id = 142;
+
+UPDATE products
+SET product_name = '햇살과수원 부사사과 118호', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8900, unit = '1kg', product_image_url = '/images/retail/retail-busa-apple-04.jpg', updated_at = SYSDATE
+WHERE product_id = 143;
+
+UPDATE products
+SET product_name = '푸른채소농장 알호두 119호', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 20400, unit = '500g', product_image_url = '/images/retail/retail-walnut-02.jpg', updated_at = SYSDATE
+WHERE product_id = 144;
+
+UPDATE products
+SET product_name = '들꽃마을농장 햇현미 1kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 현미입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 4300, unit = '1kg', product_image_url = '/images/retail/retail-brown-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 145;
+
+UPDATE products
+SET product_name = '푸른들판농장 고랭지배추 1포기', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 고랭지배추입니다. 1포기 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 4700, unit = '1포기', product_image_url = 'https://placehold.co/800x600?text=extra-product-002', updated_at = SYSDATE
+WHERE product_id = 146;
+
+UPDATE products
+SET product_name = '들꽃마을농장 생표고버섯 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 생표고버섯입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9900, unit = '500g', product_image_url = '/images/retail/retail-shiitake-mushroom-01.jpg', updated_at = SYSDATE
+WHERE product_id = 147;
+
+UPDATE products
+SET product_name = '푸른들판농장 후지사과 3kg', description = '산지에서 당도와 신선도를 확인해 선별한 부사사과입니다. 3kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 26600, unit = '3kg', product_image_url = '/images/retail/retail-busa-apple-01.jpg', updated_at = SYSDATE
+WHERE product_id = 148;
+
+UPDATE products
+SET product_name = '들꽃마을농장 찰보리 1kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찰보리입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 4500, unit = '1kg', product_image_url = '/images/retail/retail-glutinous-barley-01.jpg', updated_at = SYSDATE
+WHERE product_id = 149;
+
+UPDATE products
+SET product_name = '푸른들판농장 시금치 300g', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 시금치입니다. 300g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 3300, unit = '300g', product_image_url = 'https://placehold.co/800x600?text=extra-product-006', updated_at = SYSDATE
+WHERE product_id = 150;
+
+UPDATE products
+SET product_name = '들꽃마을농장 느타리버섯 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 느타리버섯입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 4900, unit = '500g', product_image_url = 'https://placehold.co/800x600?text=extra-product-007', updated_at = SYSDATE
+WHERE product_id = 151;
+
+UPDATE products
+SET product_name = '푸른들판농장 신고배 3kg', description = '산지에서 당도와 신선도를 확인해 선별한 신고배입니다. 3kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 30600, unit = '3kg', product_image_url = '/images/retail/retail-singo-pear-01.jpg', updated_at = SYSDATE
+WHERE product_id = 152;
+
+UPDATE products
+SET product_name = '들꽃마을농장 찹쌀 1kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찹쌀입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 5200, unit = '1kg', product_image_url = '/images/retail/retail-glutinous-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 153;
+
+UPDATE products
+SET product_name = '푸른들판농장 청상추 300g', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 청상추입니다. 300g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 4700, unit = '300g', product_image_url = '/images/retail/retail-lettuce-01.jpg', updated_at = SYSDATE
+WHERE product_id = 154;
+
+UPDATE products
+SET product_name = '들꽃마을농장 팽이버섯 3봉', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 팽이버섯입니다. 3봉 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 1500, unit = '3봉', product_image_url = 'https://placehold.co/800x600?text=extra-product-011', updated_at = SYSDATE
+WHERE product_id = 155;
+
+UPDATE products
+SET product_name = '푸른들판농장 백도복숭아 2kg', description = '산지에서 당도와 신선도를 확인해 선별한 백도복숭아입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 18400, unit = '2kg', product_image_url = '/images/retail/retail-peach-01.jpg', updated_at = SYSDATE
+WHERE product_id = 156;
+
+UPDATE products
+SET product_name = '들꽃마을농장 서리태 500g', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 서리태입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 7100, unit = '500g', product_image_url = '/images/retail/retail-black-soybean-01.jpg', updated_at = SYSDATE
+WHERE product_id = 157;
+
+UPDATE products
+SET product_name = '푸른들판농장 수미감자 3kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 수미감자입니다. 3kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9500, unit = '3kg', product_image_url = '/images/retail/retail-potato-01.jpg', updated_at = SYSDATE
+WHERE product_id = 158;
+
+UPDATE products
+SET product_name = '들꽃마을농장 볶음땅콩 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 볶음땅콩입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 18600, unit = '500g', product_image_url = '/images/retail/retail-peanut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 159;
+
+UPDATE products
+SET product_name = '푸른들판농장 샤인머스캣 2kg', description = '산지에서 당도와 신선도를 확인해 선별한 샤인머스캣입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 25300, unit = '2kg', product_image_url = '/images/retail/retail-shine-muscat-01.jpg', updated_at = SYSDATE
+WHERE product_id = 160;
+
+UPDATE products
+SET product_name = '들꽃마을농장 붉은팥 500g', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 붉은팥입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 13400, unit = '500g', product_image_url = '/images/retail/retail-red-bean-01.jpg', updated_at = SYSDATE
+WHERE product_id = 161;
+
+UPDATE products
+SET product_name = '푸른들판농장 꿀고구마 2kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 꿀고구마입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 9600, unit = '2kg', product_image_url = '/images/retail/retail-sweet-potato-01.jpg', updated_at = SYSDATE
+WHERE product_id = 162;
+
+UPDATE products
+SET product_name = '들꽃마을농장 깐밤 1kg', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 깐밤입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 13800, unit = '1kg', product_image_url = '/images/retail/retail-peeled-chestnut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 163;
+
+UPDATE products
+SET product_name = '푸른들판농장 하우스감귤 3kg', description = '산지에서 당도와 신선도를 확인해 선별한 하우스감귤입니다. 3kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 27500, unit = '3kg', product_image_url = '/images/retail/retail-tangerine-01.jpg', updated_at = SYSDATE
+WHERE product_id = 164;
+
+UPDATE products
+SET product_name = '들꽃마을농장 녹두 500g', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 녹두입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 11200, unit = '500g', product_image_url = '/images/retail/retail-mung-bean-01.jpg', updated_at = SYSDATE
+WHERE product_id = 165;
+
+UPDATE products
+SET product_name = '푸른들판농장 흙당근 2kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 흙당근입니다. 2kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6900, unit = '2kg', product_image_url = '/images/retail/retail-carrot-01.jpg', updated_at = SYSDATE
+WHERE product_id = 166;
+
+UPDATE products
+SET product_name = '들꽃마을농장 알호두 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 알호두입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 19600, unit = '500g', product_image_url = '/images/retail/retail-walnut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 167;
+
+UPDATE products
+SET product_name = '푸른들판농장 설향딸기 500g', description = '산지에서 당도와 신선도를 확인해 선별한 설향딸기입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 5300, unit = '500g', product_image_url = '/images/retail/retail-strawberry-01.jpg', updated_at = SYSDATE
+WHERE product_id = 168;
+
+UPDATE products
+SET product_name = '들꽃마을농장 국산귀리 1kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 귀리입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6100, unit = '1kg', product_image_url = '/images/retail/retail-oat-01.jpg', updated_at = SYSDATE
+WHERE product_id = 169;
+
+UPDATE products
+SET product_name = '푸른들판농장 대추방울토마토 1kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 대추방울토마토입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 5100, unit = '1kg', product_image_url = '/images/retail/retail-tomato-02.jpg', updated_at = SYSDATE
+WHERE product_id = 170;
+
+UPDATE products
+SET product_name = '들꽃마을농장 은행 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 은행입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 8600, unit = '500g', product_image_url = '/images/retail/retail-ginkgo-nut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 171;
+
+UPDATE products
+SET product_name = '푸른들판농장 생블루베리 500g', description = '산지에서 당도와 신선도를 확인해 선별한 블루베리입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 14300, unit = '500g', product_image_url = '/images/retail/retail-blueberry-01.jpg', updated_at = SYSDATE
+WHERE product_id = 172;
+
+UPDATE products
+SET product_name = '들꽃마을농장 찰옥수수 10개', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 찰옥수수입니다. 10개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 11200, unit = '10개', product_image_url = '/images/retail/retail-sweet-corn-01.jpg', updated_at = SYSDATE
+WHERE product_id = 173;
+
+UPDATE products
+SET product_name = '푸른들판농장 애호박 2개', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 애호박입니다. 2개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 2500, unit = '2개', product_image_url = '/images/retail/retail-zucchini-01.jpg', updated_at = SYSDATE
+WHERE product_id = 174;
+
+UPDATE products
+SET product_name = '들꽃마을농장 황잣 300g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 황잣입니다. 300g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 29100, unit = '300g', product_image_url = '/images/retail/retail-pine-nut-01.jpg', updated_at = SYSDATE
+WHERE product_id = 175;
+
+UPDATE products
+SET product_name = '푸른들판농장 꿀수박 1통', description = '산지에서 당도와 신선도를 확인해 선별한 꿀수박입니다. 1통 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 22700, unit = '1통', product_image_url = '/images/retail/retail-watermelon-01.jpg', updated_at = SYSDATE
+WHERE product_id = 176;
+
+UPDATE products
+SET product_name = '들꽃마을농장 신동진쌀 10kg', description = '수확 후 꼼꼼히 선별하고 알맞게 건조한 국산 신동진쌀입니다. 10kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 35500, unit = '10kg', product_image_url = '/images/retail/retail-rice-01.jpg', updated_at = SYSDATE
+WHERE product_id = 177;
+
+UPDATE products
+SET product_name = '푸른들판농장 파프리카 1kg', description = '신선한 상태와 모양을 확인해 선별한 산지 직송 파프리카입니다. 1kg 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 6400, unit = '1kg', product_image_url = '/images/retail/retail-paprika-01.jpg', updated_at = SYSDATE
+WHERE product_id = 178;
+
+UPDATE products
+SET product_name = '들꽃마을농장 구운아몬드 500g', description = '향과 식감이 좋은 원물을 골라 정성껏 준비한 구운아몬드입니다. 500g 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 12500, unit = '500g', product_image_url = '/images/retail/retail-almond-01.jpg', updated_at = SYSDATE
+WHERE product_id = 179;
+
+UPDATE products
+SET product_name = '푸른들판농장 성주참외 10개', description = '산지에서 당도와 신선도를 확인해 선별한 성주참외입니다. 10개 단위로 포장해 가정에서 보관하고 요리하기 편리합니다.', price = 13100, unit = '10개', product_image_url = '/images/retail/retail-oriental-melon-01.jpg', updated_at = SYSDATE
+WHERE product_id = 180;
+
+/* 상품명이 바뀐 뒤 주문 상품명도 실제 상품명을 따라가도록 맞춥니다. */
+UPDATE order_items oi
+SET product_name = (
+    SELECT p.product_name
+    FROM products p
+    WHERE p.product_id = oi.product_id
+)
+WHERE EXISTS (
+    SELECT 1
+    FROM products p
+    WHERE p.product_id = oi.product_id
+);
+
+/* 화면에 함께 노출되는 테스트용 문구도 실제 서비스 문구로 정리합니다. */
+UPDATE product_stock_histories
+SET change_reason = CASE change_type
+    WHEN 'INITIAL_STOCK' THEN '상품 등록 시 초기 재고 입력'
+    WHEN 'MANUAL_ADJUSTMENT' THEN '판매자 재고 실사 후 수량 조정'
+    ELSE change_reason
+END
+WHERE product_id BETWEEN 145 AND 180;
+
+UPDATE reviews r
+SET content = '상품 상태가 신선하고 포장이 꼼꼼해서 만족스럽게 구매했습니다.'
+WHERE EXISTS (
+    SELECT 1
+    FROM products p
+    WHERE p.product_id = r.product_id
+      AND p.product_id BETWEEN 145 AND 180
+);
+
+UPDATE qna
+SET question_title = '상품 보관 방법 문의',
+    question_content = '수령한 상품을 신선하게 보관하는 방법과 권장 보관 기간을 알고 싶습니다.'
+WHERE product_id BETWEEN 145 AND 180;
+
+UPDATE reports
+SET report_reason = '상품 설명과 실제 수령 상태가 달라 확인을 요청합니다.'
+WHERE product_id BETWEEN 145 AND 180;
+
+/* 승인 거절 화면에서 사유를 확인할 수 있도록 예시 데이터를 채웁니다. */
+UPDATE farms
+SET rejection_reason = '사업자등록 정보와 제출된 농장 정보가 일치하지 않아 보완이 필요합니다.'
+WHERE approval_status = 'REJECTED';
+
+UPDATE products
+SET rejection_reason = '상품 설명과 판매 단위가 명확하지 않아 수정 후 다시 신청해 주세요.'
+WHERE product_status = 'REJECTED';
+
+/* 소매 주문 일부를 당일배송 예시로 지정하고 배송 데이터와 같은 값으로 맞춥니다. */
+UPDATE orders o
+SET delivery_type = 'SAME_DAY'
+WHERE MOD(o.order_id, 3) = 0
+  AND EXISTS (
+      SELECT 1
+      FROM farms f
+      WHERE f.farm_id = o.farm_id
+        AND f.sale_type = 'RETAIL'
+  );
+
+UPDATE deliveries d
+SET delivery_type = 'SAME_DAY',
+    delivery_person_name = '농담 당일배송 기사',
+    delivery_person_phone = '010-9000-1000',
+    delivery_memo = '도착 전 수령인에게 연락'
+WHERE EXISTS (
+    SELECT 1
+    FROM orders o
+    WHERE o.order_id = d.order_id
+      AND o.delivery_type = 'SAME_DAY'
+);
+
+/* 처리 완료된 신고에는 관리자 답변과 관련 농장 정보를 연결합니다. */
+UPDATE reports r
+SET farm_id = (
+    SELECT p.farm_id
+    FROM products p
+    WHERE p.product_id = r.product_id
+)
+WHERE r.product_id IS NOT NULL;
+
+UPDATE reports
+SET admin_reply = '신고 내용을 확인하고 필요한 조치를 완료했습니다.',
+    replied_by = (SELECT user_id FROM users WHERE email = 'admin@agrolink.dev'),
+    replied_at = SYSDATE
+WHERE report_status IN ('RESOLVED', 'REJECTED');
+
+/* 판매자 포인트 출금 처리 상태별 예시입니다. */
+INSERT INTO seller_point_withdrawals (
+    withdrawal_id, seller_id, withdrawal_amount,
+    bank_name, account_number, account_holder,
+    withdrawal_status, reject_reason,
+    requested_at, approved_at, completed_at, created_at, updated_at
+) VALUES (
+    seller_point_withdrawals_seq.NEXTVAL,
+    (SELECT user_id FROM users WHERE email = 'seller.apple@agrolink.dev'),
+    15000, '농담은행', '100-200-300001', '김사과',
+    'REQUESTED', NULL,
+    TRUNC(SYSDATE) - 1, NULL, NULL, TRUNC(SYSDATE) - 1, SYSDATE
+);
+
+INSERT INTO seller_point_withdrawals (
+    withdrawal_id, seller_id, withdrawal_amount,
+    bank_name, account_number, account_holder,
+    withdrawal_status, reject_reason,
+    requested_at, approved_at, completed_at, created_at, updated_at
+) VALUES (
+    seller_point_withdrawals_seq.NEXTVAL,
+    (SELECT user_id FROM users WHERE email = 'seller.green@agrolink.dev'),
+    20000, '농담은행', '100-200-300002', '이푸름',
+    'APPROVED', NULL,
+    TRUNC(SYSDATE) - 4, TRUNC(SYSDATE) - 3, NULL, TRUNC(SYSDATE) - 4, SYSDATE
+);
+
+INSERT INTO seller_point_withdrawals (
+    withdrawal_id, seller_id, withdrawal_amount,
+    bank_name, account_number, account_holder,
+    withdrawal_status, reject_reason,
+    requested_at, approved_at, completed_at, created_at, updated_at
+) VALUES (
+    seller_point_withdrawals_seq.NEXTVAL,
+    (SELECT user_id FROM users WHERE email = 'seller.grain@agrolink.dev'),
+    30000, '농담은행', '100-200-300003', '박황금',
+    'COMPLETED', NULL,
+    TRUNC(SYSDATE) - 8, TRUNC(SYSDATE) - 7, TRUNC(SYSDATE) - 6,
+    TRUNC(SYSDATE) - 8, SYSDATE
+);
+
+INSERT INTO seller_point_withdrawals (
+    withdrawal_id, seller_id, withdrawal_amount,
+    bank_name, account_number, account_holder,
+    withdrawal_status, reject_reason,
+    requested_at, approved_at, completed_at, created_at, updated_at
+) VALUES (
+    seller_point_withdrawals_seq.NEXTVAL,
+    (SELECT user_id FROM users WHERE email = 'seller.forest@agrolink.dev'),
+    5000, '농담은행', '100-200-300004', '최숲향',
+    'REJECTED', '예금주 정보가 회원 정보와 일치하지 않습니다.',
+    TRUNC(SYSDATE) - 5, NULL, NULL, TRUNC(SYSDATE) - 5, SYSDATE
+);
+
+/* 처리된 상품 신고 두 건에 활성/해제 제재 예시를 연결합니다. */
+INSERT INTO seller_penalties (
+    penalty_id, report_id, seller_id, product_id,
+    penalty_type, penalty_points, penalty_reason, penalty_status,
+    created_by, created_at, expires_at, revoked_by, revoked_at, revoke_reason
+)
+SELECT seller_penalties_seq.NEXTVAL,
+       r.report_id, r.reported_user_id, r.product_id,
+       'WARNING', 1, '상품 설명과 실제 구성 차이에 대한 경고 조치', 'ACTIVE',
+       (SELECT user_id FROM users WHERE email = 'admin@agrolink.dev'),
+       TRUNC(SYSDATE) - 2, NULL, NULL, NULL, NULL
+FROM reports r
+WHERE r.report_id = (
+    SELECT MIN(report_id)
+    FROM reports
+    WHERE report_status = 'RESOLVED'
+      AND product_id IS NOT NULL
+);
+
+INSERT INTO seller_penalties (
+    penalty_id, report_id, seller_id, product_id,
+    penalty_type, penalty_points, penalty_reason, penalty_status,
+    created_by, created_at, expires_at, revoked_by, revoked_at, revoke_reason
+)
+SELECT seller_penalties_seq.NEXTVAL,
+       r.report_id, r.reported_user_id, r.product_id,
+       'PRODUCT_SUSPENSION', 3, '반복 신고로 인한 상품 판매 중지 조치', 'REVOKED',
+       (SELECT user_id FROM users WHERE email = 'admin@agrolink.dev'),
+       TRUNC(SYSDATE) - 5, TRUNC(SYSDATE) + 2,
+       (SELECT user_id FROM users WHERE email = 'admin@agrolink.dev'),
+       TRUNC(SYSDATE) - 1, '상품 정보가 보완되어 제재를 해제했습니다.'
+FROM reports r
+WHERE r.report_id = (
+    SELECT MAX(report_id)
+    FROM reports
+    WHERE report_status = 'RESOLVED'
+      AND product_id IS NOT NULL
+);
+
+/* CODEX_REALISTIC_PRODUCT_DATA_END */
+
 COMMIT;
