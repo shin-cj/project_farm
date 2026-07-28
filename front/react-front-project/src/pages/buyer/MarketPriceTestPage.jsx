@@ -284,7 +284,7 @@ function MarketPriceTestPage() {
             {!apiState.isLoading && apiState.data && apiState.data.totalCount > 0 ? (
                 <>
                 <CustomGraphTable
-                    data={apiState.data.list}
+                    data={[...apiState.data.list].reverse()}
                     xKey="exmn_ymd"
                     yKeys={['exmn_dd_cnvs_min_prc', 'exmn_dd_cnvs_avg_prc', 'exmn_dd_cnvs_max_prc']}
                     renderTooltip={(item) => (
