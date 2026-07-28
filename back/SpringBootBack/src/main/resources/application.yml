@@ -1,7 +1,10 @@
 server:
   port: 8080
 
-spring:
+
+  tomcat:
+    max-swallow-size: 20MB
+    spring:
   application:
     name: SpringBootBack
 
@@ -49,4 +52,3 @@ app:
 
 tosspayments:
   secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
-
