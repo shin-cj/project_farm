@@ -310,10 +310,17 @@ public class SellerPenaltyService {
 
             }
 
-            case "PRODUCT_SUSPENSION","SELLER_SUSPENSION" ->
+
+            case "PRODUCT_SUSPENSION" -> {
                 restoreProduct(penalty);
+            }
 
+            case "SELLER_SUSPENSION" -> {
 
+                    if(penalty.getProductId() != null) {
+                        restoreProduct(penalty);
+                        }
+            }
             default ->
                 throw new IllegalArgumentException("복구할 수 없는 페널티 유형입니다.");
         }
@@ -328,7 +335,6 @@ public class SellerPenaltyService {
         long otherPenaltyCount =
                 sellerPenaltyRepository.countOtherProductPenalties(
                         penalty.getProductId(),
-                        "PRODUCT_SUSPENSION",
                         "ACTIVE",
                         penalty.getPenaltyId()
                 );

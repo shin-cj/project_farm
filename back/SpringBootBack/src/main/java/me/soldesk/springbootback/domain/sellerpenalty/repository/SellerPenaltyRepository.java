@@ -75,7 +75,6 @@ public interface SellerPenaltyRepository extends JpaRepository<SellerPenalty, Lo
         SELECT COUNT(*)
         FROM seller_penalties sp
         WHERE sp.product_id = :productId
-          AND sp.penalty_type = :penaltyType
           AND sp.penalty_status = :penaltyStatus
           AND sp.penalty_id <> :penaltyId
           AND sp.penalty_type IN (
@@ -87,7 +86,6 @@ public interface SellerPenaltyRepository extends JpaRepository<SellerPenalty, Lo
     )
     long countOtherProductPenalties(
             @Param("productId") Long productId,
-            @Param("penaltyType") String penaltyType,
             @Param("penaltyStatus") String penaltyStatus,
             @Param("penaltyId") Long penaltyId
     );
