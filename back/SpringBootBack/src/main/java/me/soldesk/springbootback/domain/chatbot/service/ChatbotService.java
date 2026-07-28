@@ -8,8 +8,10 @@ import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.external.openai.OpenAiRecipeClient;
 import me.soldesk.springbootback.external.openai.dto.OpenAiRecipeResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ public class ChatbotService {
 
     //DB내 categories 테이블의 categories_id 값 기준 1 = 채소류
     private static final String SELLIING_STATUS = "ON_SALE";
+    private static final List<String> SALE_TYPES = List.of("RETAIL","WHOLESALE");
     private final OpenAiRecipeClient openAiRecipeClient;
     private final ProductRepository productRepository;
     private final ChatbotRepository chatbotRepository;
@@ -70,6 +73,13 @@ public class ChatbotService {
         return response;
     }
 
+    @Transactional(readOnly = true)
+    public List<RecommendedProductResponse> refreshMatchedProducts(
+            List<String> searchIngredients
+    ){
+        return findLowestPriceVegetableProducts(searchIngredients);
+    }
+
     private List<RecommendedProductResponse> findLowestPriceVegetableProducts(List<String> ingredients) {
         List<RecommendedProductResponse> result = new ArrayList<>();
 
@@ -84,31 +94,36 @@ public class ChatbotService {
                 continue;
             }
 
+            for (String saleType : SALE_TYPES){
+                Optional<Product> productOptional  =
+                        productRepository.findLowestPriceProductByKeyword(
+                                keyword,
+                                SELLIING_STATUS,
+                                0,
+                                saleType
+                        );
 
-            Optional<Product> productOptional  =
-                    productRepository.findLowestPriceProductByKeyword(
-                            keyword,
-                            SELLIING_STATUS,
-                            0
-                    );
+                System.out.println("검색 keyword = "+keyword);
+                System.out.println("검색 결과 존재 여부 = " + productOptional.isPresent());
+                if (productOptional .isEmpty()) {
+                    continue;
+                }
 
-            System.out.println("검색 keyword = "+keyword);
-            System.out.println("검색 결과 존재 여부 = " + productOptional.isPresent());
-            if (productOptional .isEmpty()) {
-                continue;
+                Product product  = productOptional .get();
+
+                RecommendedProductResponse recommended = new RecommendedProductResponse();
+                recommended.setIngredientName(keyword);
+                recommended.setProductId(product .getProductId());
+                recommended.setProductName(product .getProductName());
+                recommended.setPrice(product .getPrice());
+                recommended.setUnit(product .getUnit());
+                recommended.setProductImageUrl(product.getProductImageUrl());
+                recommended.setSaleType(saleType);
+                recommended.setMinOrderQuantity(product.getMinOrderQuantity());
+                recommended.setStockQuantity(product.getStockQuantity());
+                result.add(recommended);
+
             }
-
-            Product product  = productOptional .get();
-
-            RecommendedProductResponse recommended = new RecommendedProductResponse();
-            recommended.setIngredientName(keyword);
-            recommended.setProductId(product .getProductId());
-            recommended.setProductName(product .getProductName());
-            recommended.setPrice(product .getPrice());
-            recommended.setUnit(product .getUnit());
-            recommended.setProductImageUrl(product.getProductImageUrl());
-
-            result.add(recommended);
         }
 
         return result;
@@ -162,5 +177,16 @@ public class ChatbotService {
 
     }
 
+    @Transactional
+    public void deleteSavedRecipe(Long userId, Long chatbotId) {
+        Chatbot chatbot = chatbotRepository
+                .findByChatbotIdAndUserId(chatbotId, userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "저장한 레시피를 찾을 수 없습니다."
+                ));
+
+        chatbotRepository.delete(chatbot);
+    }
 
 }

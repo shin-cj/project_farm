@@ -167,15 +167,6 @@ function CartPage() {
     moveToOrder([item]);
   };
 
-  const handleBuyAll = () => {
-    if (cartItems.length === 0) {
-      alert("장바구니가 비어 있습니다.");
-      return;
-    }
-
-    moveToOrder(cartItems);
-  };
-
   const updateQuantityOnScreen = (cartItemId, quantity) => {
     setCartItems((items) =>
         items.map((item) =>
@@ -239,12 +230,7 @@ function CartPage() {
         [item.cart_item_id]: String(item.quantity),
       }))
 
-      const message =
-          error.response?.data?.detail
-          ?? error.response?.data?.message
-          ?? '수량 변경에 실패했습니다.'
-
-      alert(message)
+      alert('수량 변경에 실패했습니다. 잠시 후 다시 시도해주세요.')
     }
   }
 

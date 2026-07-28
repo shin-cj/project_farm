@@ -6,7 +6,7 @@ import {
   DELIVERY_STATUS_LABEL,
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
-
+import SavedRecipePanel from "../../components/chatbot/SavedRecipePanel.jsx";
 
 function getLoginUser() {
   try {
@@ -32,6 +32,18 @@ function formatDate(value) {
     month: "2-digit",
     day: "2-digit",
   });
+}
+
+function isClosedOrder(order) {
+  return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+}
+
+function getOrderDeliveryLabel(order) {
+  if (isClosedOrder(order)) {
+    return "배송 대상 아님";
+  }
+
+  return DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중";
 }
 
 function MyPage() {
@@ -67,9 +79,7 @@ function MyPage() {
     fetchOrders();
   }, [buyerId]);
 
-  const activeOrders = orders.filter(
-    (order) => !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus)
-  );
+  const activeOrders = orders.filter((order) => !isClosedOrder(order));
   const canceledOrders = orders.filter((order) => order.orderStatus === "CANCELED");
   const refundRequestedOrders = orders.filter((order) => order.orderStatus === "REFUND_REQUESTED");
   const refundedOrders = orders.filter((order) => order.orderStatus === "REFUNDED");
@@ -88,12 +98,39 @@ function MyPage() {
 
   return (
     <section style={{ maxWidth: "1120px", margin: "0 auto", padding: "42px 20px 70px" }}>
-      <div style={{ marginBottom: "26px" }}>
-        <p style={{ margin: "0 0 8px", color: "#4f8c60", fontWeight: 800 }}>My Page</p>
-        <h1 style={{ margin: 0, fontSize: "32px", color: "#1f2f24" }}>마이페이지</h1>
-        <p style={{ margin: "10px 0 0", color: "#68756d" }}>
-          주문, 배송, 취소/환불 현황을 한눈에 확인하세요.
-        </p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "16px",
+          marginBottom: "26px",
+        }}
+      >
+        <div>
+          <p style={{ margin: "0 0 8px", color: "#4f8c60", fontWeight: 800 }}>My Page</p>
+          <h1 style={{ margin: 0, fontSize: "32px", color: "#1f2f24" }}>마이페이지</h1>
+          <p style={{ margin: "10px 0 0", color: "#68756d" }}>
+            주문, 배송, 취소/환불 현황을 한눈에 확인하세요.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate("/user/edit")}
+          style={{
+            padding: "10px 18px",
+            backgroundColor: "#2f3640",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          개인정보 수정하기
+        </button>
       </div>
 
       {loading && <p style={{ color: "#5f6f64" }}>마이페이지 정보를 불러오는 중입니다.</p>}
@@ -154,21 +191,47 @@ function MyPage() {
               </div>
             </article>
 
-            <MyReportSummaryCard reporterId={buyerId}/>
+            <MyReportSummaryCard reporterId={buyerId} />
           </div>
 
-          <div style={{ marginTop: "28px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
-              <h2 style={{ margin: 0, color: "#1f2f24" }}>최근 주문</h2>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            alignItems: "stretch",
+            gap: "18px",
+            marginTop: "28px" }}
+          >
+            <section
+              style={{
+                minWidth: 0,
+                overflow: "hidden",
+                border: "1px solid #dce6dd",
+                borderRadius: "8px",
+                background: "#ffffff",
+              }}
+            >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
+                padding: "14px 18px",
+                marginBottom: 0,
+                borderBottom: "1px solid #edf1eb",
+              }}
+            >
+              <h2 style={{ margin: 0, color: "#1f2f24", fontSize: "20px" }}>최근 주문</h2>
               <button
                 type="button"
                 onClick={() => navigate("/orders")}
                 style={{
-                  padding: "9px 13px",
+                  padding: "7px 11px",
                   border: "1px solid #dce6dd",
-                  borderRadius: "8px",
+                  borderRadius: "6px",
                   background: "#ffffff",
                   color: "#216b3a",
+                  fontSize: "13px",
                   fontWeight: 800,
                   cursor: "pointer",
                 }}
@@ -178,17 +241,20 @@ function MyPage() {
             </div>
 
             {recentOrders.length === 0 ? (
-              <div style={{ padding: "26px", border: "1px solid #dce6dd", borderRadius: "12px", background: "#fbfdfb", color: "#68756d" }}>
+              <div
+                style={{
+                  padding: "26px",
+                  background: "#fbfdfb",
+                  color: "#68756d",
+                }}
+              >
                 최근 주문이 없습니다.
               </div>
             ) : (
               <div
                 style={{
                   overflow: "hidden",
-                  border: "1px solid #dce6dd",
-                  borderRadius: "12px",
                   background: "#ffffff",
-                  boxShadow: "0 8px 22px rgba(31, 47, 36, 0.06)",
                 }}
               >
                 {recentOrders.map((order, index) => (
@@ -196,10 +262,10 @@ function MyPage() {
                     key={order.orderId}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "minmax(0, 1.35fr) minmax(220px, 1fr) 130px",
+                      gridTemplateColumns: "minmax(0, 1fr) auto auto",
                       alignItems: "center",
-                      gap: "16px",
-                      padding: "18px 20px",
+                      gap: "10px",
+                      padding: "15px 16px",
                       borderTop: index === 0 ? "none" : "1px solid #edf1eb",
                       cursor: "pointer",
                     }}
@@ -224,11 +290,29 @@ function MyPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#e5f4ea", color: "#216b3a", fontSize: "0.85rem", fontWeight: 800 }}>
+                      <span
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          background: "#e5f4ea",
+                          color: "#216b3a",
+                          fontSize: "0.85rem",
+                          fontWeight: 800,
+                        }}
+                      >
                         {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
                       </span>
-                      <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontSize: "0.85rem", fontWeight: 800 }}>
-                        {DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
+                      <span
+                        style={{
+                          padding: "6px 10px",
+                          borderRadius: "999px",
+                          background: "#f3f6f3",
+                          color: "#526357",
+                          fontSize: "0.85rem",
+                          fontWeight: 800,
+                        }}
+                      >
+                        {getOrderDeliveryLabel(order)}
                       </span>
                     </div>
 
@@ -239,10 +323,14 @@ function MyPage() {
                 ))}
               </div>
             )}
+            </section>
+
+            <SavedRecipePanel userId={buyerId} />
           </div>
         </>
       )}
     </section>
+
   );
 }
 

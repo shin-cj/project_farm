@@ -19,6 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SellerPointWithdrawalService {
 
+    private static final long MIN_WITHDRAWAL_POINT = 5000L;
+
     private final SellerPointWithdrawalRepository sellerPointWithdrawalRepository;
     private final SellerPointService sellerPointService;
     private final UserRepository userRepository;
@@ -112,8 +114,8 @@ public class SellerPointWithdrawalService {
             throw new IllegalArgumentException("판매자 정보가 없습니다.");
         }
 
-        if (request.getWithdrawalAmount() == null || request.getWithdrawalAmount() <= 0) {
-            throw new IllegalArgumentException("출금 신청 포인트는 1 이상이어야 합니다.");
+        if (request.getWithdrawalAmount() == null || request.getWithdrawalAmount() < MIN_WITHDRAWAL_POINT) {
+            throw new IllegalArgumentException("출금 신청은 5,000P 이상부터 가능합니다.");
         }
 
         if (isBlank(request.getBankName()) || isBlank(request.getAccountNumber()) || isBlank(request.getAccountHolder())) {

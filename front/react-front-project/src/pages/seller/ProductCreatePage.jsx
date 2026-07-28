@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createProduct, uploadProductImage } from '../../api/productApi.js'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
 import './ProductCreatePage.css'
 import { getFarms } from '../../api/farmApi.js'
@@ -10,11 +10,14 @@ import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 import SellerFormModal from '../../components/common/SellerFormModal.jsx'
 import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
+import MarketItemCodePicker from '../../components/seller/MarketItemCodePicker.jsx'
 
 
 
 function ProductCreatePage() {
     const navigate = useNavigate()
+    const location = useLocation()
+    const returnTo = location.state?.returnTo || '/seller/products'
     const { alert, confirm } = useAppFeedback()
     const [searchParams] = useSearchParams()
     const requestedFarmId = searchParams.get('farmId') ?? ''
@@ -50,6 +53,8 @@ function ProductCreatePage() {
     const selectedFarm = farms.find(
         (farm) => String(farm.farmId) === String(form.farmId)
     )
+
+    const minimumExpirationDate = getMinimumExpirationDate()
 
 
     useEffect(() => {
@@ -195,6 +200,14 @@ function ProductCreatePage() {
         }))
     }
 
+    function handleMarketItemCodeSelect(marketItemCode) {
+        setIsDirty(true)
+        setForm((currentForm) => ({
+            ...currentForm,
+            marketItemCode,
+        }))
+    }
+
     async function handleSubmit(event) {
         event.preventDefault()
 
@@ -233,6 +246,16 @@ function ProductCreatePage() {
             return
         }
 
+        if (!form.marketItemCode.trim()) {
+            alert('공공 시세 품목을 선택해주세요.')
+            return
+        }
+
+        if (!form.description.trim()) {
+            alert('상품 설명을 입력해주세요.')
+            return
+        }
+
         if (!Number.isFinite(price) || price <= 0) {
             alert('가격은 1원 이상 숫자로 입력해주세요.')
             return
@@ -245,6 +268,36 @@ function ProductCreatePage() {
 
         if (!form.unit.trim()) {
             alert('판매 단위를 입력해주세요.')
+            return
+        }
+
+        if (!form.origin.trim()) {
+            alert('원산지를 입력해주세요.')
+            return
+        }
+
+        if (!form.harvestDate) {
+            alert('수확일을 선택해주세요.')
+            return
+        }
+
+        if (!form.expirationDate) {
+            alert('유통기한을 선택해주세요.')
+            return
+        }
+
+        if (form.expirationDate < minimumExpirationDate) {
+            alert('유통기한은 오늘부터 7일 이후 날짜로 선택해주세요.')
+            return
+        }
+
+        if (form.harvestDate > form.expirationDate) {
+            alert('수확일은 유통기한보다 늦을 수 없습니다.')
+            return
+        }
+
+        if (!selectedImageFile) {
+            alert('상품 이미지를 선택해주세요.')
             return
         }
 
@@ -326,7 +379,7 @@ function ProductCreatePage() {
             }
         }
 
-        navigate('/seller/products')
+        navigate(returnTo)
     }
 
     const formReady = farms.length > 0 && categories.length > 0
@@ -465,16 +518,11 @@ function ProductCreatePage() {
                             </select>
                         </div>
 
-                        <div className="product-create-field">
-                            <label>공공 시세 품목 코드</label>
-                            <input
-                                name="marketItemCode"
-                                value={form.marketItemCode}
-                                onChange={handleChange}
-                                placeholder="예: 411 (선택 입력)"
-                                maxLength="10"
-                            />
-                        </div>
+                        <MarketItemCodePicker
+                            value={form.marketItemCode}
+                            onSelect={handleMarketItemCodeSelect}
+                            disabled={submitting}
+                        />
                     </div>
 
                     <div className="product-create-field">
@@ -490,11 +538,12 @@ function ProductCreatePage() {
 
                     <div className="product-create-field">
                         <label>상품 설명</label>
-                        <textarea
-                            name="description"
-                            value={form.description}
-                            onChange={handleChange}
-                            placeholder="상품 특징, 재배 방식, 맛 등을 입력해주세요."
+                            <textarea
+                                name="description"
+                                value={form.description}
+                                onChange={handleChange}
+                                placeholder="상품 특징, 재배 방식, 맛 등을 입력해주세요."
+                                required
                         />
                     </div>
 
@@ -607,6 +656,7 @@ function ProductCreatePage() {
                                 value={form.origin}
                                 onChange={handleChange}
                                 placeholder="예: 전라남도"
+                                required
                             />
                         </div>
 
@@ -617,6 +667,7 @@ function ProductCreatePage() {
                                 name="harvestDate"
                                 value={form.harvestDate}
                                 onChange={handleChange}
+                                required
                             />
                         </div>
 
@@ -627,6 +678,8 @@ function ProductCreatePage() {
                                 name="expirationDate"
                                 value={form.expirationDate}
                                 onChange={handleChange}
+                                min={minimumExpirationDate}
+                                required
                             />
                         </div>
                     </div>
@@ -638,6 +691,7 @@ function ProductCreatePage() {
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                                 onChange={handleImageChange}
+                                required
                             />
 
                             <small>
@@ -686,3 +740,16 @@ function ProductCreatePage() {
 }
 
 export default ProductCreatePage
+
+function getMinimumExpirationDate() {
+    const date = new Date()
+
+    date.setHours(0, 0, 0, 0)
+    date.setDate(date.getDate() + 7)
+
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}

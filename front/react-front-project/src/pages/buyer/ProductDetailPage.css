@@ -1,26 +1,39 @@
 .product-detail-page {
   min-height: 100vh;
-  padding: 40px 20px;
+  width: 100%;
+  max-width: 1270px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(420px, 0.8fr);
+  column-gap: 28px;
   background-color: #f6f8f4;
 }
 
 .product-detail-card {
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(280px, 420px) 1fr;
-  gap: 36px;
-  max-width: 1100px;
+  grid-template-columns:minmax(0,1.08fr) minmax(470px,0.92fr);
+  grid-template-areas:
+    "image top"
+    "image purchase"
+    "info purchase";
+  column-gap: 28px;
+  row-gap: 16px;
+  max-width: 1220px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 24px;
+  align-items: start;
   border-radius: 20px;
   background-color: #ffffff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
-
 .product-detail-image-box {
+  grid-area: image;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 420px;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 16px;
   background-color: #eef6e8;
@@ -35,28 +48,43 @@
 }
 
 .product-detail-info {
+  grid-area: info;
   display: flex;
   flex-direction: column;
+  padding: 2px 8px 0 4px;
+}
+
+.product-detail-purchase-panel {
+  grid-area: purchase;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  border: 1px solid #e1eadc;
+  border-radius: 16px;
+  background-color: #f8fbf6;
 }
 
 .product-detail-top {
+  grid-area: top;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 0;
+
 }
 
 .product-detail-status,
 .product-detail-same-day-badge {
   display: inline-flex;
   width: fit-content;
-  padding: 7px 12px;
+  padding: 9px 15px;
   border-radius: 999px;
   background-color: #eef6e8;
   color: #3f7d20;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -67,9 +95,9 @@
 
 .product-detail-back-button {
   margin-left: auto;
-  padding: 9px 14px;
+  padding: 8px 12px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: #ffffff;
   color: #374151;
   cursor: pointer;
@@ -80,35 +108,35 @@
 }
 
 .product-detail-origin {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   color: #6b7280;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .product-detail-info h1 {
   margin: 0;
   color: #243b2f;
-  font-size: 34px;
+  font-size: 28px;
   line-height: 1.25;
 }
 
 .product-detail-description {
-  margin: 18px 0 24px;
+  margin: 10px 0 14px;
   color: #4b5563;
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 .product-detail-price-box {
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .product-detail-price-box strong {
   color: #111827;
-  font-size: 30px;
+  font-size: 28px;
 }
 
 .product-detail-price-box span {
@@ -119,41 +147,57 @@
 
 .product-detail-meta {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0 0 28px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  flex: 1;
+
+  grid-auto-rows: 96px;   /* 기존보다 살짝 높게 */
+  margin: 0 0 18px;
 }
 
 .product-detail-meta div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
   padding: 14px;
   border-radius: 12px;
-  background-color: #f9fafb;
+  background: #fff;
 }
 
 .product-detail-meta dt {
   margin-bottom: 6px;
   color: #6b7280;
-  font-size: 13px;
+  font-size: 13px;      /* 12 → 11 */
+  font-weight: 600;
 }
 
 .product-detail-meta dd {
   margin: 0;
   color: #243b2f;
-  font-size: 15px;
+  font-size: 16px;      /* 18 → 16 */
   font-weight: 800;
 }
 
 .product-detail-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
 }
 
 .product-detail-cart-button,
 .product-detail-order-link {
-  flex: 1;
-  padding: 14px 18px;
-  border-radius: 10px;
+  width: 100%;
+  height: 45px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 15px;
+  border-radius: 8px;
+  font-size: 14px;
   font-weight: 800;
   text-align: center;
   cursor: pointer;
@@ -172,12 +216,19 @@
   text-decoration: none;
 }
 
-.product-detail-cart-button:hover {
-  background-color: #eef6e8;
-}
-
-.product-detail-order-link:hover {
-  background-color: #326619;
+.product-detail-actions .report-open-button.product-detail-report-button {
+  width: 100%;
+  min-height: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  padding: 0 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .product-detail-message {
@@ -191,87 +242,179 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
-.product-detail-message.error {
-  background-color: #fff1f2;
-  color: #be123c;
-}
-
-@media (max-width: 800px) {
-  .product-detail-card {
-    grid-template-columns: 1fr;
-  }
-
-  .product-detail-image-box {
-    min-height: 280px;
-  }
-
-  .product-detail-meta {
-    grid-template-columns: 1fr;
-  }
-
-  .product-detail-actions {
-    flex-direction: column;
-  }
-}
-
 .product-order-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(20, 35, 26, 0.48);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 24px;
+  animation: product-order-backdrop-in 160ms ease-out;
 }
 
 .product-order-modal {
-  width: 420px;
-  max-width: 90vw;
+  width: 460px;
+  max-width: 100%;
   background: #ffffff;
-  border-radius: 12px;
-  padding: 28px;
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
+  border: 1px solid #dce8df;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 28px 70px rgba(12, 35, 20, 0.28);
+  animation: product-order-modal-in 180ms ease-out;
 }
 
-.product-order-modal h2 {
-  margin: 0 0 18px;
-  font-size: 24px;
+.product-order-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf3ee;
+}
+
+.product-order-modal-header span {
+  display: block;
+  margin-bottom: 5px;
+  color: #2f7d46;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.product-order-modal-header h2 {
+  margin: 0;
+  font-size: 26px;
   color: #1f3d2b;
+  letter-spacing: 0;
 }
 
-.product-order-modal p {
-  margin: 10px 0;
-  font-size: 16px;
+.product-order-modal-header button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #f1f6f2;
+  color: #335341;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.product-order-modal-header button:hover {
+  background: #e2efe5;
+}
+
+.product-order-modal-summary {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f6faf7;
+}
+
+.product-order-modal-summary strong {
+  color: #1f2f24;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.product-order-modal-summary span {
+  color: #718076;
+  font-size: 14px;
+}
+
+.product-order-modal-info {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.product-order-modal-info div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.product-order-modal-info dt {
+  color: #708075;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.product-order-modal-info dd {
+  margin: 0;
+  color: #1f2f24;
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .product-order-modal label {
   display: block;
   margin-top: 18px;
+  color: #263d2d;
   font-weight: 700;
 }
 
 .product-order-modal input {
   width: 100%;
   margin-top: 8px;
-  padding: 12px;
+  padding: 13px 14px;
   border: 1px solid #dce6dd;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 10px;
+  color: #1f2f24;
+  font-size: 18px;
+  font-weight: 800;
+  outline: none;
+}
+
+.product-order-modal input:focus {
+  border-color: #2f7d46;
+  box-shadow: 0 0 0 3px rgba(47, 125, 70, 0.12);
+}
+
+.product-order-modal-total {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #163d27;
+  color: #ffffff;
+}
+
+.product-order-modal-total span {
+  color: #cfe4d4;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.product-order-modal-total strong {
+  font-size: 24px;
+  line-height: 1;
 }
 
 .product-order-modal-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-top: 24px;
 }
 
 .product-order-modal-buttons button {
   flex: 1;
+  min-height: 46px;
   padding: 12px 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
 }
 
@@ -280,15 +423,44 @@
   color: white;
 }
 
+.product-order-submit:hover {
+  background: #276b3b;
+}
+
 .product-order-close {
   background: #eef4ef;
   color: #2f4f38;
 }
 
-/* 상품을 생산한 농장 정보를 보여주는 영역입니다. */
+.product-order-close:hover {
+  background: #dfece2;
+}
+
+@keyframes product-order-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes product-order-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .product-detail-farm-card {
-  max-width: 1100px;
-  margin: 20px auto 0;
+  grid-column: 1 / -1;
+  width: 100%;
+  max-width: none;
+  margin: 20px 0 0;
   padding: 24px 28px;
   border: 1px solid #dce6dd;
   border-left: 5px solid #3f7d20;
@@ -297,7 +469,6 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 
-/* '생산 농장'이라는 작은 안내 문구입니다. */
 .product-detail-farm-card > p:first-child {
   margin: 0 0 8px;
   color: #3f7d20;
@@ -305,14 +476,12 @@
   font-weight: 800;
 }
 
-/* 농장 이름입니다. */
 .product-detail-farm-card h2 {
   margin: 0;
   color: #243b2f;
   font-size: 24px;
 }
 
-/* 지역 정보입니다. */
 .product-detail-farm-card span {
   display: inline-block;
   margin-top: 8px;
@@ -324,36 +493,12 @@
   font-weight: 700;
 }
 
-/* 주소와 농장 소개 문구입니다. */
 .product-detail-farm-card p {
   margin: 14px 0 0;
   color: #4b5563;
   line-height: 1.7;
 }
 
-@media (max-width: 800px) {
-  .product-detail-farm-card {
-    padding: 20px;
-  }
-}
-
-.product-detail-cart-button:disabled,
-.product-detail-order-link:disabled {
-  border-color: #d1d5db;
-  background-color: #e5e7eb;
-  color: #6b7280;
-  cursor: not-allowed;
-  opacity: 0.75;
-}
-
-.product-detail-unavailable {
-  margin: 12px 0 0;
-  color: #dc2626;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-/* 농장 이름 상세 링크입니다. */
 .product-detail-farm-name-link {
   color: inherit;
   text-decoration: none;
@@ -364,12 +509,17 @@
   text-decoration: underline;
 }
 
-/* 농장 상세 페이지로 이동하는 버튼 형태의 링크입니다. */
+/* 농장 카드 내부 버튼들을 나란히 배치하기 위한 스타일 */
+.product-detail-farm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .product-detail-farm-view-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 18px;
   padding: 10px 16px;
   border: 1px solid #3f7d20;
   border-radius: 8px;
@@ -384,29 +534,61 @@
   color: #ffffff;
 }
 
+.product-detail-farm-qna-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border: 1px solid #3f7d20;
+  border-radius: 8px;
+  background-color: #3f7d20;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.product-detail-farm-qna-link:hover {
+  background-color: #2f5f17;
+}
+
+.product-qna-section,
+.product-review-section {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  box-sizing: border-box;
+}
+
 .product-detail-quantity {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 24px;
-  padding: 16px;
+  flex-direction: column;
+  width: 100%;
+  gap: 0;
+  margin-top: 18px;
+  padding: 12px;
   border-radius: 12px;
   background-color: #f7faf5;
 }
 
-.product-detail-quantity > span {
-  font-weight: 700;
+.product-detail-quantity-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.product-detail-quantity > strong {
-  margin-left: auto;
-  color: #2f6f25;
-  font-size: 18px;
+.product-detail-quantity-row > span {
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .product-detail-quantity-control {
   display: flex;
   align-items: center;
+  margin-left: auto;
 }
 
 .product-detail-quantity-control button {
@@ -425,7 +607,7 @@
   text-align: center;
 }
 
-/* 상품 상세 수량 입력창의 브라우저 기본 증감 화살표만 숨깁니다. */
+/* 수량 입력칸의 브라우저 기본 위·아래 증감 화살표를 숨깁니다. */
 .product-detail-quantity-control input[type="number"] {
   appearance: textfield;
   -moz-appearance: textfield;
@@ -437,7 +619,53 @@
   margin: 0;
 }
 
-.product-detail-quantity-control button:disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
+.product-detail-total-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-top: 18px;
+}
+
+.product-detail-total-row span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+}
+
+.product-detail-total-row strong {
+  margin-left: auto;
+  text-align: right;
+  font-size: 38px;
+  font-weight: 900;
+  color: #2f7d20;
+  line-height: 1;
+}
+
+.product-detail-total-row span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #222;
+}
+
+.product-detail-total-row strong {
+  font-size: 26px;   /* 원하는 크기로 40~46px 정도 */
+  font-weight: 900;
+  color: #2f7d20;
+  line-height: 1;
+}
+
+@media (max-width: 820px) {
+  .product-detail-page {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+
+  .product-detail-farm-card,
+  .product-qna-section,
+  .product-review-section {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
 }

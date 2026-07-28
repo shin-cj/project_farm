@@ -4,6 +4,12 @@ import "./UserManagementPage.css";
 
 const PAGE_SIZE = 20;
 
+const USER_STATUS_LABELS = {
+    ACTIVE: "정상",
+    SUSPENDED: "이용 정지",
+    WITHDRAWN: "탈퇴",
+};
+
 function formatDate(value) {
     if (!value) return "-";
     return new Date(value).toLocaleDateString("ko-KR");
@@ -54,10 +60,7 @@ function UserManagementPage() {
                 if (!active) return;
 
                 console.error("회원 목록 조회 실패", err);
-                setError(
-                    err.response?.data?.message ??
-                    "회원 목록을 불러오지 못했습니다."
-                );
+                setError("회원 목록을 불러오지 못했습니다.");
             } finally {
                 if (active) setLoading(false);
             }
@@ -220,7 +223,7 @@ function UserManagementPage() {
                                         <span
                                             className={`user-status ${user.status?.toLowerCase()}`}
                                         >
-                                            {user.status}
+                                            {USER_STATUS_LABELS[user.status] ?? "상태 미확인"}
                                         </span>
                                 </td>
 

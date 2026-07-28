@@ -1,0 +1,164 @@
+/* 좌측 Sticky 컨테이너 */
+.sticky-market-price-aside {
+    position: sticky;
+    top: 90px;
+    width: 280px;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+/* 4주 시세 미니 카드 */
+.weekly-price-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    font-family: inherit;
+}
+
+.weekly-price-card.empty {
+    text-align: center;
+    padding: 36px 16px;
+    color: #6b7280;
+}
+
+.empty-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.weekly-price-card.empty p {
+    font-size: 15px;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.weekly-price-card.empty span {
+    font-size: 13px;
+    color: #9ca3af;
+    line-height: 1.4;
+}
+
+/* 헤더 */
+.card-header {
+    margin-bottom: 16px;
+}
+
+.widget-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: #26c583;
+    background-color: #f0fdf4;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+}
+
+.card-header h3 {
+    font-size: 16px;
+    color: #1f2937;
+    margin: 0;
+}
+
+/* 메인 가격 박스 */
+.current-price-box {
+    background-color: #f9fafb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+}
+
+.current-price-box .label {
+    font-size: 12px;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.current-price-box .price-val {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    color: #111827;
+}
+
+.current-price-box .price-val strong {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.diff-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
+
+.diff-badge.up {
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.diff-badge.down {
+    color: #2563eb;
+    background-color: #eff6ff;
+}
+
+/* 4주 타임라인 리스트 */
+.weekly-timeline {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+    position: relative;
+}
+
+/* 타임라인 연결 세로선 */
+.weekly-timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background-color: #f3f4f6;
+}
+
+.weekly-timeline li {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0 6px 20px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.weekly-timeline li.active {
+    color: #111827;
+    font-weight: 700;
+}
+
+/* 타임라인 점 */
+.timeline-dot {
+    position: absolute;
+    left: 3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #d1d5db;
+}
+
+.weekly-timeline li.active .timeline-dot {
+    background-color: #26c583; /* 스크린샷의 메인 초록색 */
+    box-shadow: 0 0 0 3px #dcfce7;
+}
+
+.card-footer-tip {
+    font-size: 11px;
+    color: #9ca3af;
+    border-top: 1px border-dash #f3f4f6;
+    padding-top: 10px;
+}

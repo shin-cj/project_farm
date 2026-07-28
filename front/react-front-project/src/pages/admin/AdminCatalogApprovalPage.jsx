@@ -15,7 +15,7 @@ import './AdminCatalogApprovalPage.css'
 import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 
 function AdminCatalogApprovalPage() {
-    const { confirm } = useAppFeedback()
+    const { confirm, prompt } = useAppFeedback()
     const [pendingFarms, setPendingFarms] = useState([])
     const [pendingProducts, setPendingProducts] = useState([])
     const [loading, setLoading] = useState(true)
@@ -57,11 +57,7 @@ function AdminCatalogApprovalPage() {
                 seller: sellerResponse.data,
             })
         } catch (err) {
-            setDetailError(
-                err.response?.data?.message
-                || err.message
-                || '판매자 정보를 불러오지 못했습니다.'
-            )
+            setDetailError('판매자 정보를 불러오지 못했습니다.')
         } finally {
             setDetailLoading(false)
         }
@@ -88,11 +84,7 @@ function AdminCatalogApprovalPage() {
                 seller: sellerResponse.data,
             })
         } catch (err) {
-            setDetailError(
-                err.response?.data?.message
-                || err.message
-                || '농장 또는 판매자 정보를 불러오지 못했습니다.'
-            )
+            setDetailError('농장 또는 판매자 정보를 불러오지 못했습니다.')
         } finally {
             setDetailLoading(false)
         }
@@ -131,11 +123,7 @@ function AdminCatalogApprovalPage() {
                     return
                 }
 
-                setError(
-                    err.response?.data?.message
-                    || err.message
-                    || '승인 대기 목록을 불러오지 못했습니다.'
-                )
+                setError('승인 대기 목록을 불러오지 못했습니다.')
             })
             .finally(() => {
                 if (!cancelled) {
@@ -151,6 +139,28 @@ function AdminCatalogApprovalPage() {
     async function handleFarmApproval(farmId, approvalStatus) {
         const actionText =
             approvalStatus === 'APPROVED' ? '승인' : '거절'
+
+        let rejectionReason = null
+
+        if(approvalStatus === 'REJECTED') {
+            rejectionReason = await prompt({
+                title: '농장 거절 사유',
+                message: '판매자가 수정 후 다시 승인 요청할 수 있도록 구체적으로 작성해주세요.',
+                inputLabel: '거절 사유',
+                placeholder: '예: 사업자등록번호와 농장 주소를 다시 확인해주세요.',
+                confirmText: '사유 입력 완료',
+                type: 'danger',
+            })
+
+            if(rejectionReason === null){
+                return false
+            }
+
+            if(!rejectionReason.trim()){
+                window.alert('농장 거절 사유를 입력해주세요.')
+                return false
+            }
+        }
 
         const confirmed = await confirm({
             title: `농장을 ${actionText}할까요?`,
@@ -168,15 +178,12 @@ function AdminCatalogApprovalPage() {
             setError('')
             setDetailError('')
 
-            await updateFarmApprovalStatus(farmId, approvalStatus)
+            await updateFarmApprovalStatus(farmId, approvalStatus, rejectionReason)
             await loadApprovalTargets()
 
             return true
         } catch (err) {
-            const message =
-                err.response?.data?.message
-                || err.message
-                || `농장 ${actionText}에 실패했습니다.`
+            const message = `농장 ${actionText}에 실패했습니다. 잠시 후 다시 시도해주세요.`
 
             setError(message)
             setDetailError(message)
@@ -189,6 +196,28 @@ function AdminCatalogApprovalPage() {
     async function handleProductApproval(productId, approvalStatus) {
         const actionText =
             approvalStatus === 'APPROVED' ? '승인' : '거절'
+
+        let rejectionReason = null
+
+        if (approvalStatus === 'REJECTED') {
+            rejectionReason = await prompt({
+                title: '상품 거절 사유',
+                message: '판매자가 상품 정보를 보완할 수 있도록 구체적으로 작성해주세요.',
+                inputLabel: '거절 사유',
+                placeholder: '예: 상품 이미지와 원산지 정보를 보완해주세요.',
+                confirmText: '사유 입력 완료',
+                type: 'danger',
+            })
+
+            if (rejectionReason === null) {
+                return false
+            }
+
+            if (!rejectionReason.trim()) {
+                window.alert('상품 거절 사유를 입력해주세요.')
+                return false
+            }
+        }
 
         const confirmed = await confirm({
             title: `상품을 ${actionText}할까요?`,
@@ -209,17 +238,14 @@ function AdminCatalogApprovalPage() {
             if (approvalStatus === 'APPROVED') {
                 await approveProduct(productId)
             } else {
-                await rejectProduct(productId)
+                await rejectProduct(productId, rejectionReason)
             }
 
             await loadApprovalTargets()
 
             return true
         } catch (err) {
-            const message =
-                err.response?.data?.message
-                || err.message
-                || `상품 ${actionText}에 실패했습니다.`
+            const message = `상품 ${actionText}에 실패했습니다. 잠시 후 다시 시도해주세요.`
 
             setError(message)
             setDetailError(message)

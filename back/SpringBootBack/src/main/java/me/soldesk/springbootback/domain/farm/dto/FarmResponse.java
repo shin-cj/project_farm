@@ -44,6 +44,9 @@ public class FarmResponse {
     /** 농장 승인 상태 */
     private String approvalStatus;
 
+    /*거절 사유*/
+    private String rejectionReason;
+
     /** 농장 등록 일시 */
     private LocalDateTime createdAt;
 

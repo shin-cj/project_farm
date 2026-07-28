@@ -151,7 +151,7 @@ public class FarmService {
     //새로운 농장 생성
     public FarmResponse createFarm(FarmRequest request) {
 
-        validateFarmRequest(request);
+        validateFarmRequest(request, true);
 
         if(request.getBusinessNumber() != null
         && farmRepository.existsByBusinessNumber(request.getBusinessNumber())){
@@ -173,7 +173,7 @@ public class FarmService {
     //농장 수정
     public FarmResponse updateFarm(Long farmId, FarmRequest request) {
 
-        validateFarmRequest(request);
+        validateFarmRequest(request, false);
 
         if (request.getBusinessNumber() != null
                 && farmRepository.existsByBusinessNumberAndFarmIdNot(
@@ -214,6 +214,8 @@ public class FarmService {
         applyRequestToFarm(farm, request);
 
         farm.setApprovalStatus("PENDING");
+
+        farm.setRejectionReason(null);
 
         farm.setUpdatedAt(LocalDateTime.now());
 
@@ -256,6 +258,24 @@ public class FarmService {
             );
         }
 
+        String rejectionReason = null;
+
+        if("REJECTED".equals(nextStatus)){
+            if(request.getRejectionReason() == null || request.getRejectionReason().isBlank()){
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "농장 거절 사유를 입력해주세요."
+                );
+            }
+
+            rejectionReason = request.getRejectionReason().trim();
+            
+            if(rejectionReason.length() > 500){
+                throw  new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "농장 거절 사유는 500자 이하로 입력해주세요"
+                );
+            }
+        }
+
         Farm farm = farmRepository
                 .findById(farmId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -264,6 +284,7 @@ public class FarmService {
                 ));
 
         farm.setApprovalStatus(nextStatus);
+        farm.setRejectionReason(rejectionReason);
         farm.setUpdatedAt(LocalDateTime.now());
 
         Farm savedFarm = farmRepository.save(farm);
@@ -374,6 +395,7 @@ public class FarmService {
         response.setFarmImageUrl(farm.getFarmImageUrl());
         response.setSaleType(farm.getSaleType());
         response.setApprovalStatus(farm.getApprovalStatus());
+        response.setRejectionReason(farm.getRejectionReason());
         response.setCreatedAt(farm.getCreatedAt());
         response.setUpdatedAt(farm.getUpdatedAt());
 
@@ -381,7 +403,10 @@ public class FarmService {
     }
 
     //농장 등록, 수정 전에 유효성 검사 메소드
-    private void validateFarmRequest(FarmRequest request) {
+    private void validateFarmRequest(
+            FarmRequest request,
+            boolean requireCompleteRegistration
+    ) {
 
         if (request == null) {
             throw new ResponseStatusException(
@@ -452,6 +477,33 @@ public class FarmService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "농장 주소를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getFarmDetailAddress() == null
+                || request.getFarmDetailAddress().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 상세 주소를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getFarmDescription() == null
+                || request.getFarmDescription().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 소개를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getFarmImageUrl() == null
+                || request.getFarmImageUrl().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장 대표 이미지를 등록해주세요."
             );
         }
 

@@ -32,15 +32,7 @@ function MarketPriceUpdate() {
 
         }catch (error){
             console.log("시세 업데이트 중 에러 발생 : ", error);
-            if (error.response && error.response.data){
-                const backendMsg = typeof error.response.data === 'string' ? error.response.data : (error.response.data.message || JSON.stringify(error.response.data));
-
-                setErrorMessage(`[서버 에러] ${backendMsg}`);
-            }else if(error.request){
-                setErrorMessage("서버와 통신할 수 없습니다. (백엔드 서버 확인 필요)");
-            }else {
-                setErrorMessage(error.message);
-            }
+            setErrorMessage("시세 정보를 업데이트하지 못했습니다. 잠시 후 다시 시도해주세요.");
         }finally {
             setIsUpdate(false);
         }

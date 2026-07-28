@@ -68,6 +68,14 @@ function canViewDelivery(order) {
   return !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
 }
 
+function getOrderDeliveryLabel(order) {
+  if (!canViewDelivery(order)) {
+    return "배송 대상 아님";
+  }
+
+  return DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중";
+}
+
 function OrderHistoryPage() {
   const navigate = useNavigate();
   const { alert, prompt } = useAppFeedback();
@@ -150,7 +158,7 @@ function OrderHistoryPage() {
       alert("주문 취소가 완료되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "주문 취소에 실패했습니다.");
+      alert("주문 취소에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setCancelingOrderId(null);
     }
@@ -180,7 +188,7 @@ function OrderHistoryPage() {
       alert("환불 요청이 접수되었습니다.");
       await fetchOrders();
     } catch (error) {
-      alert(error.message || "환불 요청에 실패했습니다.");
+      alert("환불 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   }
 
@@ -290,7 +298,7 @@ function OrderHistoryPage() {
                     {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
                   </span>
                   <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontWeight: 800 }}>
-                    {DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중"}
+                    {getOrderDeliveryLabel(order)}
                   </span>
                 </div>
 

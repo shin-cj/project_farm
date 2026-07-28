@@ -7,9 +7,12 @@ function CatalogImage({
     fallbackClassName,
 }) {
     const normalizedSrc = typeof src === 'string' ? src.trim() : ''
+    const imageSrc = normalizedSrc.startsWith('/uploads/')
+        ? `http://localhost:8080${normalizedSrc}`
+        : normalizedSrc
     const [failedSrc, setFailedSrc] = useState('')
 
-    if (!normalizedSrc || failedSrc === normalizedSrc) {
+    if (!imageSrc || failedSrc === imageSrc) {
         return (
             <span className={fallbackClassName} role="img" aria-label={fallbackText}>
                 {fallbackText}
@@ -19,10 +22,10 @@ function CatalogImage({
 
     return (
         <img
-            src={normalizedSrc}
+            src={imageSrc}
             alt={alt}
             onLoad={() => setFailedSrc('')}
-            onError={() => setFailedSrc(normalizedSrc)}
+            onError={() => setFailedSrc(imageSrc)}
         />
     )
 }

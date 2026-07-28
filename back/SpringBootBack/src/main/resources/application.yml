@@ -29,6 +29,9 @@ external:
     base-url: https://apis.data.go.kr/B552845/recent
     api-key: ${API01_KEY}
 
+pexels:
+  base-url: https://api.pexels.com/v1
+  api-key: ${PEXELS_API_KEY}
 
 openai:
   api-key: ${OPENAI_API_KEY}
@@ -40,6 +43,9 @@ app:
     root-directory: ${AGROLINK_UPLOAD_ROOT:../../uploads}
     product-directory: ${app.upload.root-directory}/product
     farm-directory: ${app.upload.root-directory}/farm
+
+  seed:
+    pexels-images: false
 
 tosspayments:
   secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6

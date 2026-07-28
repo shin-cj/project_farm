@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import axios from 'axios'
 import { getProduct } from '../../api/productApi.js'
-import AddCartButton from '../../components/cart/AddCartButton.jsx'
-import './ProductDetailPage.css'
 import { getPublicFarm } from '../../api/farmApi.js'
+import AddCartButton from '../../components/cart/AddCartButton.jsx'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
-import { getApiErrorMessage } from '../../utils/apiError.js'
-import ReportButton from "../../components/report/ReportButton.jsx";
+import ReportButton from '../../components/report/ReportButton.jsx'
 import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
-
+import { getApiErrorMessage } from '../../utils/apiError.js'
+import './ProductDetailPage.css'
 
 function getStoredLoginUser() {
   try {
@@ -28,28 +28,45 @@ function getMinimumOrderQuantity(product) {
 
   const minimumOrderQuantity = Number(product.minOrderQuantity)
 
-  return Number.isInteger(minimumOrderQuantity)
-      && minimumOrderQuantity >= 2
-      ? minimumOrderQuantity
-      : 2
+  return Number.isInteger(minimumOrderQuantity) && minimumOrderQuantity >= 2
+    ? minimumOrderQuantity
+    : 2
 }
 
-// 상품 상세 기능을 담당하는 페이지 컴포넌트입니다.
+function getProductStatusLabel(productStatus) {
+  const statusLabels = {
+    ON_SALE: '판매 중',
+    SOLD_OUT: '품절',
+    PENDING: '승인 대기',
+    REJECTED: '승인 거절',
+    HIDDEN: '판매 중지',
+  }
+
+  return statusLabels[productStatus] || '상태 확인 필요'
+}
+
 function ProductDetailPage() {
-  const {productId} = useParams()
+  const { productId } = useParams()
   const navigate = useNavigate()
-  const { alert } = useAppFeedback()
   const location = useLocation()
+  const { alert } = useAppFeedback()
   const loginUser = getStoredLoginUser()
-  const userid = loginUser?.userId;
+  const userid = loginUser?.userId || loginUser?.id || loginUser?.userNo
+  const isAdmin =
+    loginUser?.email === 'admin@agrolink.dev'
+    || loginUser?.role === 'ADMIN'
+    || loginUser?.role === 'ROLE_ADMIN'
+
   const [product, setProduct] = useState(null)
   const [farm, setFarm] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
-
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
+  const [quantity, setQuantity] = useState(1)
+  const [qnaList, setQnaList] = useState([])
+  const [answerInputs, setAnswerInputs] = useState({})
+  const [reviewList, setReviewList] = useState([])
 
   useEffect(() => {
     if (!isOrderModalOpen) {
@@ -63,17 +80,14 @@ function ProductDetailPage() {
     }
 
     window.addEventListener('keydown', closeModalWithEscape)
-
-    return () => {
-      window.removeEventListener('keydown', closeModalWithEscape)
-    }
+    return () => window.removeEventListener('keydown', closeModalWithEscape)
   }, [isOrderModalOpen])
 
   useEffect(() => {
     let ignore = false
 
-    async function loadProduct(){
-      try{
+    async function loadProduct() {
+      try {
         setLoading(true)
         setError('')
 
@@ -87,44 +101,168 @@ function ProductDetailPage() {
         setFarm(null)
         setQuantity(getMinimumOrderQuantity(data))
 
-        if(data.farmId){
-          try{
+        if (data.farmId) {
+          try {
             const farmData = await getPublicFarm(data.farmId)
-
             if (!ignore) {
               setFarm(farmData)
             }
-          }catch(farmError){
-            console.log(farmError)
-
+          } catch {
             if (!ignore) {
               setFarm(null)
             }
           }
         }
-      }catch (err) {
+      } catch (err) {
         if (!ignore) {
           setError(getApiErrorMessage(err, '상품을 불러오지 못했습니다.'))
         }
-      }finally{
+      } finally {
         if (!ignore) {
           setLoading(false)
         }
       }
     }
 
-    loadProduct()
+    void loadProduct()
 
     return () => {
       ignore = true
     }
   }, [productId, reloadKey])
 
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchQnas() {
+      if (!productId) {
+        return
+      }
+
+      try {
+        const response = await axios.get(`http://localhost:8080/api/qna/${productId}`)
+        if (!ignore) {
+          setQnaList(response.data)
+        }
+      } catch {
+        if (!ignore) {
+          setQnaList([])
+        }
+      }
+    }
+
+    void fetchQnas()
+
+    return () => {
+      ignore = true
+    }
+  }, [productId])
+
+  useEffect(() => {
+    let ignore = false
+
+    async function fetchReviews() {
+      if (!productId) {
+        return
+      }
+
+      try {
+        const response = await axios.get(`http://localhost:8080/api/reviews/${productId}`)
+        if (!ignore) {
+          setReviewList(response.data)
+        }
+      } catch {
+        if (!ignore) {
+          setReviewList([])
+        }
+      }
+    }
+
+    void fetchReviews()
+
+    return () => {
+      ignore = true
+    }
+  }, [productId])
+
+  async function reloadQnas() {
+    if (!productId) {
+      return
+    }
+
+    try {
+      const response = await axios.get(`http://localhost:8080/api/qna/${productId}`)
+      setQnaList(response.data)
+    } catch {
+      setQnaList([])
+    }
+  }
+
+  async function handleDeleteQna(qnaId) {
+    if (!window.confirm('정말 이 문의를 삭제하시겠습니까?')) {
+      return
+    }
+
+    try {
+      await axios.delete(`http://localhost:8080/api/qna/${qnaId}`)
+      alert('삭제 완료되었습니다.')
+      await reloadQnas()
+    } catch {
+      alert('삭제 중 오류가 발생했습니다.')
+    }
+  }
+
+  function handleAnswerChange(qnaId, value) {
+    setAnswerInputs((current) => ({
+      ...current,
+      [qnaId]: value,
+    }))
+  }
+
+  async function handleAnswerSubmit(qnaId) {
+    const content = answerInputs[qnaId]
+
+    if (!content || !content.trim()) {
+      alert('답변 내용을 입력해주세요.')
+      return
+    }
+
+    const currentTime = new Date().toISOString()
+
+    try {
+      await axios.put(`http://localhost:8080/api/qna/${qnaId}/answer`, {
+        answerContent: content,
+        adminId: userid || 1,
+      })
+
+      alert('답변이 성공적으로 등록되었습니다!')
+      setQnaList((currentList) => (
+        currentList.map((qna) => (
+          qna.qnaId === qnaId
+            ? {
+              ...qna,
+              answerContent: content,
+              qnaStatus: 'ANSWERED',
+              answeredAt: currentTime,
+              updatedAt: currentTime,
+            }
+            : qna
+        ))
+      ))
+      setAnswerInputs((current) => ({
+        ...current,
+        [qnaId]: '',
+      }))
+    } catch {
+      alert('답변 등록에 실패했습니다.')
+    }
+  }
+
   if (loading) {
     return (
       <CatalogPageState
-          title="상품 정보 불러오는 중"
-          message="선택한 상품의 상세 정보를 확인하고 있습니다."
+        title="상품 정보 불러오는 중"
+        message="선택한 상품의 상세 정보를 확인하고 있습니다."
       />
     )
   }
@@ -132,16 +270,15 @@ function ProductDetailPage() {
   if (error) {
     return (
       <CatalogPageState
-          title="상품 정보를 불러오지 못했습니다"
-          message={error}
-          actionLabel="다시 시도"
-          onAction={() => setReloadKey((value) => value + 1)}
+        title="상품 정보를 불러오지 못했습니다"
+        message={error}
+        actionLabel="다시 시도"
+        onAction={() => setReloadKey((current) => current + 1)}
       />
     )
   }
 
   if (!product) {
-
     return (
       <main className="product-detail-page">
         <div className="product-detail-message">상품이 없습니다.</div>
@@ -150,32 +287,35 @@ function ProductDetailPage() {
   }
 
   const minimumOrderQuantity = getMinimumOrderQuantity(product)
-  const stockQuantity = Number(product.stockQuantity)
-
-  const isPurchasable =
-      product.productStatus === 'ON_SALE'
-      && stockQuantity >= minimumOrderQuantity
-
+  const stockQuantity = Number(product.stockQuantity || 0)
   const numericQuantity = Number(quantity)
-
+  const orderQuantity = Number.isInteger(numericQuantity) ? numericQuantity : minimumOrderQuantity
+  const isPurchasable = product.productStatus === 'ON_SALE' && stockQuantity >= minimumOrderQuantity
   const isValidQuantity =
-      Number.isInteger(numericQuantity)
-      && numericQuantity >= minimumOrderQuantity
-      && numericQuantity <= stockQuantity
-
+    Number.isInteger(numericQuantity)
+    && numericQuantity >= minimumOrderQuantity
+    && numericQuantity <= stockQuantity
   const unavailableMessage =
-      stockQuantity < minimumOrderQuantity
-      || product.productStatus === 'SOLD_OUT'
-          ? '최소 주문 수량을 충족할 재고가 없는 상품입니다.'
-          : product.productStatus === 'PENDING'
-              ? '승인 대기 중인 상품입니다.'
-              : product.productStatus === 'HIDDEN'
-                  ? '판매가 중지된 상품입니다.'
-                  : '현재 구매할 수 없는 상품입니다.'
+    stockQuantity < minimumOrderQuantity || product.productStatus === 'SOLD_OUT'
+      ? '최소 주문 수량을 충족할 재고가 없는 상품입니다.'
+      : product.productStatus === 'PENDING'
+        ? '승인 대기 중인 상품입니다.'
+        : product.productStatus === 'HIDDEN'
+          ? '판매가 중지된 상품입니다.'
+          : '현재 구매할 수 없는 상품입니다.'
+  const requestedListPath = location.state?.from
+  const isAllowedListPath =
+    typeof requestedListPath === 'string'
+    && (
+      requestedListPath.startsWith('/products')
+      || requestedListPath.startsWith('/seller/products')
+    )
+  const productListPath = isAllowedListPath ? requestedListPath : '/products'
+  const sortedQnaList = [...qnaList].sort((a, b) => Number(b.qnaId) - Number(a.qnaId))
+  const sortedReviewList = [...reviewList].sort((a, b) => Number(b.reviewId || b.id) - Number(a.reviewId || a.id))
 
-  function handleDecreaseQuantity(){
+  function handleDecreaseQuantity() {
     const currentQuantity = Number(quantity) || minimumOrderQuantity
-
     setQuantity(Math.max(minimumOrderQuantity, currentQuantity - 1))
   }
 
@@ -185,10 +325,13 @@ function ProductDetailPage() {
   }
 
   function handleDirectOrder() {
-    const orderQuantity = Number(quantity)
-
     if (!isPurchasable) {
       alert(unavailableMessage)
+      return
+    }
+
+    if (!isValidQuantity) {
+      alert(`주문 수량은 ${minimumOrderQuantity}개 이상, ${stockQuantity}개 이하로 입력해주세요.`)
       return
     }
 
@@ -197,28 +340,16 @@ function ProductDetailPage() {
       navigate('/login')
       return
     }
-    if (!Number.isInteger(orderQuantity)
-        || orderQuantity < minimumOrderQuantity) {
-      alert(`최소 주문 수량은 ${minimumOrderQuantity}개입니다.`)
-      return
-    }
-
-    if (orderQuantity > product.stockQuantity) {
-      alert('재고보다 많이 주문할 수 없습니다.')
-      return
-    }
 
     navigate('/order', {
       state: {
         purchaseType: 'DIRECT',
-
+        orderView: 'MODAL',
         buyerId: userid,
-
         directProduct: {
           productId: product.productId,
           quantity: orderQuantity,
         },
-
         items: [
           {
             cart_item_id: `direct-${product.productId}`,
@@ -245,51 +376,34 @@ function ProductDetailPage() {
     })
   }
 
-  const requestedListPath = location.state?.from
-
-  const isAllowedListPath = typeof  requestedListPath === 'string'
-  && (
-      requestedListPath.startsWith('/products') ||
-          requestedListPath.startsWith('/seller/products')
-      )
-
-  const productListPath = isAllowedListPath ? requestedListPath : '/products'
-
   return (
     <main className="product-detail-page">
       <section className="product-detail-card">
         <div className="product-detail-image-box">
-          <CatalogImage
-              src={product.productImageUrl}
-              alt={product.productName}
-          />
+          <CatalogImage src={product.productImageUrl} alt={product.productName} />
+        </div>
+
+        <div className="product-detail-top">
+          <span className="product-detail-status">
+            {getProductStatusLabel(product.productStatus)}
+          </span>
+
+          {product.sameDayDelivery === 'Y' && (
+            <span className="product-detail-same-day-badge">오늘 도착 가능</span>
+          )}
+
+          <button
+            type="button"
+            className="product-detail-back-button"
+            onClick={() => navigate(productListPath)}
+          >
+            목록으로
+          </button>
         </div>
 
         <div className="product-detail-info">
-          <div className="product-detail-top">
-            <span className="product-detail-status">
-              {product.productStatus || '판매 상태 미등록'}
-            </span>
-            {product.sameDayDelivery === 'Y' && (
-                <span className="product-detail-same-day-badge">
-                  오늘 도착 가능
-                </span>
-            )}
-            <button
-              type="button"
-              className="product-detail-back-button"
-              onClick={() => navigate(productListPath)}
-            >
-              목록으로
-            </button>
-          </div>
-
-          <p className="product-detail-origin">
-            {product.origin || '원산지 미등록'}
-          </p>
-
+          <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
           <h1>{product.productName}</h1>
-
           <p className="product-detail-description">
             {product.description || '상품 설명이 없습니다.'}
           </p>
@@ -299,101 +413,93 @@ function ProductDetailPage() {
             <span>{product.unit || '단위 미등록'}</span>
           </div>
 
+        </div>
+
+        <div className="product-detail-purchase-panel">
           <dl className="product-detail-meta">
             <div>
               <dt>재고</dt>
-              <dd>{product.stockQuantity}개</dd>
+              <dd>{stockQuantity}개</dd>
             </div>
-
             <div>
               <dt>수확일</dt>
               <dd>{product.harvestDate || '미등록'}</dd>
             </div>
-
             <div>
               <dt>유통기한</dt>
               <dd>{product.expirationDate || '미등록'}</dd>
             </div>
-
             <div>
               <dt>상품 번호</dt>
               <dd>{product.productId}</dd>
             </div>
-
             <div>
               <dt>판매 방식</dt>
-              <dd>
-                {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
-              </dd>
+              <dd>{product.saleType === 'WHOLESALE' ? '도매' : '소매'}</dd>
             </div>
-
             <div>
               <dt>최소 주문</dt>
               <dd>{minimumOrderQuantity}개</dd>
             </div>
-
-            <div>
-              <dt>배송 방식</dt>
-              <dd>
-                {product.sameDayDelivery === 'Y'
-                    ? '당일배송 가능'
-                    : '일반배송'}
-              </dd>
-            </div>
           </dl>
 
           <div className="product-detail-quantity">
-            <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
 
-            <div className="product-detail-quantity-control">
-              <button
-                  type="button"
-                  onClick={handleDecreaseQuantity}
-                  disabled={numericQuantity <= minimumOrderQuantity}
-                  aria-label="수량 줄이기"
-              >
-                −
-              </button>
+            <div className="product-detail-quantity-row">
+              <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
 
-              <input
-                  type="number"
-                  min={minimumOrderQuantity}
-                  max={product.stockQuantity}
-                  value={quantity}
-                  onChange={(event) => setQuantity(event.target.value)}
-                  aria-label="구매 수량"
-              />
+              <div className="product-detail-quantity-control">
+                <button
+                    type="button"
+                    onClick={handleDecreaseQuantity}
+                    disabled={numericQuantity <= minimumOrderQuantity}
+                >
+                  -
+                </button>
 
-              <button
-                  type="button"
-                  onClick={handleIncreaseQuantity}
-                  disabled={numericQuantity >= Number(product.stockQuantity)}
-                  aria-label="수량 늘리기"
-              >
-                +
-              </button>
+                <input
+                    type="number"
+                    min={minimumOrderQuantity}
+                    max={stockQuantity}
+                    value={quantity}
+                    onChange={(event) => setQuantity(event.target.value)}
+                />
+
+                <button
+                    type="button"
+                    onClick={handleIncreaseQuantity}
+                    disabled={numericQuantity >= stockQuantity}
+                >
+                  +
+                </button>
+              </div>
             </div>
 
-            <strong>
-              총 {(product.price * (numericQuantity || 0)).toLocaleString()}원
-            </strong>
+            <div className="product-detail-total-row">
+              <span>총 금액</span>
+
+              <strong>
+                {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}원
+              </strong>
+            </div>
+
           </div>
 
           <div className="product-detail-actions">
             <AddCartButton
-                productId={product.productId}
-                userid={userid}
-                quantity={numericQuantity}
-                disabled={!isPurchasable || !isValidQuantity}
-                className="product-detail-cart-button"
+              productId={product.productId}
+              userid={userid}
+              quantity={orderQuantity}
+              disabled={!isPurchasable || !isValidQuantity}
+              className="product-detail-cart-button"
             />
+
             <button
-                type="button"
-                className="product-detail-order-link"
-                onClick={() => {
-                  setIsOrderModalOpen(true)
-                }}
-                disabled={!isPurchasable || !isValidQuantity}            >
+              type="button"
+              className="product-detail-order-link"
+              onClick={() => setIsOrderModalOpen(true)}
+              disabled={!isPurchasable || !isValidQuantity}
+            >
               바로 주문하기
             </button>
 
@@ -402,102 +508,313 @@ function ProductDetailPage() {
               reporterId={userid}
               reportType="PRODUCT"
               targetLabel={product.productName}
-              />
-
-            {!isPurchasable && (
-                <p className="product-detail-unavailable">
-                  {unavailableMessage}
-                </p>
-            )}
+              className="product-detail-report-button"
+            />
           </div>
+
+          {!isPurchasable && (
+            <p className="product-detail-unavailable">{unavailableMessage}</p>
+          )}
         </div>
       </section>
+
       {farm && (
-          <section className="product-detail-farm-card">
-            <p>생산 농장</p>
+        <section className="product-detail-farm-card">
+          <p>생산 농장</p>
+          <h2>
+            <Link to={`/farms/${farm.farmId}`} className="product-detail-farm-name-link">
+              {farm.farmName}
+            </Link>
+          </h2>
+          <span>{farm.region}</span>
+          <p>{farm.farmAddress}</p>
 
-            <h2>
-              <Link
-                  to={`/farms/${farm.farmId}`}
-                  className="product-detail-farm-name-link"
-              >
-                {farm.farmName}
-              </Link>
-            </h2>
-
-            <span>{farm.region}</span>
-
-            <p>{farm.farmAddress}</p>
-
-            {farm.farmDescription && (
-                <p>{farm.farmDescription}</p>
-            )}
-            <Link
-                to={`/farms/${farm.farmId}`}
-                className="product-detail-farm-view-link"
-            >
+          <div className="product-detail-farm-actions">
+            <Link to={`/farms/${farm.farmId}`} className="product-detail-farm-view-link">
               농장 상세 보기
             </Link>
-          </section>
+          </div>
+        </section>
       )}
-      {isOrderModalOpen && (
-          <div className="product-order-modal-backdrop">
-            <div
-                className="product-order-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="product-order-modal-title"
-            >
-              <h2 id="product-order-modal-title">바로 주문하기</h2>
 
-              <p>상품명: {product.productName}</p>
-              <p>가격: {product.price.toLocaleString()}원</p>
-              <p>남은 재고: {product.stockQuantity}개</p>
-              <p>
-                판매 방식: {product.saleType === 'WHOLESALE' ? '도매' : '소매'}
-              </p>
-              <p>
-                배송 방식: {product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}
-              </p>
-              <p>최소 주문 수량: {minimumOrderQuantity}개</p>
+      <section
+        className="product-qna-section"
+        style={{
+          marginTop: '40px',
+          padding: '25px',
+          background: '#fff',
+          borderRadius: '8px',
+          border: '1px solid #e0e0e0',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, fontSize: '20px' }}>상품 문의하기</h3>
+          <button
+            type="button"
+            onClick={() => {
+              if (!userid) {
+                alert('로그인이 필요한 기능입니다.')
+                navigate('/login')
+                return
+              }
+              navigate(`/qna/write?productId=${product.productId}`)
+            }}
+            style={{
+              padding: '8px 16px',
+              background: '#2e7d32',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '14px',
+            }}
+          >
+            문의글 작성하기
+          </button>
+        </div>
 
-              <label>
-                수량
-                <input
-                    type="number"
-                    min={minimumOrderQuantity}
-                    max={product.stockQuantity}
-                    value={quantity}
-                    onChange={(event) => setQuantity(event.target.value)}
-                />
-              </label>
+        <div className="product-qna-list">
+          <h4 style={{ marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
+            문의 목록
+          </h4>
 
-              <p>
-                총 결제 금액:{" "}
-                {(product.price * Number(quantity || 1)).toLocaleString()}원
-              </p>
+          {sortedQnaList.length === 0 ? (
+            <p style={{ color: '#888', textAlign: 'center', padding: '20px 0' }}>
+              등록된 문의가 없습니다.
+            </p>
+          ) : (
+            sortedQnaList.map((qna) => (
+              <div
+                key={qna.qnaId}
+                style={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '6px',
+                  padding: '15px',
+                  marginBottom: '15px',
+                  background: '#fafafa',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 'bold', color: qna.qnaStatus === 'ANSWERED' ? '#2e7d32' : '#f57c00' }}>
+                    [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
+                  </span>
+                  <div>
+                    {qna.isSecret === 1 && <span style={{ marginRight: '10px' }}>비밀글</span>}
+                    <small style={{ color: '#888' }}>
+                      {qna.createdAt ? new Date(qna.createdAt).toLocaleString() : ''}
+                    </small>
+                  </div>
+                </div>
 
-              <div>
-                <div className="product-order-modal-buttons">
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{qna.questionTitle}</h4>
+                <p style={{ margin: '0 0 12px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
+                  {qna.questionContent}
+                </p>
+
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
                   <button
-                      type="button"
-                      className="product-order-submit"
-                      onClick={handleDirectOrder}
+                    type="button"
+                    onClick={() => navigate(`/qna/edit/${qna.qnaId}`)}
+                    style={{ padding: '4px 10px', background: '#6c757d', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
                   >
-                    결제하기
+                    수정
                   </button>
-
                   <button
-                      type="button"
-                      className="product-order-close"
-                      onClick={() => setIsOrderModalOpen(false)}
+                    type="button"
+                    onClick={() => handleDeleteQna(qna.qnaId)}
+                    style={{ padding: '4px 10px', background: '#dc3545', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
                   >
-                    닫기
+                    삭제
                   </button>
                 </div>
+
+                <div style={{ marginTop: '10px', background: '#f1f8e9', padding: '12px', borderRadius: '6px', borderLeft: '3px solid #2e7d32' }}>
+                  <strong>관리자 답변</strong>
+                  {qna.answerContent ? (
+                    <div style={{ marginTop: '8px' }}>
+                      <p style={{ margin: '0 0 5px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
+                        {qna.answerContent}
+                      </p>
+                      <small style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                        {qna.updatedAt ? new Date(qna.updatedAt).toLocaleString() : ''}
+                      </small>
+                    </div>
+                  ) : isAdmin ? (
+                    <div style={{ marginTop: '10px' }}>
+                      <textarea
+                        placeholder="관리자 답변을 입력하세요..."
+                        value={answerInputs[qna.qnaId] || ''}
+                        onChange={(event) => handleAnswerChange(qna.qnaId, event.target.value)}
+                        style={{ width: '100%', height: '50px', padding: '8px', marginBottom: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleAnswerSubmit(qna.qnaId)}
+                        style={{ padding: '6px 12px', background: '#2e7d32', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                      >
+                        답변 등록
+                      </button>
+                    </div>
+                  ) : (
+                    <p style={{ margin: '8px 0 0 0', color: '#666', fontSize: '13px' }}>
+                      아직 등록된 답변이 없습니다.
+                    </p>
+                  )}
+                </div>
               </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section
+        className="product-review-section"
+        style={{
+          marginTop: '30px',
+          marginBottom: '40px',
+          padding: '25px',
+          background: '#fff',
+          borderRadius: '8px',
+          border: '1px solid #e0e0e0',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, fontSize: '20px' }}>상품 후기</h3>
+          <button
+            type="button"
+            onClick={() => {
+              if (!userid) {
+                alert('로그인이 필요한 기능입니다.')
+                navigate('/login')
+                return
+              }
+              navigate(`/reviews/write?productId=${product.productId}`)
+            }}
+            style={{
+              padding: '8px 16px',
+              background: '#388e3c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '14px',
+            }}
+          >
+            후기 작성하기
+          </button>
+        </div>
+
+        <div className="product-review-list">
+          {sortedReviewList.length === 0 ? (
+            <p style={{ color: '#888', textAlign: 'center', padding: '20px 0' }}>
+              등록된 후기가 없습니다.
+            </p>
+          ) : (
+            sortedReviewList.map((review) => (
+              <div
+                key={review.reviewId || review.id}
+                style={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '6px',
+                  padding: '15px',
+                  marginBottom: '15px',
+                  background: '#fafafa',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 'bold', color: '#388e3c' }}>
+                    평점: {'*'.repeat(review.rating || review.score || 5)}
+                  </span>
+                  <small style={{ color: '#888' }}>
+                    {review.createdAt ? new Date(review.createdAt).toLocaleString() : ''}
+                  </small>
+                </div>
+                <p style={{ margin: '0', color: '#333', whiteSpace: 'pre-wrap' }}>
+                  {review.content || review.reviewContent}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {isOrderModalOpen && (
+        <div className="product-order-modal-backdrop" onClick={() => setIsOrderModalOpen(false)}>
+          <div
+            className="product-order-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="product-order-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="product-order-modal-header">
+              <div>
+                <span>Order</span>
+                <h2 id="product-order-modal-title">바로 주문하기</h2>
+              </div>
+              <button type="button" onClick={() => setIsOrderModalOpen(false)} aria-label="바로 주문 닫기">
+                x
+              </button>
+            </div>
+
+            <div className="product-order-modal-summary">
+              <strong>{product.productName}</strong>
+              <span>{product.origin || '원산지 미등록'}</span>
+            </div>
+
+            <dl className="product-order-modal-info">
+              <div>
+                <strong>
+                  {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}
+                  <small>원</small>
+                </strong>
+              </div>
+              <div>
+                <dt>남은 재고</dt>
+                <dd>{stockQuantity}개</dd>
+              </div>
+              <div>
+                <dt>판매 방식</dt>
+                <dd>{product.saleType === 'WHOLESALE' ? '도매' : '소매'}</dd>
+              </div>
+              <div>
+                <dt>배송 방식</dt>
+                <dd>{product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}</dd>
+              </div>
+              <div>
+                <dt>최소 주문</dt>
+                <dd>{minimumOrderQuantity}개</dd>
+              </div>
+            </dl>
+
+            <label>
+              수량
+              <input
+                type="number"
+                min={minimumOrderQuantity}
+                max={stockQuantity}
+                value={quantity}
+                onChange={(event) => setQuantity(event.target.value)}
+              />
+            </label>
+
+            <div className="product-order-modal-total">
+              <span>총 결제 금액</span>
+              <strong>{(Number(product.price || 0) * orderQuantity).toLocaleString()}원</strong>
+            </div>
+
+            <div className="product-order-modal-buttons">
+              <button type="button" className="product-order-submit" onClick={handleDirectOrder}>
+                결제하기
+              </button>
+              <button type="button" className="product-order-close" onClick={() => setIsOrderModalOpen(false)}>
+                닫기
+              </button>
             </div>
           </div>
+        </div>
       )}
     </main>
   )

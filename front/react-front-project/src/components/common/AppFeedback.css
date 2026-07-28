@@ -1,6 +1,6 @@
 .app-toast {
   position: fixed;
-  z-index: 1200;
+  z-index: 3100;
   top: 24px;
   left: 50%;
   display: flex;
@@ -64,7 +64,7 @@
 
 .app-dialog-backdrop {
   position: fixed;
-  z-index: 1190;
+  z-index: 3000;
   inset: 0;
   display: grid;
   place-items: center;

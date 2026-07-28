@@ -1,10 +1,11 @@
-import {useEffect, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {Link, useSearchParams} from 'react-router-dom'
 import {getCategories} from '../../api/categoryApi.js'
 import {getPublicProductPage} from '../../api/productApi.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import {getApiErrorMessage} from '../../utils/apiError.js'
 import './ProductListPage.css'
+import ProductListWidget from "./ProductListWidget.jsx";
 
 function isSoldOutProduct(product) {
     const minimumOrderQuantity = Number(product.minOrderQuantity ?? 1)
@@ -48,6 +49,7 @@ function ProductListPage() {
         && searchParams.get('sameDay') === 'Y'
 
     const appliedKeyword = searchParams.get('keyword')?.trim() ?? ''
+    const [searchKeyword, setSearchKeyword] = useState(appliedKeyword)
 
     const requestedSortOption = searchParams.get('sort')
     const sortOption = ['LATEST', 'PRICE_LOW', 'PRICE_HIGH']
@@ -68,6 +70,8 @@ function ProductListPage() {
 
     const [products, setProducts] = useState([])
     const [loading, setLoading] = useState(true)
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const hasLoadedProductsRef = useRef(false)
     const [error, setError] = useState('')
     const [categoryError, setCategoryError] = useState('')
     const [categoryReloadKey, setCategoryReloadKey] = useState(0)
@@ -104,12 +108,21 @@ function ProductListPage() {
         }
     }, [categoryReloadKey])
 
+    // 주소(URL) 검색 조건이 바뀌면 검색창 값도 같은 내용으로 맞춥니다.
+    useEffect(() => {
+        setSearchKeyword(appliedKeyword)
+    }, [appliedKeyword])
+
     useEffect(() => {
         let ignore = false
 
         async function loadProducts() {
             try {
-                setLoading(true)
+                if (hasLoadedProductsRef.current) {
+                    setIsRefreshing(true)
+                } else {
+                    setLoading(true)
+                }
                 setError('')
 
                 const data = await getPublicProductPage({
@@ -128,6 +141,7 @@ function ProductListPage() {
                     setTotalPages(data.totalPages ?? 0)
                     setFirstPage(data.first ?? true)
                     setLastPage(data.last ?? true)
+                    hasLoadedProductsRef.current = true
                 }
             } catch (err) {
                 if (!ignore) {
@@ -136,6 +150,7 @@ function ProductListPage() {
             } finally {
                 if (!ignore) {
                     setLoading(false)
+                    setIsRefreshing(false)
                 }
             }
         }
@@ -195,13 +210,26 @@ function ProductListPage() {
 
     function handleSearchSubmit(event) {
         event.preventDefault()
-        const formData = new FormData(event.currentTarget)
-        const keyword = String(formData.get('keyword') ?? '').trim()
+        const keyword = searchKeyword.trim()
 
         updateProductSearchParams({
             keyword: keyword || null,
             page: null,
         })
+    }
+
+    function handleSearchKeywordChange(event) {
+        const nextKeyword = event.target.value
+
+        setSearchKeyword(nextKeyword)
+
+        // 마지막 검색어까지 지우면 검색 조건만 즉시 해제합니다.
+        if (nextKeyword.trim() === '' && appliedKeyword) {
+            updateProductSearchParams({
+                keyword: null,
+                page: null,
+            })
+        }
     }
 
     function handleSortChange(event) {
@@ -241,6 +269,18 @@ function ProductListPage() {
 
     return (
         <main className="product-list-page">
+
+            {/* 👈 좌측 (또는 우측) : 스크롤을 따라다닐 위젯 */}
+            {!loading && !error && appliedKeyword !== '' && (
+                <div className="floating-widget-container">
+                    <div className="sticky-widget-inner">
+                        <ProductListWidget
+                            keyword={appliedKeyword}
+                            saleType={saleTypeFilter}
+                        />
+                    </div>
+                </div>
+            )}
             <section
                 className={
                     wholesaleMode
@@ -404,10 +444,10 @@ function ProductListPage() {
                         onSubmit={handleSearchSubmit}
                     >
                         <input
-                            key={appliedKeyword}
-                            type="search"
+                            type="text"
                             name="keyword"
-                            defaultValue={appliedKeyword}
+                            value={searchKeyword}
+                            onChange={handleSearchKeywordChange}
                             placeholder="상품명을 검색하세요"
                             className="product-search-input"
                             aria-label="상품명 검색"
@@ -440,7 +480,7 @@ function ProductListPage() {
                     </div>
                 )}
 
-                {!loading && !error && products.length > 0 && (
+                {!loading && products.length > 0 && (
                     <div className="product-grid">
                         {products.map((product) => (
                             <article
@@ -532,7 +572,7 @@ function ProductListPage() {
                     </div>
                 )}
 
-                {!loading && !error && totalPages > 1 && (
+                {!loading && totalPages > 1 && (
                     <nav
                         className="product-pagination"
                         aria-label="상품 목록 페이지 이동"
@@ -575,6 +615,7 @@ function ProductListPage() {
                     </nav>
                 )}
             </section>
+
         </main>
     )
 }

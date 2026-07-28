@@ -117,6 +117,14 @@ function DeliveryManagementPage() {
     return DELIVERY_STATUS_LABEL[status] || "배송 준비중";
   }
 
+  function getOrderDeliveryStatusLabel(order) {
+    if (isClosedOrder(order)) {
+      return "배송 대상 아님";
+    }
+
+    return getDeliveryStatusLabel(order.deliveryStatus);
+  }
+
   function getDeliveryTypeLabel(deliveryType) {
     return deliveryType === "SAME_DAY" ? "당일배송" : "택배배송";
   }
@@ -258,8 +266,8 @@ function DeliveryManagementPage() {
 
 
 
-    if (selectedOrder.deliveryStatus !== "READY") {
-      setError("이미 배송이 시작되었거나 완료된 주문은 다시 배송 등록할 수 없습니다.");
+    if (selectedOrder.deliveryStatus === "DELIVERED") {
+      setError("이미 배송 완료된 주문은 배송 정보를 수정할 수 없습니다.");
       return;
     }
 
@@ -291,7 +299,11 @@ function DeliveryManagementPage() {
         deliveryMemo,
       });
 
-      setMessage(`주문번호 ${data.orderId} 배송 등록이 완료되었습니다.`);
+      setMessage(
+        selectedOrder.deliveryStatus === "SHIPPING"
+          ? `주문번호 ${data.orderId} 배송 정보가 수정되었습니다.`
+          : `주문번호 ${data.orderId} 배송 등록이 완료되었습니다.`
+      );
       setCourierName("");
       setTrackingNumber("");
       setDeliveryPersonName("");
@@ -338,7 +350,7 @@ function DeliveryManagementPage() {
   const totalPages = Math.max(1, Math.ceil(visibleOrders.length / ordersPerPage));
   const startIndex = (currentPage - 1) * ordersPerPage;
   const currentOrders = visibleOrders.slice(startIndex, startIndex + ordersPerPage);
-  const isDeliveryLocked = selectedOrder && (selectedOrder.deliveryStatus !== "READY" || isClosedOrder(selectedOrder));
+  const isDeliveryLocked = selectedOrder && (selectedOrder.deliveryStatus === "DELIVERED" || isClosedOrder(selectedOrder));
   const isSelectedSameDayDelivery = selectedOrder?.deliveryType === "SAME_DAY";
 
   return (
@@ -597,15 +609,15 @@ function DeliveryManagementPage() {
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>농장명: {order.farmName || "농장 정보 없음"}</p>
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>구매한 날짜: {formatDateTime(order.orderedAt)}</p>
                 <p style={{ margin: "6px 0 0", color: "#68756d" }}>결제수단: {order.paymentMethod || "결제 전"}</p>
-                <p style={{ margin: "6px 0 0", color: "#68756d" }}>배송 상태: {getDeliveryStatusLabel(order.deliveryStatus)}</p>
+                <p style={{ margin: "6px 0 0", color: "#68756d" }}>배송 상태: {getOrderDeliveryStatusLabel(order)}</p>
                 {(order.courierName || order.trackingNumber) && (
                   <p style={{ margin: "6px 0 0" }}>
-                    배송 정보: {order.courierName || "택배사 미등록"} / {order.trackingNumber || "송장번호 미등록"}
+                    택배 정보: {order.courierName || "택배사 미등록"} / {order.trackingNumber || "송장번호 미등록"}
                   </p>
                 )}
                 {(order.deliveryPersonName || order.deliveryPersonPhone) && (
                   <p style={{ margin: "6px 0 0" }}>
-                    당일배송 정보: {order.deliveryPersonName || "담당자 미등록"} / {order.deliveryPersonPhone || "연락처 미등록"}
+                    당일배송 라이더: {order.deliveryPersonName || "라이더 미등록"} / {order.deliveryPersonPhone || "전화번호 미등록"}
                   </p>
                 )}
                 {isClosedOrder(order) && (
@@ -678,7 +690,7 @@ function DeliveryManagementPage() {
                   whiteSpace: "nowrap",
                 }}
               >
-                {selectedOrder ? getDeliveryStatusLabel(selectedOrder.deliveryStatus) : "주문 선택 전"}
+                {selectedOrder ? getOrderDeliveryStatusLabel(selectedOrder) : "주문 선택 전"}
               </span>
             </div>
             <div style={{ minHeight: "38px" }} />
@@ -712,7 +724,7 @@ function DeliveryManagementPage() {
                 <InfoLine label="구매일" value={formatDateTime(selectedOrder.orderedAt)} />
                 <InfoLine label="결제수단" value={selectedOrder.paymentMethod || "결제 전"} />
                 <InfoLine label="배송 방식" value={getDeliveryTypeLabel(selectedOrder.deliveryType)} />
-                <InfoLine label="배송 상태" value={getDeliveryStatusLabel(selectedOrder.deliveryStatus)} />
+                <InfoLine label="배송 상태" value={getOrderDeliveryStatusLabel(selectedOrder)} />
               </div>
 
               <div
@@ -783,7 +795,7 @@ function DeliveryManagementPage() {
               <p style={{ margin: "6px 0 0", color: "#405348" }}>요청사항: {selectedOrder.requestMessage || "없음"}</p>
                   {isDeliveryLocked && (
                 <p style={{ padding: "12px", borderRadius: "10px", background: "#ffffff", color: isClosedOrder(selectedOrder) ? "#dc2626" : "#216b3a", fontWeight: 800 }}>
-                  {isClosedOrder(selectedOrder) ? "취소 또는 환불 처리 중인 주문이라 배송 등록을 할 수 없습니다." : "이미 배송 등록된 주문입니다."}
+                  {isClosedOrder(selectedOrder) ? "취소 또는 환불 처리 중인 주문이라 배송 등록을 할 수 없습니다." : "배송 완료된 주문은 배송 정보를 수정할 수 없습니다."}
                 </p>
               )}
             </div>
@@ -814,23 +826,23 @@ function DeliveryManagementPage() {
                   fontWeight: 800,
                 }}
               >
-                당일배송 주문입니다. 택배사와 송장번호 없이 배송 담당자 정보로 관리합니다.
+                당일배송 주문입니다. 택배사와 송장번호 대신 라이더 정보와 전달사항으로 관리합니다.
               </div>
 
               <label>
-                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>배송 담당자</span>
+                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>라이더 이름</span>
                 <input
                   type="text"
                   value={deliveryPersonName}
                   onChange={(event) => setDeliveryPersonName(event.target.value)}
-                  placeholder="예: 김배송"
+                  placeholder="예: 김라이더"
                   disabled={isDeliveryLocked}
                   style={{ ...inputStyle, background: isDeliveryLocked ? "#f3f4f6" : "#ffffff" }}
                 />
               </label>
 
               <label>
-                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>담당자 연락처</span>
+                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>라이더 전화번호</span>
                 <input
                   type="text"
                   value={deliveryPersonPhone}
@@ -842,12 +854,12 @@ function DeliveryManagementPage() {
               </label>
 
               <label>
-                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>배송 메모</span>
+                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>전달사항</span>
                 <input
                   type="text"
                   value={deliveryMemo}
                   onChange={(event) => setDeliveryMemo(event.target.value)}
-                  placeholder="예: 오후 3시 출발 예정"
+                  placeholder="예: 문 앞에 두고 연락, 오후 3시 출발 예정"
                   disabled={isDeliveryLocked}
                   style={{ ...inputStyle, background: isDeliveryLocked ? "#f3f4f6" : "#ffffff" }}
                 />
@@ -901,7 +913,15 @@ function DeliveryManagementPage() {
               cursor: isDeliveryLocked ? "not-allowed" : "pointer",
             }}
           >
-            {isClosedOrder(selectedOrder) ? "처리 불가 주문" : isDeliveryLocked ? getDeliveryStatusLabel(selectedOrder?.deliveryStatus) : isSelectedSameDayDelivery ? "당일배송 시작" : "배송 등록"}
+            {isClosedOrder(selectedOrder)
+              ? "처리 불가 주문"
+              : isDeliveryLocked
+                ? getDeliveryStatusLabel(selectedOrder?.deliveryStatus)
+                : selectedOrder?.deliveryStatus === "SHIPPING"
+                  ? "배송 정보 수정"
+                  : isSelectedSameDayDelivery
+                    ? "당일배송 시작"
+                    : "배송 등록"}
           </button>
         </form>
       </div>

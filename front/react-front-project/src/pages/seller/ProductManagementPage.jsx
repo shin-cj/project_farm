@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   deleteProduct,
   getProducts,
@@ -19,6 +19,8 @@ import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 function ProductManagementPage() {
 
   const navigate = useNavigate()
+  const location = useLocation()
+  const returnTo = `${location.pathname}${location.search}`
   const { alert, confirm } = useAppFeedback()
   const [searchParams] = useSearchParams()
   const requestedFarmId = searchParams.get('farmId') ?? ''
@@ -41,6 +43,7 @@ function ProductManagementPage() {
   const [stockReasons, setStockReasons] = useState({})
   const [updatingStockId, setUpdatingStockId] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
+  const [selectedRejectionProduct, setSelectedRejectionProduct] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -436,7 +439,9 @@ function ProductManagementPage() {
           <button
               type="button"
               className="seller-product-create-button"
-              onClick={() => navigate('/seller/products/new')}
+              onClick={() => navigate('/seller/products/new', {
+                state : {returnTo},
+              })}
           >
             상품 등록
           </button>
@@ -651,9 +656,22 @@ function ProductManagementPage() {
                       </td>
 
                       <td>
-                  <span className="seller-product-status">
-                   {getStatusText(product.productStatus)}
-                  </span>
+                        <div className="seller-product-status-info">
+                          <span className="seller-product-status">
+                            {getStatusText(product.productStatus)}
+                          </span>
+
+                          {product.productStatus === 'REJECTED'
+                              && product.rejectionReason && (
+                                  <button
+                                      type="button"
+                                      className="seller-product-rejection-button"
+                                      onClick={() => setSelectedRejectionProduct(product)}
+                                  >
+                                    사유 보기
+                                  </button>
+                              )}
+                        </div>
                       </td>
 
                       <td>
@@ -662,9 +680,10 @@ function ProductManagementPage() {
                             상세
                           </Link>
 
-                          <Link to={
-                            `/seller/products/${product.productId}/edit`
-                          }>
+                          <Link
+                              to={`/seller/products/${product.productId}/edit`}
+                              state={{ returnTo }}
+                          >
                             수정
                           </Link>
 
@@ -716,6 +735,39 @@ function ProductManagementPage() {
               </table>
           )}
         </section>
+
+        {selectedRejectionProduct && (
+            <div
+                className="seller-product-rejection-modal-backdrop"
+                onMouseDown={(event) => {
+                  if (event.target === event.currentTarget) {
+                    setSelectedRejectionProduct(null)
+                  }
+                }}
+            >
+              <section
+                  className="seller-product-rejection-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="seller-product-rejection-title"
+              >
+                <p className="seller-product-rejection-modal-label">승인 검토 결과</p>
+                <h2 id="seller-product-rejection-title">상품 승인 거절 사유</h2>
+                <p className="seller-product-rejection-modal-product-name">
+                  {selectedRejectionProduct.productName}
+                </p>
+                <p className="seller-product-rejection-modal-content">
+                  {selectedRejectionProduct.rejectionReason}
+                </p>
+                <button
+                    type="button"
+                    onClick={() => setSelectedRejectionProduct(null)}
+                >
+                  확인
+                </button>
+              </section>
+            </div>
+        )}
       </main>
   )
 }

@@ -63,20 +63,19 @@ public interface AdminUserRepository extends JpaRepository<User, Long> {
 
             ORDER BY
                 CASE
-                    WHEN :sortOption = 'LATEST'
-                    THEN u.created_at
-                END DESC,
-
-                CASE
                     WHEN :sortOption = 'TOTAL_PENALTY'
-                    THEN NVL(pp.total_penalty_points, 0)
-                END DESC,
-
-                CASE
+                        THEN NVL(pp.total_penalty_points, 0)
                     WHEN :sortOption = 'ACTIVE_PENALTY'
-                    THEN NVL(pp.active_penalty_points, 0)
+                        THEN NVL(pp.active_penalty_points, 0)
+                    ELSE NULL
                 END DESC,
-
+            
+                CASE
+                    WHEN :sortOption = 'LATEST'
+                        THEN u.created_at
+                    ELSE NULL
+                END DESC,
+            
                 u.user_id DESC
             """,
 

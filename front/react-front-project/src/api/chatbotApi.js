@@ -13,6 +13,21 @@ const chatbotApi = {
     saveRecipe(request){
         return httpClient.post('/chatbot/recipes/save',request)
     },
+
+    getSavedRecipes(userId){
+        return httpClient.get(`/chatbot/users/${userId}/recipes`)
+    },
+
+    deleteSavedRecipe(userId, chatbotId){
+        return httpClient.delete(`/chatbot/users/${userId}/recipes/${chatbotId}`)
+    },
+
+    refreshMatchedProducts(searchIngredients){
+        return httpClient.post(
+            '/chatbot/products/match',
+            searchIngredients
+        )
+    },
 }
 
 export default chatbotApi

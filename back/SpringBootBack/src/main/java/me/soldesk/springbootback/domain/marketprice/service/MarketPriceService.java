@@ -7,7 +7,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.marketprice.dto.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.jackson.autoconfigure.JacksonProperties;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,9 +22,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,6 +116,26 @@ public class MarketPriceService {
     }
 
     private List<MarketPriceSearchResponse> readRecentPriceFile() throws Exception {
+        File file = new File(filePath + "api_priceSequel.json");
+
+        if (!file.exists()) {
+            fetchPriceSequel();
+        }
+
+        JsonNode root = objectMapper.readTree(file);
+        JsonNode itemNode = root.path("response").path("body").path("items").path("item");
+
+        if (itemNode.isEmpty()) {
+            throw new RuntimeException("최근 시세 랭킹 데이터가 없습니다.");
+        }
+
+        return objectMapper.readValue(
+                itemNode.toString(),
+                new TypeReference<>() {}
+        );
+    }
+
+    private List<MarketPriceSearchResponse> readTodayPriceFile() throws Exception {
         File file = new File(filePath + "api_recent.json");
 
         if (!file.exists()) {
@@ -130,7 +146,7 @@ public class MarketPriceService {
         JsonNode itemNode = root.path("response").path("body").path("items").path("item");
 
         if (itemNode.isEmpty()) {
-            throw new RuntimeException("최근 시세 랭킹 데이터가 없습니다.");
+            throw new RuntimeException("오늘 시세 데이터가 없습니다.");
         }
 
         return objectMapper.readValue(
@@ -230,7 +246,7 @@ public class MarketPriceService {
     String filePath = "./src/main/java/me/soldesk/springbootback/domain/marketprice/api/";
 
     public BuyerMainRankingResponse getBuyerMainRanking(MarketPriceSearchRequest request) throws Exception {
-        List<MarketPriceSearchResponse> recentList = filterRecentList(readRecentPriceFile(), request);
+        List<MarketPriceSearchResponse> recentList = filterRecentList(readTodayPriceFile(), request);
         int rankingLimit = request.getLimit() == null || request.getLimit() <= 0 ? 5 : request.getLimit();
 
         String baseDate = recentList.stream()
@@ -251,7 +267,7 @@ public class MarketPriceService {
     }
 
     public List<BuyerMainRankingItemResponse> getBuyerMainTodayPrices(MarketPriceSearchRequest request) throws Exception {
-        List<MarketPriceSearchResponse> recentList = filterRecentList(readRecentPriceFile(), request);
+        List<MarketPriceSearchResponse> recentList = filterRecentList(readTodayPriceFile(), request);
         int resultLimit = request.getLimit() == null || request.getLimit() <= 0 ? 200 : request.getLimit();
 
         return recentList.stream()
@@ -300,6 +316,71 @@ public class MarketPriceService {
         System.out.println("최근 30일 간 조회할 수 있는 시세 데이터가 없습니다.");
     }
 
+    public MarketPriceSearchResponse getPriceSequelJson(String keyword, String saleType){
+        String fileName = filePath + "api_priceSequel.json";
+        File file = new File(fileName);
+
+        if(!file.exists()){
+            throw new RuntimeException("저장된 시세 파일이 존재하지 않습니다. 업데이트를 먼저 해주세요.");
+        }
+        try {
+            JsonNode data = objectMapper.readValue(file, JsonNode.class);
+            JsonNode itemsNode = data.path("response")
+                    .path("body")
+                    .path("items")
+                    .path("item");
+
+            String targetKeyword = keyword.trim();
+            String targetSaleType = "WHOLESALE".equalsIgnoreCase(saleType) ? "중도매" : "소매";
+            String targetGrd = "상품";
+
+            JsonNode matchedNode = null;
+
+            for (JsonNode item : itemsNode) {
+                String itemNm = item.path("item_nm").asText("");
+                String seNm = item.path("se_nm").asText("");
+                String itemGrd = item.path("grd_nm").asText("");
+
+                // 💡 검색어 포함 여부 && 소도매 일치 && 상품등급 일치 검사
+                if (itemNm.contains(targetKeyword) && seNm.equals(targetSaleType) && itemGrd.equals(targetGrd)) {
+                    matchedNode = item;
+                    break; // 조건을 만족하는 대표 항목을 찾았으므로 탈출
+                }
+            }
+
+            // 만약 '상품' 등급으로 찾았는데 없으면, 등급 조건만 빼고 첫 번째 항목으로 재시도 (안전장치)
+            if (matchedNode == null && !targetKeyword.isEmpty()) {
+                for (JsonNode item : itemsNode) {
+                    if (item.path("item_nm").asText("").contains(targetKeyword)) {
+                        matchedNode = item;
+                        break;
+                    }
+                }
+            }
+
+            // 검색 결과가 없는 경우
+            if (matchedNode == null) {
+                return null; // 또는 empty DTO 반환
+            }
+
+            // 4. 찾은 JsonNode에서 값들을 추출하여 DTO 객체로 변환!
+            return MarketPriceSearchResponse.builder()
+                    .itemNm(matchedNode.path("item_nm").asText())
+                    .seNm(matchedNode.path("se_nm").asText())
+                    .grdNm(matchedNode.path("grd_nm").asText())
+                    .unit(matchedNode.path("unit_sz").asText() + matchedNode.path("unit").asText())
+                    .exmnDdCnvsAvgPrc(matchedNode.path("exmn_dd_cnvs_avg_prc").asText("0")) // 오늘(이번주) 가격
+                    .ww1BfrCnvsAvgPrc(matchedNode.path("ww1_bfr_cnvs_avg_prc").asText("0"))  // 1주 전
+                    .ww2BfrCnvsAvgPrc(matchedNode.path("ww2_bfr_cnvs_avg_prc").asText("0"))  // 2주 전
+                    .ww3BfrCnvsAvgPrc(matchedNode.path("ww3_bfr_cnvs_avg_prc").asText("0"))  // 3주 전
+                    .ww4BfrCnvsAvgPrc(matchedNode.path("ww4_bfr_cnvs_avg_prc").asText("0"))  // 4주 전
+                    .build();
+
+        }catch (Exception e){
+            throw  new RuntimeException("데이터 파일을 읽는 중 오류가 발생했습니다 : "+ e.getMessage(), e);
+        }
+    }
+
     public String today(int beforeDay){
         LocalDate currentDate = LocalDate.now();
         LocalDate day = currentDate.minusDays(beforeDay);
@@ -314,7 +395,12 @@ public class MarketPriceService {
                "&pageNo=1&numOfRows=1000&returnType=JSON";
        String fileName = filePath+"api_recent.json";
 
-       downloadJsonApi(url, fileName);
+       URI uri = java.net.URI.create(url);
+       Object response = searchJsonApi(uri);
+       JsonNode data = objectMapper.convertValue(response, JsonNode.class);
+       checkCommonApiError(data);
+
+       downloadJsonApi(response, fileName);
     }
 
     public Map<String, Object> getAutoUpdateStatus() {
