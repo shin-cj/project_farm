@@ -105,6 +105,8 @@ public class ProductService {
      */
     public ProductPageResponse getPublicProductPage(
             Long categoryId,
+            String marketCategoryCode,
+            String marketItemCode,
             String saleType,
             String keyword,
             boolean sameDayOnly,
@@ -172,11 +174,23 @@ public class ProductService {
                 ? null
                 : keyword.trim().toLowerCase().replaceAll("\\s+", "");
 
+        String normalizedMarketCategoryCode =
+                marketCategoryCode == null || marketCategoryCode.isBlank()
+                        ? null
+                        : marketCategoryCode.trim();
+
+        String normalizedMarketItemCode =
+                marketItemCode == null || marketItemCode.isBlank()
+                        ? null
+                        : marketItemCode.trim();
+
         String normalizedSameDayDelivery =
                 sameDayOnly ? "Y" : null;
 
         Page<Product> productPage = productRepository.findPublicProductPage(
                 categoryId,
+                normalizedMarketCategoryCode,
+                normalizedMarketItemCode,
                 normalizedSaleType,
                 normalizedSameDayDelivery,
                 normalizedKeyword,
@@ -590,6 +604,7 @@ public class ProductService {
         response.setPrice(product.getPrice());
         response.setStockQuantity(product.getStockQuantity());
         response.setUnit(product.getUnit());
+        response.setPackageWeightGrams(product.getPackageWeightGrams());
         response.setSaleType(
                 farm == null ? "RETAIL" : farm.getSaleType()
         );
@@ -723,6 +738,14 @@ public class ProductService {
             );
         }
 
+        if (request.getPackageWeightGrams() == null
+                || request.getPackageWeightGrams().signum() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "판매 단위의 총중량은 0g보다 크게 입력해주세요."
+            );
+        }
+
         if (requireCompleteRegistration
                 && (request.getOrigin() == null
                 || request.getOrigin().isBlank())) {
@@ -850,6 +873,7 @@ public class ProductService {
         product.setPrice(request.getPrice());
         product.setStockQuantity(request.getStockQuantity());
         product.setUnit(request.getUnit());
+        product.setPackageWeightGrams(request.getPackageWeightGrams());
         product.setMinOrderQuantity(request.getMinOrderQuantity());
         product.setSameDayDelivery(request.getSameDayDelivery()==null || request.getSameDayDelivery().isBlank() ? "N" : request.getSameDayDelivery().trim().toUpperCase());
         product.setOrigin(request.getOrigin());

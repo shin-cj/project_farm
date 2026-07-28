@@ -42,6 +42,7 @@ function ProductCreatePage() {
         price: '',
         stockQuantity: '',
         unit: '',
+        packageWeightGrams: '',
         minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
@@ -224,6 +225,7 @@ function ProductCreatePage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const packageWeightGrams = Number(form.packageWeightGrams)
         const minOrderQuantity = Number(form.minOrderQuantity)
 
         if (!Number.isFinite(farmId) || farmId <= 0) {
@@ -268,6 +270,12 @@ function ProductCreatePage() {
 
         if (!form.unit.trim()) {
             alert('판매 단위를 입력해주세요.')
+            return
+        }
+
+        if (!Number.isFinite(packageWeightGrams)
+            || packageWeightGrams <= 0) {
+            alert('판매 단위의 총중량을 g 단위로 입력해주세요.')
             return
         }
 
@@ -331,6 +339,7 @@ function ProductCreatePage() {
             categoryId: categoryId,
             price: price,
             stockQuantity: stockQuantity,
+            packageWeightGrams: packageWeightGrams,
             minOrderQuantity: minOrderQuantity,
         }
 
@@ -583,6 +592,21 @@ function ProductCreatePage() {
                                 placeholder="예: 5kg"
                                 required
                             />
+                        </div>
+
+                        <div className="product-create-field">
+                            <label>판매 단위 총중량(g)</label>
+                            <input
+                                type="number"
+                                name="packageWeightGrams"
+                                value={form.packageWeightGrams}
+                                onChange={handleChange}
+                                placeholder="예: 1박스가 5kg이면 5000"
+                                min="0.01"
+                                step="0.01"
+                                required
+                            />
+                            <small>오늘의 kg 시세와 비교할 때 사용됩니다.</small>
                         </div>
                     </div>
                         <div className="product-create-row">
