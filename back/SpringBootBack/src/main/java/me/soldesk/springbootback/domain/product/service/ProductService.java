@@ -754,8 +754,8 @@ public class ProductService {
             );
         }
 
-        if (request.getPackageWeightGrams() == null
-                || request.getPackageWeightGrams().signum() <= 0) {
+        if (request.getPackageWeightGrams() != null
+                && request.getPackageWeightGrams().signum() <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "판매 단위의 총중량은 0g보다 크게 입력해주세요."
