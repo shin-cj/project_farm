@@ -9,10 +9,10 @@
 }
 
 .penalty-recovery-modal {
-    width: min(820px, 100%);
+    width: min(760px, 100%);
     max-height: 86vh;
     overflow-y: auto;
-    padding: 24px;
+    padding: 20px;
     border: 1px solid #dbe5dd;
     border-radius: 8px;
     background: #ffffff;
@@ -23,29 +23,185 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+}
+
+.penalty-recovery-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.penalty-recovery-toolbar label {
+    color: #536359;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.penalty-recovery-status-select {
+    min-width: 132px;
+    height: 40px;
+    padding: 0 34px 0 12px;
+    border: 1px solid #cdd9d0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #20372a;
+    font: inherit;
+    cursor: pointer;
+}
+
+.penalty-recovery-error {
+    margin: 14px 0 0;
+    color: #b42318;
+    font-weight: 700;
 }
 
 .penalty-recovery-list {
     display: grid;
-    gap: 10px;
-    margin-top: 18px;
+    gap: 8px;
+    margin-top: 14px;
 }
 
 .penalty-recovery-list article {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    padding: 16px;
+    gap: 14px;
+    padding: 11px 12px;
     border: 1px solid #e0e7e2;
     border-radius: 6px;
+    background: #ffffff;
 }
 
-.penalty-recovery-list article > div {
+.penalty-recovery-list article > .penalty-recovery-item-main {
+    display: block;
+    min-width: 0;
+    flex: 1;
+}
+
+.penalty-recovery-seller,
+.penalty-recovery-meta,
+.penalty-recovery-scores {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px 16px;
+    align-items: center;
+}
+
+.penalty-recovery-seller {
+    gap: 8px;
+}
+
+.penalty-recovery-seller strong {
+    color: #173624;
+    font-size: 14px;
+}
+
+.penalty-recovery-status {
+    padding: 2px 7px;
+    border: 1px solid #b9dac3;
+    border-radius: 999px;
+    background: #edf8f0;
+    color: #1d6a38;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.penalty-recovery-status.revoked {
+    border-color: #d6dcd8;
+    background: #f3f5f4;
+    color: #68736c;
+}
+
+.penalty-recovery-meta {
+    gap: 4px 12px;
+    margin-top: 5px;
+    color: #5d6b62;
+    font-size: 12px;
+}
+
+.penalty-recovery-scores {
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.penalty-recovery-modal .penalty-recovery-scores > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 26px;
+    padding: 3px 7px;
+    border: 1px solid #dce6df;
+    border-radius: 6px;
+    background: #f7faf8;
+    color: #536359;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.penalty-recovery-modal .penalty-recovery-scores > span strong {
+    color: #173624;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.penalty-recovery-total.threshold {
+    border-color: #d9a6a0;
+    background: #ffffff;
+}
+
+.penalty-recovery-total.threshold strong {
+    color: #b42318;
+}
+
+.penalty-recovery-modal
+    .penalty-recovery-scores
+    > span.penalty-threshold-reached {
+    min-height: 28px;
+    padding: 3px 9px;
+    border: 1px solid #c95b50;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #a13f34;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.penalty-recovery-list article > button {
+    flex: 0 0 auto;
+    min-width: 82px;
+    min-height: 34px;
+    padding: 6px 10px;
+    border: 1px solid #267a45;
+    border-radius: 6px;
+    background: #267a45;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        background-color 160ms ease,
+        transform 120ms ease;
+}
+
+.penalty-recovery-list article > button:hover {
+    background: #1f663a;
+}
+
+.penalty-recovery-list article > button:active {
+    transform: translateY(1px);
+}
+
+.penalty-recovery-empty {
+    margin: 0;
+    padding: 32px 16px;
+    border: 1px dashed #d7e0da;
+    border-radius: 6px;
+    color: #69766e;
+    text-align: center;
 }
 
 .penalty-recovery-confirm {
@@ -60,4 +216,23 @@
     min-height: 110px;
     margin: 12px 0;
     resize: vertical;
+}
+
+@media (max-width: 640px) {
+    .penalty-recovery-backdrop {
+        padding: 12px;
+    }
+
+    .penalty-recovery-modal {
+        padding: 18px;
+    }
+
+    .penalty-recovery-list article {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .penalty-recovery-list article > button {
+        width: 100%;
+    }
 }
