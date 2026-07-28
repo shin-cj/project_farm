@@ -53,6 +53,7 @@ import AdminCatalogApprovalPage from '../pages/admin/AdminCatalogApprovalPage'
 import { CheckoutPage } from '../components/payment/checkout.jsx'
 import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
+import SuspendedAccountPage from "../pages/auth/SuspendedAccountPage.jsx";
 
 function AppRoutes() {
   return (
@@ -60,8 +61,8 @@ function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<BuyerHomePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/account-suspended" element={<SuspendedAccountPage/>}/>
         <Route path="/signup" element={<SignupPage />} />
-
         <Route path="/products" element={<ProductListPage />} />
         <Route path="/products/:productId" element={<ProductDetailPage />} />
 
