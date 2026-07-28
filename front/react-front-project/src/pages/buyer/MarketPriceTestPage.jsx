@@ -331,24 +331,82 @@ function MarketPriceTestPage() {
                         </tbody>
                     </table>
                     <div className="pagination-container" style={{ marginTop: '20px', textAlign: 'center' }}>
-                        <button onClick={() => setCurrentPage(prev => Math.max(prev-1, 1))}
-                                disabled={currentPage === 1}> ‹ </button>
+                        {/* 🌟 1. 페이지 10개 단위 그룹 계산 */}
+                        {(() => {
+                            const pageBlockSize = 10; // 한 번에 보여줄 페이지 버튼 개수
 
-                        {Array.from({length : totalPages}, (_, i) => i+1).map(page => (
-                            <button
-                                key={page}
-                                onClick={() => setCurrentPage(page)}
-                                style={{
-                                    margin: '0 4px',
-                                    fontWeight: currentPage === page ? 'bold' : 'normal',
-                                    backgroundColor: currentPage === page ? '#e2e8f0' : '#fff'
-                                }}>
-                                {page}
-                            </button>
-                        ))}
+                            // 현재 페이지가 속한 그룹 (1~10 -> 0, 11~20 -> 1)
+                            const currentGroup = Math.floor((currentPage - 1) / pageBlockSize);
+                            const startPage = currentGroup * pageBlockSize + 1;
+                            const endPage = Math.min(startPage + pageBlockSize - 1, totalPages);
 
-                        <button onClick={() => setCurrentPage(prev => Math.min(prev+1, totalPages))}
-                                disabled={currentPage === totalPages || totalPages === 0}> › </button>
+                            // 현재 블록에 표시할 페이지 번호 배열 생성
+                            const visiblePages = Array.from(
+                                { length: Math.max(0, endPage - startPage + 1) },
+                                (_, i) => startPage + i
+                            );
+
+                            return (
+                                <>
+                                    {/* 10개 이전 블록으로 이동 («) */}
+                                    <button
+                                        onClick={() => setCurrentPage(Math.max(startPage - pageBlockSize, 1))}
+                                        disabled={startPage === 1}
+                                        style={{ margin: '0 2px' }}
+                                        title="이전 10페이지"
+                                    >
+                                        «
+                                    </button>
+
+                                    {/* 이전 1페이지 이동 (‹) */}
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        style={{ margin: '0 2px' }}
+                                    >
+                                        ‹
+                                    </button>
+
+                                    {/* 🌟 10개씩 자른 페이지 숫자 버튼들 */}
+                                    {visiblePages.map(page => (
+                                        <button
+                                            key={page}
+                                            onClick={() => setCurrentPage(page)}
+                                            style={{
+                                                margin: '0 4px',
+                                                fontWeight: currentPage === page ? 'bold' : 'normal',
+                                                backgroundColor: currentPage === page ? '#e2e8f0' : '#fff',
+                                                border: currentPage === page ? '1px solid #94a3b8' : '1px solid #cbd5e1',
+                                                borderRadius: '4px',
+                                                padding: '4px 10px',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            {page}
+                                        </button>
+                                    ))}
+
+                                    {/* 다음 1페이지 이동 (›) */}
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                        style={{ margin: '0 2px' }}
+                                    >
+                                        ›
+                                    </button>
+
+                                    {/* 10개 다음 블록으로 이동 (») */}
+                                    <button
+                                        onClick={() => setCurrentPage(Math.min(startPage + pageBlockSize, totalPages))}
+                                        disabled={endPage >= totalPages}
+                                        style={{ margin: '0 2px' }}
+                                        title="다음 10페이지"
+                                    >
+                                        »
+                                    </button>
+                                </>
+                            );
+                        })()}
                     </div>
                 </div>
                 </>
