@@ -1,6 +1,44 @@
 import { useEffect } from "react";
 import "./DashboardWorkModal.css";
 
+
+const statusLabelsByKind = {
+    REPORT: {
+        PENDING: "접수 대기",
+        REVIEWING: "검토 중",
+        RESOLVED: "처리 완료",
+        REJECTED: "반려"
+    },
+
+    FARM: {
+        PENDING: "승인 대기",
+        APPROVED: "승인 완료",
+        REJECTED: "승인 거절"
+    },
+
+    PRODUCT:{
+        PENDING: "승인 대기",
+        ON_SALE: "판매 중",
+        SOLD_OUT: "품절",
+        HIDDEN: "판매 숨김",
+        REJECTED: "승인 거절"
+    },
+
+    PENALTY: {
+        ACTIVE: "적용 중",
+        REVOKED: "취소 됨"
+    }
+}
+
+function getStatusLabel(item){
+    return(
+        statusLabelsByKind[item.kind]?.[item.status]
+        || item.status
+        || "상태 없음"
+    )
+}
+
+
 function DashboardWorkModal({
                                 modal,
                                 onClose,
@@ -120,7 +158,7 @@ function DashboardWorkModal({
 
                                     <div className="dashboard-work-item-side">
                                         <span>
-                                            {item.status}
+                                        {getStatusLabel(item)}
                                         </span>
 
                                         <time>

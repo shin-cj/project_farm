@@ -28,6 +28,7 @@ public class SellerPenaltyService {
     private final ProductRepository productRepository;
     private final FarmRepository farmRepository;
     private final UserRepository userRepository;
+    private final long SELLER_SUSPENSION_THRESHOLD = 15L;
 
     @Transactional
     public SellerPenaltyResponse applyPenalty(
@@ -59,6 +60,16 @@ public class SellerPenaltyService {
         penalty.setCreatedAt(LocalDateTime.now());
 
         SellerPenalty savedPenalty = sellerPenaltyRepository.save(penalty);
+
+        long activePenaltyPoints =
+                sellerPenaltyRepository.sumActivePenaltyPoints(
+                        report.getReportedUserId()
+                );
+
+        if(activePenaltyPoints >= SELLER_SUSPENSION_THRESHOLD){
+            suspendSeller(report.getReportedUserId());
+        }
+
         return toResponse(savedPenalty);
     }
 
@@ -97,8 +108,9 @@ public class SellerPenaltyService {
     private void applyPenaltyAction(Report report, String penaltyType){
         switch (penaltyType){
             case "WARNING" -> {}
-            case "PRODUCT_SUSPENSION" -> suspendProduct(report);
-            case "SELLER_SUSPENSION" -> suspendSeller(report.getReportedUserId());
+            case "PRODUCT_SUSPENSION" -> {}
+
+            case "SELLER_SUSPENSION" -> {}
             default -> throw new IllegalArgumentException("처리 할 수 없는 페널티 유형입니다.");
         }
     }
@@ -247,6 +259,8 @@ public class SellerPenaltyService {
             throw new IllegalArgumentException("관리자만 페널티를 복구할 수 있습니다.");
         }
 
+        Long sellerId = penalty.getSellerId();
+
         restorePenaltyAction(penalty);
 
         penalty.setPenaltyStatus("REVOKED");
@@ -257,7 +271,36 @@ public class SellerPenaltyService {
         SellerPenalty savedPenalty =
                 sellerPenaltyRepository.saveAndFlush(penalty);
 
+        long remainingPoints =
+                sellerPenaltyRepository.sumActivePenaltyPoints(sellerId);
+
+        if(remainingPoints < SELLER_SUSPENSION_THRESHOLD){
+            restoreSellerById(penalty.getSellerId());
+        }
+
         return toResponse(savedPenalty);
+    }
+
+    private void restoreSellerById(Long sellerId){
+        User seller = userRepository.findById(sellerId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("복구할 판매자를 찾을 수 없습니다."));
+        if(!"SUSPENDED".equals(seller.getStatus())){
+            return;
+        }
+
+        seller.setStatus("ACTIVE");
+        seller.setUpdatedAt(LocalDateTime.now());
+
+        List<Farm> farms =
+                farmRepository.findBySellerId(sellerId);
+
+        for(Farm farm : farms){
+            if ("SUSPENDED".equals(farm.getApprovalStatus())){
+                farm.setApprovalStatus("APPROVED");
+                farm.setUpdatedAt(LocalDateTime.now());
+            }
+        }
     }
 
     private void restorePenaltyAction(SellerPenalty penalty){
@@ -270,8 +313,7 @@ public class SellerPenaltyService {
             case "PRODUCT_SUSPENSION" ->
                 restoreProduct(penalty);
 
-            case "SELLER_SUSPENSION" ->
-                restoreSeller(penalty);
+            case "SELLER_SUSPENSION" -> {}
 
             default ->
                 throw new IllegalArgumentException("복구할 수 없는 페널티 유형입니다.");
@@ -412,4 +454,5 @@ public class SellerPenaltyService {
                 .map(this::toResponse)
                 .toList();
     }
+
 }
