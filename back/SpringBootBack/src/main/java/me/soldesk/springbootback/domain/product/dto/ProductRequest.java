@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.product.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /** 프론트엔드가 백엔드에 요청할 데이터를 담는 DTO(데이터 전달 객체)입니다. */
@@ -34,6 +35,9 @@ public class ProductRequest {
 
     /** 판매 단위 */
     private String unit;
+
+    /** 판매 단위 하나의 총중량(g) */
+    private BigDecimal packageWeightGrams;
 
     /** 최소 주문 수량 */
     private Integer minOrderQuantity;

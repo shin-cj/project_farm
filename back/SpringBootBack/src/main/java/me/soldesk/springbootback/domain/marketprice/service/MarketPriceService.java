@@ -162,6 +162,7 @@ public class MarketPriceService {
         Double changeRate = calculateChangeRateNumber(currentPrice, previousPrice);
 
         return new BuyerMainRankingItemResponse(
+                item.getItemCd(),
                 item.getItemNm(),
                 item.getVrtyNm(),
                 item.getCtgryNm(),

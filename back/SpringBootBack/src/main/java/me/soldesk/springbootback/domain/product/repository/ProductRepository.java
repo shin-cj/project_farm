@@ -72,11 +72,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query(
             value = """
             SELECT p
-            FROM Product p, Farm f
+            FROM Product p, Farm f, Category c
             WHERE p.farmId = f.farmId
+              AND p.categoryId = c.categoryId
               AND f.approvalStatus = 'APPROVED'
               AND p.productStatus IN ('ON_SALE', 'SOLD_OUT')
               AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+              AND (:marketCategoryCode IS NULL OR c.marketCategoryCode = :marketCategoryCode)
+              AND (
+                    :marketItemCode IS NULL
+                    OR p.marketItemCode = :marketItemCode
+                    OR (
+                        p.marketItemCode IS NULL
+                        AND :keyword IS NOT NULL
+                        AND LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))
+                            LIKE CONCAT('%', :keyword, '%')
+                    )
+              )
               AND f.saleType = :saleType
               AND (
                     :sameDayDelivery IS NULL
@@ -93,11 +105,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """,
             countQuery = """
             SELECT COUNT(p)
-            FROM Product p, Farm f
+            FROM Product p, Farm f, Category c
             WHERE p.farmId = f.farmId
+              AND p.categoryId = c.categoryId
               AND f.approvalStatus = 'APPROVED'
               AND p.productStatus IN ('ON_SALE', 'SOLD_OUT')
               AND (:categoryId IS NULL OR p.categoryId = :categoryId)
+              AND (:marketCategoryCode IS NULL OR c.marketCategoryCode = :marketCategoryCode)
+              AND (
+                    :marketItemCode IS NULL
+                    OR p.marketItemCode = :marketItemCode
+                    OR (
+                        p.marketItemCode IS NULL
+                        AND :keyword IS NOT NULL
+                        AND LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))
+                            LIKE CONCAT('%', :keyword, '%')
+                    )
+              )
               AND f.saleType = :saleType
               AND (
                             :sameDayDelivery IS NULL
@@ -115,6 +139,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     )
     Page<Product> findPublicProductPage(
             @Param("categoryId") Long categoryId,
+            @Param("marketCategoryCode") String marketCategoryCode,
+            @Param("marketItemCode") String marketItemCode,
             @Param("saleType") String saleType,
             @Param("sameDayDelivery") String sameDayDelivery,
             @Param("keyword") String keyword,

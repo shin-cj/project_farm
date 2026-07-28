@@ -801,6 +801,51 @@
   font-weight: 900;
 }
 
+.buyer-low-price-comparison {
+  position: relative;
+  cursor: help;
+}
+
+.buyer-good-price-list .buyer-low-price-tooltip {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  bottom: calc(100% + 9px);
+  width: max-content;
+  min-width: 178px;
+  max-width: 220px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #d6e2d8;
+  border-radius: 7px;
+  background: #173d26;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(23, 61, 38, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.buyer-good-price-list .buyer-low-price-tooltip strong,
+.buyer-good-price-list .buyer-low-price-tooltip span {
+  display: block;
+  margin: 0;
+  color: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.buyer-good-price-list .buyer-low-price-tooltip strong {
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
+.buyer-low-price-comparison:hover .buyer-low-price-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .buyer-farm-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

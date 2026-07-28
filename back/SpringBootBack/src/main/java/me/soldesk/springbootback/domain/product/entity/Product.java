@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -71,6 +72,10 @@ public class Product {
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
     @Column(name = "unit", nullable = false)
     private String unit;
+
+    /** 판매 단위 하나의 총중량(g). kg 시세와 가격을 비교할 때 사용합니다. */
+    @Column(name = "package_weight_grams", precision = 10, scale = 2)
+    private BigDecimal packageWeightGrams;
 
     /** 한 번 주문할 때 필요한 최소 주문 수량 */
     @Column(name = "min_order_quantity", nullable = false)
