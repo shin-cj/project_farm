@@ -3,7 +3,7 @@ import { CATEGORY_CODES, ITEM_CODES } from '../../pages/buyer/categoryData.js'
 import './MarketItemCodePicker.css'
 
 // 공공 시세 품목을 검색해 상품 등록 폼에 품목 코드를 전달합니다.
-function MarketItemCodePicker({ value, onSelect, disabled }) {
+function MarketItemCodePicker({ value, onSelect, disabled, required = true }) {
   const [isOpen, setIsOpen] = useState(false)
   const [keyword, setKeyword] = useState('')
 
@@ -22,7 +22,13 @@ function MarketItemCodePicker({ value, onSelect, disabled }) {
     item.label.replace(/\s+/g, '').toLowerCase().includes(normalizedKeyword)
     || item.value.includes(normalizedKeyword)
   ))
-  const selectedItem = marketItems.find((item) => item.value === value)
+  const normalizedValue = String(value ?? '').trim()
+  const selectedItem = marketItems.find((item) => item.value === normalizedValue)
+  const displayValue = selectedItem
+    ? `${selectedItem.label} (${selectedItem.value})`
+    : normalizedValue
+      ? `코드 ${normalizedValue}`
+      : ''
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -43,16 +49,16 @@ function MarketItemCodePicker({ value, onSelect, disabled }) {
       <div className="market-item-code-picker-control">
         <input
             id="market-item-code"
-            value={selectedItem ? `${selectedItem.label} (${selectedItem.value})` : ''}
+            value={displayValue}
             placeholder="품목 찾기를 클릭하세요"
             readOnly
-            required
+            required={required}
         />
         <button type="button" onClick={() => setIsOpen(true)} disabled={disabled}>
           품목 찾기
         </button>
       </div>
-      <input type="hidden" name="marketItemCode" value={value} />
+      <input type="hidden" name="marketItemCode" value={normalizedValue} />
       <small>선택한 품목 코드는 상품 시세 비교에 사용됩니다.</small>
 
       {isOpen && (

@@ -4,6 +4,7 @@
    반드시 01_nongdam_reset_schema.sql 실행 후 사용합니다.
    이 파일은 데이터만 INSERT/MERGE하고 테이블을 삭제하지 않습니다.
    ========================================================= */
+
 MERGE INTO roles r
 USING (
     SELECT 1 AS role_id, 'ADMIN' AS role_name, '관리자' AS role_description
@@ -3419,6 +3420,27 @@ WHERE r.report_id = (
     WHERE report_status = 'RESOLVED'
       AND product_id IS NOT NULL
 );
+
+/* 상품 판매 단위를 g으로 환산하여 시세 비교용 총중량을 채웁니다. */
+UPDATE products
+SET package_weight_grams = CASE
+    WHEN REGEXP_LIKE(LOWER(unit), '[0-9]+([.][0-9]+)?[[:space:]]*kg')
+        THEN TO_NUMBER(REGEXP_SUBSTR(LOWER(unit), '[0-9]+([.][0-9]+)?')) * 1000
+    WHEN REGEXP_LIKE(LOWER(unit), '[0-9]+([.][0-9]+)?[[:space:]]*g')
+        THEN TO_NUMBER(REGEXP_SUBSTR(LOWER(unit), '[0-9]+([.][0-9]+)?'))
+    WHEN product_name LIKE '%수박%' AND unit LIKE '%통%'
+        THEN TO_NUMBER(REGEXP_SUBSTR(unit, '[0-9]+')) * 7000
+    WHEN product_name LIKE '%참외%' AND unit LIKE '%개%'
+        THEN TO_NUMBER(REGEXP_SUBSTR(unit, '[0-9]+')) * 350
+    WHEN product_name LIKE '%애호박%' AND unit LIKE '%개%'
+        THEN TO_NUMBER(REGEXP_SUBSTR(unit, '[0-9]+')) * 300
+    WHEN product_name LIKE '%옥수수%' AND unit LIKE '%개%'
+        THEN TO_NUMBER(REGEXP_SUBSTR(unit, '[0-9]+')) * 300
+    WHEN product_name LIKE '%팽이버섯%' AND unit LIKE '%봉%'
+        THEN TO_NUMBER(REGEXP_SUBSTR(unit, '[0-9]+')) * 200
+    ELSE 1000
+END
+WHERE package_weight_grams IS NULL;
 
 /* CODEX_REALISTIC_PRODUCT_DATA_END */
 
