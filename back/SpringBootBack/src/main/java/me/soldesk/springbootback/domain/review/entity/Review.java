@@ -73,4 +73,8 @@ public class Review {
         this.createdAt = this.createdAt == null ? LocalDateTime.now() : this.createdAt;
         this.updatedAt = this.updatedAt == null ? LocalDateTime.now() : this.updatedAt;
     }
+    public void update(Integer rating, String content) {
+        this.rating = rating;
+        this.content = content;
+    }
 }
