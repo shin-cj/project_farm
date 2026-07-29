@@ -70,12 +70,21 @@ function OrderPage() {
   }, [buyerId]);
 
   function handleAddressSearch() {
-    if (!window.daum?.Postcode) {
+    const Postcode = window.daum?.Postcode || window.kakao?.Postcode;
+
+    if (!Postcode) {
       alert("주소 검색 서비스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.");
       return;
     }
 
-    new window.daum.Postcode({
+    const popupWidth = 500;
+    const popupHeight = 600;
+    const popupLeft = window.screenX + (window.outerWidth - popupWidth) / 2;
+    const popupTop = window.screenY + (window.outerHeight - popupHeight) / 2;
+
+    new Postcode({
+      width: popupWidth,
+      height: popupHeight,
       oncomplete(data) {
         const selectedAddress =
           data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
@@ -87,7 +96,12 @@ function OrderPage() {
           detailAddressRef.current?.focus();
         }, 0);
       },
-    }).open();
+    }).open({
+      left: Math.max(0, Math.round(popupLeft)),
+      top: Math.max(0, Math.round(popupTop)),
+      popupTitle: "배송지 주소 검색",
+      popupKey: "order-address-search",
+    });
   }
 
   async function handlePaymentClick() {

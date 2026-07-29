@@ -9,6 +9,7 @@ import java.util.Map;
 
 import me.soldesk.springbootback.domain.delivery.entity.Delivery;
 import me.soldesk.springbootback.domain.delivery.repository.DeliveryRepository;
+import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
@@ -38,6 +39,7 @@ public class PaymentService {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final DeliveryRepository deliveryRepository;
+    private final FarmRepository farmRepository;
     private final SellerPointService sellerPointService;
     private final ProductStockHistoryService productStockHistoryService;
 
@@ -49,6 +51,7 @@ public class PaymentService {
             OrderItemRepository orderItemRepository,
             ProductRepository productRepository,
             DeliveryRepository deliveryRepository,
+            FarmRepository farmRepository,
             SellerPointService sellerPointService,
             ProductStockHistoryService productStockHistoryService) {
         this.restClient = restClientBuilder
@@ -60,6 +63,7 @@ public class PaymentService {
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.deliveryRepository = deliveryRepository;
+        this.farmRepository = farmRepository;
         this.sellerPointService = sellerPointService;
         this.productStockHistoryService = productStockHistoryService;
     }
@@ -213,9 +217,37 @@ public class PaymentService {
             throw new IllegalArgumentException("이미 취소된 결제입니다.");
         }
 
+        boolean sellerCancellation = request != null
+                && "SELLER".equalsIgnoreCase(request.getCancelRequester());
+
+        if (sellerCancellation) {
+            if (request.getSellerId() == null) {
+                throw new IllegalArgumentException("판매자 정보가 없습니다.");
+            }
+
+            boolean ownsOrderFarm = farmRepository.findById(order.getFarmId())
+                    .map(farm -> request.getSellerId().equals(farm.getSellerId()))
+                    .orElse(false);
+
+            if (!ownsOrderFarm) {
+                throw new IllegalArgumentException("해당 주문을 취소할 권한이 없습니다.");
+            }
+        }
+
         String cancelReason = "구매자 요청";
         if (request != null && hasText(request.getCancelReason())) {
             cancelReason = request.getCancelReason().trim();
+        }
+
+        if (sellerCancellation) {
+            if (!hasText(request.getCancelReason())) {
+                throw new IllegalArgumentException("판매자 취소 사유를 입력해주세요.");
+            }
+            cancelReason = "판매자 취소 - " + cancelReason;
+        }
+
+        if (cancelReason.length() > 200) {
+            throw new IllegalArgumentException("취소 사유는 200자 이하로 입력해주세요.");
         }
 
         String authorization = "Basic " + Base64.getEncoder()

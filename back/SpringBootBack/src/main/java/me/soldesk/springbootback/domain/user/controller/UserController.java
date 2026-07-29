@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.user.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.user.dto.UserRequest;
 import me.soldesk.springbootback.domain.user.dto.UserResponse;
@@ -25,7 +26,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<Map<String, String>> signUp(@RequestBody UserRequest request) {
+    public ResponseEntity<Map<String, String>> signUp(@Valid @RequestBody UserRequest request) {
         Map<String, String> response = new HashMap<>();
 
         try {

@@ -1,6 +1,10 @@
 const API_BASE_URL = "";
 
-export async function cancelPayment(orderId, cancelReason = "구매자 요청") {
+export async function cancelPayment(
+  orderId,
+  cancelReason = "구매자 요청",
+  cancellationContext = {}
+) {
   const response = await fetch(`${API_BASE_URL}/api/payments/${orderId}/cancel`, {
     method: "POST",
     headers: {
@@ -8,6 +12,7 @@ export async function cancelPayment(orderId, cancelReason = "구매자 요청") 
     },
     body: JSON.stringify({
       cancelReason,
+      ...cancellationContext,
     }),
   });
 

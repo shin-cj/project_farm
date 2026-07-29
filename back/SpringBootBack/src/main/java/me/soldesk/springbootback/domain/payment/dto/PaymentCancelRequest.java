@@ -7,4 +7,6 @@ import lombok.Setter;
 @Setter
 public class PaymentCancelRequest {
     private String cancelReason;
+    private String cancelRequester;
+    private Long sellerId;
 }
