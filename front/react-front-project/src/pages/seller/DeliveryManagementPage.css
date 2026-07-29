@@ -1,0 +1,176 @@
+.seller-selected-order-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.seller-order-cancel-button {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border: 1px solid #dc6b6b;
+  border-radius: 8px;
+  background: #fff;
+  color: #b42318;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.seller-order-cancel-button:hover {
+  background: #fff1f1;
+}
+
+.seller-cancel-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(22, 35, 27, 0.52);
+}
+
+.seller-cancel-modal {
+  width: min(100%, 520px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 26px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(18, 36, 25, 0.24);
+}
+
+.seller-cancel-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.seller-cancel-modal-header p {
+  margin: 0 0 6px;
+  color: #b42318;
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.seller-cancel-modal-header h2 {
+  margin: 0;
+  color: #213328;
+  font-size: 1.45rem;
+}
+
+.seller-cancel-modal-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dce6dd;
+  border-radius: 50%;
+  background: #fff;
+  color: #405348;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.seller-cancel-order-summary {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr);
+  gap: 8px 14px;
+  margin: 22px 0;
+  padding: 15px;
+  border: 1px solid #e1e8df;
+  border-radius: 8px;
+  background: #f8faf7;
+}
+
+.seller-cancel-order-summary span {
+  color: #68756d;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.seller-cancel-order-summary strong {
+  overflow-wrap: anywhere;
+  color: #213328;
+}
+
+.seller-cancel-field {
+  display: block;
+  margin-top: 16px;
+}
+
+.seller-cancel-field > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #213328;
+  font-weight: 800;
+}
+
+.seller-cancel-field select,
+.seller-cancel-field textarea {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #cfdacf;
+  border-radius: 8px;
+  background: #fff;
+  color: #213328;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.seller-cancel-field textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+
+.seller-cancel-field select:focus,
+.seller-cancel-field textarea:focus {
+  border-color: #216b3a;
+  outline: 2px solid rgba(33, 107, 58, 0.12);
+}
+
+.seller-cancel-field small {
+  display: block;
+  margin-top: 6px;
+  color: #7a867e;
+  text-align: right;
+}
+
+.seller-cancel-warning {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid #dc6b6b;
+  background: #fff5f5;
+  color: #8f2525;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.seller-cancel-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.seller-cancel-modal-actions button {
+  min-height: 46px;
+  border: 1px solid #d2ddd3;
+  border-radius: 8px;
+  background: #fff;
+  color: #405348;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.seller-cancel-modal-actions .seller-cancel-confirm-button {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff;
+}
+
+.seller-cancel-modal-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}

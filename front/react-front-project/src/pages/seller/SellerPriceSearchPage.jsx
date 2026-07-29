@@ -183,7 +183,7 @@ function SellerPriceSearchPage() {
     const selectedItemLabel = ALL_FLAT_ITEMS.find(i => String(i.value) === String(searchParams.itemCd))?.label || '품목 선택';
 
     return (
-        <section className="page-card">
+        <section className="page-card price-search-card">
             <div className="search-page-container">
                 <h2><UiIcon name="trend" /> 농산물 시세 검색창</h2>
                 <hr />
