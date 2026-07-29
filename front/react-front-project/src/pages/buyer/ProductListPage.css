@@ -456,7 +456,7 @@
 .product-name {
     display: -webkit-box;
     min-height: 48px;
-    margin-bottom: 8px;
+    margin-bottom: 3px;
     overflow: hidden;
     color: #243b2f;
     font-size: 18px;
@@ -469,6 +469,25 @@
 
 .product-name:hover {
     color: #3f7d20;
+}
+
+.product-card-ai-keywords {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 19px;
+    margin: 0 0 8px 2px;
+    overflow: hidden;
+}
+
+.product-card-ai-keyword {
+    min-width: 0;
+    overflow: hidden;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .product-description {

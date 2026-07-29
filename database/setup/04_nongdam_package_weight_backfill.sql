@@ -41,3 +41,14 @@ SELECT
     package_weight_grams
 FROM products
 ORDER BY product_id;
+
+SELECT
+    COUNT(*) AS total_product_count,
+    MIN(product_id) AS min_product_id,
+    MAX(product_id) AS max_product_id
+FROM products;
+
+SELECT product_id, product_name, market_item_code
+FROM products
+WHERE product_id NOT BETWEEN 1 AND 180
+ORDER BY product_id;
