@@ -681,6 +681,12 @@ public class MarketPriceService {
 
         List<DailyAvgPriceDto> dailyList = avgForDate(allList);
 
+        allList.sort((a, b) -> {
+            if (a.getExmnYmd() == null) return 1;
+            if (b.getExmnYmd() == null) return -1;
+            return b.getExmnYmd().compareTo(a.getExmnYmd());
+        });
+
         return new MarketPriceSearchResult(totalCount, dailyList, allList);
     }
 
