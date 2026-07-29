@@ -13,6 +13,37 @@ public interface FarmRepository extends JpaRepository<Farm, Long> {
 
     List<Farm> findBySellerId(Long sellerId);
 
+    List<Farm> findBySellerIdAndApprovalStatusNot(
+            Long sellerId,
+            String approvalStatus
+    );
+
+    List<Farm> findByApprovalStatusNot(String approvalStatus);
+
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM products p
+    WHERE p.farm_id = :farmId
+      AND p.product_status <> 'DELETED'
+    """, nativeQuery = true)
+    long countActiveProductsByFarmId(@Param("farmId") Long farmId);
+
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM orders o
+    LEFT JOIN deliveries d
+      ON d.order_id = o.order_id
+    WHERE o.farm_id = :farmId
+      AND NOT (
+          o.order_status IN ('CANCELED', 'REFUNDED')
+          OR (
+              o.order_status = 'PAID'
+              AND d.delivery_status = 'DELIVERED'
+          )
+      )
+    """, nativeQuery = true)
+    long countActiveOrdersByFarmId(@Param("farmId") Long farmId);
+
     //농장 등록 시 사업자등록번호 중복 확인
     boolean existsByBusinessNumber(String businessNumber);
 
