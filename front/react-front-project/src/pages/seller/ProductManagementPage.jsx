@@ -329,7 +329,7 @@ function ProductManagementPage() {
 
     const ok = await confirm({
       title: '상품을 삭제할까요?',
-      message: `"${product.productName}" 상품을 삭제합니다. 연결된 주문이나 장바구니가 있으면 삭제할 수 없습니다.`,
+      message: `"${product.productName}" 상품을 삭제합니다. 진행 중인 주문이 있으면 삭제할 수 없습니다.`,
       confirmText: '삭제',
       type: 'danger',
     })
