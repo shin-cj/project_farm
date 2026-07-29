@@ -399,6 +399,9 @@ function ProductDetailPage() {
           </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> b842475fd040deacdea94df9f662311e59f09640
         <div className="product-detail-top">
           <div className="product-detail-top-content">
             <div className="product-detail-badges">
@@ -440,6 +443,7 @@ function ProductDetailPage() {
             목록으로
           </button>
         </div>
+<<<<<<< HEAD
 
         <div className="product-detail-info">
           <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
@@ -551,6 +555,8 @@ function ProductDetailPage() {
             >
               목록으로
             </button>
+=======
+>>>>>>> b842475fd040deacdea94df9f662311e59f09640
           </div>
 
           <div className="product-detail-info">
