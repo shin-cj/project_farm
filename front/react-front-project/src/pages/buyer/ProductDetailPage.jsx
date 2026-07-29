@@ -29,8 +29,8 @@ function getMinimumOrderQuantity(product) {
   const minimumOrderQuantity = Number(product.minOrderQuantity)
 
   return Number.isInteger(minimumOrderQuantity) && minimumOrderQuantity >= 2
-    ? minimumOrderQuantity
-    : 2
+      ? minimumOrderQuantity
+      : 2
 }
 
 function getProductStatusLabel(productStatus) {
@@ -53,9 +53,9 @@ function ProductDetailPage() {
   const loginUser = getStoredLoginUser()
   const userid = loginUser?.userId || loginUser?.id || loginUser?.userNo
   const isAdmin =
-    loginUser?.email === 'admin@agrolink.dev'
-    || loginUser?.role === 'ADMIN'
-    || loginUser?.role === 'ROLE_ADMIN'
+      loginUser?.email === 'admin@agrolink.dev'
+      || loginUser?.role === 'ADMIN'
+      || loginUser?.role === 'ROLE_ADMIN'
 
   const [product, setProduct] = useState(null)
   const [farm, setFarm] = useState(null)
@@ -212,6 +212,21 @@ function ProductDetailPage() {
     }
   }
 
+  async function handleDeleteReview(reviewId) {
+    if (!window.confirm('정말 이 후기를 삭제하시겠습니까?')) {
+      return
+    }
+
+    try {
+      await axios.delete(`http://localhost:8080/api/reviews/${reviewId}`)
+      alert('삭제 완료되었습니다.')
+      setReviewList((currentList) => currentList.filter((r) => (r.reviewId || r.id) !== reviewId))
+    } catch (error) {
+      console.error('리뷰 삭제 에러 상세:', error.response || error)
+      alert(error.response?.data?.message || '삭제 중 오류가 발생했습니다.')
+    }
+  }
+
   function handleAnswerChange(qnaId, value) {
     setAnswerInputs((current) => ({
       ...current,
@@ -237,17 +252,17 @@ function ProductDetailPage() {
 
       alert('답변이 성공적으로 등록되었습니다!')
       setQnaList((currentList) => (
-        currentList.map((qna) => (
-          qna.qnaId === qnaId
-            ? {
-              ...qna,
-              answerContent: content,
-              qnaStatus: 'ANSWERED',
-              answeredAt: currentTime,
-              updatedAt: currentTime,
-            }
-            : qna
-        ))
+          currentList.map((qna) => (
+              qna.qnaId === qnaId
+                  ? {
+                    ...qna,
+                    answerContent: content,
+                    qnaStatus: 'ANSWERED',
+                    answeredAt: currentTime,
+                    updatedAt: currentTime,
+                  }
+                  : qna
+          ))
       ))
       setAnswerInputs((current) => ({
         ...current,
@@ -260,29 +275,29 @@ function ProductDetailPage() {
 
   if (loading) {
     return (
-      <CatalogPageState
-        title="상품 정보 불러오는 중"
-        message="선택한 상품의 상세 정보를 확인하고 있습니다."
-      />
+        <CatalogPageState
+            title="상품 정보 불러오는 중"
+            message="선택한 상품의 상세 정보를 확인하고 있습니다."
+        />
     )
   }
 
   if (error) {
     return (
-      <CatalogPageState
-        title="상품 정보를 불러오지 못했습니다"
-        message={error}
-        actionLabel="다시 시도"
-        onAction={() => setReloadKey((current) => current + 1)}
-      />
+        <CatalogPageState
+            title="상품 정보를 불러오지 못했습니다"
+            message={error}
+            actionLabel="다시 시도"
+            onAction={() => setReloadKey((current) => current + 1)}
+        />
     )
   }
 
   if (!product) {
     return (
-      <main className="product-detail-page">
-        <div className="product-detail-message">상품이 없습니다.</div>
-      </main>
+        <main className="product-detail-page">
+          <div className="product-detail-message">상품이 없습니다.</div>
+        </main>
     )
   }
 
@@ -292,24 +307,24 @@ function ProductDetailPage() {
   const orderQuantity = Number.isInteger(numericQuantity) ? numericQuantity : minimumOrderQuantity
   const isPurchasable = product.productStatus === 'ON_SALE' && stockQuantity >= minimumOrderQuantity
   const isValidQuantity =
-    Number.isInteger(numericQuantity)
-    && numericQuantity >= minimumOrderQuantity
-    && numericQuantity <= stockQuantity
+      Number.isInteger(numericQuantity)
+      && numericQuantity >= minimumOrderQuantity
+      && numericQuantity <= stockQuantity
   const unavailableMessage =
-    stockQuantity < minimumOrderQuantity || product.productStatus === 'SOLD_OUT'
-      ? '최소 주문 수량을 충족할 재고가 없는 상품입니다.'
-      : product.productStatus === 'PENDING'
-        ? '승인 대기 중인 상품입니다.'
-        : product.productStatus === 'HIDDEN'
-          ? '판매가 중지된 상품입니다.'
-          : '현재 구매할 수 없는 상품입니다.'
+      stockQuantity < minimumOrderQuantity || product.productStatus === 'SOLD_OUT'
+          ? '최소 주문 수량을 충족할 재고가 없는 상품입니다.'
+          : product.productStatus === 'PENDING'
+              ? '승인 대기 중인 상품입니다.'
+              : product.productStatus === 'HIDDEN'
+                  ? '판매가 중지된 상품입니다.'
+                  : '현재 구매할 수 없는 상품입니다.'
   const requestedListPath = location.state?.from
   const isAllowedListPath =
-    typeof requestedListPath === 'string'
-    && (
-      requestedListPath.startsWith('/products')
-      || requestedListPath.startsWith('/seller/products')
-    )
+      typeof requestedListPath === 'string'
+      && (
+          requestedListPath.startsWith('/products')
+          || requestedListPath.startsWith('/seller/products')
+      )
   const productListPath = isAllowedListPath ? requestedListPath : '/products'
   const sortedQnaList = [...qnaList].sort((a, b) => Number(b.qnaId) - Number(a.qnaId))
   const sortedReviewList = [...reviewList].sort((a, b) => Number(b.reviewId || b.id) - Number(a.reviewId || a.id))
@@ -377,20 +392,44 @@ function ProductDetailPage() {
   }
 
   return (
-    <main className="product-detail-page">
-      <section className="product-detail-card">
-        <div className="product-detail-image-box">
-          <CatalogImage src={product.productImageUrl} alt={product.productName} />
-        </div>
+      <main className="product-detail-page">
+        <section className="product-detail-card">
+          <div className="product-detail-image-box">
+            <CatalogImage src={product.productImageUrl} alt={product.productName} />
+          </div>
 
         <div className="product-detail-top">
-          <span className="product-detail-status">
-            {getProductStatusLabel(product.productStatus)}
-          </span>
+          <div className="product-detail-top-content">
+            <div className="product-detail-badges">
+              <span className="product-detail-status">
+                {getProductStatusLabel(product.productStatus)}
+              </span>
 
-          {product.sameDayDelivery === 'Y' && (
-            <span className="product-detail-same-day-badge">오늘 도착 가능</span>
-          )}
+              {product.sameDayDelivery === 'Y' && (
+                <span className="product-detail-same-day-badge">오늘 도착 가능</span>
+              )}
+            </div>
+
+            {Array.isArray(product.aiKeywords)
+                && product.aiKeywords.length > 0 && (
+                    <div className="product-detail-ai-keywords">
+                      {product.aiKeywords
+                          .filter((keyword) => (
+                              typeof keyword === 'string'
+                              && keyword.trim() !== ''
+                          ))
+                          .slice(0, 2)
+                          .map((keyword) => (
+                              <span
+                                  key={keyword}
+                                  className="product-detail-ai-keyword"
+                              >
+                #{keyword}
+              </span>
+                          ))}
+                    </div>
+                )}
+          </div>
 
           <button
             type="button"
@@ -401,387 +440,41 @@ function ProductDetailPage() {
           </button>
         </div>
 
-        <div className="product-detail-info">
-          <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
-          <h1>{product.productName}</h1>
-          <p className="product-detail-description">
-            {product.description || '상품 설명이 없습니다.'}
-          </p>
-
-          <div className="product-detail-price-box">
-            <strong>{product.price?.toLocaleString()}원</strong>
-            <span>{product.unit || '단위 미등록'}</span>
-          </div>
-
-        </div>
-
-        <div className="product-detail-purchase-panel">
-          <dl className="product-detail-meta">
-            <div>
-              <dt>재고</dt>
-              <dd>{stockQuantity}개</dd>
-            </div>
-            <div>
-              <dt>수확일</dt>
-              <dd>{product.harvestDate || '미등록'}</dd>
-            </div>
-            <div>
-              <dt>유통기한</dt>
-              <dd>{product.expirationDate || '미등록'}</dd>
-            </div>
-            <div>
-              <dt>상품 번호</dt>
-              <dd>{product.productId}</dd>
-            </div>
-            <div>
-              <dt>판매 방식</dt>
-              <dd>{product.saleType === 'WHOLESALE' ? '도매' : '소매'}</dd>
-            </div>
-            <div>
-              <dt>최소 주문</dt>
-              <dd>{minimumOrderQuantity}개</dd>
-            </div>
-          </dl>
-
-          <div className="product-detail-quantity">
-
-            <div className="product-detail-quantity-row">
-              <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
-
-              <div className="product-detail-quantity-control">
-                <button
-                    type="button"
-                    onClick={handleDecreaseQuantity}
-                    disabled={numericQuantity <= minimumOrderQuantity}
-                >
-                  -
-                </button>
-
-                <input
-                    type="number"
-                    min={minimumOrderQuantity}
-                    max={stockQuantity}
-                    value={quantity}
-                    onChange={(event) => setQuantity(event.target.value)}
-                />
-
-                <button
-                    type="button"
-                    onClick={handleIncreaseQuantity}
-                    disabled={numericQuantity >= stockQuantity}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div className="product-detail-total-row">
-              <span>총 금액</span>
-
-              <strong>
-                {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}원
-              </strong>
-            </div>
-
-          </div>
-
-          <div className="product-detail-actions">
-            <AddCartButton
-              productId={product.productId}
-              userid={userid}
-              quantity={orderQuantity}
-              disabled={!isPurchasable || !isValidQuantity}
-              className="product-detail-cart-button"
-            />
-
-            <button
-              type="button"
-              className="product-detail-order-link"
-              onClick={() => setIsOrderModalOpen(true)}
-              disabled={!isPurchasable || !isValidQuantity}
-            >
-              바로 주문하기
-            </button>
-
-            <ReportButton
-              productId={product.productId}
-              reporterId={userid}
-              reportType="PRODUCT"
-              targetLabel={product.productName}
-              className="product-detail-report-button"
-            />
-          </div>
-
-          {!isPurchasable && (
-            <p className="product-detail-unavailable">{unavailableMessage}</p>
-          )}
-        </div>
-      </section>
-
-      {farm && (
-        <section className="product-detail-farm-card">
-          <p>생산 농장</p>
-          <h2>
-            <Link to={`/farms/${farm.farmId}`} className="product-detail-farm-name-link">
-              {farm.farmName}
-            </Link>
-          </h2>
-          <span>{farm.region}</span>
-          <p>{farm.farmAddress}</p>
-
-          <div className="product-detail-farm-actions">
-            <Link to={`/farms/${farm.farmId}`} className="product-detail-farm-view-link">
-              농장 상세 보기
-            </Link>
-          </div>
-        </section>
-      )}
-
-      <section
-        className="product-qna-section"
-        style={{
-          marginTop: '40px',
-          padding: '25px',
-          background: '#fff',
-          borderRadius: '8px',
-          border: '1px solid #e0e0e0',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0, fontSize: '20px' }}>상품 문의하기</h3>
-          <button
-            type="button"
-            onClick={() => {
-              if (!userid) {
-                alert('로그인이 필요한 기능입니다.')
-                navigate('/login')
-                return
-              }
-              navigate(`/qna/write?productId=${product.productId}`)
-            }}
-            style={{
-              padding: '8px 16px',
-              background: '#2e7d32',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              fontSize: '14px',
-            }}
-          >
-            문의글 작성하기
-          </button>
-        </div>
-
-        <div className="product-qna-list">
-          <h4 style={{ marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
-            문의 목록
-          </h4>
-
-          {sortedQnaList.length === 0 ? (
-            <p style={{ color: '#888', textAlign: 'center', padding: '20px 0' }}>
-              등록된 문의가 없습니다.
+          <div className="product-detail-info">
+            <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
+            <h1>{product.productName}</h1>
+            <p className="product-detail-description">
+              {product.description || '상품 설명이 없습니다.'}
             </p>
-          ) : (
-            sortedQnaList.map((qna) => (
-              <div
-                key={qna.qnaId}
-                style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '6px',
-                  padding: '15px',
-                  marginBottom: '15px',
-                  background: '#fafafa',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 'bold', color: qna.qnaStatus === 'ANSWERED' ? '#2e7d32' : '#f57c00' }}>
-                    [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
-                  </span>
-                  <div>
-                    {qna.isSecret === 1 && <span style={{ marginRight: '10px' }}>비밀글</span>}
-                    <small style={{ color: '#888' }}>
-                      {qna.createdAt ? new Date(qna.createdAt).toLocaleString() : ''}
-                    </small>
-                  </div>
-                </div>
 
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{qna.questionTitle}</h4>
-                <p style={{ margin: '0 0 12px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
-                  {qna.questionContent}
-                </p>
-
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/qna/edit/${qna.qnaId}`)}
-                    style={{ padding: '4px 10px', background: '#6c757d', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
-                  >
-                    수정
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteQna(qna.qnaId)}
-                    style={{ padding: '4px 10px', background: '#dc3545', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
-                  >
-                    삭제
-                  </button>
-                </div>
-
-                <div style={{ marginTop: '10px', background: '#f1f8e9', padding: '12px', borderRadius: '6px', borderLeft: '3px solid #2e7d32' }}>
-                  <strong>관리자 답변</strong>
-                  {qna.answerContent ? (
-                    <div style={{ marginTop: '8px' }}>
-                      <p style={{ margin: '0 0 5px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
-                        {qna.answerContent}
-                      </p>
-                      <small style={{ color: '#2e7d32', fontWeight: 'bold' }}>
-                        {qna.updatedAt ? new Date(qna.updatedAt).toLocaleString() : ''}
-                      </small>
-                    </div>
-                  ) : isAdmin ? (
-                    <div style={{ marginTop: '10px' }}>
-                      <textarea
-                        placeholder="관리자 답변을 입력하세요..."
-                        value={answerInputs[qna.qnaId] || ''}
-                        onChange={(event) => handleAnswerChange(qna.qnaId, event.target.value)}
-                        style={{ width: '100%', height: '50px', padding: '8px', marginBottom: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleAnswerSubmit(qna.qnaId)}
-                        style={{ padding: '6px 12px', background: '#2e7d32', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
-                      >
-                        답변 등록
-                      </button>
-                    </div>
-                  ) : (
-                    <p style={{ margin: '8px 0 0 0', color: '#666', fontSize: '13px' }}>
-                      아직 등록된 답변이 없습니다.
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section
-        className="product-review-section"
-        style={{
-          marginTop: '30px',
-          marginBottom: '40px',
-          padding: '25px',
-          background: '#fff',
-          borderRadius: '8px',
-          border: '1px solid #e0e0e0',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3 style={{ margin: 0, fontSize: '20px' }}>상품 후기</h3>
-          <button
-            type="button"
-            onClick={() => {
-              if (!userid) {
-                alert('로그인이 필요한 기능입니다.')
-                navigate('/login')
-                return
-              }
-              navigate(`/reviews/write?productId=${product.productId}`)
-            }}
-            style={{
-              padding: '8px 16px',
-              background: '#388e3c',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              fontSize: '14px',
-            }}
-          >
-            후기 작성하기
-          </button>
-        </div>
-
-        <div className="product-review-list">
-          {sortedReviewList.length === 0 ? (
-            <p style={{ color: '#888', textAlign: 'center', padding: '20px 0' }}>
-              등록된 후기가 없습니다.
-            </p>
-          ) : (
-            sortedReviewList.map((review) => (
-              <div
-                key={review.reviewId || review.id}
-                style={{
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '6px',
-                  padding: '15px',
-                  marginBottom: '15px',
-                  background: '#fafafa',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 'bold', color: '#388e3c' }}>
-                    평점: {'*'.repeat(review.rating || review.score || 5)}
-                  </span>
-                  <small style={{ color: '#888' }}>
-                    {review.createdAt ? new Date(review.createdAt).toLocaleString() : ''}
-                  </small>
-                </div>
-                <p style={{ margin: '0', color: '#333', whiteSpace: 'pre-wrap' }}>
-                  {review.content || review.reviewContent}
-                </p>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
-      {isOrderModalOpen && (
-        <div className="product-order-modal-backdrop" onClick={() => setIsOrderModalOpen(false)}>
-          <div
-            className="product-order-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="product-order-modal-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="product-order-modal-header">
-              <div>
-                <span>Order</span>
-                <h2 id="product-order-modal-title">바로 주문하기</h2>
-              </div>
-              <button type="button" onClick={() => setIsOrderModalOpen(false)} aria-label="바로 주문 닫기">
-                x
-              </button>
+            <div className="product-detail-price-box">
+              <strong>{product.price?.toLocaleString()}원</strong>
+              <span>{product.unit || '단위 미등록'}</span>
             </div>
 
-            <div className="product-order-modal-summary">
-              <strong>{product.productName}</strong>
-              <span>{product.origin || '원산지 미등록'}</span>
-            </div>
+          </div>
 
-            <dl className="product-order-modal-info">
+          <div className="product-detail-purchase-panel">
+            <dl className="product-detail-meta">
               <div>
-                <strong>
-                  {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}
-                  <small>원</small>
-                </strong>
-              </div>
-              <div>
-                <dt>남은 재고</dt>
+                <dt>재고</dt>
                 <dd>{stockQuantity}개</dd>
+              </div>
+              <div>
+                <dt>수확일</dt>
+                <dd>{product.harvestDate || '미등록'}</dd>
+              </div>
+              <div>
+                <dt>유통기한</dt>
+                <dd>{product.expirationDate || '미등록'}</dd>
+              </div>
+              <div>
+                <dt>상품 번호</dt>
+                <dd>{product.productId}</dd>
               </div>
               <div>
                 <dt>판매 방식</dt>
                 <dd>{product.saleType === 'WHOLESALE' ? '도매' : '소매'}</dd>
-              </div>
-              <div>
-                <dt>배송 방식</dt>
-                <dd>{product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}</dd>
               </div>
               <div>
                 <dt>최소 주문</dt>
@@ -789,34 +482,427 @@ function ProductDetailPage() {
               </div>
             </dl>
 
-            <label>
-              수량
-              <input
-                type="number"
-                min={minimumOrderQuantity}
-                max={stockQuantity}
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
+            <div className="product-detail-quantity">
+
+              <div className="product-detail-quantity-row">
+                <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
+
+                <div className="product-detail-quantity-control">
+                  <button
+                      type="button"
+                      onClick={handleDecreaseQuantity}
+                      disabled={numericQuantity <= minimumOrderQuantity}
+                  >
+                    -
+                  </button>
+
+                  <input
+                      type="number"
+                      min={minimumOrderQuantity}
+                      max={stockQuantity}
+                      value={quantity}
+                      onChange={(event) => setQuantity(event.target.value)}
+                  />
+
+                  <button
+                      type="button"
+                      onClick={handleIncreaseQuantity}
+                      disabled={numericQuantity >= stockQuantity}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="product-detail-total-row">
+                <span>총 금액</span>
+
+                <strong>
+                  {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}원
+                </strong>
+              </div>
+
+            </div>
+
+            <div className="product-detail-actions">
+              <AddCartButton
+                  productId={product.productId}
+                  userid={userid}
+                  quantity={orderQuantity}
+                  disabled={!isPurchasable || !isValidQuantity}
+                  className="product-detail-cart-button"
               />
-            </label>
 
-            <div className="product-order-modal-total">
-              <span>총 결제 금액</span>
-              <strong>{(Number(product.price || 0) * orderQuantity).toLocaleString()}원</strong>
+              <button
+                  type="button"
+                  className="product-detail-order-link"
+                  onClick={() => setIsOrderModalOpen(true)}
+                  disabled={!isPurchasable || !isValidQuantity}
+              >
+                바로 주문하기
+              </button>
+
+              <ReportButton
+                  productId={product.productId}
+                  reporterId={userid}
+                  reportType="PRODUCT"
+                  targetLabel={product.productName}
+                  className="product-detail-report-button"
+              />
             </div>
 
-            <div className="product-order-modal-buttons">
-              <button type="button" className="product-order-submit" onClick={handleDirectOrder}>
-                결제하기
-              </button>
-              <button type="button" className="product-order-close" onClick={() => setIsOrderModalOpen(false)}>
-                닫기
-              </button>
-            </div>
+            {!isPurchasable && (
+                <p className="product-detail-unavailable">{unavailableMessage}</p>
+            )}
           </div>
-        </div>
-      )}
-    </main>
+        </section>
+
+        {farm && (
+            <section className="product-detail-farm-card">
+              <p>생산 농장</p>
+              <h2>
+                <Link to={`/farms/${farm.farmId}`} className="product-detail-farm-name-link">
+                  {farm.farmName}
+                </Link>
+              </h2>
+              <span>{farm.region}</span>
+              <p>{farm.farmAddress}</p>
+
+              <div className="product-detail-farm-actions">
+                <Link to={`/farms/${farm.farmId}`} className="product-detail-farm-view-link">
+                  농장 상세 보기
+                </Link>
+              </div>
+            </section>
+        )}
+
+        <section
+            className="product-qna-section"
+            style={{
+              marginTop: '40px',
+              padding: '25px',
+              background: '#fff',
+              borderRadius: '8px',
+              border: '1px solid #e0e0e0',
+            }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '20px' }}>상품 문의하기</h3>
+            <button
+                type="button"
+                onClick={() => {
+                  if (!userid) {
+                    alert('로그인이 필요한 기능입니다.')
+                    navigate('/login')
+                    return
+                  }
+                  navigate(`/qna/write?productId=${product.productId}`)
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: '#2e7d32',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                }}
+            >
+              문의글 작성하기
+            </button>
+          </div>
+
+          <div className="product-qna-list">
+            <h4 style={{ marginBottom: '15px', borderBottom: '2px solid #eee', paddingBottom: '10px' }}>
+              문의 목록
+            </h4>
+
+            {sortedQnaList.length === 0 ? (
+                <p style={{ color: '#888', textAlign: 'center', padding: '20px 0' }}>
+                  등록된 문의가 없습니다.
+                </p>
+            ) : (
+                sortedQnaList.map((qna) => (
+                    <div
+                        key={qna.qnaId}
+                        style={{
+                          border: '1px solid #e0e0e0',
+                          borderRadius: '6px',
+                          padding: '15px',
+                          marginBottom: '15px',
+                          background: '#fafafa',
+                        }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 'bold', color: qna.qnaStatus === 'ANSWERED' ? '#2e7d32' : '#f57c00' }}>
+                    [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
+                  </span>
+                        <div>
+                          {qna.isSecret === 1 && <span style={{ marginRight: '10px' }}>비밀글</span>}
+                          <small style={{ color: '#888' }}>
+                            {qna.createdAt ? new Date(qna.createdAt).toLocaleString() : ''}
+                          </small>
+                        </div>
+                      </div>
+
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{qna.questionTitle}</h4>
+                      <p style={{ margin: '0 0 12px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
+                        {qna.questionContent}
+                      </p>
+
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/qna/edit/${qna.qnaId}`)}
+                            style={{ padding: '4px 10px', background: '#6c757d', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
+                        >
+                          수정
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleDeleteQna(qna.qnaId)}
+                            style={{ padding: '4px 10px', background: '#dc3545', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
+                        >
+                          삭제
+                        </button>
+                      </div>
+
+                      <div style={{ marginTop: '10px', background: '#f1f8e9', padding: '12px', borderRadius: '6px', borderLeft: '3px solid #2e7d32' }}>
+                        <strong>관리자 답변</strong>
+                        {qna.answerContent ? (
+                            <div style={{ marginTop: '8px' }}>
+                              <p style={{ margin: '0 0 5px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
+                                {qna.answerContent}
+                              </p>
+                              <small style={{ color: '#2e7d32', fontWeight: 'bold' }}>
+                                {qna.updatedAt ? new Date(qna.updatedAt).toLocaleString() : ''}
+                              </small>
+                            </div>
+                        ) : isAdmin ? (
+                            <div style={{ marginTop: '10px' }}>
+                      <textarea
+                          placeholder="관리자 답변을 입력하세요..."
+                          value={answerInputs[qna.qnaId] || ''}
+                          onChange={(event) => handleAnswerChange(qna.qnaId, event.target.value)}
+                          style={{ width: '100%', height: '50px', padding: '8px', marginBottom: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc' }}
+                      />
+                              <button
+                                  type="button"
+                                  onClick={() => handleAnswerSubmit(qna.qnaId)}
+                                  style={{ padding: '6px 12px', background: '#2e7d32', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                              >
+                                답변 등록
+                              </button>
+                            </div>
+                        ) : (
+                            <p style={{ margin: '8px 0 0 0', color: '#666', fontSize: '13px' }}>
+                              아직 등록된 답변이 없습니다.
+                            </p>
+                        )}
+                      </div>
+                    </div>
+                ))
+            )}
+          </div>
+        </section>
+
+        <section
+            className="product-review-section"
+            style={{
+              marginTop: '30px',
+              marginBottom: '40px',
+              padding: '25px',
+              background: '#fff',
+              borderRadius: '8px',
+              border: '1px solid #e0e0e0',
+            }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '20px' }}>상품 후기</h3>
+            <button
+                type="button"
+                onClick={() => {
+                  if (!userid) {
+                    alert('로그인이 필요한 기능입니다.')
+                    navigate('/login')
+                    return
+                  }
+
+                  const targetProductId = product?.productId || productId;
+                  console.log("이동할 상품 ID:", targetProductId);
+
+                  if (!targetProductId) {
+                    alert('상품 정보를 찾을 수 없습니다.');
+                    return;
+                  }
+
+                  navigate(`/reviews/write?productId=${targetProductId}`)
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: '#388e3c',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                }}
+            >
+              후기 작성하기
+            </button>
+          </div>
+
+          <div className="product-review-list">
+            {sortedReviewList.length === 0 ? (
+                <p style={{ color: '#888', textAlign: 'center', padding: '20px 0' }}>
+                  등록된 후기가 없습니다.
+                </p>
+            ) : (
+                sortedReviewList.map((review) => {
+                  const reviewId = review.reviewId || review.id;
+                  return (
+                      <div
+                          key={reviewId}
+                          style={{
+                            border: '1px solid #e0e0e0',
+                            borderRadius: '6px',
+                            padding: '15px',
+                            marginBottom: '15px',
+                            background: '#fafafa',
+                          }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#388e3c' }}>
+                      평점: {'⭐'.repeat(review.rating || review.score || 5)} ({review.rating || review.score || 5}점)
+                    </span>
+                          <small style={{ color: '#888' }}>
+                            {review.createdAt ? new Date(review.createdAt).toLocaleString() : ''}
+                          </small>
+                        </div>
+
+                        <p style={{ margin: '0 0 15px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
+                          {review.content || review.reviewContent}
+                        </p>
+
+                        {(review.imageUrl || review.image_url) && (
+                            <div style={{ marginBottom: '15px' }}>
+                              <img
+                                  src={review.imageUrl || review.image_url}
+                                  alt="후기 이미지"
+                                  style={{
+                                    maxWidth: '150px',
+                                    maxHeight: '150px',
+                                    objectFit: 'cover',
+                                    borderRadius: '4px',
+                                    border: '1px solid #ddd',
+                                    display: 'block'
+                                  }}
+                              />
+                            </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button
+                              type="button"
+                              onClick={() => navigate(`/reviews/edit/${reviewId}`)}
+                              style={{ padding: '4px 10px', background: '#6c757d', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
+                          >
+                            수정
+                          </button>
+                          <button
+                              type="button"
+                              onClick={() => handleDeleteReview(reviewId)}
+                              style={{ padding: '4px 10px', background: '#dc3545', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </div>
+                  );
+                })
+            )}
+          </div>
+        </section>
+
+        {isOrderModalOpen && (
+            <div className="product-order-modal-backdrop" onClick={() => setIsOrderModalOpen(false)}>
+              <div
+                  className="product-order-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="product-order-modal-title"
+                  onClick={(event) => event.stopPropagation()}
+              >
+                <div className="product-order-modal-header">
+                  <div>
+                    <span>Order</span>
+                    <h2 id="product-order-modal-title">바로 주문하기</h2>
+                  </div>
+                  <button type="button" onClick={() => setIsOrderModalOpen(false)} aria-label="바로 주문 닫기">
+                    x
+                  </button>
+                </div>
+
+                <div className="product-order-modal-summary">
+                  <strong>{product.productName}</strong>
+                  <span>{product.origin || '원산지 미등록'}</span>
+                </div>
+
+                <dl className="product-order-modal-info">
+                  <div>
+                    <strong>
+                      {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}
+                      <small>원</small>
+                    </strong>
+                  </div>
+                  <div>
+                    <dt>남은 재고</dt>
+                    <dd>{stockQuantity}개</dd>
+                  </div>
+                  <div>
+                    <dt>판매 방식</dt>
+                    <dd>{product.saleType === 'WHOLESALE' ? '도매' : '소매'}</dd>
+                  </div>
+                  <div>
+                    <dt>배송 방식</dt>
+                    <dd>{product.sameDayDelivery === 'Y' ? '당일배송 가능' : '일반배송'}</dd>
+                  </div>
+                  <div>
+                    <dt>최소 주문</dt>
+                    <dd>{minimumOrderQuantity}개</dd>
+                  </div>
+                </dl>
+
+                <label>
+                  수량
+                  <input
+                      type="number"
+                      min={minimumOrderQuantity}
+                      max={stockQuantity}
+                      value={quantity}
+                      onChange={(event) => setQuantity(event.target.value)}
+                  />
+                </label>
+
+                <div className="product-order-modal-total">
+                  <span>총 결제 금액</span>
+                  <strong>{(Number(product.price || 0) * orderQuantity).toLocaleString()}원</strong>
+                </div>
+
+                <div className="product-order-modal-buttons">
+                  <button type="button" className="product-order-submit" onClick={handleDirectOrder}>
+                    결제하기
+                  </button>
+                  <button type="button" className="product-order-close" onClick={() => setIsOrderModalOpen(false)}>
+                    닫기
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+      </main>
   )
 }
 

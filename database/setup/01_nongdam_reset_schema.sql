@@ -413,7 +413,7 @@ CREATE TABLE order_items (
         FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
-
+SELECT * FROM ORDER_ITEMS;
 /* =========================================================
    10. 결제 테이블: payments
    주문별 결제, 취소, 환불 정보를 관리한다.
@@ -756,4 +756,7 @@ CREATE SEQUENCE seller_penalties_seq
     NOCACHE;
 
 
+SELECT * FROM REVIEWS;
+
 COMMIT;
+

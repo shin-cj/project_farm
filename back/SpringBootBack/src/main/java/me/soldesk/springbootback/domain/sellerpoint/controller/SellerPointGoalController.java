@@ -27,7 +27,7 @@ public class SellerPointGoalController {
 
     @PutMapping("/daily-goal")
     public SellerPointGoalResponse updateTodayGoal(@RequestBody SellerPointGoalRequest request){
-        return sellerPointGoalService.updaateTodayGoal(request);
+        return sellerPointGoalService.updateTodayGoal(request);
     }
 
 

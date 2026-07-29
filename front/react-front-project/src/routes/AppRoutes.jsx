@@ -83,6 +83,7 @@ function AppRoutes() {
 
         <Route path="/qna/write" element={<QnaWritePage />} />
         <Route path="/reviews/write" element={<ReviewWritePage />} />
+        <Route path="/reviews/edit/:id" element={<ReviewWritePage />} />
 
         <Route path="/qna/create" element={<QnaFormPage />} />
         <Route path="/qna/edit/:id" element={<QnaFormPage />} />
