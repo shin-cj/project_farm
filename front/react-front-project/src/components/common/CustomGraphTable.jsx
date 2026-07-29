@@ -4,11 +4,11 @@ function CustomGraphTable({
                               data = [],
                               xKey,
                               yKey,
-                              yKeys, // 🌟 새로 추가: 여러 선을 그릴 데이터 키 배열 (예: ['minPrice', 'todayAvgPrice', 'maxPrice'])
-                              lineColors = ['#2563eb', '#3f7d20', '#dc2626'], // 🌟 선 색상 (기본: 최저-파랑, 평균-초록, 최고-빨강)
+                              yKeys,
+                              lineColors = ['#2563eb', '#3f7d20', '#dc2626'],
                               renderTooltip,
                               height = '250px',
-                              minWidthPerItem = 40,
+                              minWidthPerItem = 40, // 데이터 1개당 최소 너비 (기본 40px)
                           }){
     const [hoveredPoint, setHoveredPoint] = useState(null);
 
@@ -20,29 +20,34 @@ function CustomGraphTable({
     const getXValue = (item) => (typeof xKey === 'function' ? xKey(item) : item[xKey]);
     const getYValue = (item, key) => Number(typeof key === 'function' ? key(item) : item[key]) || 0;
 
-    // 2. 사용할 키 목록 정리 (yKeys 배열이 우선, 없으면 기존 yKey 1개)
+    // 2. 사용할 키 목록 정리
     const keysToUse = yKeys && yKeys.length > 0 ? yKeys : [yKey];
 
-    // 3. 전체 데이터의 전체 키(선들)를 통틀어 y축 최저가, 최고가 및 변동 폭 계산
+    // 3. y축 최저가, 최고가 및 변동 폭 계산
     const allYValues = data.flatMap(item => keysToUse.map(k => getYValue(item, k)));
     const minVal = Math.min(...allYValues);
     const maxVal = Math.max(...allYValues);
     const range = maxVal - minVal;
 
-    // 데이터 개수에 따른 적절한 가로 최소 너비 계산
-    const minWidthPerData = minWidthPerItem || 40;
-    const minWidthPx = Math.max(700, data.length * minWidthPerData);
+    // 🌟 [핵심 1] 데이터 개수에 따른 가로 스크롤 폭 계산 (데이터 많으면 스크롤 생성)
+    const minWidthPx = Math.max(700, data.length * minWidthPerItem);
     const calculatedMinWidth = `${minWidthPx}px`;
 
-    // 4. 각 키(선)별로 데이터 포인트 및 Path 계산
+    // 🌟 [핵심 2] 앞뒤 공백을 완전히 없애는 X 좌표 계산 (0% ~ 100% 밀착)
+    const getXCoordinate = (index, total) => {
+        if (total <= 1) return 50;
+        return (index / (total - 1)) * 100; // 첫날 0%, 마지막날 100%
+    };
+
+    // 4. 각 선별 데이터 포인트 및 Path 계산
     const linesData = keysToUse.map((key, keyIdx) => {
         const points = data.map((item, index) => {
-            const x = data.length === 1 ? 50 : 2 + (index / (data.length - 1)) * 97;
+            const x = getXCoordinate(index, data.length);
             const rawY = getYValue(item, key);
 
-            let y = 50; // 모든 값이 동일할 경우 중앙 배치
+            let y = 50; // 모든 값이 동일할 경우 중앙
             if (range > 0) {
-                y = 85 - ((rawY - minVal) / range) * 70;
+                y = 85 - ((rawY - minVal) / range) * 70; // 상하 여백 조절
             }
             return { x, y, rawY, rawData: item, keyIndex: keyIdx };
         });
@@ -55,7 +60,7 @@ function CustomGraphTable({
             return `C ${controlX} ${prev.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`;
         }).join(' ');
 
-        // 곡선 아래 영역(Area) Path (첫번째 선 또는 단일 선에만 채우기 효과 적용)
+        // 영역 채우기(Area) Path
         const areaPath = points.length === 0 ? '' : `
             M ${points[0].x} 100
             L ${points[0].x} ${points[0].y}
@@ -80,18 +85,18 @@ function CustomGraphTable({
     return (
         <div style={{
             width: '100%',
-            overflowX: 'auto',
+            overflowX: 'auto', // 🌟 데이터 많을 때 좌우 스크롤 허용
             overflowY: 'visible',
-            padding: '20px 0 15px 0',
+            padding: '20px 16px 15px 16px', // 좌우 10px 패딩으로 버튼 잘림 방지
             boxSizing: 'border-box'
         }}>
             <div style={{
                 position: 'relative',
-                width: calculatedMinWidth,
+                width: calculatedMinWidth, // 🌟 적절한 최소 가로폭 유지
                 minWidth: '100%',
                 height
             }}>
-                <div style={{ width: '100%', height: 'calc(100% - 35px)', minWidth: 'max-content', position: 'relative' }}>
+                <div style={{ width: '100%', height: 'calc(100% - 35px)', position: 'relative' }}>
                     <svg
                         viewBox="0 0 100 100"
                         preserveAspectRatio="none"
@@ -104,12 +109,12 @@ function CustomGraphTable({
                         <line x1="0" y1="61" x2="100" y2="61" stroke="#f1f5f9" strokeDasharray="2" />
                         <line x1="0" y1="85" x2="100" y2="85" stroke="#e2e8f0" />
 
-                        {/* 영역 채우기 (단일 선 모드일 때만 옅은 초록색 영역 렌더링) */}
+                        {/* 단일 선 일때 영역 채우기 */}
                         {linesData.length === 1 && (
                             <path d={linesData[0].areaPath} fill="rgba(63, 125, 32, 0.12)" />
                         )}
 
-                        {/* 🌟 계산된 선(Line)들을 순회하며 그리기 */}
+                        {/* 선(Line) 그리기 */}
                         {linesData.map((line, idx) => (
                             <path
                                 key={idx}
@@ -122,7 +127,7 @@ function CustomGraphTable({
                         ))}
                     </svg>
 
-                    {/* 🌟 각 선의 데이터 포인트 버튼들 렌더링 */}
+                    {/* 데이터 포인트 버튼들 */}
                     {linesData.map((line) =>
                         line.points.map((point, index) => (
                             <button
@@ -133,8 +138,8 @@ function CustomGraphTable({
                                     left: `${point.x}%`,
                                     top: `${point.y}%`,
                                     transform: 'translate(-50%, -50%)',
-                                    width: '12px',
-                                    height: '12px',
+                                    width: '10px',
+                                    height: '10px',
                                     aspectRatio: '1',
                                     flexShrink: 0,
                                     borderRadius: '50%',
@@ -159,7 +164,6 @@ function CustomGraphTable({
                                 top: hoveredPoint.y < 25 ? `${hoveredPoint.y + 12}%` : `${hoveredPoint.y}%`,
                                 transform: (() => {
                                     const translateY = hoveredPoint.y < 40 ? '10%' : '-115%';
-
                                     if (hoveredPoint.x < 15) return `translate(0%, ${translateY})`;
                                     if (hoveredPoint.x > 85) return `translate(-100%, ${translateY})`;
                                     return `translate(-50%, ${translateY})`;
@@ -207,7 +211,7 @@ function CustomGraphTable({
                             monthDay = rawDate;
                         }
 
-                        const x = data.length === 1 ? 50 : 2 + (idx / (data.length - 1)) * 97;
+                        const x = getXCoordinate(idx, data.length);
 
                         return(
                             <div
