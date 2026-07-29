@@ -25,10 +25,10 @@ public class ReviewResponse {
         this.productId = review.getProductId();
         this.buyerId = review.getBuyerId();
         // 만약 Review 엔티티에 orderItemId나 imageUrl 등이 있다면 아래와 같이 마저 연결해 주세요.
-        // this.orderItemId = review.getOrderItemId();
+        this.orderItemId = review.getOrderItemId();
         this.rating = review.getRating();
         this.content = review.getContent();
-        // this.imageUrl = review.getImageUrl();
+        this.imageUrl = review.getImageUrl();
         this.createdAt = review.getCreatedAt();
         this.updatedAt = review.getUpdatedAt();
     }
