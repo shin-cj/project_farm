@@ -5,8 +5,9 @@ import "./SellerPenaltyViewer.css";
 
 const typeLabels = {
     WARNING: "경고",
-    PRODUCT_SUSPENSION: "상품 판매 중지",
-    SELLER_SUSPENSION: "판매자 이용 정지",
+    STRONG_WARNING: "강한 경고",
+    PRODUCT_SUSPENSION: "상품 판매 정지 (기존)",
+    SELLER_SUSPENSION: "중징계 · 상품 판매 정지",
 };
 
 function formatDate(value) {

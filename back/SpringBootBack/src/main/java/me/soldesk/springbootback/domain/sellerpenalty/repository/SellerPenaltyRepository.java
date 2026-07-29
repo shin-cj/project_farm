@@ -78,6 +78,10 @@ public interface SellerPenaltyRepository extends JpaRepository<SellerPenalty, Lo
           AND sp.penalty_type = :penaltyType
           AND sp.penalty_status = :penaltyStatus
           AND sp.penalty_id <> :penaltyId
+          AND sp.penalty_type IN (
+            'PRODUCT_SUSPENSION',
+            'SELLER_SUSPENSION'
+        )     
         """,
             nativeQuery = true
     )

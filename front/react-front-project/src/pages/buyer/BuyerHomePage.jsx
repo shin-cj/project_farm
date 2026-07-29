@@ -29,6 +29,8 @@ const PRODUCT_SALE_TYPE_OPTIONS = [
   { label: '도매', value: 'WHOLESALE' },
 ]
 
+const TICKER_VISIBLE_COUNT = 5
+
 const FARM_CATEGORY_CODES = CATEGORY_CODES.filter(
   (category) => category.value !== '500' && category.value !== '600'
 )
@@ -153,7 +155,7 @@ function ChangeRateChart({ upItems, downItems, periodLabel }) {
 function BuyerHomePage() {
   const navigate = useNavigate()
   const [rankingData, setRankingData] = useState(null)
-  const [todayRankingData, setTodayRankingData] = useState(null)
+  const [todayPriceData, setTodayPriceData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isTodayLoading, setIsTodayLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
@@ -171,7 +173,17 @@ function BuyerHomePage() {
   const [isPopularFarmLoading, setIsPopularFarmLoading] = useState(true)
   const [popularFarmErrorMessage, setPopularFarmErrorMessage] = useState('')
 
-  const lowPriceItemOptions = ITEM_CODES[lowPriceFilters.ctgryCd] || [{ label: '전체', value: '' }]
+  const lowPriceItemOptions = lowPriceFilters.ctgryCd
+    ? ITEM_CODES[lowPriceFilters.ctgryCd] || [{ label: '전체', value: '' }]
+    : [
+        { label: '전체', value: '' },
+        ...FARM_CATEGORY_CODES
+          .filter((category) => category.value)
+          .flatMap((category) => (
+            (ITEM_CODES[category.value] || [])
+              .filter((item) => item.value)
+          )),
+      ]
   const lowPriceVarietyOptions = VARIETY_CODES[lowPriceFilters.itemCd] || [{ label: '전체', value: '' }]
   const selectedLowPriceItemLabel = lowPriceItemOptions.find(
     (item) => item.value === lowPriceFilters.itemCd
@@ -210,25 +222,25 @@ function BuyerHomePage() {
   }, [filters])
 
   useEffect(() => {
-    async function fetchTodayRanking() {
+    async function fetchTodayPrices() {
       setIsTodayLoading(true)
       setTodayErrorMessage('')
 
       try {
-        const response = await marketPriceApi.getBuyerMainRanking({
-          seCd: todaySaleType,
-          limit: 50,
+        const response = await marketPriceApi.getBuyerMainTodayPrices({
+          seCd: todaySaleType || undefined,
+          limit: 1000,
         })
-        setTodayRankingData(response.data)
+        setTodayPriceData(Array.isArray(response.data) ? response.data : [])
       } catch (error) {
-        setTodayRankingData(null)
+        setTodayPriceData([])
         setTodayErrorMessage('오늘의 시세를 불러오지 못했습니다.')
       } finally {
         setIsTodayLoading(false)
       }
     }
 
-    fetchTodayRanking()
+    fetchTodayPrices()
   }, [todaySaleType])
 
   useEffect(() => {
@@ -237,35 +249,116 @@ function BuyerHomePage() {
       setLowPriceErrorMessage('')
 
       try {
-        const [productResponse, marketResponse] = await Promise.all([
-          getPublicProductPage({
-            saleType: lowPriceFilters.saleType,
-            marketCategoryCode: lowPriceFilters.ctgryCd,
-            marketItemCode: lowPriceFilters.itemCd,
-            keyword: lowPriceKeyword,
-            sortOption: 'PRICE_LOW',
-            page: 0,
-            size: 12,
-          }),
-          marketPriceApi.getBuyerMainTodayPrices({
+        const productQuery = {
+          saleType: lowPriceFilters.saleType,
+          marketCategoryCode: lowPriceFilters.ctgryCd,
+          marketItemCode: lowPriceFilters.itemCd,
+          keyword: lowPriceKeyword,
+          sortOption: 'PRICE_LOW',
+          size: 48,
+        }
+        const getProductsFromResponse = (response) => {
+          const productList =
+            response?.products
+            || response?.content
+            || response?.data?.content
+            || response?.data?.products
+            || response?.items
+            || response
+            || []
+
+          return Array.isArray(productList) ? productList : []
+        }
+        const firstProductResponse = await getPublicProductPage({
+          ...productQuery,
+          page: 0,
+        })
+        const totalProductPages = Math.max(
+          1,
+          Number(
+            firstProductResponse?.totalPages
+            || firstProductResponse?.data?.totalPages
+            || 1
+          )
+        )
+        const remainingProductResponses = totalProductPages > 1
+          ? await Promise.all(
+              Array.from({ length: totalProductPages - 1 }, (_, index) => (
+                getPublicProductPage({
+                  ...productQuery,
+                  page: index + 1,
+                })
+              ))
+            )
+          : []
+        const products = [
+          ...getProductsFromResponse(firstProductResponse),
+          ...remainingProductResponses.flatMap(getProductsFromResponse),
+        ]
+
+        let mergedMarketItems = []
+
+        try {
+          const marketResponse = await marketPriceApi.getBuyerMainTodayPrices({
             seCd: lowPriceFilters.saleType === 'WHOLESALE' ? '02' : '01',
             ctgryCd: lowPriceFilters.ctgryCd,
             itemCd: lowPriceFilters.itemCd,
             limit: 200,
-          }),
-        ])
+          })
+          const marketItems = Array.isArray(marketResponse.data) ? marketResponse.data : []
+          const loadedMarketItemCodes = new Set(
+            marketItems.map((item) => String(item.itemCode || '').trim()).filter(Boolean)
+          )
+          const missingMarketItemCodes = Array.from(
+            new Set(
+              products
+                .map((product) => String(product.marketItemCode || '').trim())
+                .filter((itemCode) => itemCode && !loadedMarketItemCodes.has(itemCode))
+            )
+          )
+          const supplementalMarketResults = await Promise.allSettled(
+            missingMarketItemCodes.map((itemCd) => (
+              marketPriceApi.getBuyerMainTodayPrices({
+                seCd: lowPriceFilters.saleType === 'WHOLESALE' ? '02' : '01',
+                itemCd,
+                limit: 200,
+              })
+            ))
+          )
+          const supplementalMarketItems = supplementalMarketResults.flatMap((result) => (
+            result.status === 'fulfilled' && Array.isArray(result.value.data)
+              ? result.value.data
+              : []
+          ))
 
-        const productList =
-          productResponse?.products
-          || productResponse?.content
-          || productResponse?.data?.content
-          || productResponse?.data?.products
-          || productResponse?.items
-          || productResponse
-          || []
+          mergedMarketItems = [
+            ...marketItems,
+            ...supplementalMarketItems,
+          ].filter((item, index, items) => {
+            const itemKey = [
+              item.itemCode,
+              item.varietyName,
+              item.saleTypeName,
+              item.unit,
+              item.currentPrice,
+            ].join('|')
 
-        setLowPriceProducts((Array.isArray(productList) ? productList : []).slice(0, 3))
-        setLowPriceMarketItems(marketResponse.data || [])
+            return items.findIndex((target) => (
+              [
+                target.itemCode,
+                target.varietyName,
+                target.saleTypeName,
+                target.unit,
+                target.currentPrice,
+              ].join('|') === itemKey
+            )) === index
+          })
+        } catch {
+          mergedMarketItems = []
+        }
+
+        setLowPriceProducts(products)
+        setLowPriceMarketItems(mergedMarketItems)
       } catch (error) {
         setLowPriceProducts([])
         setLowPriceMarketItems([])
@@ -375,26 +468,7 @@ function BuyerHomePage() {
   }
 
   const selectedPeriod = periodMap[period]
-  const todayPriceItems = [
-    ...(todayRankingData?.dayDownTop5 || []),
-    ...(todayRankingData?.dayUpTop5 || []),
-  ]
-    .reduce((uniqueItems, item) => {
-      const savedItem = uniqueItems.get(item.itemName)
-      const savedRate = Math.abs(Number(savedItem?.changeRate || 0))
-      const currentRate = Math.abs(Number(item.changeRate || 0))
-
-      if (!savedItem || currentRate > savedRate) {
-        uniqueItems.set(item.itemName, item)
-      }
-
-      return uniqueItems
-    }, new Map())
-
-  const todayPriceList = Array.from(todayPriceItems.values())
-    .sort((firstItem, secondItem) => (
-      Math.abs(Number(secondItem.changeRate || 0)) - Math.abs(Number(firstItem.changeRate || 0))
-    ))
+  const todayPriceList = todayPriceData
 
   const getProductName = (product) => product.productName || product.name || product.itemName || '상품명 없음'
   const getProductPrice = (product) => Number(product.price || product.productPrice || product.finalPrice || 0)
@@ -429,6 +503,20 @@ function BuyerHomePage() {
   }
 
   const normalizeText = (value) => String(value || '').replace(/\s/g, '').toLowerCase()
+  const parseCountUnit = (value) => {
+    const match = String(value || '')
+      .trim()
+      .match(/^(\d+(?:\.\d+)?)\s*(개|포기|단|속|접|마리|손|봉|박스|망)/)
+
+    if (!match) {
+      return null
+    }
+
+    return {
+      quantity: Number(match[1]),
+      unit: match[2],
+    }
+  }
   const getTodayMarketPriceInfo = (product) => {
     const marketItemCode = String(product.marketItemCode || '').trim()
     const normalizedProductName = normalizeText(getProductName(product))
@@ -438,6 +526,17 @@ function BuyerHomePage() {
           (item) => String(item.itemCode || '').trim() === marketItemCode
         )
       : []
+
+    if (matchedItems.length > 0) {
+      const codeVarietyMatches = matchedItems.filter((item) => {
+        const varietyName = normalizeText(item.varietyName)
+        return varietyName && normalizedProductName.includes(varietyName)
+      })
+
+      if (codeVarietyMatches.length > 0) {
+        matchedItems = codeVarietyMatches
+      }
+    }
 
     if (matchedItems.length === 0) {
       const varietyMatches = lowPriceMarketItems.filter((item) => {
@@ -456,14 +555,50 @@ function BuyerHomePage() {
     if (matchedItems.length === 0) {
       return {
         price: 0,
+        previousPrice: 0,
         unit: '',
+        comparisonPrice: 0,
+        comparisonUnit: '',
       }
     }
 
-    const totalPrice = matchedItems.reduce((sum, item) => sum + Number(item.currentPrice || 0), 0)
+    const unitGroups = Array.from(
+      matchedItems.reduce((groups, item) => {
+        const unitKey = item.unit || '단위'
+        const group = groups.get(unitKey) || []
+        group.push(item)
+        groups.set(unitKey, group)
+        return groups
+      }, new Map()).values()
+    )
+    const comparableItems = unitGroups.sort(
+      (first, second) => second.length - first.length
+    )[0]
+    const totalDisplayPrice = comparableItems.reduce(
+      (sum, item) => sum + Number(item.currentPrice || 0),
+      0
+    )
+    const totalComparisonPrice = comparableItems.reduce(
+      (sum, item) => sum + Number(item.comparisonPrice || item.currentPrice || 0),
+      0
+    )
+    const previousPriceItems = comparableItems.filter(
+      (item) => Number(item.previousPrice || 0) > 0
+    )
+    const totalPreviousPrice = previousPriceItems.reduce(
+      (sum, item) => sum + Number(item.previousPrice || 0),
+      0
+    )
+
     return {
-      price: Math.round(totalPrice / matchedItems.length),
-      unit: matchedItems[0]?.unit || '',
+      price: Math.round(totalDisplayPrice / comparableItems.length),
+      previousPrice:
+        previousPriceItems.length > 0
+          ? Math.round(totalPreviousPrice / previousPriceItems.length)
+          : 0,
+      unit: comparableItems[0]?.unit || '',
+      comparisonPrice: Math.round(totalComparisonPrice / comparableItems.length),
+      comparisonUnit: comparableItems[0]?.comparisonUnit || comparableItems[0]?.unit || '',
     }
   }
   const getLowPriceComparison = (product) => {
@@ -471,61 +606,75 @@ function BuyerHomePage() {
     const packageWeightGrams = getPackageWeightGrams(product)
     const marketPriceInfo = getTodayMarketPriceInfo(product)
     const marketAveragePrice = marketPriceInfo.price
+    const marketComparisonPrice = Number(marketPriceInfo.comparisonPrice || 0)
+    const marketCountUnit = parseCountUnit(marketPriceInfo.comparisonUnit)
+    const productCountUnit = parseCountUnit(getProductUnit(product))
+    let siteComparisonPrice = 0
 
-    if (!marketAveragePrice || productPrice <= 0) {
-      return {
-        label: '오늘 시세 정보 없음',
-        marketAveragePrice: 0,
-        productPrice,
-        productUnit: getProductUnit(product),
-        marketUnit: marketPriceInfo.unit,
-        sitePricePerKg: 0,
-        packageWeightGrams,
-        changeRate: 0,
-        hasMarketPrice: false,
-        hasComparison: false,
-      }
+    if (marketPriceInfo.comparisonUnit === 'kg' && packageWeightGrams > 0) {
+      siteComparisonPrice = (productPrice * 1000) / packageWeightGrams
+    } else if (
+      marketCountUnit
+      && productCountUnit
+      && marketCountUnit.unit === productCountUnit.unit
+    ) {
+      siteComparisonPrice = (
+        productPrice
+        / productCountUnit.quantity
+        * marketCountUnit.quantity
+      )
     }
 
-    if (packageWeightGrams <= 0) {
-      return {
-        label: '단위 환산 정보 없음',
-        marketAveragePrice,
-        productPrice,
-        productUnit: getProductUnit(product),
-        marketUnit: marketPriceInfo.unit,
-        sitePricePerKg: 0,
-        packageWeightGrams: 0,
-        changeRate: 0,
-        hasMarketPrice: true,
-        hasComparison: false,
-      }
-    }
-
-    const sitePricePerKg = (productPrice * 1000) / packageWeightGrams
-    const changeRate = ((sitePricePerKg - marketAveragePrice) / marketAveragePrice) * 100
-
-    let label = '오늘 시세와 비슷해요'
-
-    if (changeRate <= -1) {
-      label = `오늘 시세보다 ${formatRate(changeRate)} 저렴해요`
-    } else if (changeRate >= 1) {
-      label = `오늘 시세보다 ${formatRate(changeRate)} 높아요`
-    }
+    const hasComparison = (
+      marketAveragePrice > 0
+      && marketComparisonPrice > 0
+      && siteComparisonPrice > 0
+    )
+    const changeRate = hasComparison
+      ? ((siteComparisonPrice - marketComparisonPrice) / marketComparisonPrice) * 100
+      : 0
 
     return {
-      label,
       marketAveragePrice,
+      previousMarketPrice: marketPriceInfo.previousPrice,
       productPrice,
       productUnit: getProductUnit(product),
       marketUnit: marketPriceInfo.unit,
-      sitePricePerKg,
-      packageWeightGrams,
+      siteComparisonPrice,
+      comparisonUnit: marketPriceInfo.comparisonUnit,
       changeRate,
-      hasMarketPrice: true,
-      hasComparison: true,
+      hasMarketPrice: marketAveragePrice > 0,
+      hasComparison,
+      isCheaper: hasComparison && changeRate < 0,
     }
   }
+  const allCheaperLowPriceProducts = lowPriceProducts
+    .map((product) => ({
+      product,
+      comparison: getLowPriceComparison(product),
+    }))
+    .filter(({ comparison }) => comparison.isCheaper)
+    .sort((
+      firstEntry,
+      secondEntry
+    ) => firstEntry.comparison.changeRate - secondEntry.comparison.changeRate)
+  const cheaperLowPriceProducts = (
+    lowPriceFilters.itemCd
+      ? allCheaperLowPriceProducts
+      : Array.from(
+          allCheaperLowPriceProducts.reduce((uniqueProducts, entry) => {
+            const itemKey = String(entry.product.marketItemCode || '').trim()
+              || normalizeText(getProductName(entry.product))
+
+            if (!uniqueProducts.has(itemKey)) {
+              uniqueProducts.set(itemKey, entry)
+            }
+
+            return uniqueProducts
+          }, new Map()).values()
+        )
+  ).slice(0, 3)
+
   const handleCardKeyDown = (event, callback) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -534,14 +683,16 @@ function BuyerHomePage() {
   }
 
   useEffect(() => {
-    if (todayPriceList.length <= 4) {
+    if (todayPriceList.length <= TICKER_VISIBLE_COUNT) {
       setTodaySlideIndex(0)
       return undefined
     }
 
     const timerId = window.setInterval(() => {
       setTodaySlideIndex((currentIndex) => (
-        currentIndex >= todayPriceList.length - 4 ? 0 : currentIndex + 1
+        currentIndex >= todayPriceList.length - TICKER_VISIBLE_COUNT
+          ? 0
+          : currentIndex + 1
       ))
     }, 2600)
 
@@ -571,7 +722,7 @@ function BuyerHomePage() {
         </div>
       </section>
 
-      {!isTodayLoading && !todayErrorMessage && todayRankingData && (
+      {!isTodayLoading && !todayErrorMessage && todayPriceList.length > 0 && (
         <section className="buyer-price-strip">
           <div className="buyer-price-strip-heading">
             <h2>오늘의 시세</h2>
@@ -591,14 +742,22 @@ function BuyerHomePage() {
             <div
               className="buyer-price-strip-track"
               style={{
-                width: `${Math.max(todayPriceList.length, 5) * 20}%`,
-                transform: `translateX(-${todaySlideIndex * (100 / Math.max(todayPriceList.length, 5))}%)`,
+                width: `${Math.max(todayPriceList.length, TICKER_VISIBLE_COUNT) * 20}%`,
+                transform: `translateX(-${
+                  todaySlideIndex
+                  * (100 / Math.max(todayPriceList.length, TICKER_VISIBLE_COUNT))
+                }%)`,
               }}
             >
               {todayPriceList.map((item, index) => (
                 <article
-                  key={`${item.itemName}-${item.varietyName}-${index}`}
-                  style={{ flexBasis: `${100 / Math.max(todayPriceList.length, 5)}%` }}
+                  key={`${item.itemCode}-${item.varietyName}-${item.saleTypeName}-${item.unit}-${index}`}
+                  style={{
+                    flexBasis: `${
+                      100 / Math.max(todayPriceList.length, TICKER_VISIBLE_COUNT)
+                    }%`,
+                  }}
+                  tabIndex={0}
                 >
                   <div>
                     <strong>{item.itemName}</strong>
@@ -609,6 +768,18 @@ function BuyerHomePage() {
                   <em className={Number(item.changeRate) >= 0 ? 'up' : 'down'}>
                     {formatRate(item.changeRate)}
                   </em>
+                  <div className="buyer-price-strip-tooltip" role="tooltip">
+                    <div className="buyer-price-strip-tooltip-head">
+                      <strong>{item.itemName}</strong>
+                      <em className={Number(item.changeRate) >= 0 ? 'up' : 'down'}>
+                        전일 대비 {formatRate(item.changeRate)}
+                      </em>
+                    </div>
+                    <div className="buyer-price-strip-tooltip-detail">
+                      <span>{item.varietyName || '품종 정보 없음'}</span>
+                      <b>{formatPriceWithUnit(item.currentPrice, item.unit)}</b>
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>
@@ -682,13 +853,16 @@ function BuyerHomePage() {
               {!isLowPriceLoading && lowPriceErrorMessage && (
                 <p className="buyer-card-state">{lowPriceErrorMessage}</p>
               )}
-              {!isLowPriceLoading && !lowPriceErrorMessage && lowPriceProducts.length === 0 && (
-                <p className="buyer-card-state">조건에 맞는 상품이 없습니다.</p>
+              {!isLowPriceLoading && !lowPriceErrorMessage && cheaperLowPriceProducts.length === 0 && (
+                <p className="buyer-card-state buyer-low-price-empty">
+                  <strong>오늘 시세보다 저렴한 상품이 아직 없어요.</strong>
+                  <span>다른 거래유형이나 품목을 선택해 새로운 상품을 찾아보세요.</span>
+                </p>
               )}
-              {!isLowPriceLoading && !lowPriceErrorMessage && lowPriceProducts.map((product) => {
-                const comparison = getLowPriceComparison(product)
-
-                return (
+              {!isLowPriceLoading && !lowPriceErrorMessage && cheaperLowPriceProducts.map(({
+                product,
+                comparison,
+              }) => (
                   <article
                     key={product.productId || `${getProductName(product)}-${getProductPrice(product)}`}
                     className={product.productId ? 'clickable' : ''}
@@ -709,9 +883,9 @@ function BuyerHomePage() {
                     <strong>{getProductName(product)}</strong>
                     <span>{getProductFarmName(product)} · {getProductUnit(product)}</span>
                     <b>{formatPrice(getProductPrice(product))}</b>
-                    <em className="buyer-low-price-comparison">
-                      {comparison.label}
-                      {comparison.hasMarketPrice && (
+                    {comparison.isCheaper && (
+                      <em className="buyer-low-price-comparison">
+                        오늘 시세보다 {formatRate(comparison.changeRate)} 저렴해요
                         <span className="buyer-low-price-tooltip" role="tooltip">
                           <strong>
                             오늘 시세 {formatPriceWithUnit(
@@ -720,30 +894,31 @@ function BuyerHomePage() {
                             )}
                           </strong>
                           <span>
+                            어제 시세 {comparison.previousMarketPrice > 0
+                              ? formatPriceWithUnit(
+                                  comparison.previousMarketPrice,
+                                  comparison.marketUnit
+                                )
+                              : '정보 없음'}
+                          </span>
+                          <span>
                             상품 가격 {formatPriceWithUnit(
                               comparison.productPrice,
                               comparison.productUnit
                             )}
                           </span>
-                          {comparison.hasComparison ? (
-                            <>
-                              <span>
-                                kg 환산가 {formatPriceWithUnit(
-                                  Math.round(comparison.sitePricePerKg),
-                                  'kg'
-                                )}
-                              </span>
-                              <span>변동률 {formatRate(comparison.changeRate)}</span>
-                            </>
-                          ) : (
-                            <span>총중량을 등록하면 비교할 수 있습니다.</span>
-                          )}
+                          <span>
+                            {comparison.comparisonUnit} 환산가 {formatPriceWithUnit(
+                              Math.round(comparison.siteComparisonPrice),
+                              comparison.comparisonUnit
+                            )}
+                          </span>
+                          <span>시세 대비 {formatRate(comparison.changeRate)}</span>
                         </span>
-                      )}
-                    </em>
+                      </em>
+                    )}
                   </article>
-                )
-              })}
+              ))}
             </div>
           </div>
 
