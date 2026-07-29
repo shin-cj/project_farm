@@ -80,21 +80,25 @@
     box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
 }
 
-.seller-dashboard-summary .seller-dashboard-expiration-summary {
+.seller-dashboard-summary .seller-dashboard-expiration-summary.is-warning {
     border-color: #e8d8a7;
     background-color: #fffbeb;
 }
 
-.seller-dashboard-expiration-summary strong {
+.seller-dashboard-expiration-summary.is-warning strong {
     color: #b7791f;
 }
 
 .seller-dashboard-expiration-summary small {
     display: block;
     margin-top: 6px;
-    color: #8a6d1d;
+    color: #6b7280;
     font-size: 12px;
     font-weight: 700;
+}
+
+.seller-dashboard-expiration-summary.is-warning small {
+    color: #8a6d1d;
 }
 
 .seller-dashboard-summary article {

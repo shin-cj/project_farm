@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { getPublicFarms } from '../../api/farmApi.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
@@ -15,7 +15,8 @@ function normalizeKeyword(value) {
 function FarmListPage() {
     const [farms, setFarms] = useState([])
     const [saleType, setSaleType] = useState('ALL')
-    const [keyword, setKeyword] = useState('')
+    const [searchParams, setSearchParams] = useSearchParams()
+    const appliedKeyword = searchParams.get('keyword')?.trim() ?? ''
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
@@ -57,7 +58,36 @@ function FarmListPage() {
         }
     }, [reloadKey])
 
-    const normalizedKeyword = normalizeKeyword(keyword)
+    function updateKeywordSearchParam(keyword) {
+        setSearchParams((currentParams) => {
+            const nextParams = new URLSearchParams(currentParams)
+
+            if (keyword === '') {
+                nextParams.delete('keyword')
+            } else {
+                nextParams.set('keyword', keyword)
+            }
+
+            return nextParams
+        })
+    }
+
+    function handleSearchSubmit(event) {
+        event.preventDefault()
+        const keyword = event.currentTarget.elements.keyword.value.trim()
+
+        updateKeywordSearchParam(keyword)
+    }
+
+    function handleSearchKeywordChange(event) {
+        const nextKeyword = event.target.value
+
+        if (nextKeyword.trim() === '' && appliedKeyword) {
+            updateKeywordSearchParam('')
+        }
+    }
+
+    const normalizedKeyword = normalizeKeyword(appliedKeyword)
 
     const visibleFarms = farms.filter((farm) => {
         const matchesSaleType =
@@ -153,18 +183,24 @@ function FarmListPage() {
                     </button>
                 </div>
 
-                <label className="farm-list-search">
-                    <span>농장 검색</span>
-
+                <form
+                    className="farm-list-search"
+                    onSubmit={handleSearchSubmit}
+                >
                     <input
-                        type="search"
-                        value={keyword}
+                        type="text"
+                        name="keyword"
+                        key={appliedKeyword}
+                        defaultValue={appliedKeyword}
                         placeholder="농장명, 지역 또는 주소 검색"
-                        onChange={(event) =>
-                            setKeyword(event.target.value)
-                        }
+                        onChange={handleSearchKeywordChange}
+                        aria-label="농장 검색"
                     />
-                </label>
+
+                    <button type="submit">
+                        검색
+                    </button>
+                </form>
             </section>
 
             <section className="farm-list-content">
