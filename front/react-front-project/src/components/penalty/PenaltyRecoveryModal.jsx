@@ -16,6 +16,18 @@ const statusLabels = {
     REVOKED: "복구 완료",
 };
 
+function getPenaltyTypeLabel(penalty) {
+    if (
+        penalty.penaltyType === "WARNING" &&
+        Number(penalty.penaltyPoints) === 3
+    ) {
+        return "강한 경고";
+    }
+
+    return typeLabels[penalty.penaltyType] ||
+        penalty.penaltyType;
+}
+
 function PenaltyRecoveryModal({ open, onClose }) {
     const [status, setStatus] = useState("ACTIVE");
     const [penalties, setPenalties] = useState([]);
@@ -152,8 +164,7 @@ function PenaltyRecoveryModal({ open, onClose }) {
 
                                 <div className="penalty-recovery-meta">
                                     <span>
-                                        {typeLabels[penalty.penaltyType] ||
-                                            penalty.penaltyType}
+                                        {getPenaltyTypeLabel(penalty)}
                                     </span>
                                     <span>
                                         {penalty.productName ||
@@ -199,7 +210,7 @@ function PenaltyRecoveryModal({ open, onClose }) {
 
                 {selected && (
                     <div className="penalty-recovery-confirm">
-                        <h3>{typeLabels[selected.penaltyType]} 복구</h3>
+                        <h3>{getPenaltyTypeLabel(selected)} 복구</h3>
                         <textarea
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}

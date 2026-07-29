@@ -181,7 +181,17 @@ function ReportManagementPage() {
               reportStatus: selectedStatus,
               penaltyType:
                   selectedStatus === "RESOLVED"
-                      ? penaltyType
+                      ? penaltyType === "STRONG_WARNING"
+                          ? "WARNING"
+                          : penaltyType
+                      : null,
+              penaltyPoints:
+                  selectedStatus === "RESOLVED"
+                      ? penaltyType === "STRONG_WARNING"
+                          ? 3
+                          : penaltyType === "WARNING"
+                              ? 1
+                              : 5
                       : null,
               penaltyReason:
                   selectedStatus === "RESOLVED"

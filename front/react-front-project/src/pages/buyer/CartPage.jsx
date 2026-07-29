@@ -30,6 +30,23 @@ function CartPage() {
       const { data } = await cartApi.getCartItems(userid)
 
       setCartItems(data)
+      setQuantityInputs(
+          Object.fromEntries(
+              data.map(item => [
+                item.cart_item_id,
+                String(item.quantity),
+              ])
+          )
+      )
+      setSelectedItem(currentItem => {
+        if (!currentItem) {
+          return null
+        }
+
+        return data.find(
+            item => item.cart_item_id === currentItem.cart_item_id
+        ) ?? null
+      })
       setError('')
     } catch (error) {
       console.error(error)
@@ -41,6 +58,18 @@ function CartPage() {
 
   useEffect(() => {
     Promise.resolve().then(loadCartItems)
+  }, [loadCartItems])
+
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      loadCartItems()
+    }
+
+    window.addEventListener("focus", handleWindowFocus)
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus)
+    }
   }, [loadCartItems])
 
   const handleDelete = async (cartItemId) => {
@@ -203,7 +232,9 @@ function CartPage() {
         [item.cart_item_id]: String(item.quantity),
       }))
 
-      alert(`현재 재고는 ${item.stockQuantity}개입니다.`)
+      alert(
+          `현재 재고는 ${item.stockQuantity}개입니다. 재고 수량을 초과하여 담을 수 없습니다.`
+      )
       return
     }
 
@@ -416,10 +447,7 @@ function CartPage() {
                                   <button
                                       type="button"
                                       aria-label={`${item.productName} 수량 늘리기`}
-                                      disabled={
-                                        !isPurchasable ||
-                                        getDisplayQuantity(item) >= item.stockQuantity
-                                      }
+                                      disabled={!isPurchasable}
                                       onClick={() =>
                                           saveQuantity(item, getDisplayQuantity(item) + 1)
                                       }

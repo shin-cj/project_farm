@@ -23,6 +23,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
       AND p.stock_quantity > :stockQuantity
       AND p.stock_quantity >= NVL(p.min_order_quantity, 1)
       AND f.sale_type = :saleType
+      AND f.approval_status = 'APPROVED'  
     ORDER BY p.price ASC
     FETCH FIRST 1 ROWS ONLY
     """, nativeQuery = true)

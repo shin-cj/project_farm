@@ -59,7 +59,7 @@ public class ChatbotService {
         response.setRemark(aiResponse.getRemark());
         response.setRecipe(
                 step == null || step.isEmpty()
-                        ? aiResponse.getRecipe() : String.join("", step)
+                        ? aiResponse.getRecipe() : String.join("\n", step)
         );
         List<RecommendedProductResponse> matchedProducts =
                 findLowestPriceVegetableProducts(aiResponse.getSearchIngredients());
