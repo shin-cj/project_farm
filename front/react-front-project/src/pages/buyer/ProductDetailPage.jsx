@@ -398,10 +398,6 @@ function ProductDetailPage() {
             <CatalogImage src={product.productImageUrl} alt={product.productName} />
           </div>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> b842475fd040deacdea94df9f662311e59f09640
         <div className="product-detail-top">
           <div className="product-detail-top-content">
             <div className="product-detail-badges">
@@ -443,121 +439,6 @@ function ProductDetailPage() {
             목록으로
           </button>
         </div>
-<<<<<<< HEAD
-
-        <div className="product-detail-info">
-          <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
-          <h1>{product.productName}</h1>
-          <p className="product-detail-description">
-            {product.description || '상품 설명이 없습니다.'}
-          </p>
-
-          <div className="product-detail-price-box">
-            <strong>{product.price?.toLocaleString()}원</strong>
-            <span>{product.unit || '단위 미등록'}</span>
-          </div>
-
-        </div>
-
-        <div className="product-detail-purchase-panel">
-          <dl className="product-detail-meta">
-            <div>
-              <dt>재고</dt>
-              <dd>{stockQuantity}개</dd>
-            </div>
-            <div>
-              <dt>수확일</dt>
-              <dd>{product.harvestDate || '미등록'}</dd>
-            </div>
-            <div>
-              <dt>유통기한</dt>
-              <dd>{product.expirationDate || '미등록'}</dd>
-            </div>
-            <div>
-              <dt>상품 번호</dt>
-              <dd>{product.productId}</dd>
-            </div>
-            <div>
-              <dt>판매 방식</dt>
-              <dd>{product.saleType === 'WHOLESALE' ? '도매' : '소매'}</dd>
-            </div>
-            <div>
-              <dt>최소 주문</dt>
-              <dd>{minimumOrderQuantity}개</dd>
-            </div>
-          </dl>
-
-          <div className="product-detail-quantity">
-
-            <div className="product-detail-quantity-row">
-              <span>구매 수량 (최소 {minimumOrderQuantity}개)</span>
-
-              <div className="product-detail-quantity-control">
-                <button
-                    type="button"
-                    onClick={handleDecreaseQuantity}
-                    disabled={numericQuantity <= minimumOrderQuantity}
-                >
-                  -
-                </button>
-
-                <input
-                    type="number"
-                    min={minimumOrderQuantity}
-                    max={stockQuantity}
-                    value={quantity}
-                    onChange={(event) => setQuantity(event.target.value)}
-                />
-
-                <button
-                    type="button"
-                    onClick={handleIncreaseQuantity}
-                    disabled={numericQuantity >= stockQuantity}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            <div className="product-detail-total-row">
-              <span>총 금액</span>
-
-              <strong>
-                {(Number(product.price || 0) * (isValidQuantity ? numericQuantity : 0)).toLocaleString()}원
-              </strong>
-            </div>
-
-          </div>
-
-          <div className="product-detail-actions">
-            <AddCartButton
-              productId={product.productId}
-              userid={userid}
-              quantity={orderQuantity}
-              disabled={!isPurchasable || !isValidQuantity}
-              className="product-detail-cart-button"
-            />
-=======
-          <div className="product-detail-top">
-          <span className="product-detail-status">
-            {getProductStatusLabel(product.productStatus)}
-          </span>
-
-            {product.sameDayDelivery === 'Y' && (
-                <span className="product-detail-same-day-badge">오늘 도착 가능</span>
-            )}
->>>>>>> main
-
-            <button
-                type="button"
-                className="product-detail-back-button"
-                onClick={() => navigate(productListPath)}
-            >
-              목록으로
-            </button>
-=======
->>>>>>> b842475fd040deacdea94df9f662311e59f09640
-          </div>
 
           <div className="product-detail-info">
             <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
