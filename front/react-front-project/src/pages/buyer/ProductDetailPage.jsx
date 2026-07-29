@@ -439,7 +439,6 @@ function ProductDetailPage() {
             목록으로
           </button>
         </div>
-          </div>
 
           <div className="product-detail-info">
             <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>
