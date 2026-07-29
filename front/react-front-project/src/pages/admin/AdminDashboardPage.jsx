@@ -581,7 +581,7 @@ function AdminDashboardPage() {
                                         navigate("/admin/approvals")
                                     }
                                 >
-                                    <span>장기 승인 대기 농장</span>
+                                    <span>승인 대기 3일 이상 농장</span>
                                     <strong>
                                         {details.alerts.oldPendingFarms}건
                                     </strong>
@@ -593,7 +593,7 @@ function AdminDashboardPage() {
                                         navigate("/admin/approvals")
                                     }
                                 >
-                                    <span>장기 승인 대기 상품</span>
+                                    <span>승인 대기 3일 이상 상품</span>
                                     <strong>
                                         {details.alerts.oldPendingProducts}건
                                     </strong>
@@ -605,7 +605,7 @@ function AdminDashboardPage() {
                                         navigate("/admin/deliveries")
                                     }
                                 >
-                                    <span>배송 지연</span>
+                                    <span>배송 시작 후 3일 이상</span>
                                     <strong>
                                         {details.alerts.delayedDeliveries}건
                                     </strong>

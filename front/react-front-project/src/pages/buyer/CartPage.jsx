@@ -30,6 +30,23 @@ function CartPage() {
       const { data } = await cartApi.getCartItems(userid)
 
       setCartItems(data)
+      setQuantityInputs(
+          Object.fromEntries(
+              data.map(item => [
+                item.cart_item_id,
+                String(item.quantity),
+              ])
+          )
+      )
+      setSelectedItem(currentItem => {
+        if (!currentItem) {
+          return null
+        }
+
+        return data.find(
+            item => item.cart_item_id === currentItem.cart_item_id
+        ) ?? null
+      })
       setError('')
     } catch (error) {
       console.error(error)
@@ -41,6 +58,18 @@ function CartPage() {
 
   useEffect(() => {
     Promise.resolve().then(loadCartItems)
+  }, [loadCartItems])
+
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      loadCartItems()
+    }
+
+    window.addEventListener("focus", handleWindowFocus)
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus)
+    }
   }, [loadCartItems])
 
   const handleDelete = async (cartItemId) => {
