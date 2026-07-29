@@ -38,9 +38,8 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 후기입니다."));
 
-        // 엔티티 필드 업데이트 (만약 Review 엔티티에 update 메서드가 없다면 아래처럼 직접 수정하거나 엔티티를 확인해주세요)
-        // 만약 에러가 난다면 Review.java 엔티티에 update(rating, content) 메서드를 추가해주시면 됩니다.
-        review.update(request.getRating(), request.getContent());
+        // 💡 imageUrl까지 함께 업데이트되도록 전달
+        review.update(request.getRating(), request.getContent(), request.getImageUrl());
     }
 
     // 3. 후기 삭제 서비스
@@ -57,5 +56,14 @@ public class ReviewService {
         return reviews.stream()
                 .map(ReviewResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    // 5. 특정 후기 단건 조회 서비스
+    @Transactional(readOnly = true)
+    public ReviewResponse getReviewDetail(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 후기입니다. id=" + reviewId));
+
+        return new ReviewResponse(review);
     }
 }

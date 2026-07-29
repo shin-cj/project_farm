@@ -1,10 +1,9 @@
 server:
   port: 8080
-
-
   tomcat:
     max-swallow-size: 20MB
-    spring:
+
+spring:
   application:
     name: SpringBootBack
 
@@ -39,7 +38,6 @@ pexels:
 openai:
   api-key: ${OPENAI_API_KEY}
   model: gpt-5.4-mini
-
 
 app:
   upload:

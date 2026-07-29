@@ -762,6 +762,23 @@ function ProductDetailPage() {
                           {review.content || review.reviewContent}
                         </p>
 
+                        {(review.imageUrl || review.image_url) && (
+                            <div style={{ marginBottom: '15px' }}>
+                              <img
+                                  src={review.imageUrl || review.image_url}
+                                  alt="후기 이미지"
+                                  style={{
+                                    maxWidth: '150px',
+                                    maxHeight: '150px',
+                                    objectFit: 'cover',
+                                    borderRadius: '4px',
+                                    border: '1px solid #ddd',
+                                    display: 'block'
+                                  }}
+                              />
+                            </div>
+                        )}
+
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                           <button
                               type="button"

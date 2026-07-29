@@ -35,8 +35,8 @@ function ReviewWritePage() {
                     const data = res.data
                     setRating(data.rating || 5)
                     setContent(data.content || '')
-                    setTargetProductId(data.productId)
-                    setImageUrl(data.imageUrl || '')
+                    setTargetProductId(data.productId || data.product_id)
+                    setImageUrl(data.imageUrl || data.image_url || '')
                 })
                 .catch((err) => {
                     console.error('기존 리뷰 조회 실패:', err)
@@ -49,13 +49,14 @@ function ReviewWritePage() {
         }
     }, [isEditMode, reviewId, productId, navigate])
 
+    // 💡 파일을 선택하면 Base64 문자열로 변환하여 imageUrl에 담습니다 (백엔드 수정 불필요)
     const handleImageChange = (e) => {
         const file = e.target.files[0]
         if (!file) return
 
         const reader = new FileReader()
         reader.onloadend = () => {
-            setImageUrl(reader.result)
+            setImageUrl(reader.result) // Base64 문자열로 변환 완료
         }
         reader.readAsDataURL(file)
     }
@@ -68,12 +69,18 @@ function ReviewWritePage() {
             return
         }
 
+        const finalProductId = targetProductId || productId
+        if (!finalProductId) {
+            alert('상품 번호를 찾을 수 없습니다.')
+            return
+        }
+
         const requestData = {
-            productId: Number(targetProductId),
+            productId: Number(finalProductId),
             buyerId: Number(buyerId),
             rating: Number(rating),
             content: content,
-            imageUrl: imageUrl
+            imageUrl: imageUrl || null
         }
 
         try {
@@ -89,7 +96,7 @@ function ReviewWritePage() {
                 alert('후기가 성공적으로 등록되었습니다.')
             }
 
-            navigate(`/products/${targetProductId}`, { replace: true })
+            navigate(`/products/${finalProductId}`, { replace: true })
         } catch (error) {
             console.error('후기 저장 실패:', error.response || error)
             alert(error.response?.data?.message || '후기 처리 중 오류가 발생했습니다.')
@@ -101,7 +108,6 @@ function ReviewWritePage() {
             <h2>{isEditMode ? '상품 후기 수정' : '상품 후기 작성'}</h2>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
                 <div>
-                    {/* htmlFor로 input/select의 id와 매칭 */}
                     <label htmlFor="rating-select" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>평점 선택</label>
                     <select
                         id="rating-select"
