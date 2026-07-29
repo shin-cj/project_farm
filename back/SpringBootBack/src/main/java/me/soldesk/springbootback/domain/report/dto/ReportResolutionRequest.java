@@ -11,6 +11,8 @@ public class ReportResolutionRequest {
 
     private String penaltyType;
 
+    private Integer penaltyPoints;
+
     private String penaltyReason;
 
     private Long adminId;
