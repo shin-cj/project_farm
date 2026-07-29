@@ -43,12 +43,34 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     WHERE (:categoryId IS NULL OR p.categoryId = :categoryId)
       AND (:farmId IS NULL OR p.farmId = :farmId)
       AND (:productStatus IS NULL OR p.productStatus = :productStatus)
+      AND p.productStatus <> 'DELETED'
     """)
     List<Product> findProducts(
             @Param("categoryId") Long categoryId,
             @Param("farmId") Long farmId,
             @Param("productStatus") String productStatus
     );
+
+    /**
+     * 취소·환불 완료 또는 배송 완료가 아닌 주문은 상품 삭제를 막습니다.
+     */
+    @Query(value = """
+    SELECT COUNT(*)
+    FROM order_items oi
+    JOIN orders o
+      ON o.order_id = oi.order_id
+    LEFT JOIN deliveries d
+      ON d.order_id = o.order_id
+    WHERE oi.product_id = :productId
+      AND NOT (
+          o.order_status IN ('CANCELED', 'REFUNDED')
+          OR (
+              o.order_status = 'PAID'
+              AND d.delivery_status = 'DELIVERED'
+          )
+      )
+    """, nativeQuery = true)
+    long countActiveOrdersByProductId(@Param("productId") Long productId);
 
     @Query("""
     SELECT p

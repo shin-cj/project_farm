@@ -121,10 +121,10 @@ public class ProductService {
             );
         }
 
-        if (size != 12 && size != 24 && size != 48) {
+        if (size <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "페이지 표시 개수는 12, 24, 48 중 하나여야 합니다."
+                    "페이지 표시 개수는 1 이상이어야 합니다."
             );
         }
 
@@ -240,6 +240,8 @@ public class ProductService {
                         "상품을 찾을 수 없습니다."
                 ));
 
+        validateNotDeletedProduct(product);
+
         if (publicOnly) {
             validatePublicProduct(product);
         }
@@ -290,6 +292,8 @@ public class ProductService {
                         HttpStatus.NOT_FOUND,
                         "상품을 찾을 수 없습니다."
                 ));
+
+        validateNotDeletedProduct(product);
 
         String previousImageUrl = product.getProductImageUrl();
         Integer previousStockQuantity = product.getStockQuantity();
@@ -364,6 +368,8 @@ public class ProductService {
                         HttpStatus.NOT_FOUND,
                         "상품을 찾을 수 없습니다."
                 ));
+
+        validateNotDeletedProduct(product);
 
         if ("PENDING".equals(product.getProductStatus())
                 || "REJECTED".equals(product.getProductStatus())) {
@@ -501,6 +507,8 @@ public class ProductService {
                         HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."
                 ));
 
+        validateNotDeletedProduct(product);
+
         Integer previousStockQuantity = product.getStockQuantity();
         product.setStockQuantity(request.getStockQuantity());
 
@@ -551,6 +559,8 @@ public class ProductService {
                         "상품을 찾을 수 없습니다."
                 ));
 
+        validateNotDeletedProduct(product);
+
         Farm farm = farmRepository.findById(product.getFarmId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -564,11 +574,18 @@ public class ProductService {
             );
         }
 
-        String productImageUrl = product.getProductImageUrl();
-
         try {
-            productRepository.delete(product);
-            productRepository.flush();
+            if (productRepository.countActiveOrdersByProductId(productId) > 0) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "진행 중인 주문이 연결된 상품은 삭제할 수 없습니다."
+                );
+            }
+
+            // Keep order, payment, and stock-history references intact.
+            product.setProductStatus("DELETED");
+            product.setUpdatedAt(LocalDateTime.now());
+            productRepository.save(product);
         } catch (DataIntegrityViolationException exception) {
             throw new ResponseStatusException(
                     HttpStatus.CONFLICT,
@@ -576,7 +593,6 @@ public class ProductService {
             );
         }
 
-        productImageService.deleteStoredImage(productImageUrl);
     }
 
     //Product 엔티티를 ProductResponse DTO로 변환
@@ -738,8 +754,8 @@ public class ProductService {
             );
         }
 
-        if (request.getPackageWeightGrams() == null
-                || request.getPackageWeightGrams().signum() <= 0) {
+        if (request.getPackageWeightGrams() != null
+                && request.getPackageWeightGrams().signum() <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "판매 단위의 총중량은 0g보다 크게 입력해주세요."
@@ -911,6 +927,15 @@ public class ProductService {
                 && "SOLD_OUT".equals(product.getProductStatus())) {
 
             product.setProductStatus("ON_SALE");
+        }
+    }
+
+    private void validateNotDeletedProduct(Product product) {
+        if ("DELETED".equals(product.getProductStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "상품을 찾을 수 없습니다."
+            );
         }
     }
 
