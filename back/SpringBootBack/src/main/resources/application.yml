@@ -1,5 +1,7 @@
 server:
   port: 8080
+  tomcat:
+    max-swallow-size: 20MB
 
 spring:
   application:
@@ -37,7 +39,6 @@ openai:
   api-key: ${OPENAI_API_KEY}
   model: gpt-5.4-mini
 
-
 app:
   upload:
     root-directory: ${AGROLINK_UPLOAD_ROOT:../../uploads}
@@ -49,4 +50,3 @@ app:
 
 tosspayments:
   secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
-
