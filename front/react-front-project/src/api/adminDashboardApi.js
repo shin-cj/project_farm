@@ -9,7 +9,11 @@ const adminDashboardApi = {
         return httpClient.get("/admin/dashboard/details", {
             params: {period}
         })
-    }
+    },
+
+    getTodaySales(){
+        return httpClient.get("/admin/dashboard/today-sales")
+    },
 };
 
 export default adminDashboardApi;

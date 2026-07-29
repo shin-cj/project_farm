@@ -279,7 +279,13 @@ function SellerDashboardPage() {
             <strong>{summary.onSaleCount}개</strong>
           </article>
 
-          <article className="seller-dashboard-expiration-summary">
+          <article
+              className={
+                summary.expirationWarningCount > 0
+                    ? 'seller-dashboard-expiration-summary is-warning'
+                    : 'seller-dashboard-expiration-summary'
+              }
+          >
             <span>유통기한 임박 상품</span>
             <strong>{summary.expirationWarningCount}개</strong>
             <small>7일 이내</small>

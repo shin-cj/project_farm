@@ -23,6 +23,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
       AND p.stock_quantity > :stockQuantity
       AND p.stock_quantity >= NVL(p.min_order_quantity, 1)
       AND f.sale_type = :saleType
+      AND f.approval_status = 'APPROVED'  
     ORDER BY p.price ASC
     FETCH FIRST 1 ROWS ONLY
     """, nativeQuery = true)
@@ -52,7 +53,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     );
 
     /**
-     * 취소·환불 완료 또는 배송 완료가 아닌 주문은 상품 삭제를 막습니다.
+     * 결제 대기, 배송 준비·진행 또는 환불 요청 중인 주문은 상품 삭제를 막습니다.
+     * 배송 정보가 아직 없으면 배송 준비 상태로 처리합니다.
      */
     @Query(value = """
     SELECT COUNT(*)
@@ -62,12 +64,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     LEFT JOIN deliveries d
       ON d.order_id = o.order_id
     WHERE oi.product_id = :productId
+      AND o.order_status NOT IN ('CANCELED', 'REFUNDED')
       AND NOT (
-          o.order_status IN ('CANCELED', 'REFUNDED')
-          OR (
-              o.order_status = 'PAID'
-              AND d.delivery_status = 'DELIVERED'
-          )
+          o.order_status = 'PAID'
+          AND NVL(d.delivery_status, 'READY') = 'DELIVERED'
       )
     """, nativeQuery = true)
     long countActiveOrdersByProductId(@Param("productId") Long productId);

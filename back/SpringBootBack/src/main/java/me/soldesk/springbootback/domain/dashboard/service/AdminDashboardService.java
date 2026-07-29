@@ -108,5 +108,28 @@ public class AdminDashboardService {
 
     }
 
+    @Transactional(readOnly = true)
+    public List<AdminTodaySaleResponse> getTodaySale(){
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        LocalDateTime tomorrowStart = todayStart.plusDays(1);
+
+        return adminDashboardRepository
+                .findTodaySales(todayStart, tomorrowStart)
+                .stream()
+                .map(view -> AdminTodaySaleResponse.builder()
+                        .paymentId(view.getPaymentId())
+                        .orderId(view.getOrderId())
+                        .orderNumber(view.getOrderNumber())
+                        .buyerId(view.getBuyerId())
+                        .farmName(view.getFarmName())
+                        .sellerName(view.getSellerName())
+                        .paymentMethod(view.getPaymentMethod())
+                        .paymentAmount(view.getPaymentAmount())
+                        .paymentStatus(view.getPaymentStatus())
+                        .paidAt(view.getPaidAt())
+                        .build())
+                .toList();
+    }
+
 
 }
