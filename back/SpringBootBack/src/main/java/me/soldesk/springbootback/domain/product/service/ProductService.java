@@ -9,6 +9,7 @@ import me.soldesk.springbootback.domain.product.dto.ProductResponse;
 import me.soldesk.springbootback.domain.product.dto.ProductStatusRequest;
 import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
 import me.soldesk.springbootback.domain.product.entity.Product;
+import me.soldesk.springbootback.domain.product.event.ProductKeywordGenerationRequestedEvent;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.stockhistory.dto.ProductStockHistoryResponse;
 import me.soldesk.springbootback.domain.stockhistory.service.ProductStockHistoryService;
@@ -19,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -37,19 +39,22 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductImageService productImageService;
     private final ProductStockHistoryService productStockHistoryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     //의존성 주입
     public ProductService(ProductRepository productRepository,
                           FarmRepository farmRepository,
                           CategoryRepository categoryRepository,
                           ProductImageService productImageService,
-                          ProductStockHistoryService productStockHistoryService) {
+                          ProductStockHistoryService productStockHistoryService,
+                          ApplicationEventPublisher eventPublisher) {
 
         this.farmRepository = farmRepository;
         this.categoryRepository = categoryRepository;
         this.productRepository = productRepository;
         this.productImageService = productImageService;
         this.productStockHistoryService = productStockHistoryService;
+        this.eventPublisher = eventPublisher;
     }
 
     // 카테고리, 농장, 판매 상태를 조건으로 상품 목록을 조회합니다.
@@ -276,6 +281,8 @@ public class ProductService {
                 "상품 등록 초기 재고"
         );
 
+        requestProductKeywordGeneration(savedProduct);
+
         return toResponse(savedProduct);
 
     }
@@ -330,6 +337,8 @@ public class ProductService {
         )) {
             productImageService.deleteStoredImage(previousImageUrl);
         }
+
+        requestProductKeywordGeneration(savedProduct);
 
         return toResponse(savedProduct);
     }
@@ -635,6 +644,18 @@ public class ProductService {
         response.setUpdatedAt(product.getUpdatedAt());
         response.setSameDayDelivery(product.getSameDayDelivery());
 
+        List<String> aiKeywords = new ArrayList<>();
+
+        if(product.getAiKeyword1() != null && !product.getAiKeyword1().isBlank()){
+            aiKeywords.add(product.getAiKeyword1().trim());
+        }
+
+        if(product.getAiKeyword2() != null && !product.getAiKeyword2().isBlank()){
+            aiKeywords.add(product.getAiKeyword2().trim());
+        }
+
+        response.setAiKeywords(aiKeywords);
+
         return response;
     }
 
@@ -875,6 +896,14 @@ public class ProductService {
         }
     }
 
+    private void requestProductKeywordGeneration(Product product) {
+        eventPublisher.publishEvent(
+                new ProductKeywordGenerationRequestedEvent(
+                        product.getProductId()
+                )
+        );
+    }
+
     private void applyRequestToProduct(Product product, ProductRequest request){
 
         product.setFarmId(request.getFarmId());
@@ -896,6 +925,9 @@ public class ProductService {
         product.setHarvestDate(request.getHarvestDate());
         product.setExpirationDate(request.getExpirationDate());
         product.setProductImageUrl(request.getProductImageUrl());
+        product.setAiKeyword1(null);
+        product.setAiKeyword2(null);
+        product.setAiKeywordsGeneratedAt(null);
 
     }
     // 재고 수량에 따라 상품 판매 상태를 변경합니다.

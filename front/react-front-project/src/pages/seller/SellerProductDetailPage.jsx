@@ -178,6 +178,22 @@ function SellerProductDetailPage() {
         <div className="seller-product-detail-summary">
           <p className="seller-product-detail-farm">{farm.farmName} · {saleTypeText}</p>
           <h2>{product.productName}</h2>
+
+          {Array.isArray(product.aiKeywords)
+              && product.aiKeywords.length > 0 && (
+                  <div className="seller-product-detail-ai-keywords">
+                    {product.aiKeywords
+                        .filter((keyword) => (
+                          typeof keyword === 'string'
+                          && keyword.trim() !== ''
+                        ))
+                        .slice(0, 2)
+                        .map((keyword) => (
+                          <span key={keyword}>#{keyword}</span>
+                        ))}
+                  </div>
+              )}
+
           <p className="seller-product-detail-description">
             {product.description || '등록된 상품 설명이 없습니다.'}
           </p>

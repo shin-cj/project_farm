@@ -157,6 +157,25 @@
     opacity: 0.55;
 }
 
+.seller-product-ai-keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 5px;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.seller-product-ai-keyword-button {
+    border-color: #b9d8ae !important;
+    color: #2f741b !important;
+}
+
+.seller-product-ai-keyword-button:not(:disabled):hover {
+    background-color: #eef6e8 !important;
+}
+
 .seller-product-filter {
     margin-bottom: 22px;
     padding: 18px;
