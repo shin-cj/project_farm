@@ -9,6 +9,9 @@ import reportApi from "../../api/reportApi";
 import "./AdminDashboardPage.css";
 import DashboardItemDetailModal
     from "../../components/report/DashboardItemDetailModal.jsx";
+import orderApi from "../../api/orderApi.js";
+import TodayOrdersModal from "../../components/order/TodayOrdersModal.jsx";
+import TodaySalesModal from "../../components/payment/TodaySalesModal.jsx";
 
 const TREND_METRICS = {
     salesAmount: {
@@ -53,8 +56,67 @@ function AdminDashboardPage() {
         loading: false,
         error: ""
     });
-
+    const [todayOrdersModalOpen, setTodayOrdersModalOpen] = useState(false);
+    const [todayOrders, setTodayOrders] = useState([]);
+    const [todayOrdersLoading, setTodayOrdersLoading] = useState(false);
+    const [todayOrdersError, setTodayOrdersError] = useState("");
     const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
+
+    const [todaySalesModalOpen, setTodaySalesModalOpen] = useState(false)
+    const [todaySales, setTodaySales] = useState([])
+    const [todaySalesLoading, setTodaySalesLoading] = useState(false)
+    const [todaySalesError, setTodaySalesError] = useState("")
+
+
+    const openTodaySaleModal = async () => {
+        setTodaySalesModalOpen(true)
+        setTodaySalesLoading(true)
+        setTodaySalesError("")
+
+        try {
+            const {data} = await adminDashboardApi.getTodaySales()
+            setTodaySales(data)
+        }catch (e){
+            console.error(e)
+            setTodaySalesError("오늘 매출 내역을 불러오지 못했습니다.")
+        }finally {
+            setTodaySalesLoading(false)
+        }
+    }
+
+    const isToday = (dateValue) => {
+        if(!dateValue) return false
+
+        const orderDate = new Date(dateValue)
+        const today = new Date()
+
+        return (
+            orderDate.getFullYear() === today.getFullYear() &&
+            orderDate.getMonth() === today.getMonth() &&
+            orderDate.getDate() === today.getDate()
+        )
+    }
+
+    const openTodayOrdersModal = async () => {
+        setTodayOrdersModalOpen(true);
+        setTodayOrdersLoading(true);
+        setTodayOrdersError("")
+
+        try {
+            const {data} = await orderApi.getAdminOrders()
+
+            const filteredOreders = data.filter((order) =>
+                isToday(order.orderedAt)
+            )
+
+            setTodayOrders(filteredOreders)
+        } catch (e){
+            console.error(e)
+            setTodayOrdersError("오늘 주문 내역을 불러오지 못했습니다.")
+        }finally {
+            setTodayOrdersLoading(false)
+        }
+    }
 
     async function openWorkModal(type) {
         const titles = {
@@ -315,12 +377,12 @@ function AdminDashboardPage() {
                     <strong>{summary.totalMembers}명</strong>
                 </button>
 
-                <button>
+                <button type="button" onClick={openTodayOrdersModal}>
                     <span>오늘 주문</span>
                     <strong>{summary.todayOrders}건</strong>
                 </button>
 
-                <button>
+                <button type="button" onClick={openTodaySaleModal}>
                     <span>오늘 매출</span>
                     <strong>
                         {summary.todaySales.toLocaleString()}원
@@ -571,6 +633,20 @@ function AdminDashboardPage() {
                 <DashboardItemDetailModal
                     item={selectedWorkDetail}
                     onClose={closeWorkDetail}
+                />
+                <TodayOrdersModal
+                    open = {todayOrdersModalOpen}
+                    orders = {todayOrders}
+                    loading = {todayOrdersLoading}
+                    error = {todayOrdersError}
+                    onClose={() => setTodayOrdersModalOpen(false)}
+                />
+                <TodaySalesModal
+                    open={todaySalesModalOpen}
+                    sales={todaySales}
+                    loading={todaySalesLoading}
+                    error={todaySalesError}
+                    onClose={() => setTodaySalesModalOpen(false)}
                 />
 
             </section>

@@ -203,7 +203,9 @@ function CartPage() {
         [item.cart_item_id]: String(item.quantity),
       }))
 
-      alert(`현재 재고는 ${item.stockQuantity}개입니다.`)
+      alert(
+          `현재 재고는 ${item.stockQuantity}개입니다. 재고 수량을 초과하여 담을 수 없습니다.`
+      )
       return
     }
 
@@ -416,10 +418,7 @@ function CartPage() {
                                   <button
                                       type="button"
                                       aria-label={`${item.productName} 수량 늘리기`}
-                                      disabled={
-                                        !isPurchasable ||
-                                        getDisplayQuantity(item) >= item.stockQuantity
-                                      }
+                                      disabled={!isPurchasable}
                                       onClick={() =>
                                           saveQuantity(item, getDisplayQuantity(item) + 1)
                                       }

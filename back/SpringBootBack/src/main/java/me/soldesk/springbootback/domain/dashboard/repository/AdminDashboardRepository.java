@@ -174,4 +174,30 @@ public interface AdminDashboardRepository extends JpaRepository<User, Long> {
             @Param("threshold") LocalDateTime threshold
     );
 
+
+    @Query(value = """
+    SELECT
+        p.payment_id AS "paymentId",
+        p.order_id AS "orderId",
+        o.order_number AS "orderNumber",
+        o.buyer_id AS "buyerId",
+        f.farm_name AS "farmName",
+        u.name AS "sellerName",
+        p.payment_method AS "paymentMethod",
+        p.payment_amount AS "paymentAmount",
+        p.payment_status AS "paymentStatus",
+        p.paid_at AS "paidAt"
+    FROM payments p
+    JOIN orders o ON o.order_id = p.order_id
+    LEFT JOIN farms f ON f.farm_id = o.farm_id
+    LEFT JOIN users u ON u.user_id = f.seller_id
+    WHERE p.payment_status = 'DONE'
+      AND p.paid_at >= :todayStart
+      AND p.paid_at < :tomorrowStart
+    ORDER BY p.paid_at DESC
+    """, nativeQuery = true)
+    List<AdminTodaySaleView> findTodaySales(
+            @Param("todayStart") LocalDateTime todayStart,
+            @Param("tomorrowStart") LocalDateTime tomorrowStart
+    );
 }
