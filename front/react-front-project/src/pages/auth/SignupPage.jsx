@@ -126,7 +126,14 @@ function SignupPage() {
       return;
     }
 
+    const popupWidth = 500;
+    const popupHeight = 600;
+    const popupLeft = window.screenX + (window.outerWidth - popupWidth) / 2;
+    const popupTop = window.screenY + (window.outerHeight - popupHeight) / 2;
+
     new Postcode({
+      width: popupWidth,
+      height: popupHeight,
       oncomplete(data) {
         const selectedAddress =
           data.userSelectedType === "R" ? data.roadAddress : data.jibunAddress;
@@ -147,7 +154,12 @@ function SignupPage() {
           detailAddressRef.current?.focus();
         }, 0);
       },
-    }).open();
+    }).open({
+      left: Math.max(0, Math.round(popupLeft)),
+      top: Math.max(0, Math.round(popupTop)),
+      popupTitle: "회원가입 주소 검색",
+      popupKey: "signup-address-search",
+    });
   }
 
   async function handleSignup(event) {
