@@ -29,6 +29,19 @@ function makeConversationTitle(question){
   return question.length > 18 ? `${question.slice(0, 18)}...` : question;
 }
 
+function getProductQuantityInfo(product){
+  const minimumQuantity = Math.max(1, Number(product.minOrderQuantity) || 1)
+
+  const stockQuantity = Math.max(0, Number(product.stockQuantity) || 0)
+
+  return {
+    minimumQuantity,
+    stockQuantity,
+
+    canOrder: stockQuantity >= minimumQuantity,
+  }
+}
+
 function ProgressCard({status}){
   const steps = [
     '요청 내용 분석',
@@ -82,14 +95,19 @@ function ChatbotPage() {
   )
 
   const changeProductQuantity = (product, nextQuantity) => {
-    const minimumQuantity = Math.max(1, Number(product.minOrderQuantity) || 1)
-    const stockQuantity = Math.max(
-        minimumQuantity,
-        Number(product.stockQuantity) || minimumQuantity
-    )
+    const {
+      minimumQuantity,
+      stockQuantity,
+      canOrder,
+    } = getProductQuantityInfo(product)
+
+    if(!canOrder){
+      return
+    }
+
     const numericQuantity = Number(nextQuantity)
 
-    if (!Number.isInteger(numericQuantity)) {
+    if(!Number.isInteger(numericQuantity)) {
       return
     }
 
@@ -97,6 +115,7 @@ function ChatbotPage() {
         stockQuantity,
         Math.max(minimumQuantity, numericQuantity)
     )
+
     const quantityKey =
         `${activeConversationId}-${product.saleType ?? 'RETAIL'}-${product.productId}`
 
@@ -584,16 +603,18 @@ function ChatbotPage() {
 
           {displayedProducts.length > 0
           ? displayedProducts.map((product) => {
-              const minimumQuantity =
-                  Math.max(1, Number(product.minOrderQuantity) || 1)
-              const stockQuantity = Math.max(
-                  minimumQuantity,
-                  Number(product.stockQuantity) || minimumQuantity
-              )
+
+            const {
+              minimumQuantity,
+              stockQuantity,
+              canOrder,
+            } = getProductQuantityInfo(product)
+
               const quantityKey =
                   `${activeConversationId}-${product.saleType ?? 'RETAIL'}-${product.productId}`
-              const quantity =
-                  productQuantities[quantityKey] ?? minimumQuantity
+              const quantity = canOrder
+                ? productQuantities[quantityKey] ?? minimumQuantity
+                  : 0
 
               return (
                   <div
@@ -606,42 +627,49 @@ function ChatbotPage() {
                     <strong>{product.productName}</strong>
                     <p>{product.price.toLocaleString()}원 / {product.unit}</p>
 
+
+
                     <div className="chatbot-product-quantity">
                       <div className="chatbot-product-quantity-label">
                         <strong>주문 수량</strong>
                         <span>최소 {minimumQuantity}개</span>
                       </div>
 
-                      <div className="chatbot-product-quantity-control">
-                        <button
-                            type="button"
-                            onClick={() => changeProductQuantity(product, quantity - 1)}
-                            disabled={quantity <= minimumQuantity}
-                            aria-label={`${product.productName} 수량 감소`}>
-                          -
-                        </button>
+                      {canOrder ? (
+                          <div className="chatbot-product-quantity-control">
+                            <button
+                                type="button"
+                                onClick={() => changeProductQuantity(product, quantity - 1)}
+                                disabled={quantity <= minimumQuantity}
+                                >
+                              -
+                            </button>
 
-                        <input
-                            type="number"
-                            min={minimumQuantity}
-                            max={stockQuantity}
-                            value={quantity}
-                            onChange={event =>
-                                changeProductQuantity(product, event.target.value)
-                            }
-                            aria-label={`${product.productName} 주문 수량`}
-                        />
+                            <input
+                                type="number"
+                                min={minimumQuantity}
+                                max={stockQuantity}
+                                value={quantity}
+                                onChange={event =>
+                                    changeProductQuantity(product, event.target.value)
+                                }
+                            />
 
-                        <button
-                            type="button"
-                            onClick={() => changeProductQuantity(product, quantity + 1)}
-                            disabled={quantity >= stockQuantity}
-                            aria-label={`${product.productName} 수량 증가`}>
-                          +
-                        </button>
-                      </div>
+                            <button
+                                type="button"
+                                onClick={() => changeProductQuantity(product, quantity + 1)}
+                                disabled={quantity >= stockQuantity}
+                                >
+                              +
+                            </button>
+                          </div>
+                          ) : (
+                              <p className="chatbot-product-stock-warning">
+                                최소 주문 수량보다 재고가 부족합니다.
+                              </p>
+                          )}
 
-                      <small>재고 {stockQuantity}개</small>
+                      <small>실제 재고 {stockQuantity}개</small>
                     </div>
 
                     <AddCartButton
@@ -649,7 +677,7 @@ function ChatbotPage() {
                       userid={userid}
                       quantity={quantity}
                       disabled={
-                        quantity < minimumQuantity || quantity > stockQuantity
+                        !canOrder || quantity < minimumQuantity || quantity > stockQuantity
                       }
                     />
                   </div>
