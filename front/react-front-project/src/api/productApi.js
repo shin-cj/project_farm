@@ -82,6 +82,14 @@ export async function getProduct(productId, publicOnly = false) {
   return response.data
 }
 
+export async function generateProductAiKeywords(productId) {
+  const response = await axios.post(
+      `/api/products/${productId}/ai-keywords`
+  )
+
+  return response.data
+}
+
 // 판매자 상품 상세 화면에서 재고 변경 이력을 최신순으로 가져옵니다.
 export async function getProductStockHistories(productId) {
   const response = await axios.get(`/api/products/${productId}/stock-histories`)
