@@ -227,14 +227,6 @@ function SellerProductDetailPage() {
           <h2>상품 기본 정보</h2>
           <dl>
             <div><dt>원산지</dt><dd>{product.origin || '-'}</dd></div>
-            <div>
-              <dt>판매 단위 총중량</dt>
-              <dd>
-                {product.packageWeightGrams == null
-                  ? '-'
-                  : `${Number(product.packageWeightGrams).toLocaleString()}g`}
-              </dd>
-            </div>
             <div><dt>공공 시세 품목 코드</dt><dd>{product.marketItemCode || '-'}</dd></div>
             <div><dt>수확일</dt><dd>{formatDate(product.harvestDate)}</dd></div>
             <div><dt>소비기한</dt><dd>{formatDate(product.expirationDate)}</dd></div>

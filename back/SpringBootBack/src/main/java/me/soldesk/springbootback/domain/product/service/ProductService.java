@@ -126,10 +126,10 @@ public class ProductService {
             );
         }
 
-        if (size != 12 && size != 24 && size != 48) {
+        if (size <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "페이지 표시 개수는 12, 24, 48 중 하나여야 합니다."
+                    "페이지 표시 개수는 1 이상이어야 합니다."
             );
         }
 
@@ -775,8 +775,8 @@ public class ProductService {
             );
         }
 
-        if (request.getPackageWeightGrams() == null
-                || request.getPackageWeightGrams().signum() <= 0) {
+        if (request.getPackageWeightGrams() != null
+                && request.getPackageWeightGrams().signum() <= 0) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "판매 단위의 총중량은 0g보다 크게 입력해주세요."

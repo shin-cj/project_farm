@@ -156,10 +156,15 @@ public class MarketPriceService {
     }
 
     private BuyerMainRankingItemResponse toRankingItem(MarketPriceSearchResponse item, Long previousPrice) {
-        Long currentPrice = parsePrice(item.getExmnDdCnvsPrc());
+        Long currentPrice = parsePrice(item.getExmnDdPrc());
 
         Long changeAmount = currentPrice - previousPrice;
         Double changeRate = calculateChangeRateNumber(currentPrice, previousPrice);
+        boolean weightUnit = isWeightUnit(item.getUnit());
+        String displayUnit = formatMarketUnit(item.getUnitSz(), item.getUnit());
+        Long comparisonPrice = weightUnit
+                ? parsePrice(item.getExmnDdCnvsPrc())
+                : currentPrice;
 
         return new BuyerMainRankingItemResponse(
                 item.getItemCd(),
@@ -167,12 +172,42 @@ public class MarketPriceService {
                 item.getVrtyNm(),
                 item.getCtgryNm(),
                 item.getSeNm(),
-                "kg",
+                displayUnit,
                 currentPrice,
                 previousPrice,
                 changeAmount,
-                changeRate
+                changeRate,
+                weightUnit ? "kg" : displayUnit,
+                comparisonPrice
         );
+    }
+
+    private boolean isWeightUnit(String unit) {
+        if (!StringUtils.hasText(unit)) {
+            return false;
+        }
+
+        String normalizedUnit = unit.trim().toLowerCase();
+        return "g".equals(normalizedUnit)
+                || "kg".equals(normalizedUnit)
+                || normalizedUnit.startsWith("kg(");
+    }
+
+    private String formatMarketUnit(String unitSize, String unit) {
+        String normalizedSize = StringUtils.hasText(unitSize)
+                ? unitSize.trim()
+                : "";
+        String normalizedUnit = StringUtils.hasText(unit)
+                ? unit.trim()
+                : "";
+
+        if (!StringUtils.hasText(normalizedSize)) {
+            return StringUtils.hasText(normalizedUnit)
+                    ? normalizedUnit
+                    : "단위";
+        }
+
+        return normalizedSize + normalizedUnit;
     }
 
     private List<BuyerMainRankingItemResponse> createTopRanking(
@@ -184,9 +219,9 @@ public class MarketPriceService {
         return recentList.stream()
                 .map(item -> {
                     Long previousPrice = switch (period) {
-                        case "DAY" -> parsePrice(item.getDd1BfrCnvsPrc());
-                        case "WEEK" -> parsePrice(item.getWw1BfrCnvsPrc());
-                        case "MONTH" -> parsePrice(item.getMm1BfrCnvsPrc());
+                        case "DAY" -> parsePrice(item.getDd1BfrPrc());
+                        case "WEEK" -> parsePrice(item.getWw1BfrPrc());
+                        case "MONTH" -> parsePrice(item.getMm1BfrPrc());
                         default -> 0L;
                     };
 
@@ -272,7 +307,7 @@ public class MarketPriceService {
         int resultLimit = request.getLimit() == null || request.getLimit() <= 0 ? 200 : request.getLimit();
 
         return recentList.stream()
-                .map(item -> toRankingItem(item, parsePrice(item.getDd1BfrCnvsPrc())))
+                .map(item -> toRankingItem(item, parsePrice(item.getDd1BfrPrc())))
                 .filter(item -> item.getCurrentPrice() > 0)
                 .collect(Collectors.toMap(
                         item -> item.getItemName() + "|"
