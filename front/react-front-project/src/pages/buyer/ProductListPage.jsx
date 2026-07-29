@@ -1,7 +1,7 @@
 import {useEffect, useRef, useState} from 'react'
 import {Link, useSearchParams} from 'react-router-dom'
 import {getCategories} from '../../api/categoryApi.js'
-import {getPublicProductPage} from '../../api/productApi.js'
+import { getPublicProductPage } from '../../api/productApi.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import {getApiErrorMessage} from '../../utils/apiError.js'
 import './ProductListPage.css'
@@ -540,6 +540,26 @@ function ProductListPage() {
                                     >
                                         {product.productName}
                                     </Link>
+
+                                    {Array.isArray(product.aiKeywords)
+                                        && product.aiKeywords.length > 0 && (
+                                            <div className="product-card-ai-keywords">
+                                                {product.aiKeywords
+                                                    .filter((keyword) => (
+                                                        typeof keyword === 'string'
+                                                        && keyword.trim() !== ''
+                                                    ))
+                                                    .slice(0, 2)
+                                                    .map((keyword) => (
+                                                        <span
+                                                            key={keyword}
+                                                            className="product-card-ai-keyword"
+                                                        >
+                #{keyword}
+              </span>
+                                                    ))}
+                                            </div>
+                                        )}
 
                                     <p className="product-description">
                                         {product.description || '상품 설명이 없습니다.'}

@@ -47,7 +47,7 @@ public class SellerPointGoalService {
     }
 
     @Transactional
-    public SellerPointGoalResponse updaateTodayGoal(SellerPointGoalRequest request){
+    public SellerPointGoalResponse updateTodayGoal(SellerPointGoalRequest request){
         if(request.getSellerId()== null){
             throw new IllegalArgumentException("판매자 정보가 없습니다.");
         }

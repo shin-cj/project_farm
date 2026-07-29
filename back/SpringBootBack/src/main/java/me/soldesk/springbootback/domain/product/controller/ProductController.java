@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.product.controller;
 
 import me.soldesk.springbootback.domain.product.dto.*;
 import me.soldesk.springbootback.domain.product.service.ProductImageService;
+import me.soldesk.springbootback.domain.product.service.ProductKeywordService;
 import me.soldesk.springbootback.domain.product.service.ProductService;
 import me.soldesk.springbootback.domain.stockhistory.dto.ProductStockHistoryResponse;
 import org.springframework.http.HttpStatus;
@@ -17,10 +18,13 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductImageService productImageService;
+    private final ProductKeywordService productKeywordService;
 
-    public ProductController(ProductService productService, ProductImageService productImageService) {
+    public ProductController(ProductService productService, ProductImageService productImageService
+    , ProductKeywordService productKeywordService) {
         this.productService = productService;
         this.productImageService = productImageService;
+        this.productKeywordService = productKeywordService;
     }
 
     @GetMapping
@@ -76,6 +80,20 @@ public class ProductController {
             @RequestParam(defaultValue = "false") boolean publicOnly
     ) {
         return productService.getProduct(productId, publicOnly);
+    }
+
+    @GetMapping("/{productId}/ai-keywords")
+    public ProductKeywordResponse getProductKeywords(
+            @PathVariable Long productId
+    ){
+        return productKeywordService.getProductKeywords(productId);
+    }
+
+    @PostMapping("/{productId}/ai-keywords")
+    public ProductKeywordResponse generateProductKeywords(
+            @PathVariable Long productId
+    ){
+        return productKeywordService.generateProductKeywords(productId);
     }
 
     @GetMapping("/{productId}/stock-histories")

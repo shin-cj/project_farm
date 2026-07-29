@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   deleteProduct,
+  generateProductAiKeywords,
   getProducts,
   updateProductStatus,
   updateProductStock
@@ -44,6 +45,7 @@ function ProductManagementPage() {
   const [updatingStockId, setUpdatingStockId] = useState(null)
   const [deletingProductId, setDeletingProductId] = useState(null)
   const [selectedRejectionProduct, setSelectedRejectionProduct] = useState(null)
+  const [generatingKeywordId, setGeneratingKeywordId] = useState(null)
 
   useEffect(() => {
     let ignore = false
@@ -369,6 +371,41 @@ function ProductManagementPage() {
     }
   }
 
+  async function handleGenerateProductKeywords(product) {
+    if (generatingKeywordId !== null) {
+      return
+    }
+
+    try {
+      setGeneratingKeywordId(product.productId)
+
+      const result = await generateProductAiKeywords(product.productId)
+      const keywords = Array.isArray(result?.keywords)
+          ? result.keywords
+              .filter((keyword) => (
+                typeof keyword === 'string'
+                && keyword.trim() !== ''
+              ))
+              .slice(0, 2)
+          : []
+
+      setProducts((currentProducts) =>
+          currentProducts.map((currentProduct) => (
+              currentProduct.productId === product.productId
+                  ? { ...currentProduct, aiKeywords: keywords }
+                  : currentProduct
+          ))
+      )
+
+      alert('AI 상품 키워드를 생성했습니다.')
+    } catch (err) {
+      console.error(err)
+      alert(getApiErrorMessage(err, 'AI 상품 키워드 생성에 실패했습니다.'))
+    } finally {
+      setGeneratingKeywordId(null)
+    }
+  }
+
   function getStatusText(status) {
     if (status === 'ON_SALE') {
       return '판매 중'
@@ -580,8 +617,23 @@ function ProductManagementPage() {
                             <strong>{product.productName}</strong>
 
                             <span>
-        {product.origin || '원산지 미등록'}
-      </span>
+                              {product.origin || '원산지 미등록'}
+                            </span>
+
+                            {Array.isArray(product.aiKeywords)
+                                && product.aiKeywords.length > 0 && (
+                                    <div className="seller-product-ai-keywords">
+                                      {product.aiKeywords
+                                          .filter((keyword) => (
+                                            typeof keyword === 'string'
+                                            && keyword.trim() !== ''
+                                          ))
+                                          .slice(0, 2)
+                                          .map((keyword) => (
+                                            <span key={keyword}>#{keyword}</span>
+                                          ))}
+                                    </div>
+                                )}
                           </div>
                         </div>
                       </td>
@@ -686,6 +738,22 @@ function ProductManagementPage() {
                           >
                             수정
                           </Link>
+
+                          <button
+                              type="button"
+                              className="seller-product-ai-keyword-button"
+                              onClick={() => handleGenerateProductKeywords(product)}
+                              disabled={
+                                  generatingKeywordId !== null
+                                  || deletingProductId !== null
+                              }
+                          >
+                            {generatingKeywordId === product.productId
+                                ? '키워드 생성 중...'
+                                : product.aiKeywords?.length > 0
+                                    ? 'AI 키워드 재생성'
+                                    : 'AI 키워드 생성'}
+                          </button>
 
                           {product.productStatus === 'PENDING' && (
                               <span className="seller-product-approval-note">

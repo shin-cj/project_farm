@@ -5,6 +5,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /** 백엔드가 프론트엔드에 응답할 데이터를 담는 DTO(데이터 전달 객체)입니다. */
 // 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
@@ -77,5 +78,7 @@ public class ProductResponse {
     private String farmName;
 
     private String sameDayDelivery;
+
+    private List<String> aiKeywords;
 
 }

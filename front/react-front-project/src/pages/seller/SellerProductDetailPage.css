@@ -141,6 +141,16 @@
   font-size: clamp(1.65rem, 3vw, 2.25rem);
 }
 
+.seller-product-detail-ai-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 .seller-product-detail-description {
   margin: 18px 0 24px;
   color: #627166;

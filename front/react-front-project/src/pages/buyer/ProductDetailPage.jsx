@@ -398,23 +398,47 @@ function ProductDetailPage() {
             <CatalogImage src={product.productImageUrl} alt={product.productName} />
           </div>
 
-          <div className="product-detail-top">
-          <span className="product-detail-status">
-            {getProductStatusLabel(product.productStatus)}
-          </span>
+        <div className="product-detail-top">
+          <div className="product-detail-top-content">
+            <div className="product-detail-badges">
+              <span className="product-detail-status">
+                {getProductStatusLabel(product.productStatus)}
+              </span>
 
-            {product.sameDayDelivery === 'Y' && (
+              {product.sameDayDelivery === 'Y' && (
                 <span className="product-detail-same-day-badge">오늘 도착 가능</span>
-            )}
+              )}
+            </div>
 
-            <button
-                type="button"
-                className="product-detail-back-button"
-                onClick={() => navigate(productListPath)}
-            >
-              목록으로
-            </button>
+            {Array.isArray(product.aiKeywords)
+                && product.aiKeywords.length > 0 && (
+                    <div className="product-detail-ai-keywords">
+                      {product.aiKeywords
+                          .filter((keyword) => (
+                              typeof keyword === 'string'
+                              && keyword.trim() !== ''
+                          ))
+                          .slice(0, 2)
+                          .map((keyword) => (
+                              <span
+                                  key={keyword}
+                                  className="product-detail-ai-keyword"
+                              >
+                #{keyword}
+              </span>
+                          ))}
+                    </div>
+                )}
           </div>
+
+          <button
+            type="button"
+            className="product-detail-back-button"
+            onClick={() => navigate(productListPath)}
+          >
+            목록으로
+          </button>
+        </div>
 
           <div className="product-detail-info">
             <p className="product-detail-origin">{product.origin || '원산지 미등록'}</p>

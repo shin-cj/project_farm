@@ -123,4 +123,13 @@ public class Product {
     @Column(name = "same_day_delivery",nullable = false)
     private String sameDayDelivery = "N";
 
+    @Column(name = "ai_keyword_1", length = 50)
+    private String aiKeyword1;
+
+    @Column(name = "ai_keyword_2", length = 50)
+    private String aiKeyword2;
+
+    @Column(name = "ai_keywords_generated_at")
+    private LocalDateTime aiKeywordsGeneratedAt;
+
 }
