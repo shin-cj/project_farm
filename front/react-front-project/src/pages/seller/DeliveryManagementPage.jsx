@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getFarms } from "../../api/farmApi.js";
 import {
-  getSellerOrderInfo,
   getSellerOrders,
   registerSellerDelivery,
 } from "../../api/deliveryApi.js";
@@ -220,46 +219,6 @@ function DeliveryManagementPage() {
     setDeliveryMemo(order.deliveryMemo || "");
     setMessage("");
     setError("");
-  }
-
-  async function handleOrderSearch() {
-    if (!orderId) {
-      setSelectedOrder(null);
-      setError("주문 번호를 입력해주세요.");
-      return;
-    }
-
-    try {
-      const foundOrder = await getSellerOrderInfo(orderId, sellerId);
-
-      if (selectedFarmId && String(foundOrder.farmId) !== String(selectedFarmId)) {
-        setSelectedOrder(null);
-        setCourierName("");
-        setTrackingNumber("");
-        setDeliveryPersonName("");
-        setDeliveryPersonPhone("");
-        setDeliveryMemo("");
-        setError("선택한 농장의 주문이 아닙니다.");
-        return;
-      }
-
-      setSelectedOrder(foundOrder);
-      setCourierName(foundOrder.courierName || "");
-      setTrackingNumber(foundOrder.trackingNumber || "");
-      setDeliveryPersonName(foundOrder.deliveryPersonName || "");
-      setDeliveryPersonPhone(foundOrder.deliveryPersonPhone || "");
-      setDeliveryMemo(foundOrder.deliveryMemo || "");
-      setError("");
-    } catch (error) {
-      console.error(error);
-      setSelectedOrder(null);
-      setCourierName("");
-      setTrackingNumber("");
-      setDeliveryPersonName("");
-      setDeliveryPersonPhone("");
-      setDeliveryMemo("");
-      setError("주문 정보를 찾을 수 없습니다.");
-    }
   }
 
   async function handleSubmit(event) {
