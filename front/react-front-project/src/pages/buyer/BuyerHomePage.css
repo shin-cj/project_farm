@@ -1010,22 +1010,45 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
+  padding: 18px 12px;
   background: #f8fbf7;
 }
 
 .buyer-trust-strip article {
-  min-height: 92px;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 8px;
-  padding: 12px;
+  min-width: 0;
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  padding: 14px 24px;
   border-right: 1px solid #dce6dd;
-  text-align: center;
 }
 
 .buyer-trust-strip article:last-child {
   border-right: 0;
+}
+
+.buyer-trust-icon {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #edf4e9;
+  color: #285f31;
+}
+
+.buyer-trust-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.buyer-trust-copy {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
 }
 
 .buyer-trust-strip strong {
@@ -1037,6 +1060,7 @@
   color: #68756d;
   font-size: 13px;
   font-weight: 700;
+  line-height: 1.45;
 }
 
 @media (max-width: 900px) {
@@ -1049,9 +1073,12 @@
   .buyer-home-split,
   .buyer-low-price-filter,
   .buyer-good-price-list,
-  .buyer-farm-list,
-  .buyer-trust-strip {
+  .buyer-farm-list {
     grid-template-columns: 1fr;
+  }
+
+  .buyer-trust-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .buyer-market-toolbar,
@@ -1088,9 +1115,34 @@
     grid-template-columns: 86px minmax(0, 1fr) 80px;
   }
 
+  .buyer-trust-strip article {
+    border-bottom: 1px solid #dce6dd;
+  }
+
+  .buyer-trust-strip article:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .buyer-trust-strip article:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .buyer-trust-strip {
+    grid-template-columns: 1fr;
+    padding: 10px 18px;
+  }
+
   .buyer-trust-strip article,
-  .buyer-trust-strip article:last-child {
+  .buyer-trust-strip article:nth-child(2n),
+  .buyer-trust-strip article:nth-last-child(-n + 2) {
+    justify-content: flex-start;
     border-right: 0;
     border-bottom: 1px solid #dce6dd;
+  }
+
+  .buyer-trust-strip article:last-child {
+    border-bottom: 0;
   }
 }
