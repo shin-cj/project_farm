@@ -31,8 +31,21 @@ function LoginPage() {
       } else {
         navigate("/");
       }
-    } catch  {
-      alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
+    } catch (error) {
+      if(error.response?.status === 403) {
+        localStorage.removeItem("loginUser");
+
+        navigate("/account-suspended", {
+          replace: true,
+          state: {
+            message:
+            error.response?.data ||
+                "사용 정지된 계정입니다.",
+          },
+        })
+        return
+      }
+      alert("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.")
     }
   };
 

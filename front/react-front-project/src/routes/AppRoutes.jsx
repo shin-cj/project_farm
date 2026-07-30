@@ -53,42 +53,59 @@ import AdminCatalogApprovalPage from '../pages/admin/AdminCatalogApprovalPage'
 import { CheckoutPage } from '../components/payment/checkout.jsx'
 import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
+import SuspendedAccountPage from "../pages/auth/SuspendedAccountPage.jsx";
 
 function AppRoutes() {
   return (
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<BuyerHomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+    <Routes>
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<BuyerHomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/account-suspended" element={<SuspendedAccountPage/>}/>
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/products" element={<ProductListPage />} />
+        <Route path="/products/:productId" element={<ProductDetailPage />} />
 
-          <Route path="/products" element={<ProductListPage />} />
-          <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/farms" element={<FarmListPage />} />
+        <Route path="/farms/:farmId" element={<FarmDetailPage />} />
 
-          <Route path="/farms" element={<FarmListPage />} />
-          <Route path="/farms/:farmId" element={<FarmDetailPage />} />
+        <Route path="/market-prices" element={<MarketPricePage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/order" element={<OrderPage />} />
+        <Route path="/orders" element={<OrderHistoryPage />} />
 
-          <Route path="/market-prices" element={<MarketPricePage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/order" element={<OrderPage />} />
-          <Route path="/orders" element={<OrderHistoryPage />} />
+        <Route path="/mypage" element={<MyPage />} />
+        <Route path="/user/edit" element={<UserProfileEditPage />} />
 
-          <Route path="/mypage" element={<MyPage />} />
-          <Route path="/user/edit" element={<UserProfileEditPage />} />
+        <Route path="/chatbot" element={<ChatbotPage />} />
+        <Route path="/test/market-price" element={<MarketPriceTestPage />} />
+        <Route path="/deliverypage" element={<DeliveryStatusPage />} />
 
-          <Route path="/chatbot" element={<ChatbotPage />} />
-          <Route path="/test/market-price" element={<MarketPriceTestPage />} />
-          <Route path="/deliverypage" element={<DeliveryStatusPage />} />
-
-          <Route path="/qna/write" element={<QnaWritePage />} />
-          <Route path="/reviews/write" element={<ReviewWritePage />} />
-          {/* 💡 리뷰 수정 경로 추가 */}
+        <Route path="/qna/write" element={<QnaWritePage />} />
+        <Route path="/reviews/write" element={<ReviewWritePage />} />
           <Route path="/reviews/edit/:id" element={<ReviewWritePage />} />
 
-          <Route path="/qna/create" element={<QnaFormPage />} />
-          <Route path="/qna/edit/:id" element={<QnaFormPage />} />
-          <Route path="/qna/list" element={<QnaListPage />} />
-          <Route path="/qna/list/:productId" element={<QnaListPage />} />
+        <Route path="/qna/create" element={<QnaFormPage />} />
+        <Route path="/qna/edit/:id" element={<QnaFormPage />} />
+        <Route path="/qna/list" element={<QnaListPage />} />
+        <Route path="/qna/list/:productId" element={<QnaListPage />} />
+      </Route>
+
+      <Route element={<RoleRoute allowedRoleIds={[3]} />}>
+        <Route path="/seller" element={<SellerLayout />}>
+          <Route index element={<SellerDashboardPage />} />
+          <Route path="mypage" element={<SellerMyPage />} />
+          <Route path="farms" element={<FarmManagementPage />} />
+          <Route path="farms/new" element={<FarmCreatePage />} />
+          <Route path="farms/:farmId/edit" element={<FarmEditPage />} />
+          <Route path="products" element={<ProductManagementPage />} />
+          <Route path="products/new" element={<ProductCreatePage />} />
+          <Route path="products/:productId/edit" element={<ProductEditPage />} />
+          <Route path="products/:productId" element={<SellerProductDetailPage />} />
+          <Route path="orders" element={<SellerOrderPage />} />
+          <Route path="deliveries" element={<Navigate to="/seller/orders" replace />} />
+          <Route path="search" element={<SellerPriceSearchPage />} />
+          <Route path="statistics" element={<SalesStatisticsPage />} />
         </Route>
 
         <Route element={<RoleRoute allowedRoleIds={[3]} />}>

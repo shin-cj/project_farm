@@ -7,6 +7,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public class BuyerMainRankingItemResponse {
 
+    private String itemCode;
     private String itemName;
     private String varietyName;
     private String categoryName;
@@ -16,5 +17,7 @@ public class BuyerMainRankingItemResponse {
     private Long previousPrice;
     private Long changeAmount;
     private Double changeRate;
+    private String comparisonUnit;
+    private Long comparisonPrice;
 
 }

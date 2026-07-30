@@ -88,6 +88,7 @@ public class OrderService {
             Product product = productRepository.findById(cartItem.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
 
+            validateOrderableProduct(product);
             validateMinimumOrderQuantity(product, cartItem.getQuantity());
 
             if (product.getStockQuantity() < cartItem.getQuantity()) {
@@ -194,6 +195,7 @@ public class OrderService {
             throw new IllegalArgumentException("수량은 1개 이상이어야 합니다.");
         }
 
+        validateOrderableProduct(product);
         validateMinimumOrderQuantity(product, orderQuantity);
 
         if (product.getStockQuantity() < orderQuantity) {
@@ -347,6 +349,12 @@ public class OrderService {
         return productRepository.findById(productId)
                 .map(Product::getUnit)
                 .orElse(null);
+    }
+
+    private void validateOrderableProduct(Product product) {
+        if ("DELETED".equals(product.getProductStatus())) {
+            throw new IllegalArgumentException("삭제된 상품은 주문할 수 없습니다.");
+        }
     }
 
     private void validateMinimumOrderQuantity(Product product, int quantity) {

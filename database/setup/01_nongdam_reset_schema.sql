@@ -186,6 +186,7 @@ CREATE TABLE products (
     price NUMBER(12) NOT NULL,                -- 판매 단위당 가격
     stock_quantity NUMBER DEFAULT 0 NOT NULL, -- 현재 재고 수량
     unit VARCHAR2(30) NOT NULL,               -- 판매 단위: kg, 박스, 개 등
+    package_weight_grams NUMBER(10,2),        -- 판매 단위 하나의 총중량(g)
     min_order_quantity NUMBER(10) DEFAULT 1 NOT NULL,
                                                -- 최소 주문 수량
     origin VARCHAR2(100),                     -- 원산지
@@ -207,6 +208,8 @@ CREATE TABLE products (
         FOREIGN KEY (category_id) REFERENCES categories(category_id),
     CONSTRAINT ck_products_min_order_qty
         CHECK (min_order_quantity >= 1),
+    CONSTRAINT ck_products_package_weight
+        CHECK (package_weight_grams IS NULL OR package_weight_grams > 0),
     CONSTRAINT ck_products_same_day_delivery
         CHECK (same_day_delivery IN ('Y', 'N'))
 );

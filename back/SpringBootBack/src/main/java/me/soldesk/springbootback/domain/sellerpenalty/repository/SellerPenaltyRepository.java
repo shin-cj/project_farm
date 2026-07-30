@@ -78,6 +78,10 @@ public interface SellerPenaltyRepository extends JpaRepository<SellerPenalty, Lo
           AND sp.penalty_type = :penaltyType
           AND sp.penalty_status = :penaltyStatus
           AND sp.penalty_id <> :penaltyId
+          AND sp.penalty_type IN (
+            'PRODUCT_SUSPENSION',
+            'SELLER_SUSPENSION'
+        )     
         """,
             nativeQuery = true
     )
@@ -97,5 +101,18 @@ public interface SellerPenaltyRepository extends JpaRepository<SellerPenalty, Lo
             nativeQuery = true
     )
     List<SellerPenalty> findAllOrderByCreatedAtDesc();
+
+    @Query(
+            value = """
+        SELECT NVL(SUM(sp.penalty_points), 0)
+        FROM seller_penalties sp
+        WHERE sp.seller_id = :sellerId
+        AND sp.penalty_status = 'ACTIVE'
+        """,
+            nativeQuery = true
+    )
+    long sumActivePenaltyPoints(
+            @Param("sellerId") Long sellerId
+    );
 
 }

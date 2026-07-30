@@ -38,6 +38,8 @@ public class ProductController {
     @GetMapping("/public-page")
     public ProductPageResponse getPublicProductPage(
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String marketCategoryCode,
+            @RequestParam(required = false) String marketItemCode,
             @RequestParam(defaultValue = "RETAIL") String saleType,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "false") boolean sameDayOnly,
@@ -47,6 +49,8 @@ public class ProductController {
     ) {
         return productService.getPublicProductPage(
                 categoryId,
+                marketCategoryCode,
+                marketItemCode,
                 saleType,
                 keyword,
                 sameDayOnly,

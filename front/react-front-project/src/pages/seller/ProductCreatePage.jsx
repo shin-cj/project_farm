@@ -11,6 +11,12 @@ import { getApiErrorMessage } from '../../utils/apiError.js'
 import SellerFormModal from '../../components/common/SellerFormModal.jsx'
 import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 import MarketItemCodePicker from '../../components/seller/MarketItemCodePicker.jsx'
+import marketPriceApi from '../../api/marketPriceApi.js'
+import {
+    calculatePackageWeightGrams,
+    combineProductUnit,
+    splitProductUnit,
+} from '../../utils/productWeight.js'
 
 
 
@@ -32,6 +38,8 @@ function ProductCreatePage() {
     const [formLoading, setFormLoading] = useState(true)
     const [formError, setFormError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
+    const [marketUnitOptions, setMarketUnitOptions] = useState([])
+    const [marketUnitLoading, setMarketUnitLoading] = useState(false)
 
     const [form, setForm] = useState({
         farmId: '',
@@ -42,6 +50,7 @@ function ProductCreatePage() {
         price: '',
         stockQuantity: '',
         unit: '',
+        packageWeightGrams: '',
         minOrderQuantity: '1',
         origin: '',
         harvestDate: '',
@@ -53,6 +62,10 @@ function ProductCreatePage() {
     const selectedFarm = farms.find(
         (farm) => String(farm.farmId) === String(form.farmId)
     )
+    const selectedSaleType = selectedFarm?.saleType ?? ''
+    const selectedUnit = splitProductUnit(form.unit)
+    const selectedUnitName =
+        selectedUnit.name || marketUnitOptions[0]?.name || ''
 
     const minimumExpirationDate = getMinimumExpirationDate()
 
@@ -135,6 +148,83 @@ function ProductCreatePage() {
         }
     }, [imagePreviewUrl])
 
+    useEffect(() => {
+        let ignore = false
+
+        async function loadMarketUnitOptions() {
+            if (!selectedSaleType || !form.marketItemCode) {
+                setMarketUnitOptions([])
+                setMarketUnitLoading(false)
+                return
+            }
+
+            try {
+                setMarketUnitLoading(true)
+
+                const response = await marketPriceApi.getBuyerMainTodayPrices({
+                    seCd: selectedSaleType === 'WHOLESALE' ? '02' : '01',
+                    itemCd: form.marketItemCode,
+                    limit: 200,
+                })
+                const optionMap = new Map()
+
+                ;(Array.isArray(response.data) ? response.data : []).forEach((item) => {
+                    const unit = splitProductUnit(item.unit)
+
+                    if (unit.size && unit.name && !optionMap.has(unit.name)) {
+                        optionMap.set(unit.name, unit)
+                    }
+                })
+
+                if (ignore) {
+                    return
+                }
+
+                const options = Array.from(optionMap.values())
+                setMarketUnitOptions(options)
+
+                if (options.length > 0) {
+                    setForm((currentForm) => {
+                        const currentUnit = splitProductUnit(currentForm.unit)
+                        const nextOption = options.find(
+                            (option) => option.name === currentUnit.name
+                        ) ?? options[0]
+                        const nextSize =
+                            currentUnit.name === nextOption.name && currentUnit.size
+                                ? currentUnit.size
+                                : nextOption.size
+                        const nextUnit = combineProductUnit(nextSize, nextOption.name)
+                        const calculatedWeight = calculatePackageWeightGrams(nextUnit)
+
+                        return {
+                            ...currentForm,
+                            unit: nextUnit,
+                            packageWeightGrams:
+                                calculatedWeight === null
+                                    ? currentForm.packageWeightGrams
+                                    : String(calculatedWeight),
+                        }
+                    })
+                }
+            } catch (error) {
+                if (!ignore) {
+                    console.error(error)
+                    setMarketUnitOptions([])
+                }
+            } finally {
+                if (!ignore) {
+                    setMarketUnitLoading(false)
+                }
+            }
+        }
+
+        loadMarketUnitOptions()
+
+        return () => {
+            ignore = true
+        }
+    }, [selectedSaleType, form.marketItemCode])
+
     function handleImageChange(event) {
         const imageFile = event.target.files?.[0] ?? null
 
@@ -190,6 +280,22 @@ function ProductCreatePage() {
                     nextFarm?.saleType === 'WHOLESALE'
                         ? 'N'
                         : currentForm.sameDayDelivery,
+                unit: '',
+                packageWeightGrams: '',
+            }))
+            return
+        }
+
+        if (name === 'unit') {
+            const calculatedWeight = calculatePackageWeightGrams(value)
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                unit: value,
+                packageWeightGrams:
+                    calculatedWeight === null
+                        ? ''
+                        : String(calculatedWeight),
             }))
             return
         }
@@ -205,6 +311,50 @@ function ProductCreatePage() {
         setForm((currentForm) => ({
             ...currentForm,
             marketItemCode,
+            unit:
+                currentForm.marketItemCode === marketItemCode
+                    ? currentForm.unit
+                    : '',
+            packageWeightGrams:
+                currentForm.marketItemCode === marketItemCode
+                    ? currentForm.packageWeightGrams
+                    : '',
+        }))
+    }
+
+    function handleUnitSizeChange(event) {
+        const nextUnit = combineProductUnit(event.target.value, selectedUnitName)
+        const calculatedWeight = calculatePackageWeightGrams(nextUnit)
+
+        setIsDirty(true)
+        setForm((currentForm) => ({
+            ...currentForm,
+            unit: nextUnit,
+            packageWeightGrams:
+                calculatedWeight === null
+                    ? currentForm.packageWeightGrams
+                    : String(calculatedWeight),
+        }))
+    }
+
+    function handleUnitNameChange(event) {
+        const nextOption = marketUnitOptions.find(
+            (option) => option.name === event.target.value
+        )
+        const nextUnit = combineProductUnit(
+            selectedUnit.size || nextOption?.size,
+            event.target.value
+        )
+        const calculatedWeight = calculatePackageWeightGrams(nextUnit)
+
+        setIsDirty(true)
+        setForm((currentForm) => ({
+            ...currentForm,
+            unit: nextUnit,
+            packageWeightGrams:
+                calculatedWeight === null
+                    ? currentForm.packageWeightGrams
+                    : String(calculatedWeight),
         }))
     }
 
@@ -224,6 +374,10 @@ function ProductCreatePage() {
         const categoryId = Number(form.categoryId)
         const price = Number(form.price)
         const stockQuantity = Number(form.stockQuantity)
+        const packageWeightGrams =
+            form.packageWeightGrams === ''
+                ? null
+                : Number(form.packageWeightGrams)
         const minOrderQuantity = Number(form.minOrderQuantity)
 
         if (!Number.isFinite(farmId) || farmId <= 0) {
@@ -268,6 +422,13 @@ function ProductCreatePage() {
 
         if (!form.unit.trim()) {
             alert('판매 단위를 입력해주세요.')
+            return
+        }
+
+        if (packageWeightGrams !== null
+            && (!Number.isFinite(packageWeightGrams)
+                || packageWeightGrams <= 0)) {
+            alert('판매 단위의 총중량을 g 단위로 입력해주세요.')
             return
         }
 
@@ -331,6 +492,7 @@ function ProductCreatePage() {
             categoryId: categoryId,
             price: price,
             stockQuantity: stockQuantity,
+            packageWeightGrams: packageWeightGrams,
             minOrderQuantity: minOrderQuantity,
         }
 
@@ -576,14 +738,46 @@ function ProductCreatePage() {
 
                         <div className="product-create-field">
                             <label>판매 단위</label>
-                            <input
-                                name="unit"
-                                value={form.unit}
-                                onChange={handleChange}
-                                placeholder="예: 5kg"
-                                required
-                            />
+                            <div className="product-market-unit-input">
+                                <input
+                                    type="number"
+                                    value={selectedUnit.size}
+                                    onChange={handleUnitSizeChange}
+                                    placeholder="수량"
+                                    min="0.01"
+                                    step="0.01"
+                                    disabled={
+                                        marketUnitLoading
+                                        || marketUnitOptions.length === 0
+                                    }
+                                    required
+                                />
+                                <select
+                                    value={selectedUnitName}
+                                    onChange={handleUnitNameChange}
+                                    disabled={
+                                        marketUnitLoading
+                                        || marketUnitOptions.length === 0
+                                    }
+                                    required
+                                >
+                                    <option value="">
+                                        {marketUnitLoading
+                                            ? '단위 조회 중'
+                                            : '단위 선택'}
+                                    </option>
+                                    {marketUnitOptions.map((option) => (
+                                        <option key={option.name} value={option.name}>
+                                            {option.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <small className="product-package-weight-help">
+                                품목과 판매 방식을 기준으로 시세 단위가 자동 선택되며, 앞 숫자는 변경할 수 있습니다.
+                            </small>
                         </div>
+
                     </div>
                         <div className="product-create-row">
                             <div className="product-create-field">
