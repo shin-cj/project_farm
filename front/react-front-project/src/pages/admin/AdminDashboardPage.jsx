@@ -61,6 +61,7 @@ function AdminDashboardPage() {
     const [todayOrdersLoading, setTodayOrdersLoading] = useState(false);
     const [todayOrdersError, setTodayOrdersError] = useState("");
     const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
+    const [returnToWorkModal, setReturnToWorkModal] = useState(false);
 
     const [todaySalesModalOpen, setTodaySalesModalOpen] = useState(false)
     const [todaySales, setTodaySales] = useState([])
@@ -115,6 +116,19 @@ function AdminDashboardPage() {
             setTodayOrdersError("오늘 주문 내역을 불러오지 못했습니다.")
         }finally {
             setTodayOrdersLoading(false)
+        }
+    }
+
+    function toReportWorkItem(report){
+        return{
+            id: report.reportId,
+            kind: "REPORT",
+            data: report,
+            title: report.productName || "상품 정보 없음",
+            subtitle: report.reporterEmail || "신고자 정보 없음",
+            description: report.reportReason,
+            status: report.reportStatus,
+            createdAt: report.createdAt
         }
     }
 
@@ -270,6 +284,8 @@ function AdminDashboardPage() {
     }
 
     function openWorkDetail(item){
+        setReturnToWorkModal(true)
+
         setWorkModal((previous) => ({
             ...previous,
             open: false
@@ -278,13 +294,35 @@ function AdminDashboardPage() {
         setSelectedWorkDetail(item)
     }
 
+    function openRecentReportDetail(report){
+        const recentReportItems =
+            recentReports.map(toReportWorkItem)
+
+        setWorkModal({
+            open: false,
+            type: "RECENT_REPORTS",
+            title: "최근 접수된 신고",
+            items: recentReportItems,
+            loading: false,
+            error: ""
+        })
+
+        setReturnToWorkModal(true)
+        setSelectedWorkDetail(toReportWorkItem(report))
+
+    }
+
     function closeWorkDetail(){
         setSelectedWorkDetail(null)
 
-        setWorkModal((previous) => ({
-            ...previous,
-            open: true
-        }))
+        if(returnToWorkModal) {
+            setWorkModal((previous) => ({
+                ...previous,
+                open: true
+            }))
+        }
+
+        setReturnToWorkModal(false)
     }
 
     useEffect(() => {
@@ -426,11 +464,11 @@ function AdminDashboardPage() {
                     {recentReports.map((report) => (
                         <button
                             key={report.reportId}
-                            onClick={() => openWorkModal("RECENT_REPORTS")}
+                            onClick={() => openRecentReportDetail(report)}
                         >
                             <span>신고 #{report.reportId}</span>
                             <strong>{report.productName || "상품 정보 없음"}</strong>
-                            <small>{report.reporterEmail}</small>
+                            <small>{report.reporterEmail || "신고자 정보 없음"}</small>
                         </button>
                     ))}
                 </section>
