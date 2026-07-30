@@ -27,4 +27,6 @@ public class ReportRequest {
     private String reportStatus;
 
     private Long farmId;
+
+    private Long reviewId;
 }

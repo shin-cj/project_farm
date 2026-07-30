@@ -55,6 +55,7 @@ public interface ReportRepository extends JpaRepository<Report,Long> {
         r.report_id        AS "reportId",
         r.reporter_id      AS "reporterId",
         reporter.email     AS "reporterEmail",
+        reported.email     AS "reportedUserEmail",    
 
         r.reported_user_id AS "reportedUserId",
 
@@ -74,7 +75,9 @@ public interface ReportRepository extends JpaRepository<Report,Long> {
         r.replied_by       AS "repliedBy"
 
     FROM reports r
-
+     LEFT JOIN users reported
+     ON reported.user_id = r.reported_user_id        
+            
     LEFT JOIN users reporter
       ON reporter.user_id = r.reporter_id
 
