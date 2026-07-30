@@ -23,4 +23,5 @@ public interface AdminReportView {
     LocalDateTime getRepliedAt();
     Long getRepliedBy();
     Long getFarmId();
+    String getReportedUserEmail();
 }
