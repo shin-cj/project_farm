@@ -15,6 +15,7 @@ const reportTypeLabels = {
 function ReportButton({
     productId,
     farmId,
+    reviewId,
     reporterId,
     reportType="PRODUCT",
     targetLabel,
@@ -38,7 +39,7 @@ function ReportButton({
         }
 
         const targetId =
-            reportType === "FARM" ? farmId : productId
+            reportType === "FARM" ? farmId : reportType === "REVIEW" ? reviewId : productId
 
         if(!targetId){
             alert("신고 대상 정보를 불러오지 못했습니다.")
@@ -75,6 +76,7 @@ function ReportButton({
             const response = await reportApi.createRort({
                 productId: reportType === "PRODUCT" ? productId : null,
                 farmId: reportType === "FARM" ? farmId : null,
+                reviewId: reportType === "REVIEW" ? reviewId : null,
                 reporterId,
                 reportType,
                 reportReason: trimmedReason,

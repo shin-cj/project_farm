@@ -79,13 +79,19 @@ public class CartService {
         cartItemRepository.save(cartItem);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<CartResponse> getCartItems(Long userId){
         return cartRepository.findByUserId(userId)
-                .map(cart -> cartItemRepository.findByCartId(cart.getCartId())
-                        .stream()
-                        .map(this::toCartResponse)
-                        .toList())
+                .map(cart -> { List<CartItem> cartItems =
+                        cartItemRepository.findByCartId(cart.getCartId());
+                                for(CartItem cartItem : cartItems){
+                                    adjustQuantityToCurrentStock(cartItem);
+                                }
+
+                                return cartItems.stream()
+                                        .map(this::toCartResponse)
+                                        .toList();
+                })
                 .orElse(List.of());
     }
 
@@ -182,4 +188,20 @@ public class CartService {
                 : minimumOrderQuantity;
     }
 
+
+    private void adjustQuantityToCurrentStock(CartItem cartItem){
+        Product product = productRepository
+                .findById(cartItem.getProductId())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("상품이 없습니다."));
+
+        int stockQuantity = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        if(stockQuantity > 0 &&
+                   cartItem.getQuantity() > stockQuantity){
+            cartItem.setQuantity(stockQuantity);
+        }
+    }
 }

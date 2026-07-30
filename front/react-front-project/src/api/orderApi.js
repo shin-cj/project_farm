@@ -8,13 +8,19 @@ const orderApi = {
         })
     },
 
+    getAdminOrders(){
+        return httpClient.get("/orders/admin")
+    },
+
     createOrder(request){
         return httpClient.post("/orders/from-cart",request)
     },
 
     createOrderFromProduct(request) {
         return httpClient.post("/orders/from-product", request)
-    }
+    },
+
+
 
 }
 

@@ -16,7 +16,7 @@ export const CATEGORY_CODES = [
     { label: "채소류", value: "200" },
     { label: "특용작물", value: "300" },
     { label: "과일류", value: "400" },
-    { label: "축산물", value: "500" },
+    //{ label: "축산물", value: "500" },
     { label: "수산물", value: "600" },
 ];
 
@@ -127,7 +127,7 @@ export const ITEM_CODES = {
         { label: "블루베리", value: "429" },
         { label: "아보카도", value: "430" },
     ],
-    "500": [ // 축산물
+    /*"500": [ // 축산물
         { label: "전체", value: "" },
         { label: "소", value: "4301" },
         { label: "돼지", value: "4304" },
@@ -142,7 +142,7 @@ export const ITEM_CODES = {
         { label: "닭", value: "9901" },
         { label: "계란", value: "9903" },
         { label: "우유", value: "9908" },
-    ],
+    ],*/
     "600": [ // 수산물
         { label: "전체", value: "" },
         { label: "고등어", value: "611" },
@@ -1122,7 +1122,7 @@ export const DISTRICT_CODES = [
 
     // --- 특수 및 기타 ---
     { label: "온라인", value: "9998" },
-    { label: "전국(축산부류한정)", value: "1000" } // 축산물 시세 조회 시 전국 평균 기준 코드
+    //{ label: "전국(축산부류한정)", value: "1000" } // 축산물 시세 조회 시 전국 평균 기준 코드
 ];
 
 // 7.시장코드(mrktCd)

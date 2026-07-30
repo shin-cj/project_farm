@@ -48,4 +48,6 @@ public class ReportResponse {
 
     private Long farmId;
 
+    private String reportedUserEmail;
+
 }

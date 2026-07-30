@@ -74,28 +74,43 @@
 
 .farm-list-search {
     display: flex;
-    flex-direction: column;
-    gap: 7px;
     width: min(360px, 100%);
 }
 
-.farm-list-search span {
-    color: #64736b;
-    font-size: 12px;
-    font-weight: 700;
-}
-
 .farm-list-search input {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     padding: 11px 14px;
-    border: 1px solid #ccd8c9;
-    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px 0 0 10px;
+    background-color: #ffffff;
+    color: #243b2f;
+    font-size: 14px;
     outline: none;
 }
 
 .farm-list-search input:focus {
     border-color: #438d32;
     box-shadow: 0 0 0 3px rgb(67 141 50 / 12%);
+}
+
+.farm-list-search button {
+    padding: 11px 17px;
+    border: 1px solid #3f7d20;
+    border-radius: 0 10px 10px 0;
+    background-color: #3f7d20;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.farm-list-search button:hover {
+    background-color: #326719;
+}
+
+.farm-list-search button:focus-visible {
+    outline: 3px solid rgb(63 125 32 / 18%);
+    outline-offset: 2px;
 }
 
 .farm-list-result {

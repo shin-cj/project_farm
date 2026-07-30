@@ -10,6 +10,18 @@ const typeLabels = {
     SELLER_SUSPENSION: "중징계 · 상품 판매 정지",
 };
 
+function getPenaltyTypeLabel(penalty) {
+    if (
+        penalty.penaltyType === "WARNING" &&
+        Number(penalty.penaltyPoints) === 3
+    ) {
+        return "강한 경고";
+    }
+
+    return typeLabels[penalty.penaltyType] ||
+        penalty.penaltyType;
+}
+
 function formatDate(value) {
     if (!value) {
         return "-";
@@ -97,8 +109,7 @@ function SellerPenaltyViewer({ sellerId }) {
                             >
                                 <div>
                                     <strong>
-                                        {typeLabels[penalty.penaltyType] ||
-                                            penalty.penaltyType}
+                                        {getPenaltyTypeLabel(penalty)}
                                     </strong>
 
                                     <span>

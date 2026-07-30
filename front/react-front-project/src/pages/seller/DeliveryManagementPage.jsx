@@ -5,13 +5,23 @@ import {
   getSellerOrders,
   registerSellerDelivery,
 } from "../../api/deliveryApi.js";
+import { cancelPayment } from "../../api/paymentApi.js";
 import { DELIVERY_STATUS_LABEL } from "../../constants/statusLabels.js";
+import "./DeliveryManagementPage.css";
 
 const filterOptions = [
   { value: "ACTIVE", label: "처리할 주문" },
   { value: "CANCELED", label: "취소 주문" },
   { value: "SHIPPING", label: "배송 중" },
   { value: "DELIVERED", label: "배송 완료" },
+];
+
+const sellerCancelReasonOptions = [
+  { value: "OUT_OF_STOCK", label: "재고 부족" },
+  { value: "PRODUCT_ISSUE", label: "상품 상태 문제" },
+  { value: "DELIVERY_UNAVAILABLE", label: "배송 처리 불가" },
+  { value: "SELLER_REQUEST", label: "판매자 사정" },
+  { value: "OTHER", label: "기타" },
 ];
 
 function getLoginUser() {
@@ -43,6 +53,10 @@ function DeliveryManagementPage() {
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [deliveryFilter, setDeliveryFilter] = useState("ACTIVE");
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelReasonType, setCancelReasonType] = useState("");
+  const [cancelReasonDetail, setCancelReasonDetail] = useState("");
+  const [isCanceling, setIsCanceling] = useState(false);
 
   const ordersPerPage = 3;
 
@@ -143,6 +157,11 @@ function DeliveryManagementPage() {
 
   function isProcessableOrder(order) {
     return order?.orderStatus === "PAID" && order?.deliveryStatus === "READY";
+  }
+
+  function isSellerCancelable(order) {
+    return order?.orderStatus === "PAID"
+      && (!order?.deliveryStatus || order.deliveryStatus === "READY");
   }
 
   function getVisibleOrders() {
@@ -313,6 +332,87 @@ function DeliveryManagementPage() {
     } catch (error) {
       console.error(error);
       setError("배송 등록에 실패했습니다.");
+    }
+  }
+
+  function openCancelModal() {
+    if (!isSellerCancelable(selectedOrder)) {
+      setError("결제 완료 후 아직 배송을 시작하지 않은 주문만 취소할 수 있습니다.");
+      return;
+    }
+
+    setCancelTarget(selectedOrder);
+    setCancelReasonType("");
+    setCancelReasonDetail("");
+    setMessage("");
+    setError("");
+  }
+
+  function closeCancelModal() {
+    if (isCanceling) {
+      return;
+    }
+
+    setCancelTarget(null);
+    setCancelReasonType("");
+    setCancelReasonDetail("");
+  }
+
+  async function handleSellerCancel() {
+    if (!cancelTarget || !sellerId) {
+      setError("취소할 주문 또는 판매자 정보를 확인할 수 없습니다.");
+      return;
+    }
+
+    if (!cancelReasonType) {
+      setError("주문 취소 사유를 선택해주세요.");
+      return;
+    }
+
+    const trimmedDetail = cancelReasonDetail.trim();
+    if (cancelReasonType === "OTHER" && !trimmedDetail) {
+      setError("기타 사유를 직접 입력해주세요.");
+      return;
+    }
+
+    const reasonLabel = sellerCancelReasonOptions.find(
+      (option) => option.value === cancelReasonType
+    )?.label;
+    const cancelReason = trimmedDetail
+      ? `${reasonLabel}: ${trimmedDetail}`
+      : reasonLabel;
+
+    try {
+      setIsCanceling(true);
+      setMessage("");
+      setError("");
+
+      await cancelPayment(cancelTarget.orderId, cancelReason, {
+        cancelRequester: "SELLER",
+        sellerId: Number(sellerId),
+      });
+
+      const canceledOrderId = cancelTarget.orderId;
+      setCancelTarget(null);
+      setCancelReasonType("");
+      setCancelReasonDetail("");
+      setDeliveryFilter("CANCELED");
+      await fetchSellerOrders(selectedFarmId);
+      setMessage(`주문번호 ${canceledOrderId} 주문이 취소되었습니다.`);
+    } catch (cancelError) {
+      console.error(cancelError);
+
+      let cancelErrorMessage = cancelError?.message || "";
+      try {
+        const parsedError = JSON.parse(cancelErrorMessage);
+        cancelErrorMessage = parsedError.message || cancelErrorMessage;
+      } catch {
+        // JSON 응답이 아니면 서버가 전달한 원문을 그대로 표시합니다.
+      }
+
+      setError(cancelErrorMessage || "주문 취소에 실패했습니다.");
+    } finally {
+      setIsCanceling(false);
     }
   }
 
@@ -717,7 +817,18 @@ function DeliveryManagementPage() {
                 background: isDeliveryLocked ? "#f3f4f6" : "linear-gradient(135deg, #fbfdfb, #ffffff)",
               }}
             >
-              <h3 style={{ margin: "0 0 14px", color: "#213328" }}>선택한 주문 정보</h3>
+              <div className="seller-selected-order-heading">
+                <h3 style={{ margin: 0, color: "#213328" }}>선택한 주문 정보</h3>
+                {isSellerCancelable(selectedOrder) && (
+                  <button
+                    type="button"
+                    className="seller-order-cancel-button"
+                    onClick={openCancelModal}
+                  >
+                    주문 취소
+                  </button>
+                )}
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px 14px", color: "#405348" }}>
                 <InfoLine label="농장명" value={selectedOrder.farmName || "농장 정보 없음"} />
                 <InfoLine label="주문코드" value={selectedOrder.orderNumber} />
@@ -925,6 +1036,96 @@ function DeliveryManagementPage() {
           </button>
         </form>
       </div>
+
+      {cancelTarget && (
+        <div
+          className="seller-cancel-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeCancelModal();
+            }
+          }}
+        >
+          <div
+            className="seller-cancel-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seller-cancel-title"
+          >
+            <div className="seller-cancel-modal-header">
+              <div>
+                <p>ORDER CANCELLATION</p>
+                <h2 id="seller-cancel-title">판매자 주문 취소</h2>
+              </div>
+              <button
+                type="button"
+                className="seller-cancel-modal-close"
+                onClick={closeCancelModal}
+                disabled={isCanceling}
+                aria-label="취소 창 닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="seller-cancel-order-summary">
+              <span>주문번호</span>
+              <strong>{cancelTarget.orderNumber || cancelTarget.orderId}</strong>
+              <span>상품</span>
+              <strong>{cancelTarget.orderName || cancelTarget.productName || "주문 상품"}</strong>
+            </div>
+
+            <label className="seller-cancel-field">
+              <span>취소 사유</span>
+              <select
+                value={cancelReasonType}
+                onChange={(event) => setCancelReasonType(event.target.value)}
+                disabled={isCanceling}
+              >
+                <option value="">사유를 선택해주세요</option>
+                {sellerCancelReasonOptions.map((reason) => (
+                  <option key={reason.value} value={reason.value}>
+                    {reason.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="seller-cancel-field">
+              <span>상세 사유 {cancelReasonType === "OTHER" ? "(필수)" : "(선택)"}</span>
+              <textarea
+                value={cancelReasonDetail}
+                onChange={(event) => setCancelReasonDetail(event.target.value)}
+                maxLength={150}
+                rows={4}
+                placeholder="구매자가 확인할 수 있도록 구체적인 사유를 입력해주세요."
+                disabled={isCanceling}
+              />
+              <small>{cancelReasonDetail.length} / 150</small>
+            </label>
+
+            <p className="seller-cancel-warning">
+              주문을 취소하면 결제 금액이 환불되고 상품 재고와 판매자 포인트가 복구됩니다.
+              취소 후에는 배송을 등록할 수 없습니다.
+            </p>
+
+            <div className="seller-cancel-modal-actions">
+              <button type="button" onClick={closeCancelModal} disabled={isCanceling}>
+                돌아가기
+              </button>
+              <button
+                type="button"
+                className="seller-cancel-confirm-button"
+                onClick={handleSellerCancel}
+                disabled={isCanceling}
+              >
+                {isCanceling ? "취소 처리 중..." : "주문 취소 확정"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,0 +1,417 @@
+.today-sales-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 24px;
+    background-color: rgba(19, 35, 26, 0.48);
+    backdrop-filter: blur(3px);
+    animation: today-sales-backdrop-in 160ms ease-out;
+}
+
+.today-sales-modal {
+    display: flex;
+    flex-direction: column;
+    width: min(940px, 100%);
+    max-height: min(760px, calc(100vh - 48px));
+    box-sizing: border-box;
+    overflow: hidden;
+    border: 1px solid #d7e0da;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 24px 64px rgba(15, 34, 23, 0.24);
+    color: #25372c;
+    animation: today-sales-modal-in 190ms ease-out;
+}
+
+.today-sales-header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid #e7ece8;
+    background-color: #fbfcfb;
+}
+
+.today-sales-header h2,
+.today-sales-header p {
+    margin: 0;
+}
+
+.today-sales-header h2 {
+    color: #173226;
+    font-size: 1.35rem;
+    line-height: 1.3;
+    letter-spacing: 0;
+}
+
+.today-sales-header p {
+    margin-top: 5px;
+    color: #758279;
+    font-size: 0.92rem;
+    font-weight: 650;
+}
+
+.today-sales-header > button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background-color: transparent;
+    color: #66736b;
+    font: inherit;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition:
+        border-color 140ms ease,
+        background-color 140ms ease,
+        color 140ms ease,
+        transform 120ms ease;
+}
+
+.today-sales-header > button:hover {
+    border-color: #d9e1db;
+    background-color: #f0f4f1;
+    color: #1f5736;
+}
+
+.today-sales-header > button:active {
+    transform: scale(0.94);
+}
+
+.today-sales-header > button:focus-visible {
+    outline: 3px solid rgba(45, 126, 75, 0.2);
+    outline-offset: 2px;
+}
+
+.today-sales-summary {
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: 1.25fr 0.8fr 1fr;
+    gap: 10px;
+    padding: 16px 24px;
+    border-bottom: 1px solid #edf1ee;
+    background-color: #ffffff;
+}
+
+.today-sales-summary > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    min-height: 62px;
+    box-sizing: border-box;
+    padding: 13px 15px;
+    border: 1px solid #e0e7e2;
+    border-radius: 7px;
+    background-color: #f8faf8;
+}
+
+.today-sales-summary > div:first-child {
+    border-color: #c5daca;
+    background-color: #f1f8f3;
+}
+
+.today-sales-summary span {
+    min-width: 0;
+    color: #66736b;
+    font-size: 0.9rem;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+.today-sales-summary strong {
+    flex: 0 0 auto;
+    margin-left: 12px;
+    color: #1f653b;
+    font-size: 1.08rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.today-sales-summary > div:first-child strong {
+    font-size: 1.2rem;
+}
+
+.today-sales-content {
+    min-height: 220px;
+    padding: 0 24px 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-color: #aab8ae #f1f4f2;
+    scrollbar-width: thin;
+}
+
+.today-sales-content::-webkit-scrollbar {
+    width: 9px;
+}
+
+.today-sales-content::-webkit-scrollbar-track {
+    background-color: #f1f4f2;
+}
+
+.today-sales-content::-webkit-scrollbar-thumb {
+    border: 2px solid #f1f4f2;
+    border-radius: 5px;
+    background-color: #aab8ae;
+}
+
+.today-sales-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    margin: 0;
+    color: #68766d;
+    font-size: 0.98rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.today-sales-message.error {
+    color: #a43d38;
+}
+
+.today-sale-item {
+    display: grid;
+    grid-template-columns:
+        minmax(80px, 0.65fr)
+        minmax(160px, 1.25fr)
+        minmax(160px, 1.25fr)
+        minmax(105px, 0.8fr)
+        minmax(110px, 0.85fr);
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    min-height: 78px;
+    box-sizing: border-box;
+    padding: 15px 4px;
+    border-bottom: 1px solid #edf1ee;
+    transition: background-color 140ms ease;
+}
+
+.today-sale-item:last-child {
+    border-bottom: 0;
+}
+
+.today-sale-item:hover {
+    background-color: #f8faf8;
+}
+
+.today-sale-item time {
+    color: #748178;
+    font-size: 0.87rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.45;
+}
+
+.today-sale-order,
+.today-sale-farm {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 5px;
+}
+
+.today-sale-order strong,
+.today-sale-farm strong {
+    min-width: 0;
+    overflow: hidden;
+    color: #24382c;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.today-sale-order span,
+.today-sale-farm span {
+    min-width: 0;
+    overflow: hidden;
+    color: #7a867e;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.today-sale-method {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: end;
+    min-height: 28px;
+    box-sizing: border-box;
+    padding: 5px 9px;
+    border: 1px solid #d9e2dc;
+    border-radius: 6px;
+    background-color: #f5f7f5;
+    color: #55645b;
+    font-size: 0.8rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.today-sale-price {
+    color: #176238;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+@keyframes today-sales-backdrop-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes today-sales-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .today-sales-backdrop,
+    .today-sales-modal {
+        animation: none;
+    }
+}
+
+@media (max-width: 780px) {
+    .today-sales-backdrop {
+        padding: 16px;
+    }
+
+    .today-sales-modal {
+        max-height: calc(100vh - 32px);
+    }
+
+    .today-sales-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .today-sales-summary > div:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .today-sale-item {
+        grid-template-columns: 76px minmax(145px, 1fr) minmax(105px, auto);
+        gap: 11px 14px;
+    }
+
+    .today-sale-farm {
+        grid-column: 2;
+        grid-row: 2;
+    }
+
+    .today-sale-method {
+        grid-column: 3;
+        grid-row: 2;
+    }
+
+    .today-sale-price {
+        grid-column: 3;
+        grid-row: 1;
+    }
+}
+
+@media (max-width: 540px) {
+    .today-sales-backdrop {
+        align-items: stretch;
+        padding: 10px;
+    }
+
+    .today-sales-modal {
+        max-height: calc(100vh - 20px);
+    }
+
+    .today-sales-header {
+        padding: 18px 16px 15px;
+    }
+
+    .today-sales-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .today-sales-summary {
+        gap: 8px;
+        padding: 12px 16px;
+    }
+
+    .today-sales-summary > div {
+        min-height: 52px;
+        padding: 10px 11px;
+    }
+
+    .today-sales-summary > div:first-child strong {
+        font-size: 1.08rem;
+    }
+
+    .today-sales-content {
+        padding: 0 16px 16px;
+    }
+
+    .today-sale-item {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px 14px;
+        min-height: 0;
+        padding: 16px 2px;
+    }
+
+    .today-sale-item time {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .today-sale-order {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .today-sale-farm {
+        grid-column: 1;
+        grid-row: 3;
+    }
+
+    .today-sale-method {
+        grid-column: 2;
+        grid-row: 3;
+    }
+
+    .today-sale-price {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .today-sale-order strong,
+    .today-sale-order span,
+    .today-sale-farm strong,
+    .today-sale-farm span {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}

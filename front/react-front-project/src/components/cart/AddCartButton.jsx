@@ -46,7 +46,19 @@ function AddCartButton({
         } catch (e) {
             console.error(e)
 
-            alert('장바구니 담기에 실패했습니다. 잠시 후 다시 시도해주세요.')
+            const serverMessage = e.response?.data?.message ?? ''
+
+            const isStockLimitError =
+                e.response?.status === 409 ||
+                serverMessage.includes('현재 재고')
+
+            if(isStockLimitError){
+                alert(
+                    '이미 장바구니에 해당 상품을 구매 가능한 최대 수량까지 담았습니다.'
+                )
+            }else{
+                alert(serverMessage || '장바구니 담기에 실패했습니다. 잠시 후 다시 시도해주세요.')
+            }
         } finally {
             setLoading(false)
         }

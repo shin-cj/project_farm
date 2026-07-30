@@ -37,13 +37,21 @@ public class SellerPenaltyService {
     ){
         validatePenaltyRequest(report, request);
 
-        String penaltyType = request.getPenaltyType().trim().toUpperCase();
+        String requestedPenaltyType =
+                request.getPenaltyType().trim().toUpperCase();
+        boolean strongWarning =
+                "STRONG_WARNING".equals(requestedPenaltyType);
+        String penaltyType =
+                strongWarning ? "WARNING" : requestedPenaltyType;
+        Integer requestedPenaltyPoints =
+                strongWarning ? 3 : request.getPenaltyPoints();
 
         if(sellerPenaltyRepository.existsByReportId(report.getReportId())){
             throw new IllegalArgumentException("이미 페널티가 부여된 신고 입니다.");
         }
 
-        int penaltyPoints = getPenaltyPoints(penaltyType);
+        int penaltyPoints =
+                getPenaltyPoints(penaltyType, requestedPenaltyPoints);
 
         applyPenaltyAction(report, penaltyType);
 
@@ -75,6 +83,16 @@ public class SellerPenaltyService {
 
     private void validatePenaltyRequest(Report report, ReportResolutionRequest request) {
 
+        String penaltyType =
+                request.getPenaltyType().trim().toUpperCase();
+
+        if("REVIEW".equals(report.getReportType())
+                && !"WARNING".equals(penaltyType)){
+            throw new IllegalArgumentException(
+                    "후기 신고에는 경고 페널티만 적용할 수 있습니다."
+            );
+        }
+
         if(report == null){
             throw new IllegalArgumentException("신고 정보가 없습니다.");
         }
@@ -96,10 +114,24 @@ public class SellerPenaltyService {
         }
     }
 
-    private int getPenaltyPoints(String penaltyType){
+    private int getPenaltyPoints(
+            String penaltyType,
+            Integer requestedPenaltyPoints
+    ){
         return switch (penaltyType){
-            case "WARNING" -> 1;
-            case "STRONG_WARNING" -> 3;
+            case "WARNING" -> {
+                int points = requestedPenaltyPoints == null
+                        ? 1
+                        : requestedPenaltyPoints;
+
+                if(points != 1 && points != 3){
+                    throw new IllegalArgumentException(
+                            "경고 점수는 1점 또는 3점만 가능합니다."
+                    );
+                }
+
+                yield points;
+            }
             case "SELLER_SUSPENSION" -> 5;
             case "PRODUCT_SUSPENSION" -> 5;
             default -> throw new IllegalArgumentException("올바르지 않은 페널티 유형입니다.");
@@ -310,10 +342,17 @@ public class SellerPenaltyService {
 
             }
 
-            case "PRODUCT_SUSPENSION","SELLER_SUSPENSION" ->
+
+            case "PRODUCT_SUSPENSION" -> {
                 restoreProduct(penalty);
+            }
 
+            case "SELLER_SUSPENSION" -> {
 
+                    if(penalty.getProductId() != null) {
+                        restoreProduct(penalty);
+                        }
+            }
             default ->
                 throw new IllegalArgumentException("복구할 수 없는 페널티 유형입니다.");
         }
@@ -328,7 +367,6 @@ public class SellerPenaltyService {
         long otherPenaltyCount =
                 sellerPenaltyRepository.countOtherProductPenalties(
                         penalty.getProductId(),
-                        "PRODUCT_SUSPENSION",
                         "ACTIVE",
                         penalty.getPenaltyId()
                 );
