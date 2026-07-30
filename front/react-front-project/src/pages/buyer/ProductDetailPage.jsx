@@ -761,7 +761,8 @@ function ProductDetailPage() {
                 </p>
             ) : (
                 sortedReviewList.map((review) => {
-                  const reviewId = review.reviewId || review.id;
+                  const reviewId = review.reviewId || review.id
+                  const isReviewOwner = Number(userid) === Number(review.buyerId)
                   return (
                       <div
                           key={reviewId}
@@ -804,6 +805,8 @@ function ProductDetailPage() {
                         )}
 
                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          {isReviewOwner ? (
+                              <>
                           <button
                               type="button"
                               onClick={() => navigate(`/reviews/edit/${reviewId}`)}
@@ -818,6 +821,15 @@ function ProductDetailPage() {
                           >
                             삭제
                           </button>
+                              </>
+                        ) : (
+                            <ReportButton
+                              reviewId= {reviewId}
+                              reporterId={userid}
+                              reportType="REVIEW"
+                              targetLabel={`후기#${reviewId}`}
+                              />
+                          )}
                         </div>
                       </div>
                   );

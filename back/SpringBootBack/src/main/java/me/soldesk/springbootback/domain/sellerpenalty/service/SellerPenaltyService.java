@@ -83,6 +83,16 @@ public class SellerPenaltyService {
 
     private void validatePenaltyRequest(Report report, ReportResolutionRequest request) {
 
+        String penaltyType =
+                request.getPenaltyType().trim().toUpperCase();
+
+        if("REVIEW".equals(report.getReportType())
+                && !"WARNING".equals(penaltyType)){
+            throw new IllegalArgumentException(
+                    "후기 신고에는 경고 페널티만 적용할 수 있습니다."
+            );
+        }
+
         if(report == null){
             throw new IllegalArgumentException("신고 정보가 없습니다.");
         }

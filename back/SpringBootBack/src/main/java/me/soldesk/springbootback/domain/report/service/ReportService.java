@@ -7,6 +7,8 @@ import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.report.dto.*;
 import me.soldesk.springbootback.domain.report.entity.Report;
 import me.soldesk.springbootback.domain.report.repository.ReportRepository;
+import me.soldesk.springbootback.domain.review.entity.Review;
+import me.soldesk.springbootback.domain.review.repository.ReviewRepository;
 import me.soldesk.springbootback.domain.sellerpenalty.service.SellerPenaltyService;
 import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReportService {
 
+    private final ReviewRepository reviewRepository;
     private final ReportRepository reportRepository;
     private final SellerPenaltyService sellerPenaltyService;
     private final UserRepository  userRepository;
@@ -91,6 +94,7 @@ public class ReportService {
 
         String reportType =
                 request.getReportType().trim().toUpperCase();
+        String storedReeportReason = request.getReportReason().trim();
 
         Long reportedUserId;
         Long productId = null;
@@ -123,6 +127,25 @@ public class ReportService {
                             new IllegalArgumentException("신고할 농장을 찾을 수 없습니다."));
 
             reportedUserId = farm.getSellerId();
+        }else if("REVIEW".equals(reportType)){
+            if(request.getReviewId() == null){
+                throw new IllegalArgumentException(
+                        "신고할 후기 정보가 없습니다."
+                );
+            }
+
+            Review review = reviewRepository
+                    .findById(request.getReviewId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "신고할 후기를 찾을 수 없습니다."
+                            ));
+            productId = review.getProductId();
+            reportedUserId = review.getBuyerId();
+
+            storedReeportReason =
+                    "[후기 #" + review.getReviewId() + "]" + storedReeportReason;
+
         }else {
             throw new IllegalArgumentException("지원하지 않는 신고 유형입니다.");
         }
@@ -130,6 +153,8 @@ public class ReportService {
         if (request.getReporterId().equals(reportedUserId)){
             throw new IllegalArgumentException("자신을 신고 할 수 없습니다.");
         }
+
+
 
         Report report = new Report();
 
@@ -171,6 +196,7 @@ public class ReportService {
         response.setReportedFarmName(view.getReportedFarmName());
         response.setProductId(view.getProductId());
         response.setProductName(view.getProductName());
+        response.setReportedUserEmail(view.getReportedUserEmail());
 
 
         return response;
@@ -243,7 +269,11 @@ public class ReportService {
             throw new IllegalArgumentException("이미 최종 처리 된 신고 입니다.");
         }
 
-        if("RESOLVED".equals(finalStatus)){
+        boolean penaltyTargetReport =
+                List.of("PRODUCT", "FARM", "REVIEW")
+                        .contains(report.getReportType());
+
+        if("RESOLVED".equals(finalStatus) && penaltyTargetReport){
             sellerPenaltyService.applyPenalty(report, request);
         }
 
