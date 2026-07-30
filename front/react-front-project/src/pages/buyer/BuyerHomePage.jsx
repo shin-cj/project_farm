@@ -52,11 +52,58 @@ const formatRate = (value) => {
 
 
 const TRUST_ITEMS = [
-  { title: '산지 직거래', description: '중간 유통 없이 산지에서 바로' },
-  { title: '승인 농장', description: '엄격한 기준으로 선별된 농장' },
-  { title: '투명한 시세', description: '공공데이터 기준 가격 흐름' },
-  { title: '신선 배송', description: '가까운 산지에서 빠르게 배송' },
+  { icon: 'direct', title: '산지 직거래', description: '중간 유통 없이 산지에서 바로' },
+  { icon: 'approved', title: '승인 농장', description: '엄격한 기준으로 선별된 농장' },
+  { icon: 'market', title: '투명한 시세', description: '공공데이터 기준 가격 흐름' },
+  { icon: 'delivery', title: '신선 배송', description: '가까운 산지에서 빠르게 배송' },
 ]
+
+function TrustIcon({ name }) {
+  const paths = {
+    direct: (
+      <>
+        <path d="M5 10h14l-1.4 9H6.4L5 10Z" />
+        <path d="m8 10 4-6 4 6" />
+        <path d="M9 14v2M12 14v2M15 14v2" />
+      </>
+    ),
+    approved: (
+      <>
+        <path d="M12 3 5 6v5c0 4.3 2.8 8.2 7 10 4.2-1.8 7-5.7 7-10V6l-7-3Z" />
+        <path d="m9 12 2 2 4-4" />
+      </>
+    ),
+    market: (
+      <>
+        <path d="M4 20h16" />
+        <path d="M7 17v-4M12 17V9M17 17V6" />
+        <path d="m5 9 4-3 4 2 5-5" />
+      </>
+    ),
+    delivery: (
+      <>
+        <path d="M3 6h11v10H3z" />
+        <path d="M14 10h4l3 3v3h-7z" />
+        <circle cx="7" cy="18" r="2" />
+        <circle cx="17" cy="18" r="2" />
+      </>
+    ),
+  }
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths[name]}
+    </svg>
+  )
+}
 
 
 
@@ -1033,8 +1080,14 @@ function BuyerHomePage() {
       <section className="buyer-trust-strip">
         {TRUST_ITEMS.map((item) => (
           <article key={item.title}>
-            <strong>{item.title}</strong>
-            <span>{item.description}</span>
+            <div className="buyer-trust-icon">
+              <TrustIcon name={item.icon} />
+            </div>
+
+            <div className="buyer-trust-copy">
+              <strong>{item.title}</strong>
+              <span>{item.description}</span>
+            </div>
           </article>
         ))}
       </section>
