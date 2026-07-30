@@ -154,7 +154,8 @@ function ReportManagementPage() {
       return;
     }
 
-    if (selectedStatus === "RESOLVED") {
+    if (selectedStatus === "RESOLVED" &&
+        requiresPenalty) {
       if (!penaltyType) {
         setError("페널티 유형을 선택해 주세요.");
         alert("페널티 유형을 선택해 주세요.")
@@ -380,6 +381,14 @@ function ReportManagementPage() {
           selectedReport.reportStatus
       )
 
+  const requiresPenalty =
+      ["PRODUCT","FARM","REVIEW"].includes(
+          selectedReport?.reportType
+      )
+
+  const isReviewReport =
+      selectedReport?.reportType === "REVIEW"
+
   return (
     <section className="page-card report-management-page">
       <header className="report-page-header">
@@ -423,9 +432,9 @@ function ReportManagementPage() {
             headers={[
               "신고 번호",
               "신고자 이메일",
-              "피신고자 농장",
+              "신고 대상",
               "유형",
-              "상품",
+              "관련 상품",
               "신고 내용",
               "접수 일시",
               "처리 상태",
@@ -438,9 +447,22 @@ function ReportManagementPage() {
                   <small>#{report.reporterId}</small>
                 </td>
                 <td>
-                  <strong>{report.reportedFarmName || "농장 정보 없음"}</strong>
-                  <small>판매자 #{report.reportedUserId}</small>
-                </td>
+                  {report.reportType === "REVIEW" ? (
+                  <>
+                    <strong>
+                    {report.reportedUserEmail || "계정 정보 없음"}
+                    </strong>
+                    <small>회원 #{report.reportedUserId}</small>
+                  </>
+                  ) : (
+                  <>
+                    <strong>
+                      {report.reportedFarmName || "농장 정보 없음"}
+                    </strong>
+                    <small>판매자 #{report.reportedUserId}</small>
+                  </>
+                  )}
+                  </td>
                 <td>
                   <span className="report-type-badge">
                     {typeLabels[report.reportType] || report.reportType}
@@ -525,8 +547,12 @@ function ReportManagementPage() {
                   <dd>{selectedReport.reportedFarmName}</dd>
                 </div>
                 <div>
-                  <dt>신고 상품</dt>
-                  <dd>{selectedReport.productName}</dd>
+                  <dt>
+                    {selectedReport.reportType === "REVIEW" ? "신고된 계정" : "신고 상품"}
+                  </dt>
+                  <dd>{selectedReport.reportType === "REVIEW" ? selectedReport.reportedUserEmail :
+                        selectedReport.productName}
+                  </dd>
                 </div>
                 <div>
                   <dt>현재 상태</dt>
@@ -603,9 +629,9 @@ function ReportManagementPage() {
                   </div>
               )}
               {selectedStatus === "RESOLVED" &&
-                  !["RESOLVED", "REJECTED"].includes(
-                      selectedReport.reportStatus
-                  ) && (
+                  requiresPenalty &&
+                  !selectedReportIsFinal
+                   && (
                       <section className="report-penalty-panel">
                         <h3>판매자 페널티</h3>
 
@@ -625,10 +651,12 @@ function ReportManagementPage() {
                           <option value="STRONG_WARNING">
                             강한 경고 3점
                           </option>
-                          <option value="SELLER_SUSPENSION"
-                                  disabled={!selectedReport?.productId}>
-                            중징계 5점 + 상품 판매 정지
-                          </option>
+                          {!isReviewReport &&(
+                              <option value="SELLER_SUSPENSION"
+                                      disabled={!selectedReport?.productId}>
+                                중징계 5점 + 상품 판매 정지
+                              </option>
+                          )}
                         </select>
 
                         {penaltyType && (
