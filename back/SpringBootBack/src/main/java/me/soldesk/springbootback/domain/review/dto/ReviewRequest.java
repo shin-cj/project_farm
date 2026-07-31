@@ -26,6 +26,6 @@ public class ReviewRequest {
     private String content;
 
     /** 리뷰 이미지 주소 */
-    private String imageUrl;
+    private byte[] imageUrl;
 
 }

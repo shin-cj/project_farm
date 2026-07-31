@@ -20,8 +20,9 @@ public class ProductController {
     private final ProductImageService productImageService;
     private final ProductKeywordService productKeywordService;
 
-    public ProductController(ProductService productService, ProductImageService productImageService
-    , ProductKeywordService productKeywordService) {
+    public ProductController(ProductService productService,
+                             ProductImageService productImageService,
+                             ProductKeywordService productKeywordService) { // 💡 콤마 제거 완료!
         this.productService = productService;
         this.productImageService = productImageService;
         this.productKeywordService = productKeywordService;
@@ -33,7 +34,6 @@ public class ProductController {
             @RequestParam(required = false) Long farmId,
             @RequestParam(required = false) String productStatus,
             @RequestParam(defaultValue = "false") boolean publicOnly
-
     ) {
         return productService.getProducts(categoryId, farmId, productStatus, publicOnly);
     }

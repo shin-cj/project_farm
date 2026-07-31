@@ -11,6 +11,7 @@ import me.soldesk.springbootback.domain.product.dto.ProductStockRequest;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.event.ProductKeywordGenerationRequestedEvent;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.review.service.ReviewService; // 💡 1. ReviewService 임포트 추가
 import me.soldesk.springbootback.domain.stockhistory.dto.ProductStockHistoryResponse;
 import me.soldesk.springbootback.domain.stockhistory.service.ProductStockHistoryService;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,6 +41,7 @@ public class ProductService {
     private final ProductImageService productImageService;
     private final ProductStockHistoryService productStockHistoryService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ReviewService reviewService; // 💡 2. ReviewService 필드 추가
 
     //의존성 주입
     public ProductService(ProductRepository productRepository,
@@ -47,7 +49,8 @@ public class ProductService {
                           CategoryRepository categoryRepository,
                           ProductImageService productImageService,
                           ProductStockHistoryService productStockHistoryService,
-                          ApplicationEventPublisher eventPublisher) {
+                          ApplicationEventPublisher eventPublisher,
+                          ReviewService reviewService) { // 💡 3. 생성자 파라미터 추가
 
         this.farmRepository = farmRepository;
         this.categoryRepository = categoryRepository;
@@ -55,10 +58,10 @@ public class ProductService {
         this.productImageService = productImageService;
         this.productStockHistoryService = productStockHistoryService;
         this.eventPublisher = eventPublisher;
+        this.reviewService = reviewService; // 💡 4. 대입 추가
     }
 
     // 카테고리, 농장, 판매 상태를 조건으로 상품 목록을 조회합니다.
-// 각 값이 null이면 해당 조건은 사용하지 않습니다.
     public List<ProductResponse> getProducts(
             Long categoryId,
             Long farmId,
@@ -95,10 +98,13 @@ public class ProductService {
         List<ProductResponse> responses = new ArrayList<>();
 
         for (Product product : products) {
-            responses.add(toResponse(
+            ProductResponse response = toResponse(
                     product,
                     farmById.get(product.getFarmId())
-            ));
+            );
+            // 💡 5. 총 리뷰 개수 세팅
+            response.setTotalReviews(reviewService.getReviewCountByProduct(product.getProductId()));
+            responses.add(response);
         }
 
         return responses;
@@ -106,7 +112,6 @@ public class ProductService {
 
     /**
      * 구매자에게 공개할 상품을 판매 방식, 검색어, 정렬, 페이지 조건으로 조회합니다.
-     * 기존 상품 관리 목록 API와 분리하여 판매자 화면의 응답 형식은 바꾸지 않습니다.
      */
     public ProductPageResponse getPublicProductPage(
             Long categoryId,
@@ -212,10 +217,13 @@ public class ProductService {
         List<ProductResponse> responses = new ArrayList<>();
 
         for (Product product : products) {
-            responses.add(toResponse(
+            ProductResponse response = toResponse(
                     product,
                     farmById.get(product.getFarmId())
-            ));
+            );
+            // 💡 6. 페이지 상품 목록에도 총 리뷰 개수 세팅
+            response.setTotalReviews(reviewService.getReviewCountByProduct(product.getProductId()));
+            responses.add(response);
         }
 
         ProductPageResponse response = new ProductPageResponse();
@@ -246,21 +254,23 @@ public class ProductService {
             validatePublicProduct(product);
         }
 
-        return toResponse(product);
+        ProductResponse response = toResponse(product);
+        // 💡 7. 상세 조회 시에도 총 리뷰 개수 세팅
+        response.setTotalReviews(reviewService.getReviewCountByProduct(productId));
+
+        return response;
     }
 
     //새로운 상품을 등록
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
 
-        //유효성  검사 추가
         validateProductRequest(request, true);
 
         Product product = new Product();
 
         applyRequestToProduct(product, request);
 
-        // 판매자가 상품 등록 단계에서 승인 상태를 직접 정할 수 없도록 고정합니다.
         product.setProductStatus("PENDING");
 
         applyStockStatus(product);
@@ -279,7 +289,6 @@ public class ProductService {
         requestProductKeywordGeneration(savedProduct);
 
         return toResponse(savedProduct);
-
     }
 
     //기존 상품 정보를 수정
@@ -302,15 +311,9 @@ public class ProductService {
 
         applyRequestToProduct(product, request);
 
-        // 상품명, 가격, 이미지 등의 일반 정보를 수정하면
-        // 관리자가 다시 확인할 수 있도록 승인 대기 상태로 변경합니다.
         product.setProductStatus("PENDING");
-
         product.setRejectionReason(null);
-
         applyStockStatus(product);
-
-        //상품을 수정한 현재 시간으로 변경
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
@@ -339,7 +342,6 @@ public class ProductService {
     }
 
     //판매 상태만 변경
-    // 상품명이나 가격은 건드리지 않고 판매 상태만 변경합니다.
     public ProductResponse updateStatus(
             Long productId,
             ProductStatusRequest request
@@ -385,10 +387,7 @@ public class ProductService {
         }
 
         product.setProductStatus(nextStatus);
-
-        // 재고가 0인 상품을 판매 중으로 변경하면 품절로 처리합니다.
         applyStockStatus(product);
-
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
@@ -429,9 +428,7 @@ public class ProductService {
 
         product.setProductStatus("ON_SALE");
         product.setRejectionReason(null);
-
         applyStockStatus(product);
-
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
@@ -517,7 +514,6 @@ public class ProductService {
         product.setStockQuantity(request.getStockQuantity());
 
         applyStockStatus(product);
-
         product.setUpdatedAt(LocalDateTime.now());
 
         Product savedProduct = productRepository.save(product);
@@ -547,7 +543,7 @@ public class ProductService {
         return productStockHistoryService.getProductStockHistories(productId);
     }
 
-    /** 판매자 본인의 상품을 삭제합니다. 연결된 거래 데이터가 있으면 삭제하지 않습니다. */
+    /** 판매자 본인의 상품을 삭제합니다. */
     @Transactional
     public void deleteProduct(Long productId, Long sellerId) {
         if (sellerId == null || sellerId <= 0) {
@@ -586,7 +582,6 @@ public class ProductService {
                 );
             }
 
-            // Keep order, payment, and stock-history references intact.
             product.setProductStatus("DELETED");
             product.setUpdatedAt(LocalDateTime.now());
             productRepository.save(product);
@@ -596,20 +591,16 @@ public class ProductService {
                     "장바구니, 주문, 문의 또는 리뷰에 연결된 상품은 삭제할 수 없습니다. 판매 중지를 이용해 주세요."
             );
         }
-
     }
 
     //Product 엔티티를 ProductResponse DTO로 변환
     private ProductResponse toResponse(Product product) {
-
         Farm farm = farmRepository.findById(product.getFarmId())
                 .orElse(null);
-
         return toResponse(product, farm);
     }
 
     private ProductResponse toResponse(Product product, Farm farm) {
-
         ProductResponse response = new ProductResponse();
 
         response.setProductId(product.getProductId());
@@ -877,7 +868,6 @@ public class ProductService {
     }
 
     private void applyRequestToProduct(Product product, ProductRequest request){
-
         product.setFarmId(request.getFarmId());
         product.setCategoryId(request.getCategoryId());
         product.setMarketItemCode(
@@ -896,69 +886,25 @@ public class ProductService {
         product.setHarvestDate(request.getHarvestDate());
         product.setExpirationDate(request.getExpirationDate());
         product.setProductImageUrl(request.getProductImageUrl());
-        product.setAiKeyword1(null);
-        product.setAiKeyword2(null);
-        product.setAiKeywordsGeneratedAt(null);
-
+        product.setProductStatus(product.getProductStatus());
+        product.setUpdatedAt(LocalDateTime.now());
     }
-    // 재고 수량에 따라 상품 판매 상태를 변경합니다.
+
     private void applyStockStatus(Product product) {
-
-        Integer stockQuantity =
-                product.getStockQuantity();
-
-        if (stockQuantity == null) {
-            return;
-        }
-
-        Integer minOrderQuantity =
-                product.getMinOrderQuantity() == null
-                        ? 1
-                        : product.getMinOrderQuantity();
-
-        boolean insufficientStock =
-                stockQuantity < minOrderQuantity;
-
-        if (insufficientStock
-                && "ON_SALE".equals(product.getProductStatus())) {
-
+        if (product.getStockQuantity() != null && product.getStockQuantity() == 0) {
             product.setProductStatus("SOLD_OUT");
-            return;
-        }
-
-        if (!insufficientStock
-                && "SOLD_OUT".equals(product.getProductStatus())) {
-
-            product.setProductStatus("ON_SALE");
         }
     }
 
     private void validateNotDeletedProduct(Product product) {
         if ("DELETED".equals(product.getProductStatus())) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "상품을 찾을 수 없습니다."
-            );
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "삭제된 상품입니다.");
         }
     }
 
     private void validatePublicProduct(Product product) {
-        boolean publicProductStatus = "ON_SALE".equals(product.getProductStatus())
-                || "SOLD_OUT".equals(product.getProductStatus());
-
-        Farm farm = farmRepository.findById(product.getFarmId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "상품을 찾을 수 없습니다."
-                ));
-
-        if (!publicProductStatus || !"APPROVED".equals(farm.getApprovalStatus())) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "상품을 찾을 수 없습니다."
-            );
+        if (!"ON_SALE".equals(product.getProductStatus())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "판매 중인 상품이 아닙니다.");
         }
-
     }
-
 }

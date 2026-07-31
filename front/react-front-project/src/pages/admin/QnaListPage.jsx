@@ -136,13 +136,18 @@ function QnaListPage() {
                         key={qna.qnaId}
                         style={{ border: '1px solid #ddd', padding: '20px', marginBottom: '15px', borderRadius: '8px', background: '#fff' }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                            <span style={{
-                                fontWeight: 'bold',
-                                color: qna.qnaStatus === 'ANSWERED' ? '#28a745' : '#ffc107'
-                            }}>
-                                [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
-                            </span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                <span style={{
+                                    fontWeight: 'bold',
+                                    color: qna.qnaStatus === 'ANSWERED' ? '#28a745' : '#ffc107'
+                                }}>
+                                    [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
+                                </span>
+                                <span style={{ fontWeight: 'bold', color: '#555', fontSize: '14px' }}>
+                                    작성자: {qna.buyerName || '익명'}
+                                </span>
+                            </div>
                             <div>
                                 {qna.isSecret === 1 && (
                                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginRight: '10px' }}>
@@ -157,7 +162,6 @@ function QnaListPage() {
 
                         <h4 style={{ margin: '0 0 10px 0' }}>{qna.questionTitle}</h4>
                         <p style={{ margin: '0 0 15px 0', whiteSpace: 'pre-wrap' }}>{qna.questionContent}</p>
-
                         {/* 수정 및 삭제 버튼 */}
                         <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
                             <button
