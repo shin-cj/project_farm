@@ -345,7 +345,14 @@ function OrderHistoryPage() {
         <div style={{ display: "flex", gap: "8px" }}>
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => {
+              if (location.state?.fromPaymentSuccess) {
+                navigate("/mypage", { replace: true });
+                return;
+              }
+
+              navigate(-1);
+            }}
             style={{
               padding: "11px 16px",
               border: "1px solid #d4ddd6",
