@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import orderApi from "../../api/orderApi.js";
-import { cancelPayment, requestRefund } from "../../api/paymentApi.js";
+import { getDeliveryByOrderId } from "../../api/deliveryApi.js";
+import {
+  cancelPayment,
+  cancelPaymentGroup,
+  requestRefund,
+} from "../../api/paymentApi.js";
 import {
   DELIVERY_STATUS_LABEL,
   ORDER_STATUS_LABEL,
@@ -77,6 +82,30 @@ function getOrderDeliveryLabel(order) {
   return DELIVERY_STATUS_LABEL[order.deliveryStatus] || "배송 준비중";
 }
 
+function getOrderGroupNumber(orderNumber) {
+  if (/^ORDER-\d+-\d+$/.test(orderNumber || "")) {
+    return orderNumber.replace(/-\d+$/, "");
+  }
+
+  return orderNumber;
+}
+
+function groupOrdersByPayment(orders) {
+  return Array.from(
+    orders.reduce((groupMap, order) => {
+      const groupNumber = getOrderGroupNumber(order.orderNumber);
+      const groupOrders = groupMap.get(groupNumber) || [];
+
+      groupOrders.push(order);
+      groupMap.set(groupNumber, groupOrders);
+      return groupMap;
+    }, new Map())
+  ).map(([groupNumber, groupedOrders]) => ({
+    groupNumber,
+    orders: groupedOrders,
+  }));
+}
+
 function OrderHistoryPage() {
   const navigate = useNavigate();
   const { alert, prompt } = useAppFeedback();
@@ -88,6 +117,11 @@ function OrderHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelingOrderId, setCancelingOrderId] = useState(null);
+  const [cancelingOrderGroupNumber, setCancelingOrderGroupNumber] = useState(null);
+  const [deliveryModalOrder, setDeliveryModalOrder] = useState(null);
+  const [deliveryModalData, setDeliveryModalData] = useState(null);
+  const [deliveryModalLoading, setDeliveryModalLoading] = useState(false);
+  const [deliveryModalError, setDeliveryModalError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [orderFilter, setOrderFilter] = useState("ALL");
 
@@ -131,6 +165,44 @@ function OrderHistoryPage() {
   useEffect(() => {
     fetchOrders();
   }, [buyerId]);
+
+  useEffect(() => {
+    if (!deliveryModalOrder) {
+      return undefined;
+    }
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        closeDeliveryModal();
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [deliveryModalOrder]);
+
+  async function openDeliveryModal(order) {
+    setDeliveryModalOrder(order);
+    setDeliveryModalData(null);
+    setDeliveryModalError("");
+    setDeliveryModalLoading(true);
+
+    try {
+      const delivery = await getDeliveryByOrderId(order.orderId);
+      setDeliveryModalData(delivery);
+    } catch {
+      setDeliveryModalError("배송 정보를 불러오지 못했습니다.");
+    } finally {
+      setDeliveryModalLoading(false);
+    }
+  }
+
+  function closeDeliveryModal() {
+    setDeliveryModalOrder(null);
+    setDeliveryModalData(null);
+    setDeliveryModalError("");
+    setDeliveryModalLoading(false);
+  }
 
   async function handleCancelOrder(order) {
     const cancelGuide = getCancelGuide(order);
@@ -193,21 +265,75 @@ function OrderHistoryPage() {
     }
   }
 
-  const filteredOrders = orders.filter((order) => {
+  async function handleCancelOrderGroup(group) {
+    const activeOrders = group.orders.filter(
+      (order) => !["CANCELED", "REFUNDED"].includes(order.orderStatus)
+    );
+    const blockedOrder = activeOrders.find((order) => getCancelGuide(order));
+
+    if (activeOrders.length === 0) {
+      alert("이미 모든 주문이 취소되었습니다.");
+      return;
+    }
+
+    if (blockedOrder) {
+      alert(getCancelGuide(blockedOrder));
+      return;
+    }
+
+    const cancelReason = await prompt({
+      title: "전체 주문을 취소할까요?",
+      message: "이 결제에 포함된 모든 농장 주문과 배송비가 함께 취소됩니다.",
+      inputLabel: "취소 사유",
+      placeholder: "예: 구매자 요청",
+      initialValue: "구매자 요청",
+      confirmText: "전체 주문 취소",
+      type: "danger",
+    });
+
+    if (cancelReason === null) {
+      return;
+    }
+
+    try {
+      setCancelingOrderGroupNumber(group.groupNumber);
+      await cancelPaymentGroup(
+        activeOrders[0].orderId,
+        cancelReason || "구매자 전체 주문 취소"
+      );
+      alert("전체 주문 취소가 완료되었습니다.");
+      await fetchOrders();
+    } catch {
+      alert("전체 주문 취소에 실패했습니다. 주문 상태를 확인해주세요.");
+    } finally {
+      setCancelingOrderGroupNumber(null);
+    }
+  }
+
+  const orderGroups = groupOrdersByPayment(orders);
+  const filteredOrderGroups = orderGroups.filter((group) => {
     if (orderFilter === "DELIVERY") {
-      return !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+      return group.orders.some(
+        (order) =>
+          !["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus)
+      );
     }
 
     if (orderFilter === "CANCEL") {
-      return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
+      return group.orders.some((order) =>
+        ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus)
+      );
     }
 
     return true;
   });
 
-  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const totalPages = Math.ceil(filteredOrderGroups.length / ordersPerPage);
   const startIndex = (currentPage - 1) * ordersPerPage;
-  const currentOrders = filteredOrders.slice(startIndex, startIndex + ordersPerPage);
+  const currentOrderGroups = filteredOrderGroups.slice(
+    startIndex,
+    startIndex + ordersPerPage
+  );
 
   return (
     <section style={{ maxWidth: "1120px", margin: "0 auto", padding: "42px 20px 70px" }}>
@@ -284,176 +410,415 @@ function OrderHistoryPage() {
         </div>
       )}
 
-      {!loading && !error && filteredOrders.length === 0 && (
+      {!loading && !error && filteredOrderGroups.length === 0 && (
         <div style={{ padding: "34px", border: "1px solid #dce6dd", borderRadius: "10px", background: "#fbfdfb" }}>
           표시할 주문 내역이 없습니다.
         </div>
       )}
 
       <div style={{ display: "grid", gap: "16px" }}>
-        {currentOrders.map((order) => {
-          const cancelGuide = getCancelGuide(order);
-          const canCancel = !cancelGuide;
-          const canRequestRefund = order.orderStatus === "PAID" && order.deliveryStatus === "DELIVERED";
+        {currentOrderGroups.map((group) => {
+          const representativeOrder = group.orders[0];
+          const totalProductPrice = group.orders.reduce(
+            (sum, order) => sum + Number(order.totalProductPrice || 0),
+            0
+          );
+          const deliveryFee = group.orders.reduce(
+            (sum, order) => sum + Number(order.deliveryFee || 0),
+            0
+          );
+          const totalPaymentAmount = group.orders.reduce(
+            (sum, order) => sum + Number(order.finalPrice || 0),
+            0
+          );
+          const remainingPaymentAmount = group.orders
+            .filter(
+              (order) =>
+                !["CANCELED", "REFUNDED"].includes(order.orderStatus)
+            )
+            .reduce(
+              (sum, order) => sum + Number(order.finalPrice || 0),
+              0
+            );
+          const canceledAmount = totalPaymentAmount - remainingPaymentAmount;
+          const hasCanceledOrder = group.orders.some((order) =>
+            ["CANCELED", "REFUNDED"].includes(order.orderStatus)
+          );
+          const displayedPaymentAmount = hasCanceledOrder
+            ? remainingPaymentAmount
+            : totalPaymentAmount;
+          const activeGroupOrders = group.orders.filter(
+            (order) => !["CANCELED", "REFUNDED"].includes(order.orderStatus)
+          );
+          const canCancelOrderGroup =
+            activeGroupOrders.length > 0
+            && activeGroupOrders.every((order) => !getCancelGuide(order));
 
           return (
             <article
-              key={order.orderId}
+              key={group.groupNumber}
               style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 220px",
-                gap: "20px",
-                padding: "22px",
+                padding: "0",
                 border: "1px solid #dce6dd",
                 borderRadius: "10px",
                 background: "#ffffff",
                 boxShadow: "0 8px 22px rgba(31, 47, 36, 0.06)",
+                overflow: "hidden",
               }}
             >
-              <div>
-                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
-                  <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#e5f4ea", color: "#216b3a", fontWeight: 800 }}>
-                    {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
+              <header
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(220px, 1fr) auto",
+                  alignItems: "flex-start",
+                  gap: "20px",
+                  padding: "20px 22px",
+                  background: "#f7faf7",
+                  borderBottom: "1px solid #e3ebe4",
+                }}
+              >
+                <div>
+                  <span style={{ display: "block", color: "#68756d", fontSize: "13px", fontWeight: 800 }}>
+                    결제 주문번호
                   </span>
-                  <span style={{ padding: "6px 10px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontWeight: 800 }}>
-                    {getOrderDeliveryLabel(order)}
+                  <strong style={{ display: "block", marginTop: "5px", color: "#1f2f24", fontSize: "20px" }}>
+                    {group.groupNumber}
+                  </strong>
+                  <span style={{ display: "block", marginTop: "7px", color: "#68756d" }}>
+                    {formatDate(representativeOrder.orderedAt)}
                   </span>
                 </div>
 
-                {order.orderItems?.length > 0 && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: "8px",
-                      margin: "0 0 14px",
-                      padding: "12px",
-                      border: "1px solid #edf2ed",
-                      borderRadius: "8px",
-                      background: "#fbfdfb",
-                    }}
-                  >
-                    {order.orderItems.map((item) => (
-                      <div
-                        key={item.orderItemId}
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr auto",
-                          gap: "12px",
-                          color: "#405348",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        <span>
-                          <small
+                <div style={{ textAlign: "right", color: "#405348", lineHeight: 1.7 }}>
+                  <span style={{ display: "block" }}>
+                    {representativeOrder.paymentMethod || "결제 정보 없음"}
+                  </span>
+                  <strong style={{ display: "block", color: "#216b3a", fontSize: "19px" }}>
+                    {formatPrice(displayedPaymentAmount)}
+                  </strong>
+                </div>
+              </header>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(260px, 0.8fr) minmax(0, 1.7fr)",
+                  gap: "24px",
+                  padding: "12px 22px",
+                  borderBottom: "1px solid #e3ebe4",
+                  background: "#f2f7f2",
+                  color: "#526158",
+                  fontSize: "14px",
+                  lineHeight: 1.5,
+                }}
+              >
+                <span>
+                  <strong style={{ marginRight: "9px", color: "#2f6f42" }}>받는 사람</strong>
+                  {representativeOrder.receiverName} · {representativeOrder.receiverPhone}
+                </span>
+                <span style={{ minWidth: 0 }}>
+                  <strong style={{ marginRight: "9px", color: "#2f6f42" }}>배송지</strong>
+                  {[representativeOrder.receiverAddress, representativeOrder.receiverDetailAddress]
+                    .filter(Boolean)
+                    .join(" ")}
+                </span>
+              </div>
+
+              <div style={{ display: "grid", gap: "14px", padding: "20px 22px" }}>
+                {group.orders.map((order) => {
+                  const cancelGuide = getCancelGuide(order);
+                  const canCancel = !cancelGuide;
+                  const canRequestRefund =
+                    order.orderStatus === "PAID"
+                    && order.deliveryStatus === "DELIVERED";
+
+                  return (
+                    <section
+                      key={order.orderId}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "minmax(0, 1fr) 190px",
+                        gap: "18px",
+                        padding: "18px",
+                        border: "1px solid #e2eae3",
+                        borderRadius: "8px",
+                        background: ["CANCELED", "REFUNDED"].includes(order.orderStatus)
+                          ? "#fffafa"
+                          : "#ffffff",
+                      }}
+                    >
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "12px" }}>
+                          <strong style={{ color: "#1f2f24", fontSize: "18px" }}>
+                            {order.farmName || "농장 정보 없음"}
+                          </strong>
+                          <span style={{ padding: "5px 9px", borderRadius: "999px", background: "#e5f4ea", color: "#216b3a", fontSize: "12px", fontWeight: 900 }}>
+                            {ORDER_STATUS_LABEL[order.orderStatus] || order.orderStatus}
+                          </span>
+                          <span style={{ padding: "5px 9px", borderRadius: "999px", background: "#f3f6f3", color: "#526357", fontSize: "12px", fontWeight: 900 }}>
+                            {getOrderDeliveryLabel(order)}
+                          </span>
+                        </div>
+
+                        <span style={{ display: "block", marginBottom: "10px", color: "#68756d", fontSize: "13px" }}>
+                          농장 주문번호 {order.orderNumber}
+                        </span>
+
+                        {order.orderItems?.map((item) => (
+                          <div
+                            key={item.orderItemId}
                             style={{
-                              display: "inline-flex",
-                              marginRight: "8px",
-                              padding: "3px 7px",
-                              borderRadius: "999px",
-                              background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
-                              color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
-                              fontSize: "12px",
-                              fontWeight: 900,
+                              display: "grid",
+                              gridTemplateColumns: "minmax(0, 1fr) auto",
+                              gap: "12px",
+                              padding: "9px 0",
+                              borderTop: "1px solid #edf2ed",
+                              color: "#405348",
                             }}
                           >
-                            {item.saleType === "WHOLESALE" ? "도매" : "소매"}
-                          </small>
-                          <small className="order-item-farm">
-                            {order.farmName || "농장 정보 없음"}
-                          </small>
-                          {item.productName}
-                          <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
-                            {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`].filter(Boolean).join(" ")}
-                          </strong>
-                        </span>
-                        <strong>{formatPrice(item.itemTotalPrice)}</strong>
+                            <span>
+                              <small
+                                style={{
+                                  display: "inline-flex",
+                                  marginRight: "7px",
+                                  padding: "3px 7px",
+                                  borderRadius: "999px",
+                                  background: item.saleType === "WHOLESALE" ? "#e0f2fe" : "#e5f4ea",
+                                  color: item.saleType === "WHOLESALE" ? "#075985" : "#216b3a",
+                                  fontWeight: 900,
+                                }}
+                              >
+                                {item.saleType === "WHOLESALE" ? "도매" : "소매"}
+                              </small>
+                              {item.productName}
+                              <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
+                                {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`]
+                                  .filter(Boolean)
+                                  .join(" ")}
+                              </strong>
+                            </span>
+                            <strong>{formatPrice(item.itemTotalPrice)}</strong>
+                          </div>
+                        ))}
+
+                        <div style={{ display: "flex", gap: "14px", flexWrap: "wrap", marginTop: "10px", color: "#526158", fontSize: "14px" }}>
+                          <span>상품 금액 {formatPrice(order.totalProductPrice)}</span>
+                          {order.courierName && <span>택배사 {order.courierName}</span>}
+                          {order.trackingNumber && <span>송장번호 {order.trackingNumber}</span>}
+                        </div>
+
+                        {cancelGuide && (
+                          <p style={{ margin: "12px 0 0", color: "#a16207", fontWeight: 700 }}>
+                            {cancelGuide}
+                          </p>
+                        )}
+
+                        {["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus) && (
+                          <div style={{ marginTop: "12px", padding: "12px", borderRadius: "8px", background: "#fff1f2", color: "#991b1b", fontWeight: 700 }}>
+                            <span>사유: {order.refundReason || "사유 없음"}</span>
+                            {order.refundedAt && (
+                              <span style={{ display: "block", marginTop: "5px" }}>
+                                처리일: {formatDate(order.refundedAt)}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                )}
 
-                {(!order.orderItems || order.orderItems.length === 0) && (
-                  <h2 style={{ margin: "0 0 10px", fontSize: "22px", color: "#1f2f24" }}>
-                    {order.orderName || "주문 상품"}
-                  </h2>
-                )}
+                      <div className="order-history-actions">
+                        <button
+                          type="button"
+                          onClick={() => openDeliveryModal(order)}
+                          disabled={!canViewDelivery(order)}
+                          className="order-history-action order-history-action--primary"
+                        >
+                          {canViewDelivery(order) ? "배송 조회" : "배송 조회 불가"}
+                        </button>
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px 20px", color: "#3f4f44", lineHeight: 1.7 }}>
-                  <span>주문번호: {order.orderNumber}</span>
-                  <span>주문일: {formatDate(order.orderedAt)}</span>
-                  <span>결제수단: {order.paymentMethod || "결제 정보 없음"}</span>
-                  <span>결제금액: {formatPrice(order.finalPrice)}</span>
-                  <span>받는 사람: {order.receiverName}</span>
-                  <span>전화번호: {order.receiverPhone}</span>
-                  <span style={{ gridColumn: "1 / -1" }}>
-                    배송지: {[order.receiverAddress, order.receiverDetailAddress].filter(Boolean).join(" ")}
-                  </span>
-                  {order.courierName && <span>택배사: {order.courierName}</span>}
-                  {order.trackingNumber && <span>송장번호: {order.trackingNumber}</span>}
+                        <button
+                          type="button"
+                          onClick={() => handleCancelOrder(order)}
+                          disabled={!canCancel || cancelingOrderId === order.orderId}
+                          className="order-history-action order-history-action--cancel"
+                        >
+                          {cancelingOrderId === order.orderId ? "취소 처리 중..." : "주문 취소"}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRequestRefund(order)}
+                          disabled={!canRequestRefund}
+                          className="order-history-action order-history-action--refund"
+                        >
+                          환불 요청
+                        </button>
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+
+              <footer
+                style={{
+                  display: "grid",
+                  gap: "8px",
+                  padding: "18px 22px",
+                  borderTop: "1px solid #e3ebe4",
+                  background: "#fbfdfb",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#526158" }}>
+                  <span>상품 금액</span>
+                  <strong>{formatPrice(totalProductPrice)}</strong>
                 </div>
-
-                {cancelGuide && (
-                  <p style={{ margin: "14px 0 0", color: "#a16207", fontWeight: 700 }}>
-                    {cancelGuide}
-                  </p>
-                )}
-
-                {(order.orderStatus === "CANCELED" || order.orderStatus === "REFUND_REQUESTED" || order.orderStatus === "REFUNDED") && (
-                  <div
-                    style={{
-                      marginTop: "14px",
-                      padding: "14px",
-                      borderRadius: "8px",
-                      background: "#fff1f2",
-                      border: "1px solid #fecdd3",
-                      color: "#991b1b",
-                      fontWeight: 700,
-                    }}
-                  >
-                    <p style={{ margin: "0 0 6px" }}>
-                      사유: {order.refundReason || "사유 없음"}
-                    </p>
-                    {order.refundedAt && (
-                      <p style={{ margin: 0 }}>
-                        처리일: {formatDate(order.refundedAt)}
-                      </p>
-                    )}
+                {hasCanceledOrder && (
+                  <div style={{ display: "flex", justifyContent: "space-between", color: "#b42318" }}>
+                    <span>취소한 금액</span>
+                    <strong>-{formatPrice(canceledAmount)}</strong>
                   </div>
                 )}
-              </div>
-
-              <div className="order-history-actions">
-                <button
-                  type="button"
-                  onClick={() => navigate(`/deliverypage?orderId=${order.orderId}`)}
-                  disabled={!canViewDelivery(order)}
-                  className="order-history-action order-history-action--primary"
-                >
-                  {canViewDelivery(order) ? "배송 조회" : "배송 조회 불가"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleCancelOrder(order)}
-                  disabled={!canCancel || cancelingOrderId === order.orderId}
-                  className="order-history-action order-history-action--cancel"
-                >
-                  {cancelingOrderId === order.orderId ? "취소 처리 중..." : "주문 취소"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleRequestRefund(order)}
-                  disabled={!canRequestRefund}
-                  className="order-history-action order-history-action--refund"
-                >
-                  환불 요청
-                </button>
-              </div>
+                <div style={{ display: "flex", justifyContent: "space-between", color: "#526158" }}>
+                  <span>배송비</span>
+                  <strong>{formatPrice(deliveryFee)}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "10px", borderTop: "1px solid #dce6dd", color: "#1f2f24", fontSize: "18px" }}>
+                  <span>총 결제금액</span>
+                  <strong style={{ color: "#216b3a" }}>{formatPrice(displayedPaymentAmount)}</strong>
+                </div>
+                {group.orders.length > 1 && (
+                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => handleCancelOrderGroup(group)}
+                      disabled={
+                        !canCancelOrderGroup
+                        || cancelingOrderGroupNumber === group.groupNumber
+                      }
+                      className="order-history-action order-history-action--cancel"
+                      style={{ width: "auto", minWidth: "170px" }}
+                    >
+                      {cancelingOrderGroupNumber === group.groupNumber
+                        ? "전체 취소 처리 중..."
+                        : hasCanceledOrder
+                          ? "남은 주문 전체 취소"
+                          : "전체 주문 취소"}
+                    </button>
+                  </div>
+                )}
+              </footer>
             </article>
           );
         })}
       </div>
+
+      {deliveryModalOrder && (
+        <div
+          className="order-delivery-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              closeDeliveryModal();
+            }
+          }}
+        >
+          <section
+            className="order-delivery-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-delivery-modal-title"
+          >
+            <header className="order-delivery-modal-header">
+              <div>
+                <p>배송 조회</p>
+                <h2 id="order-delivery-modal-title">
+                  {deliveryModalOrder.farmName || "농장 주문"}
+                </h2>
+                <span>주문번호 {deliveryModalOrder.orderNumber}</span>
+              </div>
+              <button
+                type="button"
+                className="order-delivery-modal-close"
+                onClick={closeDeliveryModal}
+                aria-label="배송 조회 닫기"
+                title="닫기"
+              >
+                ×
+              </button>
+            </header>
+
+            {deliveryModalLoading && (
+              <p className="order-delivery-modal-message">
+                배송 정보를 불러오는 중입니다.
+              </p>
+            )}
+
+            {!deliveryModalLoading && deliveryModalError && (
+              <p className="order-delivery-modal-message error">
+                {deliveryModalError}
+              </p>
+            )}
+
+            {!deliveryModalLoading && !deliveryModalError && deliveryModalData && (
+              <>
+                <div className="order-delivery-progress">
+                  {[
+                    { status: "READY", label: "배송 준비중" },
+                    { status: "SHIPPING", label: "배송 중" },
+                    { status: "DELIVERED", label: "배송 완료" },
+                  ].map((step, index, steps) => {
+                    const currentStep = steps.findIndex(
+                      (item) => item.status === deliveryModalData.deliveryStatus
+                    );
+                    const isActive = index <= Math.max(currentStep, 0);
+
+                    return (
+                      <div
+                        className={isActive ? "active" : ""}
+                        key={step.status}
+                      >
+                        <span>{index + 1}</span>
+                        <strong>{step.label}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="order-delivery-modal-info">
+                  <div>
+                    <span>현재 상태</span>
+                    <strong>
+                      {DELIVERY_STATUS_LABEL[deliveryModalData.deliveryStatus]
+                        || "배송 준비중"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>택배사</span>
+                    <strong>{deliveryModalData.courierName || "등록 전"}</strong>
+                  </div>
+                  <div>
+                    <span>송장번호</span>
+                    <strong>{deliveryModalData.trackingNumber || "등록 전"}</strong>
+                  </div>
+                  <div>
+                    <span>배송 시작일</span>
+                    <strong>{formatDate(deliveryModalData.shippedAt)}</strong>
+                  </div>
+                  <div>
+                    <span>배송 완료일</span>
+                    <strong>{formatDate(deliveryModalData.deliveredAt)}</strong>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <footer className="order-delivery-modal-footer">
+              <button type="button" onClick={closeDeliveryModal}>
+                확인
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: "8px", marginTop: "24px" }}>

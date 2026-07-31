@@ -166,9 +166,6 @@ export function SuccessPage() {
         <main style={pageStyle}>
             <section style={cardStyle}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
-                    <button type="button" onClick={() => navigate(-1)} style={backButtonStyle}>
-                        ← 뒤로가기
-                    </button>
                     <span
                         style={{
                             padding: "7px 11px",

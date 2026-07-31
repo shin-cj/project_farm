@@ -34,6 +34,14 @@ public class PaymentController {
         return paymentService.cancelPayment(orderId, request);
     }
 
+    @PostMapping("/{orderId}/cancel-group")
+    public Map<String, Object> cancelPaymentGroup(
+            @PathVariable Long orderId,
+            @RequestBody PaymentCancelRequest request
+    ) {
+        return paymentService.cancelPaymentGroup(orderId, request);
+    }
+
     @PostMapping("/{orderId}/refund-request")
     public Map<String,Object> requestRefund(@PathVariable Long orderId,@RequestBody PaymentRefundRequest request){
         return paymentService.requestRefund(orderId,request);
