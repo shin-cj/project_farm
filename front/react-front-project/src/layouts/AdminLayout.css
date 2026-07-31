@@ -205,6 +205,30 @@
   min-width: 0;
 }
 
+/* 관리자 목록 화면의 최상위 흰 카드만 제거해 회원·신고 관리와 같은 배경 흐름을 만듭니다. */
+.page-card.admin-flat-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 30px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page-card.admin-flat-page > h1 {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dce4de;
+}
+
+.admin-flat-page-header {
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dce4de;
+}
+
 /* 태블릿에서는 메뉴를 화면 위쪽의 버튼 모음으로 바꿉니다. */
 @media (max-width: 900px) {
   .admin-layout {

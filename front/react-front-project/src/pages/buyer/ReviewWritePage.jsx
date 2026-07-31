@@ -33,7 +33,7 @@ function ReviewWritePage() {
     const isEditMode = Boolean(reviewId)
 
     const loginUser = getStoredLoginUser()
-    const buyerId = loginUser?.userId || loginUser?.id || loginUser?.userNo || 1
+    const buyerId = loginUser?.userId || loginUser?.id || loginUser?.userNo
 
     const [rating, setRating] = useState(5)
     const [content, setContent] = useState('')
@@ -41,6 +41,12 @@ function ReviewWritePage() {
     const [targetProductId, setTargetProductId] = useState(productId)
 
     useEffect(() => {
+        if (!buyerId) {
+            alert('로그인이 필요한 기능입니다.')
+            navigate('/login', { replace: true })
+            return
+        }
+
         if (isEditMode) {
             axios.get(`http://localhost:8080/api/reviews/detail/${reviewId}`)
                 .then((res) => {
@@ -59,7 +65,7 @@ function ReviewWritePage() {
                 navigate(-1)
             }
         }
-    }, [isEditMode, reviewId, productId, navigate])
+    }, [buyerId, isEditMode, reviewId, productId, navigate])
 
     // 💡 파일을 선택하면 Base64 문자열로 변환하여 imageUrl에 담습니다 (백엔드 수정 불필요)
     const handleImageChange = (e) => {

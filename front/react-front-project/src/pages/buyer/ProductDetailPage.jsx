@@ -9,6 +9,7 @@ import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
 import ReportButton from '../../components/report/ReportButton.jsx'
 import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
+import { canWriteReview } from '../../api/reviewApi.js'
 import './ProductDetailPage.css'
 
 function getStoredLoginUser() {
@@ -218,7 +219,9 @@ function ProductDetailPage() {
     }
 
     try {
-      await axios.delete(`http://localhost:8080/api/reviews/${reviewId}`)
+      await axios.delete(`http://localhost:8080/api/reviews/${reviewId}`, {
+        params: { buyerId: userid },
+      })
       alert('삭제 완료되었습니다.')
       setReviewList((currentList) => currentList.filter((r) => (r.reviewId || r.id) !== reviewId))
     } catch (error) {
@@ -586,7 +589,7 @@ function ProductDetailPage() {
             <h3 style={{ margin: 0, fontSize: '20px' }}>상품 문의하기</h3>
             <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   if (!userid) {
                     alert('로그인이 필요한 기능입니다.')
                     navigate('/login')
@@ -724,7 +727,7 @@ function ProductDetailPage() {
             <h3 style={{ margin: 0, fontSize: '20px' }}>상품 후기</h3>
             <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   if (!userid) {
                     alert('로그인이 필요한 기능입니다.')
                     navigate('/login')
@@ -737,6 +740,18 @@ function ProductDetailPage() {
                   if (!targetProductId) {
                     alert('상품 정보를 찾을 수 없습니다.');
                     return;
+                  }
+
+                  try {
+                    const eligible = await canWriteReview(userid, targetProductId)
+                    if (!eligible) {
+                      alert('배송 완료된 구매 상품만 리뷰를 작성할 수 있습니다.')
+                      return
+                    }
+                  } catch (reviewEligibilityError) {
+                    console.error('리뷰 작성 가능 여부 확인 실패:', reviewEligibilityError)
+                    alert('리뷰 작성 가능 여부를 확인하지 못했습니다.')
+                    return
                   }
 
                   navigate(`/reviews/write?productId=${targetProductId}`)
@@ -764,7 +779,8 @@ function ProductDetailPage() {
             ) : (
                 sortedReviewList.map((review) => {
                   const reviewId = review.reviewId || review.id
-                  const isReviewOwner = Number(userid) === Number(review.buyerId)
+                  const isReviewOwner = Boolean(userid)
+                      && Number(userid) === Number(review.buyerId)
                   return (
                       <div
                           key={reviewId}

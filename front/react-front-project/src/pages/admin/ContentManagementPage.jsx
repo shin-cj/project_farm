@@ -28,7 +28,7 @@ function Tables() {
 
 
 function ContentManagementPage() {
-  return <PagePlaceholder title="리뷰·문의 관리" description={<Tables/>} />
+  return <PagePlaceholder className="admin-flat-page" title="리뷰·문의 관리" description={<Tables/>} />
 }
 
 export default ContentManagementPage
