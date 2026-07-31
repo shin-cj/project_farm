@@ -76,9 +76,11 @@ public class QnaService {
     public void updateQna(Long qnaId, QnaRequest request) {
         Qna qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문의가 없습니다."));
+
+        validateOwner(qna, request.getBuyerId());
         qna.setQuestionTitle(request.getQuestionTitle());
         qna.setQuestionContent(request.getQuestionContent());
-        qna.setIsSecret(request.getIsSecret());
+        qna.setIsSecret(request.getIsSecret() != null ? request.getIsSecret() : 0);
     }
 
     @Transactional
@@ -94,7 +96,18 @@ public class QnaService {
         qna.setAnsweredAt(LocalDateTime.now());
     }
 
-    public void deleteQna(Long qnaId) {
-        qnaRepository.deleteById(qnaId);
+    @Transactional
+    public void deleteQna(Long qnaId, Long buyerId) {
+        Qna qna = qnaRepository.findById(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 문의가 없습니다."));
+
+        validateOwner(qna, buyerId);
+        qnaRepository.delete(qna);
+    }
+
+    private void validateOwner(Qna qna, Long buyerId) {
+        if (buyerId == null || !buyerId.equals(qna.getBuyerId())) {
+            throw new IllegalArgumentException("본인이 작성한 문의만 수정하거나 삭제할 수 있습니다.");
+        }
     }
 }
