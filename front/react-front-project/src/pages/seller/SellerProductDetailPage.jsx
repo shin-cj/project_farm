@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getProduct, getProductStockHistories } from '../../api/productApi.js'
 import { getFarms } from '../../api/farmApi.js'
+import { getReviewsByProduct } from '../../api/reviewApi.js'
 import { getLoginSellerId } from '../../config/devAccount.js'
 import CatalogImage from '../../components/catalog/CatalogImage.jsx'
 import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
@@ -37,6 +38,27 @@ function formatDateTime(value) {
   return String(value).replace('T', ' ').slice(0, 16)
 }
 
+function getSafeRating(value) {
+  return Math.min(5, Math.max(0, Number(value) || 0))
+}
+
+function getReviewImageSrc(imageUrl) {
+  if (!imageUrl || typeof imageUrl !== 'string') {
+    return null
+  }
+
+  if (
+    imageUrl.startsWith('data:')
+    || imageUrl.startsWith('http://')
+    || imageUrl.startsWith('https://')
+    || imageUrl.startsWith('/')
+  ) {
+    return imageUrl
+  }
+
+  return `data:image/jpeg;base64,${imageUrl}`
+}
+
 function getStockHistoryText(changeType) {
   const historyText = {
     INITIAL_STOCK: '상품 등록 초기 재고',
@@ -56,6 +78,7 @@ function SellerProductDetailPage() {
   const [product, setProduct] = useState(null)
   const [farm, setFarm] = useState(null)
   const [stockHistories, setStockHistories] = useState([])
+  const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -73,10 +96,11 @@ function SellerProductDetailPage() {
           throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
         }
 
-        const [productData, farms, historyData] = await Promise.all([
+        const [productData, farms, historyData, reviewData] = await Promise.all([
           getProduct(productId),
           getFarms(sellerId),
           getProductStockHistories(productId),
+          getReviewsByProduct(productId),
         ])
 
         if (ignore) {
@@ -94,6 +118,7 @@ function SellerProductDetailPage() {
         setProduct(productData)
         setFarm(ownedFarm)
         setStockHistories(historyData)
+        setReviews(reviewData)
       } catch (err) {
         if (!ignore) {
           console.error(err)
@@ -134,6 +159,10 @@ function SellerProductDetailPage() {
 
   const isFarmApproved = farm.approvalStatus === 'APPROVED'
   const saleTypeText = farm.saleType === 'WHOLESALE' ? '도매' : '소매'
+  const averageRating = reviews.length === 0
+    ? 0
+    : reviews.reduce((sum, review) => sum + getSafeRating(review.rating), 0)
+      / reviews.length
 
   return (
     <main className="seller-product-detail-page">
@@ -290,6 +319,58 @@ function SellerProductDetailPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+      </section>
+
+      <section className="seller-product-review-card">
+        <div className="seller-product-review-heading">
+          <div>
+            <p>PRODUCT REVIEWS</p>
+            <h2>고객 리뷰</h2>
+          </div>
+          <div className="seller-product-review-summary">
+            <strong>{averageRating.toFixed(1)}점</strong>
+            <span>총 {reviews.length}개</span>
+          </div>
+        </div>
+
+        {reviews.length === 0 ? (
+          <p className="seller-product-review-empty">
+            아직 이 상품에 등록된 리뷰가 없습니다.
+          </p>
+        ) : (
+          <div className="seller-product-review-list">
+            {reviews.map((review) => {
+              const rating = getSafeRating(review.rating)
+              const reviewImageSrc = getReviewImageSrc(review.imageUrl)
+
+              return (
+                <article key={review.reviewId} className="seller-product-review-item">
+                  <div className="seller-product-review-item-header">
+                    <strong>{review.name || '익명'}</strong>
+                    <span aria-label={`${rating}점`}>
+                      {'★'.repeat(rating)}
+                      {'☆'.repeat(5 - rating)}
+                    </span>
+                  </div>
+
+                  <p className="seller-product-review-content">
+                    {review.content || '작성된 리뷰 내용이 없습니다.'}
+                  </p>
+
+                  {reviewImageSrc && (
+                    <img
+                      className="seller-product-review-image"
+                      src={reviewImageSrc}
+                      alt={`${review.name || '고객'}의 리뷰 첨부 이미지`}
+                    />
+                  )}
+
+                  <small>{formatDateTime(review.createdAt)}</small>
+                </article>
+              )
+            })}
           </div>
         )}
       </section>

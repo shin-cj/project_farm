@@ -22,6 +22,10 @@ function getPercent(value, total) {
   return (value / total) * 100;
 }
 
+function getSafeRating(value) {
+  return Math.min(5, Math.max(0, Number(value) || 0));
+}
+
 function SalesStatisticsPage() {
   const [days, setDays] = useState(30);
   const [statistics, setStatistics] = useState({
@@ -609,8 +613,8 @@ function SalesStatisticsPage() {
                       {review.name || "익명"}
                     </span>
                     <span className="seller-review-stars">
-                      {"★".repeat(review.rating || 0)}
-                      {"☆".repeat(5 - (review.rating || 0))}
+                      {"★".repeat(getSafeRating(review.rating))}
+                      {"☆".repeat(5 - getSafeRating(review.rating))}
                     </span>
                   </div>
                   <p className="seller-review-content">{review.content}</p>
