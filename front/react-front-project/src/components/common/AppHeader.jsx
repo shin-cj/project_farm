@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import {Navigate, NavLink, useNavigate} from "react-router-dom";
 import nongdamLogo from "../../assets/brand/nongdam-logo.png";
 import { clearLoginUser, getLoginRoleId, getLoginUser } from "../../utils/authStorage.js";
 
@@ -33,6 +33,14 @@ function AppHeader() {
     navigate("/");
   }
 
+  function isLoginCheck(event){
+    if(!loginUser){
+      event.preventDefault()
+      alert('로그인이 필요합니다.')
+      return navigate("/login");
+    }
+  }
+
   return (
     <header className="app-header">
       <div className="app-header-inner">
@@ -44,8 +52,8 @@ function AppHeader() {
 
         <nav className="main-nav" aria-label="주요 메뉴">
           {(isBuyer || !loginUser) && (
-            <>
-              <NavLink to="/chatbot">레시피 챗봇</NavLink>
+              <>
+              <NavLink to="/chatbot" onClick={isLoginCheck}>레시피 챗봇</NavLink>
               <NavLink to="/products">상품</NavLink>
               <NavLink to="/farms">농장</NavLink>
               <NavLink to="/market-prices">주간 시세</NavLink>

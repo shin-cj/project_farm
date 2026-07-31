@@ -112,7 +112,7 @@ function PenaltyRecoveryModal({ open, onClose }) {
                 <header>
                     <div>
                         <span>ADMIN PENALTY</span>
-                        <h2>제재 이용자 관리</h2>
+                        <h2>페널티 이용자 관리</h2>
                     </div>
                     <button type="button" onClick={onClose}>×</button>
                 </header>
@@ -126,7 +126,7 @@ function PenaltyRecoveryModal({ open, onClose }) {
                         onChange={(e) => setStatus(e.target.value)}
                     >
                         <option value="ACTIVE">제재 중</option>
-                        <option value="REVOKED">복구 완료</option>
+                        <option value="REVOKED">초기화 완료</option>
                         <option value="ALL">전체</option>
                     </select>
                 </div>
@@ -200,7 +200,7 @@ function PenaltyRecoveryModal({ open, onClose }) {
 
                             {penalty.penaltyStatus === "ACTIVE" && (
                                 <button type="button" onClick={() => setSelected(penalty)}>
-                                    원상 복구
+                                    초기화
                                 </button>
                             )}
                         </article>

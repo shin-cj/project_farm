@@ -77,7 +77,9 @@ function AppRoutes() {
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/user/edit" element={<UserProfileEditPage />} />
 
-        <Route path="/chatbot" element={<ChatbotPage />} />
+        <Route element={<RoleRoute allowedRoleIds={[2]}/>}>
+          <Route path="/chatbot" element={<ChatbotPage />} />
+        </Route>
         <Route path="/test/market-price" element={<MarketPriceTestPage />} />
         <Route path="/deliverypage" element={<DeliveryStatusPage />} />
 
