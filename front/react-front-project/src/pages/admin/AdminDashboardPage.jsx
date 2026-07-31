@@ -621,12 +621,6 @@ function AdminDashboardPage() {
                                     </strong>
                                 </button>
 
-                                <button type="button">
-                                    <span>품절 상품</span>
-                                    <strong>
-                                        {details.alerts.soldOutProducts}건
-                                    </strong>
-                                </button>
                             </div>
                         </section>
                     </>
