@@ -42,6 +42,12 @@ export function CheckoutPage() {
     const [searchParams] = useSearchParams();
     const amountParam = searchParams.get("amount");
     const paymentAmount = amountParam === null ? 0 : Number(amountParam);
+    const totalProductPriceParam = searchParams.get("totalProductPrice");
+    const deliveryFeeParam = searchParams.get("deliveryFee");
+    const deliveryFee = deliveryFeeParam === null ? 0 : Number(deliveryFeeParam);
+    const totalProductPrice = totalProductPriceParam === null
+        ? Math.max(paymentAmount - deliveryFee, 0)
+        : Number(totalProductPriceParam);
     const orderName = searchParams.get("orderName") || "";
     const orderId = searchParams.get("orderId") || "";
 
@@ -399,7 +405,7 @@ export function CheckoutPage() {
                                 상품 금액
                             </span>
                             <strong style={{ color: "#213328", fontSize: "17px" }}>
-                                {paymentAmount.toLocaleString()}원
+                                {totalProductPrice.toLocaleString()}원
                             </strong>
                         </div>
                         <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "10px" }}>
@@ -407,7 +413,7 @@ export function CheckoutPage() {
                                 배송비
                             </span>
                             <strong style={{ color: "#213328", fontSize: "17px" }}>
-                                0원
+                                {deliveryFee.toLocaleString()}원
                             </strong>
                         </div>
                         <div
