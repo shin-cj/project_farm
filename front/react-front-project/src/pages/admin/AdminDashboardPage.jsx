@@ -1,56 +1,124 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { getProduct, getProductStockHistories } from '../../api/productApi.js'
-import { getFarms } from '../../api/farmApi.js'
-import { getLoginSellerId } from '../../config/devAccount.js'
-import { getReviewsByProduct } from '../../api/reviewApi.js'
-import CatalogImage from '../../components/catalog/CatalogImage.jsx'
-import CatalogPageState from '../../components/catalog/CatalogPageState.jsx'
-import { getApiErrorMessage } from '../../utils/apiError.js'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { getFarms } from "../../api/farmApi.js";
+import { getProducts } from "../../api/productApi.js";
+import penaltyApi from "../../api/penaltyApi.js";
+import DashboardWorkModal from "../../components/report/DashboardWorkModal.jsx";
+import adminDashboardApi from "../../api/adminDashboardApi";
+import reportApi from "../../api/reportApi";
+import "./AdminDashboardPage.css";
+import DashboardItemDetailModal
+    from "../../components/report/DashboardItemDetailModal.jsx";
+import orderApi from "../../api/orderApi.js";
+import TodayOrdersModal from "../../components/order/TodayOrdersModal.jsx";
+import TodaySalesModal from "../../components/payment/TodaySalesModal.jsx";
 
-
-function getProductStatusText(status) {
-    const statusText = {
-        PENDING: '승인 대기',
-        APPROVED: '승인 완료',
-        REJECTED: '승인 거절',
-        ON_SALE: '판매 중',
-        SOLD_OUT: '품절',
-        HIDDEN: '판매 중지',
+const TREND_METRICS = {
+    salesAmount: {
+        label: "매출",
+        unit: "원"
+    },
+    orderCount:{
+        label: "주문",
+        unit: "건"
+    },
+    newMemberCount: {
+        label:"신규 회원",
+        unit:"명"
+    },
+    reportCount: {
+        label:"신고",
+        unit:"건"
     }
-
-    return statusText[status] ?? '상태 미확인'
 }
 
-function formatDate(value) {
-    if (!value) {
-        return '-'
-    }
-
-    return String(value).replace('T', ' ').slice(0, 10)
+function formatNumber(value){
+    return Number(value ?? 0).toLocaleString("ko-KR")
 }
 
-function formatDateTime(value) {
-    if (!value) {
-        return '-'
+function AdminDashboardPage() {
+    const navigate = useNavigate();
+
+    const [summary, setSummary] = useState(null);
+    const [recentReports, setRecentReports] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [details, setDetails] = useState(null);
+    const [period, setPeriod] = useState(7);
+    const [trendMetric, setTrendMetric] = useState("salesAmount");
+    const [detailsLoading, setDetailsLoading] = useState(true);
+    const [detailsError, setDetailsError] = useState("");
+    const [workModal, setWorkModal] = useState({
+        open: false,
+        type:"",
+        title: "",
+        items: [],
+        loading: false,
+        error: ""
+    });
+    const [todayOrdersModalOpen, setTodayOrdersModalOpen] = useState(false);
+    const [todayOrders, setTodayOrders] = useState([]);
+    const [todayOrdersLoading, setTodayOrdersLoading] = useState(false);
+    const [todayOrdersError, setTodayOrdersError] = useState("");
+    const [selectedWorkDetail, setSelectedWorkDetail] = useState(null);
+    const [returnToWorkModal, setReturnToWorkModal] = useState(false);
+
+    const [todaySalesModalOpen, setTodaySalesModalOpen] = useState(false)
+    const [todaySales, setTodaySales] = useState([])
+    const [todaySalesLoading, setTodaySalesLoading] = useState(false)
+    const [todaySalesError, setTodaySalesError] = useState("")
+
+
+    const openTodaySaleModal = async () => {
+        setTodaySalesModalOpen(true)
+        setTodaySalesLoading(true)
+        setTodaySalesError("")
+
+        try {
+            const {data} = await adminDashboardApi.getTodaySales()
+            setTodaySales(data)
+        }catch (e){
+            console.error(e)
+            setTodaySalesError("오늘 매출 내역을 불러오지 못했습니다.")
+        }finally {
+            setTodaySalesLoading(false)
+        }
     }
 
-    return String(value).replace('T', ' ').slice(0, 16)
-}
+    const isToday = (dateValue) => {
+        if(!dateValue) return false
 
-function getStockHistoryText(changeType) {
-    const historyText = {
-        INITIAL_STOCK: '상품 등록 초기 재고',
-        MANUAL_ADJUSTMENT: '판매자 재고 수정',
-        PAYMENT_DEDUCTION: '주문 결제 재고 차감',
-        PAYMENT_CANCEL_RESTORE: '결제 취소 재고 복구',
+        const orderDate = new Date(dateValue)
+        const today = new Date()
+
+        return (
+            orderDate.getFullYear() === today.getFullYear() &&
+            orderDate.getMonth() === today.getMonth() &&
+            orderDate.getDate() === today.getDate()
+        )
     }
 
-    return historyText[changeType] ?? '재고 변경'
-}
+    const openTodayOrdersModal = async () => {
+        setTodayOrdersModalOpen(true);
+        setTodayOrdersLoading(true);
+        setTodayOrdersError("")
 
-function SellerProductDetailPage() {
-    const { productId } = useParams()
+        try {
+            const {data} = await orderApi.getAdminOrders()
+
+            const filteredOreders = data.filter((order) =>
+                isToday(order.orderedAt)
+            )
+
+            setTodayOrders(filteredOreders)
+        } catch (e){
+            console.error(e)
+            setTodayOrdersError("오늘 주문 내역을 불러오지 못했습니다.")
+        }finally {
+            setTodayOrdersLoading(false)
+        }
+    }
+
     function toReportWorkItem(report){
         return{
             id: report.reportId,
@@ -113,190 +181,198 @@ function SellerProductDetailPage() {
                 items = response.data.map(toReportWorkItem);
             }
 
-    // 🚨 [디버깅용 로그 추가]
-    console.log("현재 주소창에서 추출한 productId:", productId);
-    console.log("현재 주소창의 전체 경로:", window.location.pathname);
-    const navigate = useNavigate()
-    const [product, setProduct] = useState(null)
-    const [farm, setFarm] = useState(null)
-    const [stockHistories, setStockHistories] = useState([])
-    const [reviews, setReviews] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState('')
+            if (type === "PENDING_FARMS") {
+                const farms = await getFarms(null);
+
+                items = farms
+                    .filter((farm) => farm.approvalStatus === "PENDING")
+                    .map((farm) => ({
+                        id: farm.farmId,
+                        title: farm.farmName,
+                        kind: "FARM",
+                        data: farm,
+                        subtitle: farm.region || "지역 미등록",
+                        description:
+                            farm.farmDescription || "농장 소개 없음",
+                        status: farm.approvalStatus,
+                        createdAt: farm.createdAt
+                    }));
+            }
+
+            if (type === "PENDING_PRODUCTS") {
+                const products =
+                    await getProducts(null, null, "PENDING");
+
+                items = products.map((product) => ({
+                    id: product.productId,
+                    title: product.productName,
+                    kind: "PRODUCT",
+                    data: product,
+                    subtitle: product.farmName || "농장 정보 없음",
+                    description:
+                        `${product.price?.toLocaleString()}원 · 재고 ${product.stockQuantity}`,
+                    status: product.productStatus,
+                    createdAt: product.createdAt
+                }));
+            }
+
+            if (type === "ACTIVE_PENALTIES") {
+                const response =
+                    await penaltyApi.getAdminList("ACTIVE");
+
+                items = response.data.map((penalty) => ({
+                    id: penalty.penaltyId,
+                    title:
+                        penalty.productName ||
+                        `판매자 번호 ${penalty.sellerId}`,
+                    kind: "PENALTY",
+                    data: penalty,
+                    subtitle: `누적 점수 ${penalty.penaltyPoints}점`,
+                    description:
+                        penalty.penaltyReason || "사유 없음",
+                    status: penalty.penaltyStatus,
+                    createdAt: penalty.createdAt
+                }));
+            }
+
+            setWorkModal({
+                open: true,
+                type: type,
+                title: titles[type],
+                items,
+                loading: false,
+                error: ""
+            });
+        } catch (error) {
+            setWorkModal({
+                open: true,
+                type:type,
+                title: titles[type],
+                items: [],
+                loading: false,
+                error: "목록을 불러오지 못했습니다."
+            });
+        }
+    }
+
+    function openWorkDetail(item){
+        setReturnToWorkModal(true)
+
+        setWorkModal((previous) => ({
+            ...previous,
+            open: false
+        }))
+
+        setSelectedWorkDetail(item)
+    }
+
+    function openRecentReportDetail(report){
+        const recentReportItems =
+            recentReports.map(toReportWorkItem)
+
+        setWorkModal({
+            open: false,
+            type: "RECENT_REPORTS",
+            title: "최근 접수된 신고",
+            items: recentReportItems,
+            loading: false,
+            error: ""
+        })
+
+        setReturnToWorkModal(true)
+        setSelectedWorkDetail(toReportWorkItem(report))
+
+    }
+
+    function closeWorkDetail(){
+        setSelectedWorkDetail(null)
+
+        if(returnToWorkModal) {
+            setWorkModal((previous) => ({
+                ...previous,
+                open: true
+            }))
+        }
+
+        setReturnToWorkModal(false)
+    }
 
     useEffect(() => {
-        let ignore = false
+        Promise.all([
+            adminDashboardApi.getSummary(),
+            reportApi.getAdminReports("PENDING")
+        ])
+            .then(([summaryResponse, reportResponse]) => {
+                setSummary(summaryResponse.data);
+                setRecentReports(reportResponse.data.slice(0, 5));
+            })
+            .catch((requestError) => {
+                console.error(requestError);
+                setError("대시보드 정보를 불러오지 못했습니다.");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
 
-        async function loadSellerProduct() {
-            try {
-                setLoading(true)
-                setError('')
+    useEffect(() => {
+        setDetailsLoading(true);
+        setDetailsError("");
 
-                const sellerId = getLoginSellerId()
+        adminDashboardApi
+            .getDetails(period)
+            .then((response) => {
+                setDetails(response.data);
+            })
+            .catch((requestError) => {
+                console.error(requestError);
+                setDetailsError(
+                    "상세 운영 현황을 불러오지 못했습니다."
+                );
+            })
+            .finally(() => {
+                setDetailsLoading(false);
+            });
+    }, [period]);
 
-                if (sellerId === null) {
-                    throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
-                }
-
-                const [productData, farms, historyData, reviewData] = await Promise.all([
-                    getProduct(productId),
-                    getFarms(sellerId),
-                    getProductStockHistories(productId),
-                    getReviewsByProduct(Number(productId) || 0).catch(() => []),
-                ])
-
-                if (ignore) {
-                    return
-                }
-
-                const ownedFarm = farms.find(
-                    (currentFarm) => Number(currentFarm.farmId) === Number(productData.farmId),
-                )
-
-                if (!ownedFarm) {
-                    throw new Error('조회 권한이 없는 상품입니다.')
-                }
-
-                // 💡 묶어서 비동기 배치 업데이트처럼 처리하여 린트 경고 방지
-                setProduct(productData)
-                setFarm(ownedFarm)
-                setStockHistories(historyData)
-                setReviews(reviewData || [])
-            } catch (err) {
-                if (!ignore) {
-                    console.error(err)
-                    setError(getApiErrorMessage(err, '상품 정보를 불러오지 못했습니다.'))
-                }
-            } finally {
-                if (!ignore) {
-                    setLoading(false)
-                }
-            }
-        }
-
-        loadSellerProduct()
-
-        return () => {
-            ignore = true
-        }
-    }, [productId])
-
-    // 💡 [방어 코드] unused-vars 경고를 원천 차단하기 위해 화면에 error 변수를 명시적으로 활용
     if (loading) {
-        return <CatalogPageState message="상품 운영 정보를 불러오는 중입니다." />
+        return <div>대시보드를 불러오는 중입니다.</div>;
     }
 
     if (error) {
-        return (
-            <CatalogPageState
-                tone="error"
-                message={error}
-                actionLabel="상품 관리로 돌아가기"
-                onAction={() => navigate('/seller/products')}
-            />
-        )
+        return <div>{error}</div>;
     }
 
-    if (!product || !farm) {
-        return <CatalogPageState message="상품 정보를 찾을 수 없습니다." />
+    const trends = details?.trends ?? [];
+
+    const selectedMetric =
+        TREND_METRICS[trendMetric];
+
+    const maxTrendValue = Math.max(
+        ...trends.map((item) =>
+            Number(item[trendMetric] ?? 0)
+        ),
+        1
+    );
+
+    const memberStatus = details?.memberStatus ?? {
+        activeMembers: 0,
+        suspendedMembers: 0,
+        withdrawnMembers: 0
+    };
+
+    const memberTotal =
+        Number(memberStatus.activeMembers) +
+        Number(memberStatus.suspendedMembers) +
+        Number(memberStatus.withdrawnMembers);
+
+    function calculateMemberPercent(value) {
+        if (memberTotal === 0) {
+            return 0;
+        }
+
+        return Number(value) / memberTotal * 100;
     }
-
-    const isFarmApproved = farm.approvalStatus === 'APPROVED'
-    const saleTypeText = farm.saleType === 'WHOLESALE' ? '도매' : '소매'
-
-    return (
-        <main className="seller-product-detail-page">
-            <section className="seller-product-detail-heading">
-                <div>
-                    <p className="seller-product-detail-label">Seller Product Detail</p>
-                    <h1>상품 운영 상세</h1>
-                    <p>구매자 화면과 분리된 판매자용 상품 관리 정보입니다.</p>
-                </div>
-
-                <div className="seller-product-detail-actions">
-                    <Link to="/seller/products" className="seller-product-detail-secondary-button">
-                        목록으로
-                    </Link>
-                    {isFarmApproved ? (
-                        <Link
-                            to={`/seller/products/${product.productId}/edit`}
-                            className="seller-product-detail-primary-button"
-                        >
-                            상품 수정
-                        </Link>
-                    ) : (
-                        <span className="seller-product-detail-disabled-button">
-              농장 승인 후 수정 가능
-            </span>
-                    )}
-                </div>
-            </section>
-
-            <section className="seller-product-detail-card">
-                <div className="seller-product-detail-image-wrap">
-                    <CatalogImage
-                        src={product.productImageUrl}
-                        alt={product.productName}
-                        fallbackClassName="seller-product-detail-image-fallback"
-                    />
-                    <span className={`seller-product-detail-status status-${product.productStatus}`}>
-            {getProductStatusText(product.productStatus)}
-          </span>
-                </div>
-
-                <div className="seller-product-detail-summary">
-                    <p className="seller-product-detail-farm">{farm.farmName} · {saleTypeText}</p>
-                    <h2>{product.productName}</h2>
-                    <p className="seller-product-detail-description">
-                        {product.description || '등록된 상품 설명이 없습니다.'}
-                    </p>
-
-                    <div className="seller-product-detail-price-row">
-                        <strong>{Number(product.price ?? 0).toLocaleString()}원</strong>
-                        <span>/{product.unit || '단위 미등록'}</span>
-                    </div>
-
-                    <div className="seller-product-detail-notice">
-                        <strong>농장 승인 상태: {farm.approvalStatus === 'APPROVED' ? '승인 완료' : '승인 대기'}</strong>
-                        {!isFarmApproved && (
-                            <span>승인 대기 농장의 상품은 구매자에게 공개되지 않으며 수정할 수 없습니다.</span>
-                        )}
-                    </div>
-                </div>
-            </section>
-
-            <section className="seller-product-detail-info-grid">
-                <article>
-                    <h2>판매·재고 정보</h2>
-                    <dl>
-                        <div><dt>현재 재고</dt><dd>{Number(product.stockQuantity ?? 0).toLocaleString()}개</dd></div>
-                        <div><dt>판매 방식</dt><dd>{saleTypeText}</dd></div>
-                        <div><dt>최소 주문 수량</dt><dd>{product.minOrderQuantity ?? 1}개</dd></div>
-                        <div><dt>당일배송</dt><dd>{product.sameDayDelivery === 'Y' ? '가능' : '일반배송'}</dd></div>
-                    </dl>
-                </article>
-
-                <article>
-                    <h2>상품 기본 정보</h2>
-                    <dl>
-                        <div><dt>원산지</dt><dd>{product.origin || '-'}</dd></div>
-                        <div><dt>공공 시세 품목 코드</dt><dd>{product.marketItemCode || '-'}</dd></div>
-                        <div><dt>수확일</dt><dd>{formatDate(product.harvestDate)}</dd></div>
-                        <div><dt>소비기한</dt><dd>{formatDate(product.expirationDate)}</dd></div>
-                        <div><dt>등록일</dt><dd>{formatDate(product.createdAt)}</dd></div>
-                    </dl>
-                </article>
-
-                <article>
-                    <h2>연결 농장 정보</h2>
-                    <dl>
-                        <div><dt>농장명</dt><dd>{farm.farmName}</dd></div>
-                        <div><dt>지역</dt><dd>{farm.region || '-'}</dd></div>
-                        <div><dt>농장 승인</dt><dd>{farm.approvalStatus === 'APPROVED' ? '승인 완료' : '승인 대기'}</dd></div>
-                        <div><dt>사업자 번호</dt><dd>{farm.businessNumber || '-'}</dd></div>
-                    </dl>
-                </article>
-            </section>
 
     return (
         <section className="admin-dashboard-page">
@@ -373,109 +449,124 @@ function SellerProductDetailPage() {
             <section className="dashboard-detail-area">
                 <header className="dashboard-detail-header">
                     <div>
-                        <p>STOCK HISTORY</p>
-                        <h2>재고 이력</h2>
+                        <h2>운영 분석</h2>
+                        <p>기간별 운영 추이와 주의 항목입니다.</p>
                     </div>
-                    <span>최신 변경 순</span>
-                </div>
 
-                {stockHistories.length === 0 ? (
-                    <p className="seller-product-stock-history-empty">
-                        재고 변경 이력이 아직 없습니다. 앞으로의 재고 수정과 결제 변동이 이곳에 기록됩니다.
-                    </p>
-                ) : (
-                    <div className="seller-product-stock-history-table-wrap">
-                        <table className="seller-product-stock-history-table">
-                            <thead>
-                            <tr>
-                                <th>변경 일시</th>
-                                <th>변경 내용</th>
-                                <th>변동 수량</th>
-                                <th>재고 변화</th>
-                                <th>연결 주문</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {stockHistories.map((history) => (
-                                <tr key={history.stockHistoryId}>
-                                    <td>{formatDateTime(history.createdAt)}</td>
-                                    <td>
-                                        <strong>{getStockHistoryText(history.changeType)}</strong>
-                                        {history.changeReason && <span>{history.changeReason}</span>}
-                                    </td>
-                                    <td className={history.changeQuantity >= 0 ? 'increase' : 'decrease'}>
-                                        {history.changeQuantity >= 0 ? '+' : ''}
-                                        {Number(history.changeQuantity ?? 0).toLocaleString()}개
-                                    </td>
-                                    <td>
-                                        {Number(history.previousQuantity ?? 0).toLocaleString()}개 →{' '}
-                                        {Number(history.currentQuantity ?? 0).toLocaleString()}개
-                                    </td>
-                                    <td>{history.orderId ? `주문 #${history.orderId}` : '-'}</td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
+                    <select
+                        value={period}
+                        onChange={(e) =>
+                    setPeriod(Number(e.target.value))}>
+                        <option value={7}>최근 7일</option>
+                        <option value={30}>최근 30일</option>
+                    </select>
+                </header>
+                {detailsLoading ? (
+                    <div className="dashboard-detail-state">
+                        운영 현황을 불러오는 중입니다.
                     </div>
-                )}
-            </section>
-
-            <section className="seller-product-stock-history-card" style={{ marginTop: '30px' }}>
-                <div className="seller-product-stock-history-heading">
-                    <div>
-                        <p>PRODUCT REVIEWS</p>
-                        <h2>고객 리뷰 관리</h2>
+                ) : detailsError ? (
+                    <div className="dashboard-detail-error">
+                        {detailsError}
                     </div>
-                    <span>총 {reviews.length}개</span>
-                </div>
+                ) : details && (
+                    <>
+                        <div className="dashboard-bottom-grid">
+                            <section className="dashboard-trend-section">
+                                <header>
+                                    <h3>최근 운영 추이</h3>
 
-                {reviews.length === 0 ? (
-                    <p className="seller-product-stock-history-empty">
-                        아직 이 상품에 등록된 리뷰가 없습니다.
-                    </p>
-                ) : (
-                    <div className="seller-product-stock-history-table-wrap" style={{ padding: '20px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            {reviews.map((review) => (
-                                <div
-                                    key={review.reviewId || review.id}
-                                    style={{
-                                        border: '1px solid #e0e0e0',
-                                        padding: '15px',
-                                        borderRadius: '8px',
-                                        background: '#fff'
-                                    }}
-                                >
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <strong style={{ color: '#2e7d32' }}>
-                                            평점: {"⭐".repeat(review.rating || 5)} ({review.rating || 5}점)
-                                        </strong>
-                                        <small style={{ color: '#888' }}>
-                                            {formatDateTime(review.createdAt)}
-                                        </small>
+                                    <div className="dashboard-trend-tabs">
+                                        {Object.entries(TREND_METRICS).map(([key, metric]) => (
+                                            <button
+                                                type="button"
+                                                key={key}
+                                                className={trendMetric === key
+                                                ? "active"
+                                                : ""}
+                                            onClick={() => setTrendMetric(key)}>
+                                                {metric.label}
+                                            </button>
+                                        )
+                                        )}
                                     </div>
+                                </header>
 
-                                    <p style={{ margin: '0 0 10px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
-                                        {review.content}
+                                <div className="dashboard-trend-list">
+                                    {trends.map((item) => {
+                                        const value =
+                                            Number(item[trendMetric] ?? 0);
+
+                                        const barWidth =
+                                            value / maxTrendValue * 100;
+
+                                        return (
+                                            <div
+                                                className="dashboard-trend-row"
+                                                key={item.date}
+                                            >
+                                                <time>{item.date.slice(5)}</time>
+
+                                                <div className="dashboard-trend-track">
+                                                    <span
+                                                        style={{width:`${barWidth}%`}}
+                                                    />
+                                                </div>
+
+                                                <strong>
+                                                    {formatNumber(value)}
+                                                    {selectedMetric.unit}
+                                                </strong>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </section>
+
+                            <section className="dashboard-member-section">
+                                <h3>회원 상태</h3>
+
+                                <div className="dashboard-member-bar">
+                                    <span
+                                        className="active"
+                                        style={{width:`${calculateMemberPercent(memberStatus.activeMembers)}%`}}
+                                    />
+                                    <span
+                                        className="suspended"
+                                        style={{
+                                            width:`${calculateMemberPercent(memberStatus.suspendedMembers)}%`
+                                        }}
+                                    />
+                                    <span
+                                        className="withdrawn"
+                                        style={{
+                                            width: `${calculateMemberPercent(memberStatus.withdrawnMembers)}%`}}
+                                    />
+                                </div>
+
+                                <div className="dashboard-member-list">
+                                    <p>
+                                        <span>정상 회원</span>
+                                        <strong>
+                                            {formatNumber(memberStatus.activeMembers)}명
+                                        </strong>
                                     </p>
 
-                                    {(review.imageUrl || review.image_url) && (
-                                        <div style={{ marginTop: '10px' }}>
-                                            <img
-                                                src={review.imageUrl || review.image_url}
-                                                alt="리뷰 첨부 이미지"
-                                                style={{
-                                                    width: '80px',
-                                                    height: '80px',
-                                                    objectFit: 'cover',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid #ddd'
-                                                }}
-                                            />
-                                        </div>
-                                    )}
+                                    <p>
+                                        <span>정지 회원</span>
+                                        <strong>
+                                            {formatNumber(memberStatus.suspendedMembers)}명
+                                        </strong>
+                                    </p>
+
+                                    <p>
+                                        <span>탈퇴 회원</span>
+                                        <strong>
+                                            {formatNumber(memberStatus.withdrawnMembers)}명
+                                        </strong>
+                                    </p>
                                 </div>
-                            ))}
+                            </section>
                         </div>
 
                         <section className="dashboard-alert-section">
@@ -534,9 +625,37 @@ function SellerProductDetailPage() {
                         </section>
                     </>
                 )}
+                <DashboardWorkModal
+                    modal={workModal}
+                    onItemClick={openWorkDetail}
+                    onClose={() => setWorkModal((previous) => ({
+                        ...previous,
+                        open: false
+                    }))
+                    }
+                />
+                <DashboardItemDetailModal
+                    item={selectedWorkDetail}
+                    onClose={closeWorkDetail}
+                />
+                <TodayOrdersModal
+                    open = {todayOrdersModalOpen}
+                    orders = {todayOrders}
+                    loading = {todayOrdersLoading}
+                    error = {todayOrdersError}
+                    onClose={() => setTodayOrdersModalOpen(false)}
+                />
+                <TodaySalesModal
+                    open={todaySalesModalOpen}
+                    sales={todaySales}
+                    loading={todaySalesLoading}
+                    error={todaySalesError}
+                    onClose={() => setTodaySalesModalOpen(false)}
+                />
+
             </section>
-        </main>
-    )
+        </section>
+    );
 }
 
-export default SellerProductDetailPage
+export default AdminDashboardPage;

@@ -421,7 +421,7 @@ function OrderPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "150px minmax(0, 1fr)",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
           gap: "10px",
           marginTop: "28px",
         }}

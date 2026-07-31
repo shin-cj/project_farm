@@ -61,6 +61,7 @@ export function SuccessPage() {
                 throw new Error("결제 승인 요청에 실패했습니다.");
             }
 
+            sessionStorage.setItem(`paymentCompleted:${orderId}`, "true");
             setIsConfirmed(true);
 
             try {
@@ -266,9 +267,17 @@ export function SuccessPage() {
                 }}>
                     {isConfirmed ? (
                         <>
-                            <Link className="btn primary" style={buttonStyle} to="/orders">
+                            <button
+                                className="btn primary"
+                                style={buttonStyle}
+                                type="button"
+                                onClick={() => navigate("/orders", {
+                                    replace: true,
+                                    state: { fromPaymentSuccess: true }
+                                })}
+                            >
                                 주문내역으로
-                            </Link>
+                            </button>
                             <Link className="btn" style={buttonStyle} to="/">
                                 홈으로
                             </Link>
