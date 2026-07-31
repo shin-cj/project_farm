@@ -15,6 +15,8 @@ public class ReviewResponse {
 
     private Long reviewId;
     private Long productId;
+    private String productName;
+    private String farmName;
     private Long buyerId;
     private String name;
     private Long orderItemId;

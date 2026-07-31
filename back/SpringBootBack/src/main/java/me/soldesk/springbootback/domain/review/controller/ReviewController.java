@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -30,6 +31,23 @@ public class ReviewController {
         return ResponseEntity.ok(review);
     }
 
+    // 관리자 리뷰 관리 화면에서 전체 리뷰를 최신순으로 조회합니다.
+    @GetMapping("/all")
+    public ResponseEntity<List<ReviewResponse>> getAllReviews() {
+        return ResponseEntity.ok(reviewService.getAllReviews());
+    }
+
+    @GetMapping("/eligibility")
+    public ResponseEntity<Map<String, Boolean>> canCreateReview(
+            @RequestParam Long buyerId,
+            @RequestParam Long productId
+    ) {
+        return ResponseEntity.ok(Map.of(
+                "eligible",
+                reviewService.canCreateReview(buyerId, productId)
+        ));
+    }
+
     // 3. 상품별 후기 목록 조회 API (변수가 들어가는 동적 경로는 아래로!)
     @GetMapping("/{productId}")
     public ResponseEntity<List<ReviewResponse>> getReviewsByProduct(@PathVariable Long productId) {
@@ -46,8 +64,11 @@ public class ReviewController {
 
     // 5. 후기 삭제 API (DeleteMapping 올바르게 사용 중)
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<String> deleteReview(@PathVariable Long reviewId) {
-        reviewService.deleteReview(reviewId);
+    public ResponseEntity<String> deleteReview(
+            @PathVariable Long reviewId,
+            @RequestParam Long buyerId
+    ) {
+        reviewService.deleteReview(reviewId, buyerId);
         return ResponseEntity.ok("후기가 삭제되었습니다.");
     }
 }

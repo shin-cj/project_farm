@@ -197,7 +197,7 @@ function AdminDeliveryManagementPage() {
   }
 
   return (
-    <section className="page-card">
+    <section className="page-card admin-flat-page">
       <p className="page-label">Admin Delivery</p>
       <h1>배송 / 취소 / 환불 관리</h1>
       <p style={{ color: "#68756d" }}>

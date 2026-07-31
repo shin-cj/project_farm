@@ -42,7 +42,7 @@ public class ProductStockHistory {
     @Column(name = "order_id")
     private Long orderId;
 
-    /** INITIAL_STOCK, MANUAL_ADJUSTMENT, PAYMENT_DEDUCTION, PAYMENT_CANCEL_RESTORE */
+    /** INITIAL_STOCK, MANUAL_ADJUSTMENT, PAYMENT_DEDUCTION, PAYMENT_CANCEL_RESTORE, PAYMENT_REFUND_RESTORE */
     @Column(name = "change_type", nullable = false)
     private String changeType;
 

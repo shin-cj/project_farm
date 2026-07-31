@@ -366,6 +366,14 @@ public class PaymentService {
     }
 
     private void restoreOrderStock(Order order) {
+        restoreOrderStock(
+                order,
+                "PAYMENT_CANCEL_RESTORE",
+                "결제 취소에 따른 재고 복구"
+        );
+    }
+
+    private void restoreOrderStock(Order order, String changeType, String changeReason) {
         List<OrderItem> orderItems = orderItemRepository
                 .findByOrderId(order.getOrderId());
 
@@ -384,10 +392,10 @@ public class PaymentService {
             productStockHistoryService.record(
                     product.getProductId(),
                     item.getOrderId(),
-                    "PAYMENT_CANCEL_RESTORE",
+                    changeType,
                     previousStockQuantity,
                     product.getStockQuantity(),
-                    "결제 취소에 따른 재고 복구"
+                    changeReason
             );
         }
     }
@@ -587,6 +595,12 @@ public class PaymentService {
                 .body(Map.class);
 
         transferDeliveryFee(order, payment, remainingOrders);
+
+        restoreOrderStock(
+                order,
+                "PAYMENT_REFUND_RESTORE",
+                "환불 승인에 따른 재고 복구"
+        );
 
         order.setOrderStatus("REFUNDED");
         order.setUpdatedAt(LocalDateTime.now());

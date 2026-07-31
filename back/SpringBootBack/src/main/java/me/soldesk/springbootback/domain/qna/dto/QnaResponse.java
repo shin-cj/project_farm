@@ -23,6 +23,9 @@ public class QnaResponse {
     /** 문의 대상 상품 번호 */
     private Long productId;
 
+    /** 문의 대상 상품 이름 */
+    private String productName;
+
     /** 질문 작성자 회원 번호 */
     private Long buyerId;
 

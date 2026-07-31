@@ -1,7 +1,7 @@
 // 아직 기능 구현 전인 화면에서 담당 기능과 다음 작업을 안내하는 공통 컴포넌트입니다.
-function PagePlaceholder({ title, description, showNote = true }) {
+function PagePlaceholder({ title, description, showNote = true, className = '' }) {
   return (
-    <section className="page-card">
+    <section className={`page-card ${className}`.trim()}>
       <h1>{title}</h1>
       <div>{description}</div>
       {showNote && (
