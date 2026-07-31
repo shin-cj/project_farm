@@ -1,5 +1,17 @@
 import axios from 'axios'
 
+export const getAllReviews = async () => {
+    const response = await axios.get('/api/reviews/all')
+    return Array.isArray(response.data) ? response.data : []
+}
+
+export const canWriteReview = async (buyerId, productId) => {
+    const response = await axios.get('/api/reviews/eligibility', {
+        params: { buyerId, productId },
+    })
+    return response.data?.eligible === true
+}
+
 export const getReviewsByProduct = async (productId) => {
     try {
         const response = await axios.get(`/api/reviews/${productId}`)

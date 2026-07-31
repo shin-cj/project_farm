@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,30 +19,16 @@ public class QnaService {
     private final QnaRepository qnaRepository;
 
     public List<QnaResponse> getQnasByProduct(Long productId) {
-        List<Qna> qnas = qnaRepository.findByProductIdOrderByCreatedAtDesc(productId);
-        List<QnaResponse> responseList= new ArrayList<>();
-
-        for(Qna qna : qnas){
-            QnaResponse response = new QnaResponse(qna);
-            String name = qnaRepository.findNameByUserId(qna.getBuyerId());
-            response.setBuyerName(name);
-            responseList.add(response);
-        }
-        return responseList;
+        return qnaRepository.findByProductIdOrderByCreatedAtDesc(productId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     // 전체 QnA 목록 조회 메서드 (수동 강제 내림차순 정렬: 최신 글이 맨 위로)
     public List<QnaResponse> getAllQnas() {
-        List<Qna> qnas = qnaRepository.findAll();
-        List<QnaResponse> responseList= new ArrayList<>();
-
-        for(Qna qna : qnas){
-            QnaResponse response = new QnaResponse(qna);
-            String name = qnaRepository.findNameByUserId(qna.getBuyerId());
-            response.setBuyerName(name);
-            responseList.add(response);
-        }
-        return responseList;
+        return qnaRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional
@@ -68,7 +52,9 @@ public class QnaService {
         QnaResponse res = new QnaResponse();
         res.setQnaId(qna.getQnaId());
         res.setProductId(qna.getProductId());
+        res.setProductName(qnaRepository.findProductNameByProductId(qna.getProductId()));
         res.setBuyerId(qna.getBuyerId());
+        res.setBuyerName(qnaRepository.findNameByUserId(qna.getBuyerId()));
         res.setQuestionTitle(qna.getQuestionTitle());
         res.setQuestionContent(qna.getQuestionContent());
         res.setAnswerContent(qna.getAnswerContent());

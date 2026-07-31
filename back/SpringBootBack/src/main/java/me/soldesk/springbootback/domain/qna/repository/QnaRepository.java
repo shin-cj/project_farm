@@ -12,6 +12,11 @@ public interface QnaRepository extends JpaRepository<Qna, Long> {
     // 상품 ID로 QnA 목록 조회
     List<Qna> findByProductIdOrderByCreatedAtDesc(Long productId);
 
+    List<Qna> findAllByOrderByCreatedAtDesc();
+
     @Query("SELECT u.name FROM User u WHERE u.userId = :userId")
     String findNameByUserId(Long userId);
+
+    @Query("SELECT p.productName FROM Product p WHERE p.productId = :productId")
+    String findProductNameByProductId(Long productId);
 }

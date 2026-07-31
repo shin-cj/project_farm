@@ -53,6 +53,8 @@ function AdminPointWithdrawalPage() {
   const [loading, setLoading] = useState(false);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [approveTarget, setApproveTarget] = useState(null);
+  const [approving, setApproving] = useState(false);
 
   async function fetchWithdrawals() {
     try {
@@ -105,6 +107,35 @@ function AdminPointWithdrawalPage() {
     await handleChangeStatus(target.withdrawalId, "REJECTED", rejectReason.trim());
   }
 
+  async function submitApprove() {
+    const target = approveTarget;
+    if (!target || approving) {
+      return;
+    }
+
+    try {
+      setApproving(true);
+      setMessage("");
+      setError("");
+
+      if (target.withdrawalStatus === "REQUESTED") {
+        await updateAdminSellerPointWithdrawalStatus(target.withdrawalId, "APPROVED");
+      }
+
+      await updateAdminSellerPointWithdrawalStatus(target.withdrawalId, "COMPLETED");
+      setApproveTarget(null);
+      setMessage("출금 승인이 완료되어 지급 완료 처리되었습니다.");
+      await fetchWithdrawals();
+    } catch (approvalError) {
+      console.error(approvalError);
+      setApproveTarget(null);
+      setError("출금 승인 처리에 실패했습니다. 현재 상태를 다시 확인해주세요.");
+      await fetchWithdrawals();
+    } finally {
+      setApproving(false);
+    }
+  }
+
   const visibleWithdrawals = withdrawals.filter((withdrawal) => {
     if (filter === "ALL") {
       return true;
@@ -123,8 +154,8 @@ function AdminPointWithdrawalPage() {
     .reduce((sum, withdrawal) => sum + Number(withdrawal.withdrawalAmount || 0), 0);
 
   return (
-    <section className="page-card" style={{ display: "grid", gap: "22px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: "14px", alignItems: "flex-start" }}>
+    <section className="page-card admin-flat-page" style={{ display: "grid", gap: "22px" }}>
+      <div className="admin-flat-page-header" style={{ display: "flex", justifyContent: "space-between", gap: "14px", alignItems: "flex-start" }}>
         <div>
           <p style={{ margin: "0 0 8px", color: "#3f7d20", fontWeight: 900 }}>
             Point Withdrawal
@@ -198,8 +229,8 @@ function AdminPointWithdrawalPage() {
 
         {visibleWithdrawals.map((withdrawal) => {
           const status = statusStyle[withdrawal.withdrawalStatus] || statusStyle.REQUESTED;
-          const canApproveOrReject = withdrawal.withdrawalStatus === "REQUESTED";
-          const canComplete = withdrawal.withdrawalStatus === "APPROVED";
+          const canApprove = ["REQUESTED", "APPROVED"].includes(withdrawal.withdrawalStatus);
+          const canReject = withdrawal.withdrawalStatus === "REQUESTED";
 
           return (
             <article
@@ -277,8 +308,8 @@ function AdminPointWithdrawalPage() {
               <div className="admin-withdrawal-actions">
                 <button
                   type="button"
-                  onClick={() => handleChangeStatus(withdrawal.withdrawalId, "APPROVED")}
-                  disabled={!canApproveOrReject}
+                  onClick={() => setApproveTarget(withdrawal)}
+                  disabled={!canApprove}
                   className="admin-withdrawal-action admin-withdrawal-action--approve"
                 >
                   승인
@@ -286,18 +317,10 @@ function AdminPointWithdrawalPage() {
                 <button
                   type="button"
                   onClick={() => openRejectModal(withdrawal)}
-                  disabled={!canApproveOrReject}
+                  disabled={!canReject}
                   className="admin-withdrawal-action admin-withdrawal-action--reject"
                 >
                   반려
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleChangeStatus(withdrawal.withdrawalId, "COMPLETED")}
-                  disabled={!canComplete}
-                  className="admin-withdrawal-action admin-withdrawal-action--complete"
-                >
-                  지급 완료
                 </button>
               </div>
             </article>
@@ -332,6 +355,54 @@ function AdminPointWithdrawalPage() {
               </button>
               <button type="button" onClick={submitReject} className="admin-withdrawal-modal-reject">
                 반려 처리
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {approveTarget && (
+        <div
+          className="admin-withdrawal-modal-backdrop"
+          onClick={() => !approving && setApproveTarget(null)}
+        >
+          <div
+            className="admin-withdrawal-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p style={{ margin: "0 0 8px", color: "#2d7e4b", fontWeight: 900 }}>
+              출금 승인 최종 확인
+            </p>
+            <h2 style={{ margin: "0 0 12px", color: "#213328", fontSize: "1.35rem" }}>
+              정말 출금을 승인할까요?
+            </h2>
+            <div style={{ display: "grid", gap: "8px", padding: "14px", border: "1px solid #dce5de", borderRadius: "6px", background: "#f7faf8", color: "#405348" }}>
+              <strong style={{ color: "#213328", fontSize: "1.15rem" }}>
+                {formatPoint(approveTarget.withdrawalAmount)}
+              </strong>
+              <span>{approveTarget.sellerName || "판매자 정보 없음"}</span>
+              <span>{approveTarget.bankName} · {approveTarget.accountNumber}</span>
+              <span>예금주: {approveTarget.accountHolder}</span>
+            </div>
+            <p style={{ margin: "14px 0 0", color: "#a12c2c", fontSize: "0.9rem", fontWeight: 800 }}>
+              승인하면 즉시 지급 완료 처리되며 되돌릴 수 없습니다.
+            </p>
+            <div className="admin-withdrawal-modal-actions">
+              <button
+                type="button"
+                onClick={() => setApproveTarget(null)}
+                disabled={approving}
+                className="admin-withdrawal-modal-cancel"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={submitApprove}
+                disabled={approving}
+                className="admin-withdrawal-modal-approve"
+              >
+                {approving ? "처리 중" : "승인 및 지급 완료"}
               </button>
             </div>
           </div>

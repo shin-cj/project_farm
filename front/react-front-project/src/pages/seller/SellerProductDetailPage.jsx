@@ -65,6 +65,7 @@ function getStockHistoryText(changeType) {
     MANUAL_ADJUSTMENT: '판매자 재고 수정',
     PAYMENT_DEDUCTION: '주문 결제 재고 차감',
     PAYMENT_CANCEL_RESTORE: '결제 취소 재고 복구',
+    PAYMENT_REFUND_RESTORE: '환불 승인 재고 복구',
   }
 
   return historyText[changeType] ?? '재고 변경'
