@@ -1,6 +1,10 @@
 package me.soldesk.springbootback.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.delivery.entity.Delivery;
+import me.soldesk.springbootback.domain.delivery.repository.DeliveryRepository;
+import me.soldesk.springbootback.domain.order.entity.Order;
+import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.user.dto.UserProfileUpdateRequest;
 import me.soldesk.springbootback.domain.user.dto.UserRequest;
 import me.soldesk.springbootback.domain.user.dto.UserResponse;
@@ -10,12 +14,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
+    private final DeliveryRepository deliveryRepository;
 
     public void registerUser(UserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -83,6 +90,55 @@ public class UserService {
 
         userRepository.save(user);
 
+   }
+
+   @Transactional
+   public void withdrawBuyer(Long userId) {
+       User user = getUserInfo(userId);
+
+       if (!Long.valueOf(2L).equals(user.getRoleId())) {
+           throw new IllegalArgumentException("구매자 계정만 바로 탈퇴할 수 있습니다.");
+       }
+
+       if ("WITHDRAWN".equals(user.getStatus())) {
+           throw new IllegalArgumentException("이미 탈퇴 처리된 계정입니다.");
+       }
+
+       if (!"ACTIVE".equals(user.getStatus())) {
+           throw new IllegalArgumentException("현재 계정 상태에서는 탈퇴할 수 없습니다.");
+       }
+
+       boolean hasUnfinishedOrder = orderRepository
+               .findByBuyerIdOrderByOrderedAtDesc(userId)
+               .stream()
+               .anyMatch(this::isUnfinishedBuyerOrder);
+
+       if (hasUnfinishedOrder) {
+           throw new IllegalArgumentException(
+                   "처리 중인 주문, 배송 또는 환불이 있어 탈퇴할 수 없습니다."
+           );
+       }
+
+       user.setStatus("WITHDRAWN");
+       user.setUpdatedAt(LocalDateTime.now());
+       userRepository.save(user);
+   }
+
+   private boolean isUnfinishedBuyerOrder(Order order) {
+       if (List.of("CANCELED", "REFUNDED", "DELIVERED")
+               .contains(order.getOrderStatus())) {
+           return false;
+       }
+
+       if (!"PAID".equals(order.getOrderStatus())) {
+           return true;
+       }
+
+       Delivery delivery = deliveryRepository.findByOrderId(order.getOrderId())
+               .orElse(null);
+
+       return delivery == null
+               || !"DELIVERED".equals(delivery.getDeliveryStatus());
    }
 
    @Transactional

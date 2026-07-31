@@ -55,6 +55,18 @@ public class UserController {
         );
     }
 
+    @PatchMapping("/{userId}/withdraw")
+    public ResponseEntity<Map<String, String>> withdrawBuyer(@PathVariable Long userId) {
+        userService.withdrawBuyer(userId);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "status", "success",
+                        "message", "회원 탈퇴가 완료되었습니다."
+                )
+        );
+    }
+
     @PutMapping("/{userId}")
     public UserResponse updateUserProfile(
         @PathVariable Long userId,
