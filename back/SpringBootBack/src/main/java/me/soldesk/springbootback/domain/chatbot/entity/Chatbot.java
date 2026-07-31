@@ -51,12 +51,12 @@ public class Chatbot {
 
     /** 추천 레시피 제목 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "recipe_title", nullable = true)
+    @Column(name = "recipe_title", nullable = true, length = 100)
     private String recipeTitle;
 
     /** 기타 참고사항 */
     // Java 필드와 실제 DB 컬럼을 연결하고 NULL 허용 여부를 지정합니다.
-    @Column(name = "remark", nullable = true)
+    @Column(name = "remark", nullable = true,  length = 1000)
     private String remark;
 
     /** 챗봇 기록 생성 일시 */

@@ -361,6 +361,11 @@ function ChatbotPage() {
       return
     }
 
+    if(!userid){
+      alert('로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.')
+      return
+    }
+
     try {
       await chatbotApi.saveRecipe({
         user_id: userid,
