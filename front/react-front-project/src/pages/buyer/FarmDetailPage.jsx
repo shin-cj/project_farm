@@ -215,12 +215,6 @@ function FarmDetailPage() {
     </span>
                     )}
 
-                    {product.sameDayDelivery === 'Y' && (
-                        <span className="farm-detail-same-day">
-      당일배송
-    </span>
-                    )}
-
                     <CatalogImage
                         src={product.productImageUrl}
                         alt={product.productName}

@@ -197,8 +197,7 @@
 }
 
 .farm-detail-product-sale-badge,
-.farm-detail-sold-out,
-.farm-detail-same-day {
+.farm-detail-sold-out {
     position: absolute;
     z-index: 1;
     padding: 7px 11px;
@@ -230,14 +229,6 @@
     right: 12px;
     background-color: rgba(31, 41, 55, 0.88);
     color: #ffffff;
-}
-
-/* 당일배송 배지: 이미지 왼쪽 아래 */
-.farm-detail-same-day {
-    bottom: 12px;
-    left: 12px;
-    background-color: #e5f4ea;
-    color: #216b3a;
 }
 
 .farm-detail-product-body {

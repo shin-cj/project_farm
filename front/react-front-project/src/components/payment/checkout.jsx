@@ -67,6 +67,18 @@ export function CheckoutPage() {
     const paymentMethodWidgetRef = useRef(null);
     const [checkoutItems, setCheckoutItems] = useState([]);
 
+    useEffect(() => {
+        if (
+            orderId
+            && sessionStorage.getItem(`paymentCompleted:${orderId}`) === "true"
+        ) {
+            navigate("/orders", {
+                replace: true,
+                state: { fromPaymentSuccess: true },
+            });
+        }
+    }, [navigate, orderId]);
+
     const orderInfo = {
         orderId,
         orderNumber: orderId,
