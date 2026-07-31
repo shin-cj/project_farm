@@ -44,6 +44,21 @@ public class ReportService {
 
     }
 
+    @Transactional(readOnly = true)
+    public List<ReportResponse> getReceivedReports(Long reportedUserId) {
+        if (reportedUserId == null) {
+            throw new IllegalArgumentException(
+                    "로그인한 판매자 정보가 없습니다."
+            );
+        }
+
+        return reportRepository
+                .findReceivedReportViews(reportedUserId)
+                .stream()
+                .map(this::toSellerReceivedReportResponse)
+                .toList();
+    }
+
     @Transactional
     public ReportResponse updateReportStatus(Long reportId, ReportStatusRequest request){
 
@@ -201,6 +216,18 @@ public class ReportService {
 
         return response;
 
+    }
+
+    private ReportResponse toSellerReceivedReportResponse(
+            AdminReportView view
+    ) {
+        ReportResponse response = toAdminResponse(view);
+
+        response.setReporterId(null);
+        response.setReporterEmail(null);
+        response.setRepliedBy(null);
+
+        return response;
     }
 
     @Transactional

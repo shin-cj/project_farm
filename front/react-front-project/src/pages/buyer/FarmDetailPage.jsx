@@ -133,8 +133,8 @@ function FarmDetailPage() {
               <h1>{farm.farmName}</h1>
             </div>
             <div className="farm-detail-actions">
-                <Link className="farm-detail-product-link" to="/products">
-                  상품 보러가기
+                <Link className="farm-detail-product-link" to="/farms">
+                  뒤로가기
                 </Link>
                 <ReportButton
                   farmId={farm.farmId}
@@ -192,15 +192,25 @@ function FarmDetailPage() {
               >
                 <Link to={`/products/${product.productId}`}>
                   <div className="farm-detail-product-image">
+
+
                     {product.productStatus === 'SOLD_OUT' && (
-                      <span className="farm-detail-sold-out">품절</span>
+                        <span className="farm-detail-sold-out">
+      품절
+    </span>
+                    )}
+
+                    {product.sameDayDelivery === 'Y' && (
+                        <span className="farm-detail-same-day">
+      당일배송
+    </span>
                     )}
 
                     <CatalogImage
-                      src={product.productImageUrl}
-                      alt={product.productName}
-                      fallbackText="상품 이미지 없음"
-                      fallbackClassName="farm-detail-image-fallback"
+                        src={product.productImageUrl}
+                        alt={product.productName}
+                        fallbackText="상품 이미지 없음"
+                        fallbackClassName="farm-detail-image-fallback"
                     />
                   </div>
 
