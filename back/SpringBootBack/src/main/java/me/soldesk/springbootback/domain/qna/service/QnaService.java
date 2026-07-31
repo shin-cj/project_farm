@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,17 +21,30 @@ public class QnaService {
     private final QnaRepository qnaRepository;
 
     public List<QnaResponse> getQnasByProduct(Long productId) {
-        return qnaRepository.findByProductIdOrderByCreatedAtDesc(productId)
-                .stream().map(this::toResponse).collect(Collectors.toList());
+        List<Qna> qnas = qnaRepository.findByProductIdOrderByCreatedAtDesc(productId);
+        List<QnaResponse> responseList= new ArrayList<>();
+
+        for(Qna qna : qnas){
+            QnaResponse response = new QnaResponse(qna);
+            String name = qnaRepository.findNameByUserId(qna.getBuyerId());
+            response.setBuyerName(name);
+            responseList.add(response);
+        }
+        return responseList;
     }
 
     // 전체 QnA 목록 조회 메서드 (수동 강제 내림차순 정렬: 최신 글이 맨 위로)
     public List<QnaResponse> getAllQnas() {
-        return qnaRepository.findAll()
-                .stream()
-                .sorted((q1, q2) -> q2.getQnaId().compareTo(q1.getQnaId()))
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        List<Qna> qnas = qnaRepository.findAll();
+        List<QnaResponse> responseList= new ArrayList<>();
+
+        for(Qna qna : qnas){
+            QnaResponse response = new QnaResponse(qna);
+            String name = qnaRepository.findNameByUserId(qna.getBuyerId());
+            response.setBuyerName(name);
+            responseList.add(response);
+        }
+        return responseList;
     }
 
     @Transactional

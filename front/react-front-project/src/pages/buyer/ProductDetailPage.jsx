@@ -634,10 +634,16 @@ function ProductDetailPage() {
                           background: '#fafafa',
                         }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 'bold', color: qna.qnaStatus === 'ANSWERED' ? '#2e7d32' : '#f57c00' }}>
-                    [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
-                  </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+    <span style={{ fontWeight: 'bold', color: qna.qnaStatus === 'ANSWERED' ? '#2e7d32' : '#f57c00' }}>
+      [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
+    </span>
+                          {/* 💡 문의글 작성자 아이디 출력 */}
+                          <span style={{ fontWeight: 'bold', color: '#555', fontSize: '14px' }}>
+      작성자: {qna.buyerName || '익명'}
+    </span>
+                        </div>
                         <div>
                           {qna.isSecret === 1 && <span style={{ marginRight: '10px' }}>비밀글</span>}
                           <small style={{ color: '#888' }}>
@@ -774,15 +780,19 @@ function ProductDetailPage() {
                             background: '#fafafa',
                           }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 'bold', color: '#388e3c' }}>
-                      평점: {'⭐'.repeat(review.rating || review.score || 5)} ({review.rating || review.score || 5}점)
-                    </span>
-                          <small style={{ color: '#888' }}>
-                            {review.createdAt ? new Date(review.createdAt).toLocaleString() : ''}
-                          </small>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 'bold', color: '#555', fontSize: '14px' }}>
+                         작성자: {review.name || '익명'}
+                        </span>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 'bold', color: '#388e3c' }}>
+                          평점: {'⭐'.repeat(review.rating || review.score || 5)} ({review.rating || review.score || 5}점)
+                          </span>
+                            <small style={{ color: '#888' }}>
+                              {review.updatedAt === review.createdAt ? `작성 일자 : ${new Date(review.createdAt).toLocaleString()}` : `수정된 일자 : ${new Date(review.updatedAt).toLocaleString()}`}
+                            </small>
+                          </div>
                         </div>
-
                         <p style={{ margin: '0 0 15px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
                           {review.content || review.reviewContent}
                         </p>
@@ -790,7 +800,7 @@ function ProductDetailPage() {
                         {(review.imageUrl || review.image_url) && (
                             <div style={{ marginBottom: '15px' }}>
                               <img
-                                  src={review.imageUrl || review.image_url}
+                                  src={`data:image/jpeg;base64,${review.imageUrl}`}
                                   alt="후기 이미지"
                                   style={{
                                     maxWidth: '150px',

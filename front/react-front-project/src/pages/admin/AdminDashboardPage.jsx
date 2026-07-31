@@ -51,6 +51,10 @@ function getStockHistoryText(changeType) {
 
 function SellerProductDetailPage() {
     const { productId } = useParams()
+
+    // 🚨 [디버깅용 로그 추가]
+    console.log("현재 주소창에서 추출한 productId:", productId);
+    console.log("현재 주소창의 전체 경로:", window.location.pathname);
     const navigate = useNavigate()
     const [product, setProduct] = useState(null)
     const [farm, setFarm] = useState(null)
@@ -77,7 +81,7 @@ function SellerProductDetailPage() {
                     getProduct(productId),
                     getFarms(sellerId),
                     getProductStockHistories(productId),
-                    getReviewsByProduct(productId).catch(() => []),
+                    getReviewsByProduct(Number(productId) || 0).catch(() => []),
                 ])
 
                 if (ignore) {

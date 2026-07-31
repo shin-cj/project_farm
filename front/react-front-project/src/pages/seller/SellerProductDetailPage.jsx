@@ -311,6 +311,14 @@ function SellerProductDetailPage() {
                           }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+
+                          {/* 💡 [여기 추가] 작성자 아이디 영역 */}
+                          <span style={{ fontWeight: 'bold', color: '#555', fontSize: '14px' }}>
+    작성자 ID: {review.buyerId || '익명'}
+                            {/* 백엔드에서 주는 필드명에 맞춰서 수정 가능합니다 (예: review.writerId, review.memberName 등) */}
+                            작성자: {review.writerId || review.memberName || review.member?.loginId || '구매자'}
+                          </span>
+
                           <strong style={{ color: '#2e7d32' }}>
                             평점: {"⭐".repeat(review.rating || 5)} ({review.rating || 5}점)
                           </strong>
