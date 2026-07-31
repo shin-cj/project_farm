@@ -417,7 +417,7 @@ function MarketPriceTestPage() {
                                     <td>{Number(row.exmn_dd_avg_prc).toLocaleString()}원</td>
                                     <td className="price-text" style={{color: "blue"}}>{Number(row.exmn_dd_cnvs_min_prc).toLocaleString()}원</td>
                                     <td className="price-text" style={{color: "black"}}>{Number(row.exmn_dd_cnvs_avg_prc).toLocaleString()}원</td>
-                                    <td className="price-text">{Number(row.exmn_dd_cnvs_max_prc).toLocaleString()}원</td>
+                                    <td className="price-text" style={{color: "red"}}>{Number(row.exmn_dd_cnvs_max_prc).toLocaleString()}원</td>
                                 </tr>
                             ))}
                             </tbody>
