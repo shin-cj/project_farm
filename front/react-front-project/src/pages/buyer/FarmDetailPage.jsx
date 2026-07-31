@@ -35,6 +35,17 @@ function FarmDetailPage() {
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
 
+  function handleBack() {
+    const historyIndex = window.history.state?.idx ?? 0
+
+    if (historyIndex > 0) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/farms')
+  }
+
   useEffect(() => {
     let ignore = false
 
@@ -133,9 +144,13 @@ function FarmDetailPage() {
               <h1>{farm.farmName}</h1>
             </div>
             <div className="farm-detail-actions">
-                <Link className="farm-detail-product-link" to="/farms">
-                  뒤로가기
-                </Link>
+              <button
+                  type="button"
+                  className="farm-detail-product-link"
+                  onClick={handleBack}
+              >
+                뒤로가기
+              </button>
                 <ReportButton
                   farmId={farm.farmId}
                   reporterId={reporterId}
