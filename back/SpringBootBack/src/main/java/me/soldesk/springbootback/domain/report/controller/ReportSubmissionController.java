@@ -23,6 +23,13 @@ public class ReportSubmissionController {
         return reportService.getMyReports(reporterId);
     }
 
+    @GetMapping("/received")
+    public List<ReportResponse> getReceivedReports(
+            @RequestParam Long sellerId
+    ) {
+        return reportService.getReceivedReports(sellerId);
+    }
+
     @PostMapping
     public ReportResponse createReport(@RequestBody ReportRequest request){
 
