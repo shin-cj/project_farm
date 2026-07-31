@@ -14,6 +14,10 @@ const userApi = {
     return httpClient.patch(`/users/${userId}/withdrawal-request`)
   },
 
+  withdrawBuyer(userId) {
+    return httpClient.patch(`/users/${userId}/withdraw`)
+  },
+
 };
 
 export default userApi;

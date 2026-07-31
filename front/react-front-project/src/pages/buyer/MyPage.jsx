@@ -115,22 +115,49 @@ function MyPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/user/edit")}
+        <div
           style={{
-            padding: "10px 18px",
-            backgroundColor: "#2f3640",
-            color: "#fff",
-            border: "none",
-            borderRadius: "6px",
-            fontWeight: "bold",
-            cursor: "pointer",
-            whiteSpace: "nowrap",
+            display: "flex",
+            alignSelf: "flex-end",
+            gap: "10px",
+            marginBottom: "2px",
           }}
         >
-          개인정보 수정하기
-        </button>
+          <button
+            type="button"
+            onClick={() => navigate("/user/edit")}
+            style={{
+              padding: "11px 17px",
+              border: "1px solid #3f7d20",
+              borderRadius: "9px",
+              backgroundColor: "#ffffff",
+              color: "#2f6f42",
+              boxShadow: "0 4px 10px rgba(47, 111, 66, 0.08)",
+              fontWeight: 800,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            개인정보 수정하기
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/user/edit?action=withdrawal")}
+            style={{
+              padding: "11px 17px",
+              border: "1px solid #dc2626",
+              borderRadius: "9px",
+              backgroundColor: "#ffffff",
+              color: "#b91c1c",
+              fontWeight: 800,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            탈퇴하기
+          </button>
+        </div>
       </div>
 
       {loading && <p style={{ color: "#5f6f64" }}>마이페이지 정보를 불러오는 중입니다.</p>}
