@@ -13,6 +13,8 @@ import {
 import { getLoginSellerId } from "../../config/devAccount.js";
 import "./SellerDashboardPage.css";
 import SellerPenaltyViewer from "../../components/penalty/SellerPenaltyViewer.jsx";
+import SellerReceivedReportViewer
+  from "../../components/report/SellerReceivedReportViewer.jsx";
 
 function formatPoint(value) {
   return `${Number(value || 0).toLocaleString()}P`;
@@ -351,7 +353,13 @@ function SellerMyPage() {
         </article>
       </section>
 
-      {sellerId && (<SellerPenaltyViewer sellerId={sellerId} />)}
+      {sellerId && (
+          <section className="seller-compliance-grid">
+            <SellerPenaltyViewer sellerId={sellerId} />
+
+            <SellerReceivedReportViewer sellerId={sellerId} />
+          </section>
+      )}
 
       <section className="seller-withdrawal-section">
         <article className="seller-withdrawal-card">
@@ -459,7 +467,7 @@ function SellerMyPage() {
         </article>
       </section>
 
-      <section className="seller-dashboard-content">
+      <section className="seller-dashboard-content seller-my-page-content">
         <article className="seller-dashboard-recent">
           <div>
             <h2>판매 활동 요약</h2>
