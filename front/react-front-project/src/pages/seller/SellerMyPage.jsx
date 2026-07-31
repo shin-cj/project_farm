@@ -332,7 +332,7 @@ function SellerMyPage() {
         </Link>
       </section>
 
-      <section className="seller-dashboard-summary">
+      <section className="seller-dashboard-summary1">
         <article>
           <span>출금 가능 포인트</span>
           <strong>{formatPoint(pointSummary.availablePoint)}</strong>

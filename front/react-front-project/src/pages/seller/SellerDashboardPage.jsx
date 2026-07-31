@@ -4,8 +4,8 @@ import { getFarms } from '../../api/farmApi.js'
 import { getProducts } from '../../api/productApi.js'
 import './SellerDashboardPage.css'
 import { getLoginSellerId } from '../../config/devAccount.js'
-import {getSellerSalesTrend} from "../../api/salesApi.js";
-import {getSellerOrders} from "../../api/deliveryApi.js";
+import { getSellerSalesTrend } from '../../api/salesApi.js'
+import { getSellerOrders } from '../../api/deliveryApi.js'
 
 const SALES_DAY_OPTIONS = [7, 14, 30]
 
@@ -53,7 +53,6 @@ function SellerDashboardPage() {
   const [error, setError] = useState('')
   const [sellerOrders,setSellerOrders] = useState([])
   const [hoveredSalesPoint, setHoveredSalesPoint] = useState(null)
-
   useEffect(() => {
     async function loadDashboard() {
       try {
@@ -66,7 +65,7 @@ function SellerDashboardPage() {
           throw new Error('로그인한 판매자 정보를 확인할 수 없습니다.')
         }
 
-        const salesResponse = await getSellerSalesTrend(sellerId,salesDays)
+        const salesResponse = await getSellerSalesTrend(sellerId, salesDays)
         setSalesData(salesResponse.data)
 
         const ordersData = await getSellerOrders(sellerId)
@@ -548,6 +547,7 @@ function SellerDashboardPage() {
             <p>주문배송관리의 처리할 주문 기준과 동일하게 표시됩니다.</p>
           </article>
         </section>
+
       </main>
   )
 }
