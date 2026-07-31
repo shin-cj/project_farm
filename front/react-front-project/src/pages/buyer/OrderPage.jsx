@@ -418,25 +418,50 @@ function OrderPage() {
         </label>
       </div>
 
-      <button
-        type="button"
-        onClick={handlePaymentClick}
-        disabled={submitting || !isBuyer}
+      <div
         style={{
-          width: "100%",
+          display: "grid",
+          gridTemplateColumns: "150px minmax(0, 1fr)",
+          gap: "10px",
           marginTop: "28px",
-          padding: "14px 18px",
-          border: "none",
-          borderRadius: "8px",
-          background: submitting || !isBuyer ? "#9ca3af" : "#216b3a",
-          color: "#ffffff",
-          fontSize: "1rem",
-          fontWeight: 700,
-          cursor: submitting || !isBuyer ? "not-allowed" : "pointer",
         }}
       >
-        {submitting ? "주문 생성 중..." : "결제하러 가기"}
-      </button>
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          disabled={submitting}
+          style={{
+            padding: "14px 18px",
+            border: "1px solid #cbd8ce",
+            borderRadius: "8px",
+            background: "#ffffff",
+            color: "#405348",
+            fontSize: "1rem",
+            fontWeight: 800,
+            cursor: submitting ? "not-allowed" : "pointer",
+          }}
+        >
+          뒤로가기
+        </button>
+
+        <button
+          type="button"
+          onClick={handlePaymentClick}
+          disabled={submitting || !isBuyer}
+          style={{
+            padding: "14px 18px",
+            border: "none",
+            borderRadius: "8px",
+            background: submitting || !isBuyer ? "#9ca3af" : "#216b3a",
+            color: "#ffffff",
+            fontSize: "1rem",
+            fontWeight: 700,
+            cursor: submitting || !isBuyer ? "not-allowed" : "pointer",
+          }}
+        >
+          {submitting ? "주문 생성 중..." : "결제하러 가기"}
+        </button>
+      </div>
     </section>
     </div>
   );
