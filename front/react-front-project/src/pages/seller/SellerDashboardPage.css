@@ -1277,6 +1277,68 @@
     font-size: 13px;
 }
 
+/* 💡 최근 리뷰 카드 그리드 및 아이템 스타일 */
+.seller-statistics-card.wide {
+    grid-column: 1 / -1; /* 대시보드 전체 너비 차지 */
+}
+
+.seller-review-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.seller-review-item {
+    background-color: #f9fbf8;
+    border: 1px solid #e2ebd0;
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.seller-review-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(63, 125, 32, 0.08);
+}
+
+.seller-review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.seller-review-product-badge {
+    background-color: #eaf3e3;
+    color: #3f7d20;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+.seller-review-stars {
+    color: #f59e0b; /* 별점 골드 컬러 */
+    font-size: 14px;
+    letter-spacing: 2px;
+}
+
+.seller-review-content {
+    margin: 0;
+    font-size: 14px;
+    color: #333333;
+    line-height: 1.5;
+    word-break: break-all;
+}
+
 .seller-statistics-empty {
     margin: 0;
     padding: 24px;

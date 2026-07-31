@@ -33,6 +33,11 @@ public class ReviewService {
         reviewRepository.save(review);
     }
 
+    @Transactional(readOnly = true)
+    public long getReviewCountByProduct(Long productId) {
+        return reviewRepository.countByProductId(productId);
+    }
+
     // 2. 후기 수정 서비스
     @Transactional
     public void updateReview(Long reviewId, ReviewRequest request) {

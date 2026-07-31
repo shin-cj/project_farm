@@ -2,83 +2,37 @@ package me.soldesk.springbootback.domain.product.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** 백엔드가 프론트엔드에 응답할 데이터를 담는 DTO(데이터 전달 객체)입니다. */
-// 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
 @Getter
-// 모든 필드의 setter 메서드를 Lombok이 자동 생성합니다.
 @Setter
 public class ProductResponse {
-
-    /** 상품 고유 번호 */
     private Long productId;
-
-    /** 상품을 판매하는 농장 번호 */
     private Long farmId;
-
-    /** 상품 카테고리 번호 */
-    private Long categoryId;
-
-    /** 공공 농산물 시세 API 품목 코드 */
-    private String marketItemCode;
-
-    /** 상품 이름 */
-    private String productName;
-
-    /** 상품 상세 설명 */
-    private String description;
-
-    /** 상품 판매 가격 */
-    private Long price;
-
-    /** 현재 재고 수량 */
-    private Integer stockQuantity;
-
-    /** 판매 단위 */
-    private String unit;
-
-    /** 판매 단위 하나의 총중량(g) */
-    private BigDecimal packageWeightGrams;
-
-    /** 상품을 판매하는 농장의 판매 방식: RETAIL(소매), WHOLESALE(도매) */
-    private String saleType;
-
-    /** 최소 주문 수량 */
-    private Integer minOrderQuantity;
-
-    /** 원산지 */
-    private String origin;
-
-    /** 수확일 */
-    private LocalDate harvestDate;
-
-    /** 소비기한 또는 유통기한 */
-    private LocalDate expirationDate;
-
-    /** 상품 이미지 주소 */
-    private String productImageUrl;
-
-    /** 상품 판매 상태 */
-    private String productStatus;
-
-    /*거절 사유*/
-    private String rejectionReason;
-
-    /** 상품 등록 일시 */
-    private LocalDateTime createdAt;
-
-    /** 상품 수정 일시 */
-    private LocalDateTime updatedAt;
-
-    //상품을 판매하는 농장 이름
     private String farmName;
-
+    private Long categoryId;
+    private String marketItemCode;
+    private String productName;
+    private String description;
+    private Long price;
+    private Integer stockQuantity;
+    private String unit;
+    private BigDecimal packageWeightGrams;
+    private String saleType;
+    private Integer minOrderQuantity;
+    private String origin;
+    private LocalDate harvestDate;
+    private LocalDate expirationDate;
+    private String productImageUrl;
+    private String productStatus;
+    private String rejectionReason;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String sameDayDelivery;
-
     private List<String> aiKeywords;
-
+    private long totalReviews; // 💡 이 필드와 자동 생성되는 setTotalReviews()를 서비스에서 사용합니다.
 }

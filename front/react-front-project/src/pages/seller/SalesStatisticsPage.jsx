@@ -32,6 +32,8 @@ function SalesStatisticsPage() {
     topProducts: [],
     farmSales: [],
     timeSlotSales: [],
+    reviewTotalCount: 0,
+    recentReviews: [],
   });
   const [salesTrend, setSalesTrend] = useState([]);
 
@@ -63,9 +65,7 @@ function SalesStatisticsPage() {
         setStatistics(statisticsResponse.data);
         setSalesTrend(trendResponse.data);
 
-        // 💡 임시로 리뷰 데이터 연동 (백엔드 리뷰 API 경로에 맞춰 추후 변경 가능, 현재는 에러 방지용 안전 처리)
-        // 만약 판매자 리뷰 조회 API가 있다면 여기에 추가하시면 됩니다.
-        setReviews([]);
+        setReviews(statisticsResponse.data.recentReviews || []);
 
       } catch (err) {
         console.error(err);
@@ -230,7 +230,7 @@ function SalesStatisticsPage() {
 
           <article>
             <span>총 리뷰 수</span>
-            <strong>{reviews.length}개</strong>
+            <strong>{statistics.reviewTotalCount}개</strong>
           </article>
         </section>
 
@@ -592,28 +592,33 @@ function SalesStatisticsPage() {
           </article>
 
           {/* 💡 최근 리뷰 박스 추가 영역 */}
-          <article className="seller-statistics-card">
+          {/* 💡 최근 리뷰 박스 (가로 확장 및 카드형 디자인 적용) */}
+          <article className="seller-statistics-card wide">
             <div className="seller-statistics-card-header">
               <div>
                 <h2>최근 리뷰</h2>
-                <p>고객들이 작성한 상품 리뷰 내역입니다.</p>
+                <p>고객들이 작성한 생생한 상품 리뷰 내역입니다.</p>
               </div>
             </div>
 
             {reviews.length === 0 ? (
                 <p className="seller-statistics-empty">등록된 리뷰가 없습니다.</p>
             ) : (
-                <div className="seller-statistics-time-list">
+                <div className="seller-review-card-grid">
                   {reviews.map((review) => (
-                      <div key={review.reviewId} className="seller-statistics-time-row">
-                        <div className="seller-statistics-time-label">
-                          <div>
-                            <strong>평점: {"⭐".repeat(review.rating || 5)}</strong>
-                            <p style={{ margin: "4px 0 0 0", color: "#555", fontSize: "13px" }}>
-                              {review.content}
-                            </p>
-                          </div>
+                      <div key={review.reviewId} className="seller-review-item">
+                        <div className="seller-review-header">
+                <span className="seller-review-product-badge">
+                  {review.name || "익명"}
+                </span>
+                          <span className="seller-review-stars">
+                  {"★".repeat(review.rating || 5)}
+                            {"☆".repeat(5 - (review.rating || 5))}
+                </span>
                         </div>
+                        <p className="seller-review-content">
+                          "{review.content}"
+                        </p>
                       </div>
                   ))}
                 </div>
