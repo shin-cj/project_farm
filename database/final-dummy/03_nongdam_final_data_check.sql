@@ -303,6 +303,9 @@ UNION ALL SELECT 'seller_point_calculation_mismatch', COUNT(*) FROM seller_point
 UNION ALL SELECT 'stock_history_arithmetic_mismatch', COUNT(*) FROM product_stock_histories WHERE previous_quantity+change_quantity<>current_quantity
 UNION ALL SELECT 'product_stock_last_history_mismatch', COUNT(*) FROM products p JOIN (SELECT product_id, current_quantity FROM (SELECT product_id, current_quantity, ROW_NUMBER() OVER(PARTITION BY product_id ORDER BY created_at DESC, stock_history_id DESC) rn FROM product_stock_histories) WHERE rn=1) h ON h.product_id=p.product_id WHERE p.stock_quantity<>h.current_quantity;
 
+SELECT * FROM RE_BOARD;
+SELECT * FROM REVIEWS;
+SELECT * FROM USERS;
 /* 8. 주요 참조 관계: 모든 ERROR_COUNT가 0이어야 합니다. */
 SELECT check_name, error_count FROM (
     SELECT 1 sort_order, 'products_without_farm' check_name, COUNT(*) error_count FROM products p LEFT JOIN farms f ON f.farm_id=p.farm_id WHERE f.farm_id IS NULL
