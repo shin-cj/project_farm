@@ -2,6 +2,13 @@ import {useEffect,useState} from "react";
 import reportApi from "../../api/reportApi.js";
 import "./MyReportList.css"
 
+const REPORT_STATUS_LABELS = {
+    PENDING: "접수 대기",
+    REVIEWING: "검토 중",
+    RESOLVED: "처리 완료",
+    REJECTED: "반려",
+}
+
 function getLoginUser(){
     try {
         const value = localStorage.getItem("loginUser")
@@ -27,8 +34,6 @@ function MyReportList({
 
     useEffect(() => {
         if(!reporterId){
-            setError("로그인이 필요한 기능입니다.")
-            setLoading(false)
             return
         }
 
@@ -58,6 +63,10 @@ function MyReportList({
             active = false
         }
     }, [reporterId])
+
+    if(!reporterId){
+        return <div>로그인이 필요한 기능입니다.</div>
+    }
 
     if(loading){
         return <div>신고 내역을 불러오는 중입니다.</div>
@@ -91,7 +100,10 @@ function MyReportList({
                 className="my-report-item">
                     <div>
                         <strong>상품 신고 #{report.reportId}</strong>
-                        <span>{report.reportStatus}</span>
+                        <span>
+                            {REPORT_STATUS_LABELS[report.reportStatus]
+                                ?? "상태 미확인"}
+                        </span>
                     </div>
 
                     <p>{report.reportReason}</p>

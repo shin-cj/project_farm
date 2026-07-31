@@ -10,6 +10,19 @@ const initialForm = {
     newPassword: "", confirmPassword: "", status: ""
 };
 
+function formatPhoneNumber(phone = "") {
+    const numbersOnly = phone.replace(/\D/g, "");
+
+    if (!/^01[016789]\d{7,8}$/.test(numbersOnly)) {
+        return phone.trim();
+    }
+
+    return numbersOnly.replace(
+        /^(01[016789])(\d{3,4})(\d{4})$/,
+        "$1-$2-$3"
+    );
+}
+
 function SellerProfileEditPage() {
     const navigate = useNavigate();
     const loginUser = getLoginUser();
@@ -17,7 +30,11 @@ function SellerProfileEditPage() {
 
     useEffect(() => {
         userApi.getUser(loginUser.userId).then(({ data }) => {
-            setForm((prev) => ({ ...prev, ...data }));
+            setForm((prev) => ({
+                ...prev,
+                ...data,
+                phone: formatPhoneNumber(data.phone ?? ""),
+            }));
         });
     }, [loginUser.userId]);
 
@@ -38,7 +55,16 @@ function SellerProfileEditPage() {
 
     function handleChange(event) {
         const { name, value } = event.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+
+        const nextValue =
+            name === "phone"
+            ? formatPhoneNumber(value)
+            : value
+
+        setForm((prev) => ({
+            ...prev,
+            [name]: nextValue
+        }));
     }
 
     function handleOpenPostcode() {
@@ -125,11 +151,6 @@ function SellerProfileEditPage() {
                 </label>
 
                 <label className="seller-profile-field">
-                    <span>회원 번호</span>
-                    <input type="text" value={form.userId} disabled />
-                </label>
-
-                <label className="seller-profile-field">
                     <span>새 비밀번호</span>
                     <input
                         type="password"
@@ -168,11 +189,14 @@ function SellerProfileEditPage() {
                 <label className="seller-profile-field">
                     <span>휴대전화 번호</span>
                     <input
-                        type="text"
+                        type="tel"
                         name="phone"
                         value={form.phone}
                         onChange={handleChange}
                         placeholder="010-1234-5678"
+                        inputMode="numeric"
+                        autoComplete="tel"
+                        maxLength={13}
                         disabled={pending}
                         required
                     />
