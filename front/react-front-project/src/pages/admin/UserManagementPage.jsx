@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import adminUserApi from "../../api/adminUserApi.js";
+import WithdrawalReviewModal from "../../components/admin/WithdrawalReviewModal.jsx";
 import "./UserManagementPage.css";
 
 const PAGE_SIZE = 20;
@@ -8,6 +9,7 @@ const USER_STATUS_LABELS = {
     ACTIVE: "정상",
     SUSPENDED: "이용 정지",
     WITHDRAWN: "탈퇴",
+    WITHDRAWAL_PENDING: "탈퇴 승인 대기",
 };
 
 function formatDate(value) {
@@ -32,6 +34,8 @@ function UserManagementPage() {
     const [error, setError] = useState("");
     const [sortOption, setSortOptions] = useState("LATEST")
     const [statusFilter, setStatusFilter] = useState("ALL");
+    const [selectedWithdrawalUserId, setSelectedWithdrawalUserId] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
 
     useEffect(() => {
@@ -71,7 +75,7 @@ function UserManagementPage() {
         return () => {
             active = false;
         };
-    }, [role, searchKeyword, sortOption, statusFilter, page]);
+    }, [role, searchKeyword, sortOption, statusFilter, page, refreshKey]);
 
     const handleRoleChange = (nextRole) => {
         setRole(nextRole);
@@ -107,6 +111,7 @@ function UserManagementPage() {
                     <option value="ALL">전체 상태</option>
                     <option value="ACTIVE">정상 회원</option>
                     <option value="SUSPENDED">이용 정지 회원</option>
+                    <option value="WITHDRAWAL_PENDING">탈퇴 승인 대기</option>
                     <option value="WITHDRAWN">탈퇴 회원</option>
                 </select>
 
@@ -167,17 +172,18 @@ function UserManagementPage() {
                         <th>현재 페널티</th>
                         <th>누적 페널티</th>
                         <th>가입일</th>
+                        <th>관리</th>
                     </tr>
                     </thead>
 
                     <tbody>
                     {loading ? (
                         <tr>
-                            <td colSpan="10">회원 목록을 불러오는 중입니다.</td>
+                            <td colSpan="11">회원 목록을 불러오는 중입니다.</td>
                         </tr>
                     ) : users.length === 0 ? (
                         <tr>
-                            <td colSpan="10">조회된 회원이 없습니다.</td>
+                            <td colSpan="11">조회된 회원이 없습니다.</td>
                         </tr>
                     ) : (
                         users.map((user) => (
@@ -236,6 +242,19 @@ function UserManagementPage() {
                                 </td>
 
                                 <td>{formatDate(user.createdAt)}</td>
+                                <td>
+                                    {user.status === "WITHDRAWAL_PENDING" ? (
+                                        <button
+                                            type="button"
+                                            className="withdrawal-review-open"
+                                            onClick={() => setSelectedWithdrawalUserId(user.userId)}
+                                        >
+                                            탈퇴 요청 확인
+                                        </button>
+                                    ) : (
+                                        "-"
+                                    )}
+                                </td>
                             </tr>
                         ))
                     )}
@@ -266,6 +285,17 @@ function UserManagementPage() {
                     다음
                 </button>
             </div>
+
+            {selectedWithdrawalUserId && (
+                <WithdrawalReviewModal
+                    userId={selectedWithdrawalUserId}
+                    onClose={() => setSelectedWithdrawalUserId(null)}
+                    onCompleted={() => {
+                        setSelectedWithdrawalUserId(null);
+                        setRefreshKey((value) => value + 1);
+                    }}
+                />
+            )}
         </section>
     );
 }

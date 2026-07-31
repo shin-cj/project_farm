@@ -256,6 +256,14 @@ function DashboardItemDetailModal({
                                 </div>
 
                                 <div>
+                                    <dt>피신고자 이메일</dt>
+                                    <dd>
+                                        {data.reportedUserEmail ||
+                                        `피신고자 #${data.reportedUserId ?? "-"}`}
+                                    </dd>
+                                </div>
+
+                                <div>
                                     <dt>피신고 농장</dt>
                                     <dd>
                                         {data.reportedFarmName ||

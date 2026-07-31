@@ -96,6 +96,10 @@
     background-color: #fafcfb;
 }
 
+.dashboard-detail-grid > div:nth-child(9):last-child {
+    grid-column: 2;
+}
+
 .dashboard-detail-grid dt {
     margin-bottom: 5px;
     color: #768279;
@@ -161,6 +165,10 @@
 
     .dashboard-detail-grid {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dashboard-detail-grid > div:nth-child(9):last-child {
+        grid-column: auto;
     }
 
     .dashboard-item-detail-body {
