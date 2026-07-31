@@ -124,8 +124,8 @@ function AdminDashboardPage() {
             id: report.reportId,
             kind: "REPORT",
             data: report,
-            title: report.productName || "상품 정보 없음",
-            subtitle: report.reporterEmail || "신고자 정보 없음",
+            title: report.reportedUserEmail || `피신고자 #${report.reportedUserId ?? "-"}`,
+            subtitle: `신고자: ${report.reporterEmail || "정보 없음"}`,
             description: report.reportReason,
             status: report.reportStatus,
             createdAt: report.createdAt
@@ -158,17 +158,7 @@ function AdminDashboardPage() {
                 const response =
                     await reportApi.getAdminReports("PENDING");
 
-                items = response.data.map((report) => ({
-                    id: report.reportId,
-                    kind:"REPORT",
-                    data:report,
-
-                    title: report.productName || "상품 정보 없음",
-                    subtitle: report.reporterEmail || "신고자 정보 없음",
-                    description: report.reportReason,
-                    status: report.reportStatus,
-                    createdAt: report.createdAt
-                }));
+                items = response.data.map(toReportWorkItem);
             }
 
             if (type === "RECENT_REPORTS") {
@@ -181,32 +171,14 @@ function AdminDashboardPage() {
                             new Date(b.createdAt) -
                             new Date(a.createdAt)
                     )
-                    .map((report) => ({
-                        id: report.reportId,
-                        kind:"REPORT",
-                        data:report,
-                        title: report.productName || "상품 정보 없음",
-                        subtitle: report.reporterEmail || "신고자 정보 없음",
-                        description: report.reportReason,
-                        status: report.reportStatus,
-                        createdAt: report.createdAt
-                    }));
+                    .map(toReportWorkItem);
             }
 
             if (type === "REVIEWING_REPORTS") {
                 const response =
                     await reportApi.getAdminReports("REVIEWING");
 
-                items = response.data.map((report) => ({
-                    id: report.reportId,
-                    kind:"REPORT",
-                    data:report,
-                    title: report.productName || "상품 정보 없음",
-                    subtitle: report.reporterEmail || "신고자 정보 없음",
-                    description: report.reportReason,
-                    status: report.reportStatus,
-                    createdAt: report.createdAt
-                }));
+                items = response.data.map(toReportWorkItem);
             }
 
             if (type === "PENDING_FARMS") {
@@ -467,8 +439,8 @@ function AdminDashboardPage() {
                             onClick={() => openRecentReportDetail(report)}
                         >
                             <span>신고 #{report.reportId}</span>
-                            <strong>{report.productName || "상품 정보 없음"}</strong>
-                            <small>{report.reporterEmail || "신고자 정보 없음"}</small>
+                            <strong>{report.reportedUserEmail || `피신고자 #${report.reportedUserId ?? "-"}`}</strong>
+                            <small>신고자: {report.reporterEmail || "정보 없음"}</small>
                         </button>
                     ))}
                 </section>

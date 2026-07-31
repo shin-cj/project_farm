@@ -179,11 +179,13 @@
   border-bottom: 0;
 }
 
-.report-management-page .manage-table input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: #2d7e4b;
-  cursor: pointer;
+.report-management-page
+.report-table-wrap
+.manage-table > thead > tr > th:first-child,
+.report-management-page
+.report-table-wrap
+.manage-table > tbody > tr > td:first-child {
+  display: none;
 }
 
 .report-id-cell {
