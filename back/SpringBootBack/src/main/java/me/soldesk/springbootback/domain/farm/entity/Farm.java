@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 // 이 클래스가 JPA에서 관리하는 Entity임을 표시합니다.
 @Entity
 // 연결할 실제 Oracle 테이블 이름을 지정합니다.
-@Table(name = "farms")
+@Table(name = "FARMS")
 // 모든 필드의 getter 메서드를 Lombok이 자동 생성합니다.
 @Getter
 // 모든 필드의 setter 메서드를 Lombok이 자동 생성합니다.

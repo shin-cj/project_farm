@@ -6,11 +6,13 @@ import me.soldesk.springbootback.domain.order.entity.Order;
 import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
-import me.soldesk.springbootback.domain.sales.dto.SellerFarmSalesResponse;
-import me.soldesk.springbootback.domain.sales.dto.SellerSalesStatisticsResponse;
-import me.soldesk.springbootback.domain.sales.dto.SellerSalesTrendResponse;
-import me.soldesk.springbootback.domain.sales.dto.SellerTimeSlotSalesResponse;
-import me.soldesk.springbootback.domain.sales.dto.SellerTopProductResponse;
+import me.soldesk.springbootback.domain.product.entity.Product;
+import me.soldesk.springbootback.domain.product.repository.ProductRepository;
+import me.soldesk.springbootback.domain.review.entity.Review;
+import me.soldesk.springbootback.domain.review.repository.ReviewRepository;
+import me.soldesk.springbootback.domain.sales.dto.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -25,11 +27,15 @@ public class SellerSalesService {
     private final FarmRepository farmRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ReviewRepository reviewRepository;
+    private final ProductRepository productRepository;
 
-    public SellerSalesService(FarmRepository farmRepository,OrderRepository orderRepository, OrderItemRepository orderItemRepository){
+    public SellerSalesService(FarmRepository farmRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, ReviewRepository reviewRepository, ProductRepository productRepository){
         this.farmRepository = farmRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.reviewRepository = reviewRepository;
+        this.productRepository = productRepository;
     }
 
     public List<SellerSalesTrendResponse> getSalesTrend(Long sellerId,int days){
@@ -140,7 +146,7 @@ public class SellerSalesService {
                 .toList();
 
         if (farmIds.isEmpty()){
-            return new SellerSalesStatisticsResponse(0L,0L,0L,0L,List.of(),List.of(), createEmptyTimeSlotSales());
+            return new SellerSalesStatisticsResponse(0L,0L,0L,0L,List.of(),List.of(), createEmptyTimeSlotSales(),0L,List.of());
         }
 
         LocalDate today = LocalDate.now();
@@ -230,7 +236,32 @@ public class SellerSalesService {
                 .count();
 
         List<SellerTimeSlotSalesResponse> timeSlotSales = createTimeSlotSales(orders);
+        List<Long> productIds = new ArrayList<>();
+        for (Long farmId : farmIds) {
+            List<Product> products = productRepository.findByFarmId(farmId);
+            for (Product findId : products) {
+                productIds.add(findId.getProductId());
+            }
+        }
+        long reviewTotalCount = 0L;
+        for (Long productId : productIds){
+            long reviewCount = reviewRepository.countByProductId(productId);
+            reviewTotalCount += reviewCount;
+        }
 
+        List<ReviewSummaryResponse> recentReviews = List.of();
+        if (!productIds.isEmpty()) {
+            Pageable pageable = PageRequest.of(0, 5); // 최신 리뷰 3개 제한
+            List<Review> topReviews = reviewRepository.findTopReviewsByProductIds(productIds, pageable);
+
+            recentReviews = topReviews.stream()
+                    .map(review -> {
+                        String userName = reviewRepository.findNameByUserId(review.getBuyerId()); // <-- 작성자 이름 필드명에 맞게 변경하세요!
+
+                        return ReviewSummaryResponse.from(review, userName);
+                    })
+                    .toList();
+        }
         return new SellerSalesStatisticsResponse(
                 totalSales,
                 totalOrderCount,
@@ -238,8 +269,11 @@ public class SellerSalesService {
                 canceledOrRefundedOrderCount,
                 topProduct,
                 farmSales,
-                timeSlotSales
+                timeSlotSales,
+                reviewTotalCount,
+                recentReviews
         );
+
     }
 
     private List<SellerTimeSlotSalesResponse> createTimeSlotSales(List<Order> orders) {

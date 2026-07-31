@@ -39,8 +39,8 @@ public class Review {
     private String content;
 
     @Lob
-    @Column(name = "image_url", columnDefinition = "VARCHAR2(1000)", nullable = true)
-    private String imageUrl;
+    @Column(name = "image_url", nullable = true)
+    private byte[] imageUrl;
 
     @Column(name = "created_at", nullable = true)
     private LocalDateTime createdAt;
@@ -55,7 +55,7 @@ public class Review {
     }
 
     // 💡 update 메서드에 imageUrl 추가 및 수정일시(updatedAt) 갱신 로직 추가
-    public void update(Integer rating, String content, String imageUrl) {
+    public void update(Integer rating, String content, byte[] imageUrl) {
         this.rating = rating;
         this.content = content;
         this.imageUrl = imageUrl;

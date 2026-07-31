@@ -6,7 +6,13 @@ function QnaTable() {
     const [loading, setLoading] = useState(true);
     const [answerInputs, setAnswerInputs] = useState({});
 
-    // QnA 목록 불러오기
+    // 탭 상태
+    const [activeTab, setActiveTab] = useState('ALL');
+
+    // 페이징 관련 상태 (페이지당 10개씩 표시)
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     const fetchQnas = useCallback(async () => {
         try {
             const response = await axios.get('/api/qna/all');
@@ -20,18 +26,13 @@ function QnaTable() {
     }, []);
 
     useEffect(() => {
-        const loadData = async () => {
-            await fetchQnas();
-        };
-        loadData();
+        fetchQnas();
     }, [fetchQnas]);
 
-    // 관리자 답변 입력값 변경 핸들러
     const handleAnswerChange = (qnaId, value) => {
         setAnswerInputs({ ...answerInputs, [qnaId]: value });
     };
 
-    // 관리자 답변 등록 (실시간 시간 반영)
     const handleAnswerSubmit = async (qnaId) => {
         const content = answerInputs[qnaId];
         if (!content || !content.trim()) {
@@ -39,7 +40,7 @@ function QnaTable() {
             return;
         }
 
-        const currentTime = new Date().toISOString(); // 현재 실시간 시각
+        const currentTime = new Date().toISOString();
 
         try {
             await axios.put(`/api/qna/${qnaId}/answer`, {
@@ -49,7 +50,6 @@ function QnaTable() {
 
             alert('답변이 성공적으로 등록되었습니다!');
 
-            // 프론트엔드 상태를 즉시 업데이트하여 새로고침 없이 답변일 실시간 표시
             setQnas(prevQnas =>
                 prevQnas.map(qna => {
                     if (qna.qnaId === qnaId) {
@@ -57,7 +57,7 @@ function QnaTable() {
                             ...qna,
                             answerContent: content,
                             qnaStatus: 'ANSWERED',
-                            answeredAt: currentTime // 실시간 답변일 주입!
+                            answeredAt: currentTime
                         };
                     }
                     return qna;
@@ -72,75 +72,186 @@ function QnaTable() {
     };
 
     if (loading) {
-        return <div style={{ padding: '20px', textAlign: 'center' }}>로딩 중...</div>;
+        return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>로딩 중...</div>;
     }
 
-    // 문의번호 기준 최신순 정렬
-    const sortedQnas = [...qnas].sort((a, b) => Number(b.qnaId) - Number(a.qnaId));
+    // 탭 필터링
+    const filteredQnas = qnas.filter(qna => {
+        const isAnswered = qna.qnaStatus === 'ANSWERED' || qna.answerContent;
+        if (activeTab === 'WAITING' && isAnswered) return false;
+        if (activeTab === 'ANSWERED' && !isAnswered) return false;
+        return true;
+    });
+
+    const sortedQnas = [...filteredQnas].sort((a, b) => Number(b.qnaId) - Number(a.qnaId));
+
+    // 페이징 계산 로직
+    const totalPages = Math.ceil(sortedQnas.length / itemsPerPage) || 1;
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentQnas = sortedQnas.slice(startIndex, startIndex + itemsPerPage);
+
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        setCurrentPage(1);
+    };
 
     return (
-        <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', background: '#fff', fontSize: '14px' }}>
-                <thead>
-                <tr style={{ background: '#f1f1f1', borderBottom: '1px solid #ddd' }}>
-                    <th style={{ padding: '10px' }}>문의번호</th>
-                    <th style={{ padding: '10px' }}>상품번호</th>
-                    <th style={{ padding: '10px' }}>작성자번호</th>
-                    <th style={{ padding: '10px' }}>제목</th>
-                    <th style={{ padding: '10px' }}>내용</th>
-                    <th style={{ padding: '10px' }}>답변 관리</th>
-                    <th style={{ padding: '10px' }}>답변자</th>
-                    <th style={{ padding: '10px' }}>상태</th>
-                    <th style={{ padding: '10px' }}>공개여부</th>
-                    <th style={{ padding: '10px' }}>작성일</th>
-                    <th style={{ padding: '10px' }}>답변일</th>
-                </tr>
-                </thead>
-                <tbody>
-                {sortedQnas.length === 0 ? (
-                    <tr>
-                        <td colSpan="11" style={{ textAlign: 'center', padding: '20px' }}>등록된 문의가 없습니다.</td>
+        <div style={{ fontFamily: 'inherit' }}>
+            {/* 상단 타이틀 */}
+            <div style={{ marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111', margin: '0 0 6px 0' }}>문의 관리</h2>
+                <p style={{ fontSize: '14px', color: '#666', margin: 0 }}>전체 문의 {qnas.length}개</p>
+            </div>
+
+            {/* 탭 버튼 영역 */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', background: '#fff', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                <button
+                    onClick={() => handleTabChange('ALL')}
+                    style={{ padding: '8px 20px', borderRadius: '8px', border: activeTab === 'ALL' ? '1px solid #166534' : '1px solid #e2e8f0', background: activeTab === 'ALL' ? '#f0fdf4' : '#fff', color: activeTab === 'ALL' ? '#166534' : '#64748b', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}
+                >
+                    전체
+                </button>
+                <button
+                    onClick={() => handleTabChange('WAITING')}
+                    style={{ padding: '8px 20px', borderRadius: '8px', border: activeTab === 'WAITING' ? '1px solid #166534' : '1px solid #e2e8f0', background: activeTab === 'WAITING' ? '#f0fdf4' : '#fff', color: activeTab === 'WAITING' ? '#166534' : '#64748b', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}
+                >
+                    답변 대기
+                </button>
+                <button
+                    onClick={() => handleTabChange('ANSWERED')}
+                    style={{ padding: '8px 20px', borderRadius: '8px', border: activeTab === 'ANSWERED' ? '1px solid #166534' : '1px solid #e2e8f0', background: activeTab === 'ANSWERED' ? '#f0fdf4' : '#fff', color: activeTab === 'ANSWERED' ? '#166534' : '#64748b', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}
+                >
+                    답변 완료
+                </button>
+            </div>
+
+            {/* 메인 테이블 영역 */}
+            <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflowX: 'auto', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px', tableLayout: 'fixed' }}>
+                    <thead>
+                    <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>
+                        <th style={{ padding: '14px 12px', width: '60px', fontWeight: '600' }}>번호</th>
+                        <th style={{ padding: '14px 12px', width: '90px', fontWeight: '600' }}>상품/회원</th>
+                        <th style={{ padding: '14px 12px', width: '200px', fontWeight: '600' }}>제목 및 내용</th>
+                        <th style={{ padding: '14px 12px', width: '240px', fontWeight: '600' }}>답변 관리</th>
+                        <th style={{ padding: '14px 12px', width: '70px', fontWeight: '600' }}>답변자</th>
+                        <th style={{ padding: '14px 12px', width: '80px', fontWeight: '600' }}>상태</th>
+                        <th style={{ padding: '14px 12px', width: '70px', fontWeight: '600' }}>공개</th>
+                        <th style={{ padding: '14px 12px', width: '110px', fontWeight: '600' }}>작성/답변일</th>
                     </tr>
-                ) : (
-                    sortedQnas.map((qna) => (
-                        <tr key={qna.qnaId} style={{ borderBottom: '1px solid #eee' }}>
-                            <td style={{ padding: '10px' }}>{qna.qnaId}</td>
-                            <td style={{ padding: '10px' }}>{qna.productId}</td>
-                            <td style={{ padding: '10px' }}>{qna.buyerId}</td>
-                            <td style={{ padding: '10px' }}>{qna.questionTitle}</td>
-                            <td style={{ padding: '10px' }}>{qna.questionContent}</td>
-                            <td style={{ padding: '10px', minWidth: '200px' }}>
-                                {qna.answerContent ? (
-                                    <span>{qna.answerContent}</span>
-                                ) : (
-                                    <div>
-                                        <textarea
-                                            placeholder="답변 입력..."
-                                            value={answerInputs[qna.qnaId] || ''}
-                                            onChange={(e) => handleAnswerChange(qna.qnaId, e.target.value)}
-                                            style={{ width: '100%', height: '40px', marginBottom: '4px', padding: '4px', boxSizing: 'border-box' }}
-                                        />
-                                        <button
-                                            onClick={() => handleAnswerSubmit(qna.qnaId)}
-                                            style={{ background: '#28a745', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '3px', cursor: 'pointer' }}
-                                        >
-                                            등록
-                                        </button>
-                                    </div>
-                                )}
-                            </td>
-                            <td style={{ padding: '10px' }}>{qna.answeredBy || '-'}</td>
-                            <td style={{ padding: '10px' }}>{qna.qnaStatus}</td>
-                            <td style={{ padding: '10px' }}>{qna.isSecret === 1 ? "비밀" : "공개"}</td>
-                            <td style={{ padding: '10px' }}>{qna.createdAt ? new Date(qna.createdAt).toLocaleString() : '-'}</td>
-                            <td style={{ padding: '10px', color: qna.answeredAt ? '#007bff' : '#888', fontWeight: qna.answeredAt ? 'bold' : 'normal' }}>
-                                {qna.answeredAt ? new Date(qna.answeredAt).toLocaleString() : '-'}
-                            </td>
+                    </thead>
+                    <tbody>
+                    {currentQnas.length === 0 ? (
+                        <tr>
+                            <td colSpan="8" style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>조건에 맞는 문의 내역이 없습니다.</td>
                         </tr>
-                    ))
-                )}
-                </tbody>
-            </table>
+                    ) : (
+                        currentQnas.map((qna) => {
+                            const isAnswered = qna.qnaStatus === 'ANSWERED' || qna.answerContent;
+
+                            return (
+                                <tr key={qna.qnaId} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                    <td style={{ padding: '14px 12px', color: '#64748b', fontWeight: '500' }}>{qna.qnaId}</td>
+                                    <td style={{ padding: '14px 12px', color: '#475569', fontSize: '13px' }}>
+                                        <div style={{ fontWeight: '600' }}>상품 {qna.productId}</div>
+                                        <div style={{ color: '#94a3b8', fontSize: '11px' }}>회원 {qna.buyerId}</div>
+                                    </td>
+                                    <td style={{ padding: '14px 12px', wordBreak: 'break-all' }}>
+                                        <div style={{ fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>{qna.questionTitle}</div>
+                                        <div style={{ color: '#64748b', fontSize: '12px', lineHeight: '1.4' }}>{qna.questionContent}</div>
+                                    </td>
+                                    <td style={{ padding: '14px 12px' }}>
+                                        {qna.answerContent ? (
+                                            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '8px 10px', borderRadius: '8px', color: '#166534', fontSize: '12px', lineHeight: '1.4', wordBreak: 'break-all' }}>
+                                                {qna.answerContent}
+                                            </div>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                <textarea
+                                                    placeholder="답변 입력..."
+                                                    value={answerInputs[qna.qnaId] || ''}
+                                                    onChange={(e) => handleAnswerChange(qna.qnaId, e.target.value)}
+                                                    style={{ width: '100%', height: '48px', padding: '6px', borderRadius: '6px', border: '1px solid #cbd5e1', resize: 'none', fontSize: '12px', boxSizing: 'border-box', outline: 'none' }}
+                                                />
+                                                <button
+                                                    onClick={() => handleAnswerSubmit(qna.qnaId)}
+                                                    style={{ alignSelf: 'flex-end', background: '#166534', color: '#fff', border: 'none', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer' }}
+                                                >
+                                                    등록
+                                                </button>
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td style={{ padding: '14px 12px', color: '#64748b', fontSize: '13px' }}>{qna.answeredBy || '-'}</td>
+                                    <td style={{ padding: '14px 12px' }}>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            padding: '3px 8px',
+                                            borderRadius: '10px',
+                                            fontSize: '11px',
+                                            fontWeight: 'bold',
+                                            background: isAnswered ? '#f0fdf4' : '#fef3c7',
+                                            color: isAnswered ? '#166534' : '#b45309',
+                                            border: isAnswered ? '1px solid #bbf7d0' : '1px solid #fde68a'
+                                        }}>
+                                            {isAnswered ? '정상' : '대기'}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '14px 12px', color: '#475569', fontSize: '13px' }}>
+                                        {qna.isSecret === 1 ? '비밀' : '공개'}
+                                    </td>
+                                    <td style={{ padding: '14px 12px', fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>
+                                        <div>{qna.createdAt ? new Date(qna.createdAt).toLocaleDateString() : '-'}</div>
+                                        <div style={{ color: qna.answeredAt ? '#2563eb' : '#cbd5e1', fontWeight: qna.answeredAt ? '600' : 'normal' }}>
+                                            {qna.answeredAt ? new Date(qna.answeredAt).toLocaleDateString() : '-'}
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })
+                    )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* 페이징 네비게이션 바 */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px' }}>
+                <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    style={{
+                        padding: '6px 16px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        background: currentPage === 1 ? '#f1f5f9' : '#fff',
+                        color: currentPage === 1 ? '#94a3b8' : '#334155',
+                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px'
+                    }}
+                >
+                    이전
+                </button>
+                <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>
+                    {currentPage} / {totalPages}
+                </span>
+                <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    style={{
+                        padding: '6px 16px',
+                        borderRadius: '6px',
+                        border: '1px solid #cbd5e1',
+                        background: currentPage === totalPages ? '#f1f5f9' : '#fff',
+                        color: currentPage === totalPages ? '#94a3b8' : '#334155',
+                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px'
+                    }}
+                >
+                    다음
+                </button>
+            </div>
         </div>
     );
 }

@@ -11,6 +11,18 @@ function getStoredLoginUser() {
     }
 }
 
+
+// 예시: Base64 접두사 제거 함수
+function cleanBase64Image(imgString) {
+    if (!imgString) return null;
+    // 'data:image/jpeg;base64,' 형태가 있다면 콤마(,) 뒤의 순수 데이터만 추출
+    if (imgString.includes('base64,')) {
+        return imgString.split('base64,')[1];
+    }
+    return imgString;
+}
+
+
 function ReviewWritePage() {
     const navigate = useNavigate()
     const { id: reviewId } = useParams()
@@ -85,12 +97,20 @@ function ReviewWritePage() {
 
         try {
             if (isEditMode) {
-                await axios.put(`http://localhost:8080/api/reviews/${reviewId}`, requestData, {
+                const payload = {
+                    ...requestData,
+                    imageUrl: cleanBase64Image(requestData.imageUrl), // 👈 순수 Base64만 추출해서 전송
+                };
+                await axios.put(`http://localhost:8080/api/reviews/${reviewId}`, payload, {
                     withCredentials: true
                 })
                 alert('후기가 성공적으로 수정되었습니다.')
             } else {
-                await axios.post('http://localhost:8080/api/reviews/create', requestData, {
+                const payload = {
+                    ...requestData,
+                    imageUrl: cleanBase64Image(requestData.imageUrl), // 👈 순수 Base64만 추출해서 전송
+                };
+                await axios.post('http://localhost:8080/api/reviews/create', payload, {
                     withCredentials: true
                 })
                 alert('후기가 성공적으로 등록되었습니다.')
@@ -143,7 +163,7 @@ function ReviewWritePage() {
                     {imageUrl && (
                         <div style={{ marginBottom: '10px' }}>
                             <img
-                                src={imageUrl}
+                                src={imageUrl.startsWith('data:') || imageUrl.startsWith('blob:') ? imageUrl : `data:image/jpeg;base64,${imageUrl}`}
                                 alt="미리보기"
                                 style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '4px', display: 'block', marginBottom: '5px', border: '1px solid #ddd' }}
                             />

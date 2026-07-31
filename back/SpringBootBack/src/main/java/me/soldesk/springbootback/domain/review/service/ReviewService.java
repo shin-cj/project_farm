@@ -5,11 +5,12 @@ import me.soldesk.springbootback.domain.review.dto.ReviewRequest;
 import me.soldesk.springbootback.domain.review.dto.ReviewResponse;
 import me.soldesk.springbootback.domain.review.entity.Review;
 import me.soldesk.springbootback.domain.review.repository.ReviewRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +33,11 @@ public class ReviewService {
         reviewRepository.save(review);
     }
 
+    @Transactional(readOnly = true)
+    public long getReviewCountByProduct(Long productId) {
+        return reviewRepository.countByProductId(productId);
+    }
+
     // 2. 후기 수정 서비스
     @Transactional
     public void updateReview(Long reviewId, ReviewRequest request) {
@@ -51,19 +57,34 @@ public class ReviewService {
     // 4. 상품별 후기 목록 조회 서비스
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByProduct(Long productId) {
+        // 1. 엔티티 리스트 조회
         List<Review> reviews = reviewRepository.findByProductId(productId);
+        List<ReviewResponse> responseList = new ArrayList<>();
 
-        return reviews.stream()
-                .map(ReviewResponse::new)
-                .collect(Collectors.toList());
+        // 2. 엔티티를 DTO로 변환 + 이름 세팅
+        for(Review review : reviews) {
+            ReviewResponse response = new ReviewResponse(review); // Review를 받는 생성자 활용
+            String name = reviewRepository.findNameByUserId(review.getBuyerId());
+            response.setName(name);
+            responseList.add(response);
+        }
+        return responseList;
     }
 
     // 5. 특정 후기 단건 조회 서비스
     @Transactional(readOnly = true)
     public ReviewResponse getReviewDetail(Long reviewId) {
+        // 1. 엔티티 조회
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 후기입니다. id=" + reviewId));
 
-        return new ReviewResponse(review);
+        // 2. DTO로 변환
+        ReviewResponse response = new ReviewResponse(review);
+
+        // 3. 작성자 이름 조회해서 세팅
+        String name = reviewRepository.findNameByUserId(review.getBuyerId());
+        response.setName(name);
+
+        return response;
     }
 }
