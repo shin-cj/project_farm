@@ -89,8 +89,7 @@
   gap: 12px;
 }
 
-.product-detail-status,
-.product-detail-same-day-badge {
+.product-detail-status {
   display: inline-flex;
   width: fit-content;
   padding: 9px 15px;
@@ -99,11 +98,6 @@
   color: #3f7d20;
   font-size: 14px;
   font-weight: 800;
-}
-
-.product-detail-same-day-badge {
-  background-color: #e5f4ea;
-  color: #216b3a;
 }
 
 .product-detail-back-button {

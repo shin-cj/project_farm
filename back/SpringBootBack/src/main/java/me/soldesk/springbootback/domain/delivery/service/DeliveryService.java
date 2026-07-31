@@ -37,7 +37,6 @@ public class DeliveryService {
                     DeliveryResponse response = new DeliveryResponse();
                     response.setOrderId(orderId);
                     response.setDeliveryStatus("READY");
-                    response.setDeliveryType(order.getDeliveryType());
 
                     return response;
                 });
@@ -62,39 +61,21 @@ public class DeliveryService {
             throw new IllegalArgumentException("이미 배송 완료된 주문은 수정할 수 없습니다.");
         }
 
-        String deliveryType = deliveryRequest.getDeliveryType() == null
-                || deliveryRequest.getDeliveryType().isBlank()
-                ? order.getDeliveryType()
-                : deliveryRequest.getDeliveryType().trim().toUpperCase();
-
-        if (!"COURIER".equals(deliveryType) && !"SAME_DAY".equals(deliveryType)) {
-            throw new IllegalArgumentException("배송 방식은 COURIER 또는 SAME_DAY만 가능합니다.");
-        }
-
         delivery.setOrderId(deliveryRequest.getOrderId());
-        delivery.setDeliveryType(deliveryType);
 
-        if ("SAME_DAY".equals(deliveryType)) {
-            if (isBlank(deliveryRequest.getDeliveryPersonName()) || isBlank(deliveryRequest.getDeliveryPersonPhone())) {
-                throw new IllegalArgumentException("당일배송 라이더 이름과 전화번호를 입력해주세요.");
-            }
-
-            delivery.setCourierName(null);
-            delivery.setTrackingNumber(null);
-            delivery.setDeliveryPersonName(deliveryRequest.getDeliveryPersonName());
-            delivery.setDeliveryPersonPhone(deliveryRequest.getDeliveryPersonPhone());
-            delivery.setDeliveryMemo(deliveryRequest.getDeliveryMemo());
-        } else {
-            if (isBlank(deliveryRequest.getCourierName()) || isBlank(deliveryRequest.getTrackingNumber())) {
-                throw new IllegalArgumentException("택배사와 송장번호를 입력해주세요.");
-            }
-
-            delivery.setCourierName(deliveryRequest.getCourierName());
-            delivery.setTrackingNumber(deliveryRequest.getTrackingNumber());
-            delivery.setDeliveryPersonName(null);
-            delivery.setDeliveryPersonPhone(null);
-            delivery.setDeliveryMemo(null);
+        if (isBlank(deliveryRequest.getCourierName()) || isBlank(deliveryRequest.getTrackingNumber())) {
+            throw new IllegalArgumentException("택배사와 송장번호를 입력해주세요.");
         }
+
+        String courierName = deliveryRequest.getCourierName().trim();
+        String trackingNumber = normalizeTrackingNumber(deliveryRequest.getTrackingNumber());
+
+        if (!isValidTrackingNumber(courierName, trackingNumber)) {
+            throw new IllegalArgumentException("송장번호를 확인해주세요.");
+        }
+
+        delivery.setCourierName(courierName);
+        delivery.setTrackingNumber(trackingNumber);
 
         delivery.setDeliveryStatus("SHIPPING");
         delivery.setShippedAt(LocalDateTime.now());
@@ -143,10 +124,6 @@ public class DeliveryService {
         response.setOrderId(delivery.getOrderId());
         response.setCourierName(delivery.getCourierName());
         response.setTrackingNumber(delivery.getTrackingNumber());
-        response.setDeliveryType(delivery.getDeliveryType());
-        response.setDeliveryPersonName(delivery.getDeliveryPersonName());
-        response.setDeliveryPersonPhone(delivery.getDeliveryPersonPhone());
-        response.setDeliveryMemo(delivery.getDeliveryMemo());
         response.setDeliveryStatus(delivery.getDeliveryStatus());
         response.setShippedAt(delivery.getShippedAt());
         response.setDeliveredAt(delivery.getDeliveredAt());
@@ -176,5 +153,22 @@ public class DeliveryService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    private String normalizeTrackingNumber(String trackingNumber) {
+        return trackingNumber == null
+                ? ""
+                : trackingNumber.replaceAll("[\\s-]", "");
+    }
+
+    private boolean isValidTrackingNumber(String courierName, String trackingNumber) {
+        return switch (courierName) {
+            case "CJ대한통운" -> trackingNumber.matches("\\d{10}|\\d{12}");
+            case "우체국택배" -> trackingNumber.matches("\\d{13}");
+            case "한진택배" -> trackingNumber.matches("\\d{12}|\\d{14}");
+            case "롯데택배" -> trackingNumber.matches("\\d{12}");
+            case "로젠택배" -> trackingNumber.matches("\\d{11}");
+            default -> false;
+        };
     }
 }

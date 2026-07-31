@@ -31,6 +31,8 @@ import java.util.Optional;
 @Service
 public class OrderService {
 
+    private static final Long DELIVERY_FEE = 3_000L;
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CartItemRepository cartItemRepository;
@@ -119,18 +121,12 @@ public class OrderService {
             Long farmId = farmEntry.getKey();
             List<CartItem> farmCartItems = farmEntry.getValue();
             Long farmTotalPrice = 0L;
-            boolean allSameDayDelivery = true;
-
             for (CartItem cartItem : farmCartItems) {
                 Product product = productByCartItemId.get(cartItem.getCartItemId());
                 farmTotalPrice += product.getPrice() * cartItem.getQuantity();
-
-                if (!"Y".equals(product.getSameDayDelivery())) {
-                    allSameDayDelivery = false;
-                }
             }
 
-            Long deliveryFee = 0L;
+            Long deliveryFee = orderSequence == 1 ? DELIVERY_FEE : 0L;
             Long finalPrice = farmTotalPrice + deliveryFee;
 
             Order order = new Order();
@@ -146,8 +142,6 @@ public class OrderService {
             order.setReceiverAddress(request.getReceiverAddress());
             order.setReceiverDetailAddress(request.getReceiverDetailAddress());
             order.setRequestMessage(request.getRequestMessage());
-            order.setDeliveryType(allSameDayDelivery ? "SAME_DAY" : "COURIER");
-
             Order savedOrder = orderRepository.save(order);
             savedOrders.add(savedOrder);
 
@@ -174,8 +168,10 @@ public class OrderService {
         response.setOrderId(firstSavedOrder.getOrderId());
         response.setOrderNumber(hasMultipleFarms ? checkoutOrderNumber : firstSavedOrder.getOrderNumber());
         response.setOrderName(representativeOrderName);
-        response.setFinalPrice(totalPrice);
-        response.setDeliveryType(cartItemsByFarmId.size() == 1 ? firstSavedOrder.getDeliveryType() : "MIXED");
+        response.setDeliveryFee(DELIVERY_FEE);
+        response.setFinalPrice(savedOrders.stream()
+                .mapToLong(Order::getFinalPrice)
+                .sum());
         response.setOrderItems(savedOrders.stream()
                 .flatMap(order -> orderItemRepository.findByOrderId(order.getOrderId()).stream())
                 .map(this::toOrderItemResponse)
@@ -203,7 +199,7 @@ public class OrderService {
         }
 
         Long totalPrice = product.getPrice() * orderQuantity;
-        Long deliveryFee = 0L;
+        Long deliveryFee = DELIVERY_FEE;
         Long finalPrice = totalPrice + deliveryFee;
 
         Order order = new Order();
@@ -219,8 +215,6 @@ public class OrderService {
         order.setReceiverAddress(request.getReceiverAddress());
         order.setReceiverDetailAddress(request.getReceiverDetailAddress());
         order.setRequestMessage(request.getRequestMessage());
-        order.setDeliveryType("Y".equals(product.getSameDayDelivery()) ? "SAME_DAY" : "COURIER");
-
         Order savedOrder = orderRepository.save(order);
 
         OrderItem orderItem = new OrderItem();
@@ -237,8 +231,9 @@ public class OrderService {
         response.setOrderId(savedOrder.getOrderId());
         response.setOrderNumber(savedOrder.getOrderNumber());
         response.setOrderName(product.getProductName());
+        response.setTotalProductPrice(totalPrice);
+        response.setDeliveryFee(deliveryFee);
         response.setFinalPrice(finalPrice);
-        response.setDeliveryType(savedOrder.getDeliveryType());
         response.setOrderItems(List.of(toOrderItemResponse(orderItem)));
 
         return response;
@@ -309,13 +304,9 @@ public class OrderService {
         response.setPaymentStatus(paymentOptional.map(Payment::getPaymentStatus).orElse(null));
         response.setPaymentMethod(paymentOptional.map(Payment::getPaymentMethod).orElse(null));
         response.setDeliveryStatus(deliveryOptional.map(Delivery::getDeliveryStatus).orElse("READY"));
-        response.setDeliveryType(deliveryOptional.map(Delivery::getDeliveryType).orElse(order.getDeliveryType()));
         response.setDeliveryId(deliveryOptional.map(Delivery::getDeliveryId).orElse(null));
         response.setCourierName(deliveryOptional.map(Delivery::getCourierName).orElse(null));
         response.setTrackingNumber(deliveryOptional.map(Delivery::getTrackingNumber).orElse(null));
-        response.setDeliveryPersonName(deliveryOptional.map(Delivery::getDeliveryPersonName).orElse(null));
-        response.setDeliveryPersonPhone(deliveryOptional.map(Delivery::getDeliveryPersonPhone).orElse(null));
-        response.setDeliveryMemo(deliveryOptional.map(Delivery::getDeliveryMemo).orElse(null));
         response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
         response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 

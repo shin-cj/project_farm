@@ -113,13 +113,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               )
               AND f.saleType = :saleType
               AND (
-                    :sameDayDelivery IS NULL
-                    OR (
-                        f.saleType = 'RETAIL'
-                        AND p.sameDayDelivery = :sameDayDelivery
-                    )
-              )            
-              AND (
                     :keyword IS NULL
                     OR LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))
                        LIKE CONCAT('%', :keyword, '%')
@@ -146,13 +139,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
               )
               AND f.saleType = :saleType
               AND (
-                            :sameDayDelivery IS NULL
-                            OR (
-                                f.saleType = 'RETAIL'
-                                AND p.sameDayDelivery = :sameDayDelivery
-                            )
-                      )
-              AND (
                     :keyword IS NULL
                     OR LOWER(FUNCTION('REPLACE', p.productName, ' ', ''))
                        LIKE CONCAT('%', :keyword, '%')
@@ -164,7 +150,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("marketCategoryCode") String marketCategoryCode,
             @Param("marketItemCode") String marketItemCode,
             @Param("saleType") String saleType,
-            @Param("sameDayDelivery") String sameDayDelivery,
             @Param("keyword") String keyword,
             Pageable pageable
     );

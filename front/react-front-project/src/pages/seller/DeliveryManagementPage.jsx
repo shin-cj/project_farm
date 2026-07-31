@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { getFarms } from "../../api/farmApi.js";
 import {
-  getSellerOrderInfo,
   getSellerOrders,
   registerSellerDelivery,
 } from "../../api/deliveryApi.js";
@@ -24,6 +23,23 @@ const sellerCancelReasonOptions = [
   { value: "OTHER", label: "기타" },
 ];
 
+const trackingNumberRules = {
+  CJ대한통운: { pattern: /^(?:\d{10}|\d{12})$/, maxLength: 12 },
+  우체국택배: { pattern: /^\d{13}$/, maxLength: 13 },
+  한진택배: { pattern: /^(?:\d{12}|\d{14})$/, maxLength: 14 },
+  롯데택배: { pattern: /^\d{12}$/, maxLength: 12 },
+  로젠택배: { pattern: /^\d{11}$/, maxLength: 11 },
+};
+
+function normalizeTrackingNumber(value) {
+  return value.replace(/\D/g, "");
+}
+
+function isValidTrackingNumber(courier, value) {
+  const rule = trackingNumberRules[courier];
+  return Boolean(rule?.pattern.test(value));
+}
+
 function getLoginUser() {
   try {
     const storedUser = localStorage.getItem("loginUser");
@@ -45,9 +61,6 @@ function DeliveryManagementPage() {
   const [orderId, setOrderId] = useState("");
   const [courierName, setCourierName] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
-  const [deliveryPersonName, setDeliveryPersonName] = useState("");
-  const [deliveryPersonPhone, setDeliveryPersonPhone] = useState("");
-  const [deliveryMemo, setDeliveryMemo] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,8 +70,14 @@ function DeliveryManagementPage() {
   const [cancelReasonType, setCancelReasonType] = useState("");
   const [cancelReasonDetail, setCancelReasonDetail] = useState("");
   const [isCanceling, setIsCanceling] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("");
 
   const ordersPerPage = 3;
+
+  function showWarning(message) {
+    setError("");
+    setWarningMessage(message);
+  }
 
   useEffect(() => {
     fetchSellerFarms();
@@ -101,9 +120,6 @@ function DeliveryManagementPage() {
       setOrderId("");
       setCourierName("");
       setTrackingNumber("");
-      setDeliveryPersonName("");
-      setDeliveryPersonPhone("");
-      setDeliveryMemo("");
       setError("");
     } catch (error) {
       console.error(error);
@@ -137,10 +153,6 @@ function DeliveryManagementPage() {
     }
 
     return getDeliveryStatusLabel(order.deliveryStatus);
-  }
-
-  function getDeliveryTypeLabel(deliveryType) {
-    return deliveryType === "SAME_DAY" ? "당일배송" : "택배배송";
   }
 
   function getSaleTypeLabel(saleType) {
@@ -203,9 +215,6 @@ function DeliveryManagementPage() {
     setOrderId("");
     setCourierName("");
     setTrackingNumber("");
-    setDeliveryPersonName("");
-    setDeliveryPersonPhone("");
-    setDeliveryMemo("");
     setMessage("");
     setError("");
   }
@@ -215,51 +224,8 @@ function DeliveryManagementPage() {
     setOrderId(String(order.orderId));
     setCourierName(order.courierName || "");
     setTrackingNumber(order.trackingNumber || "");
-    setDeliveryPersonName(order.deliveryPersonName || "");
-    setDeliveryPersonPhone(order.deliveryPersonPhone || "");
-    setDeliveryMemo(order.deliveryMemo || "");
     setMessage("");
     setError("");
-  }
-
-  async function handleOrderSearch() {
-    if (!orderId) {
-      setSelectedOrder(null);
-      setError("주문 번호를 입력해주세요.");
-      return;
-    }
-
-    try {
-      const foundOrder = await getSellerOrderInfo(orderId, sellerId);
-
-      if (selectedFarmId && String(foundOrder.farmId) !== String(selectedFarmId)) {
-        setSelectedOrder(null);
-        setCourierName("");
-        setTrackingNumber("");
-        setDeliveryPersonName("");
-        setDeliveryPersonPhone("");
-        setDeliveryMemo("");
-        setError("선택한 농장의 주문이 아닙니다.");
-        return;
-      }
-
-      setSelectedOrder(foundOrder);
-      setCourierName(foundOrder.courierName || "");
-      setTrackingNumber(foundOrder.trackingNumber || "");
-      setDeliveryPersonName(foundOrder.deliveryPersonName || "");
-      setDeliveryPersonPhone(foundOrder.deliveryPersonPhone || "");
-      setDeliveryMemo(foundOrder.deliveryMemo || "");
-      setError("");
-    } catch (error) {
-      console.error(error);
-      setSelectedOrder(null);
-      setCourierName("");
-      setTrackingNumber("");
-      setDeliveryPersonName("");
-      setDeliveryPersonPhone("");
-      setDeliveryMemo("");
-      setError("주문 정보를 찾을 수 없습니다.");
-    }
   }
 
   async function handleSubmit(event) {
@@ -268,14 +234,14 @@ function DeliveryManagementPage() {
     setError("");
 
     if (!selectedOrder) {
-      setError("왼쪽 주문 목록에서 주문을 선택하거나 주문번호 확인을 먼저 해주세요.");
+      showWarning("왼쪽 주문 목록에서 주문을 선택하거나 주문번호 확인을 먼저 해주세요.");
       return;
     }
 
     if (isClosedOrder(selectedOrder)) {
 
 
-      setError("취소 또는 환불 처리 중인 주문은 배송 등록을 할 수 없습니다.");
+      showWarning("취소 또는 환불 처리 중인 주문은 배송 등록을 할 수 없습니다.");
 
 
       return;
@@ -286,36 +252,34 @@ function DeliveryManagementPage() {
 
 
     if (selectedOrder.deliveryStatus === "DELIVERED") {
-      setError("이미 배송 완료된 주문은 배송 정보를 수정할 수 없습니다.");
+      showWarning("이미 배송 완료된 주문은 배송 정보를 수정할 수 없습니다.");
       return;
     }
-
-    const isSameDayDelivery = selectedOrder.deliveryType === "SAME_DAY";
 
     if (!orderId) {
-      setError("주문번호를 확인해주세요.");
+      showWarning("주문번호를 확인해주세요.");
       return;
     }
 
-    if (isSameDayDelivery && (!deliveryPersonName || !deliveryPersonPhone)) {
-      setError("당일배송 담당자와 연락처를 입력해주세요.");
+    if (!courierName || !trackingNumber) {
+      showWarning("주문번호, 택배사, 송장번호를 모두 입력해주세요.");
       return;
     }
 
-    if (!isSameDayDelivery && (!courierName || !trackingNumber)) {
-      setError("주문번호, 택배사, 송장번호를 모두 입력해주세요.");
+    const normalizedTrackingNumber = normalizeTrackingNumber(trackingNumber);
+
+    if (
+      !isValidTrackingNumber(courierName, normalizedTrackingNumber)
+    ) {
+      showWarning("송장번호를 확인해주세요.");
       return;
     }
 
     try {
       const data = await registerSellerDelivery({
         orderId: Number(orderId),
-        deliveryType: selectedOrder.deliveryType || "COURIER",
         courierName,
-        trackingNumber,
-        deliveryPersonName,
-        deliveryPersonPhone,
-        deliveryMemo,
+        trackingNumber: normalizedTrackingNumber,
       });
 
       setMessage(
@@ -325,19 +289,16 @@ function DeliveryManagementPage() {
       );
       setCourierName("");
       setTrackingNumber("");
-      setDeliveryPersonName("");
-      setDeliveryPersonPhone("");
-      setDeliveryMemo("");
       await fetchSellerOrders(selectedFarmId);
     } catch (error) {
       console.error(error);
-      setError("배송 등록에 실패했습니다.");
+      showWarning("배송 등록에 실패했습니다.");
     }
   }
 
   function openCancelModal() {
     if (!isSellerCancelable(selectedOrder)) {
-      setError("결제 완료 후 아직 배송을 시작하지 않은 주문만 취소할 수 있습니다.");
+      showWarning("결제 완료 후 아직 배송을 시작하지 않은 주문만 취소할 수 있습니다.");
       return;
     }
 
@@ -360,18 +321,18 @@ function DeliveryManagementPage() {
 
   async function handleSellerCancel() {
     if (!cancelTarget || !sellerId) {
-      setError("취소할 주문 또는 판매자 정보를 확인할 수 없습니다.");
+      showWarning("취소할 주문 또는 판매자 정보를 확인할 수 없습니다.");
       return;
     }
 
     if (!cancelReasonType) {
-      setError("주문 취소 사유를 선택해주세요.");
+      showWarning("주문 취소 사유를 선택해주세요.");
       return;
     }
 
     const trimmedDetail = cancelReasonDetail.trim();
     if (cancelReasonType === "OTHER" && !trimmedDetail) {
-      setError("기타 사유를 직접 입력해주세요.");
+      showWarning("기타 사유를 직접 입력해주세요.");
       return;
     }
 
@@ -410,7 +371,7 @@ function DeliveryManagementPage() {
         // JSON 응답이 아니면 서버가 전달한 원문을 그대로 표시합니다.
       }
 
-      setError(cancelErrorMessage || "주문 취소에 실패했습니다.");
+      showWarning(cancelErrorMessage || "주문 취소에 실패했습니다.");
     } finally {
       setIsCanceling(false);
     }
@@ -451,14 +412,13 @@ function DeliveryManagementPage() {
   const startIndex = (currentPage - 1) * ordersPerPage;
   const currentOrders = visibleOrders.slice(startIndex, startIndex + ordersPerPage);
   const isDeliveryLocked = selectedOrder && (selectedOrder.deliveryStatus === "DELIVERED" || isClosedOrder(selectedOrder));
-  const isSelectedSameDayDelivery = selectedOrder?.deliveryType === "SAME_DAY";
 
   return (
     <section className="page-card" style={{ maxWidth: "1440px", margin: "0 auto" }}>
       <p className="page-label">Seller Order / Delivery</p>
       <h1>주문 접수 및 배송 관리</h1>
       <p style={{ color: "#68756d" }}>
-        농장별 주문을 확인하고 택배배송 또는 당일배송 상태를 관리할 수 있습니다.
+        농장별 주문을 확인하고 택배 배송 상태를 관리할 수 있습니다.
       </p>
 
       {message && (
@@ -623,13 +583,13 @@ function DeliveryManagementPage() {
                     style={{
                       padding: "6px 10px",
                       borderRadius: "999px",
-                      background: order.deliveryType === "SAME_DAY" ? "#fff4d6" : "#eef3ee",
-                      color: order.deliveryType === "SAME_DAY" ? "#8a4b08" : "#405348",
+                      background: "#eef3ee",
+                      color: "#405348",
                       fontWeight: 900,
                       fontSize: "0.82rem",
                     }}
                   >
-                    {getDeliveryTypeLabel(order.deliveryType)}
+                    택배배송
                   </span>
                 </div>
                 {order.orderItems?.length > 0 && (
@@ -715,11 +675,6 @@ function DeliveryManagementPage() {
                     택배 정보: {order.courierName || "택배사 미등록"} / {order.trackingNumber || "송장번호 미등록"}
                   </p>
                 )}
-                {(order.deliveryPersonName || order.deliveryPersonPhone) && (
-                  <p style={{ margin: "6px 0 0" }}>
-                    당일배송 라이더: {order.deliveryPersonName || "라이더 미등록"} / {order.deliveryPersonPhone || "전화번호 미등록"}
-                  </p>
-                )}
                 {isClosedOrder(order) && (
                     <p style={{ margin: "8px 0 0", color: "#dc2626", fontWeight: 800 }}>
                       사유: {order.refundReason || "사유 없음"}
@@ -777,7 +732,7 @@ function DeliveryManagementPage() {
               <div>
                 <h2 style={{ margin: 0, fontSize: "1.35rem" }}>배송 관리</h2>
                 <p style={{ margin: "6px 0 0", color: "#68756d", fontSize: "0.92rem" }}>
-                  선택한 주문의 배송 방식에 맞춰 배송 정보를 등록합니다.
+                  선택한 주문의 택배사와 송장번호를 등록합니다.
                 </p>
               </div>
               <span
@@ -834,7 +789,7 @@ function DeliveryManagementPage() {
                 <InfoLine label="주문코드" value={selectedOrder.orderNumber} />
                 <InfoLine label="구매일" value={formatDateTime(selectedOrder.orderedAt)} />
                 <InfoLine label="결제수단" value={selectedOrder.paymentMethod || "결제 전"} />
-                <InfoLine label="배송 방식" value={getDeliveryTypeLabel(selectedOrder.deliveryType)} />
+                <InfoLine label="배송 방식" value="택배배송" />
                 <InfoLine label="배송 상태" value={getOrderDeliveryStatusLabel(selectedOrder)} />
               </div>
 
@@ -925,64 +880,15 @@ function DeliveryManagementPage() {
             </div>
           )}
 
-          {isSelectedSameDayDelivery ? (
-            <>
-              <div
-                style={{
-                  padding: "14px",
-                  border: "1px solid #dce6dd",
-                  borderRadius: "14px",
-                  background: "linear-gradient(135deg, #f2f8f3, #ffffff)",
-                  color: "#216b3a",
-                  fontWeight: 800,
-                }}
-              >
-                당일배송 주문입니다. 택배사와 송장번호 대신 라이더 정보와 전달사항으로 관리합니다.
-              </div>
-
-              <label>
-                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>라이더 이름</span>
-                <input
-                  type="text"
-                  value={deliveryPersonName}
-                  onChange={(event) => setDeliveryPersonName(event.target.value)}
-                  placeholder="예: 김라이더"
-                  disabled={isDeliveryLocked}
-                  style={{ ...inputStyle, background: isDeliveryLocked ? "#f3f4f6" : "#ffffff" }}
-                />
-              </label>
-
-              <label>
-                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>라이더 전화번호</span>
-                <input
-                  type="text"
-                  value={deliveryPersonPhone}
-                  onChange={(event) => setDeliveryPersonPhone(event.target.value)}
-                  placeholder="예: 010-1234-5678"
-                  disabled={isDeliveryLocked}
-                  style={{ ...inputStyle, background: isDeliveryLocked ? "#f3f4f6" : "#ffffff" }}
-                />
-              </label>
-
-              <label>
-                <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>전달사항</span>
-                <input
-                  type="text"
-                  value={deliveryMemo}
-                  onChange={(event) => setDeliveryMemo(event.target.value)}
-                  placeholder="예: 문 앞에 두고 연락, 오후 3시 출발 예정"
-                  disabled={isDeliveryLocked}
-                  style={{ ...inputStyle, background: isDeliveryLocked ? "#f3f4f6" : "#ffffff" }}
-                />
-              </label>
-            </>
-          ) : (
-            <>
-              <label>
+          <label>
                 <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>택배사</span>
                 <select
                   value={courierName}
-                  onChange={(event) => setCourierName(event.target.value)}
+                  onChange={(event) => {
+                    setCourierName(event.target.value);
+                    setTrackingNumber("");
+                    setError("");
+                  }}
                   disabled={isDeliveryLocked}
                   style={{ ...inputStyle, background: isDeliveryLocked ? "#f3f4f6" : "#ffffff" }}
                 >
@@ -993,21 +899,23 @@ function DeliveryManagementPage() {
                   <option value="롯데택배">롯데택배</option>
                   <option value="로젠택배">로젠택배</option>
                 </select>
-              </label>
+          </label>
 
-              <label>
+          <label>
                 <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>송장번호</span>
                 <input
                   type="text"
                   value={trackingNumber}
-                  onChange={(event) => setTrackingNumber(event.target.value)}
+                  onChange={(event) =>
+                    setTrackingNumber(normalizeTrackingNumber(event.target.value))
+                  }
                   placeholder="송장번호를 입력하세요"
+                  inputMode="numeric"
+                  maxLength={trackingNumberRules[courierName]?.maxLength || 14}
                   disabled={isDeliveryLocked}
                   style={{ ...inputStyle, background: isDeliveryLocked ? "#f3f4f6" : "#ffffff" }}
                 />
-              </label>
-            </>
-          )}
+          </label>
 
           <button
             type="submit"
@@ -1030,9 +938,7 @@ function DeliveryManagementPage() {
                 ? getDeliveryStatusLabel(selectedOrder?.deliveryStatus)
                 : selectedOrder?.deliveryStatus === "SHIPPING"
                   ? "배송 정보 수정"
-                  : isSelectedSameDayDelivery
-                    ? "당일배송 시작"
-                    : "배송 등록"}
+                  : "배송 등록"}
           </button>
         </form>
       </div>
@@ -1124,6 +1030,32 @@ function DeliveryManagementPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {warningMessage && (
+        <div
+          className="seller-warning-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setWarningMessage("");
+            }
+          }}
+        >
+          <section
+            className="seller-warning-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="seller-warning-title"
+          >
+            <span className="seller-warning-modal-mark" aria-hidden="true">!</span>
+            <h2 id="seller-warning-title">확인해주세요</h2>
+            <p>{warningMessage}</p>
+            <button type="button" onClick={() => setWarningMessage("")} autoFocus>
+              확인
+            </button>
+          </section>
         </div>
       )}
     </section>

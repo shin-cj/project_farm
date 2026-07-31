@@ -71,7 +71,7 @@ public class SellerSalesService {
             if(dailySales == null){
                 continue;
             }
-            dailySales.sales += order.getFinalPrice();
+            dailySales.sales += order.getTotalProductPrice();
             dailySales.orderCount +=1;
 
             List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
@@ -157,7 +157,7 @@ public class SellerSalesService {
 
         Long totalSales = orders.stream()
                 .filter(this::isSalesOrder)
-                .mapToLong(Order::getFinalPrice)
+                .mapToLong(Order::getTotalProductPrice)
                 .sum();
 
         Long totalOrderCount = orders.stream()
@@ -188,7 +188,7 @@ public class SellerSalesService {
                         entry.getValue().quantity,
                         entry.getValue().sales
                 )).sorted((a,b)->Long.compare(b.getSales(), a.getSales()))
-                .limit(5)
+                .limit(3)
                 .toList();
 
         Map<Long,FarmSales> farmSalesMap = new HashMap<>();
@@ -207,7 +207,7 @@ public class SellerSalesService {
                             }
                     );
 
-                    farmSales.sales += order.getFinalPrice();
+                    farmSales.sales += order.getTotalProductPrice();
                     farmSales.orderCount += 1;
                 });
 
@@ -257,7 +257,7 @@ public class SellerSalesService {
                     TimeSlotSales timeSlotSales = timeSlotSalesMap.get(timeSlotLabel);
 
                     timeSlotSales.orderCount += 1;
-                    timeSlotSales.sales += order.getFinalPrice();
+                    timeSlotSales.sales += order.getTotalProductPrice();
                 });
 
         return timeSlotSalesMap.entrySet()
