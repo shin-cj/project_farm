@@ -189,6 +189,8 @@ function OrderPage() {
       const params = new URLSearchParams({
         orderId: order.orderNumber,
         amount: String(order.finalPrice),
+        totalProductPrice: String(order.totalProductPrice ?? totalAmount),
+        deliveryFee: String(order.deliveryFee ?? deliveryFee),
         orderName: order.orderName,
         receiverName,
         receiverPhone,

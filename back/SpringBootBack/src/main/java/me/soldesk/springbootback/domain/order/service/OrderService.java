@@ -168,6 +168,7 @@ public class OrderService {
         response.setOrderId(firstSavedOrder.getOrderId());
         response.setOrderNumber(hasMultipleFarms ? checkoutOrderNumber : firstSavedOrder.getOrderNumber());
         response.setOrderName(representativeOrderName);
+        response.setTotalProductPrice(totalPrice);
         response.setDeliveryFee(DELIVERY_FEE);
         response.setFinalPrice(savedOrders.stream()
                 .mapToLong(Order::getFinalPrice)
