@@ -4,6 +4,16 @@ const userApi = {
   getUser(userId) {
     return httpClient.get(`/users/${userId}`);
   },
+
+  updateUser(userId, data){
+    return httpClient.put(`/users/${userId}`, data)
+  },
+
+
+  requestWithdrawal(userId){
+    return httpClient.patch(`/users/${userId}/withdrawal-request`)
+  },
+
 };
 
 export default userApi;

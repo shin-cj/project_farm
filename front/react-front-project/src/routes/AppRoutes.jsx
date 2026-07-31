@@ -54,6 +54,7 @@ import { CheckoutPage } from '../components/payment/checkout.jsx'
 import { SuccessPage } from '../components/payment/success.jsx'
 import { FailPage } from '../components/payment/fail.jsx'
 import SuspendedAccountPage from "../pages/auth/SuspendedAccountPage.jsx";
+import SellerProfileEditPage from "../pages/seller/SellerProfileEditPage.jsx";
 
 function AppRoutes() {
   return (
@@ -108,6 +109,7 @@ function AppRoutes() {
           <Route path="deliveries" element={<Navigate to="/seller/orders" replace />} />
           <Route path="search" element={<SellerPriceSearchPage />} />
           <Route path="statistics" element={<SalesStatisticsPage />} />
+          <Route path="profile/edit" element={<SellerProfileEditPage/>}/>
         </Route>
       </Route>
 
