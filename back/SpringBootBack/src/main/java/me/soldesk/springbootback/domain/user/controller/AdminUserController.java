@@ -2,11 +2,12 @@ package me.soldesk.springbootback.domain.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.user.dto.AdminUserPageResponse;
+import me.soldesk.springbootback.domain.user.dto.WithdrawalReviewResponse;
 import me.soldesk.springbootback.domain.user.service.AdminUserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/users")
@@ -31,6 +32,41 @@ public class AdminUserController {
             int size
     ){
         return adminUserService.getUsers(role, keyword, sortOption, status, page, size);
+    }
+
+    @PatchMapping("/{userId}/withdrawal/approve")
+    public ResponseEntity<Map<String, String>> approveWithdrawal(
+        @PathVariable Long userId
+    ){
+        adminUserService.approveWithdrawal(userId);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "status", "success",
+                            "message", "회원 탈퇴가 승인되었습니다."
+                )
+        );
+    }
+
+    @PatchMapping("/{userId}/withdrawal/reject")
+    public ResponseEntity<Map<String, String>> rejectWithdrawal(
+        @PathVariable Long userId
+    ){
+        adminUserService.rejectWithdrawal(userId);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "status", "success",
+                        "message","회원 탈퇴 요쳥이 반려되었습니다."
+                )
+        );
+    }
+
+    @GetMapping("/{userId}/withdrawal-review")
+    public WithdrawalReviewResponse getWithdrawalReview(
+            @PathVariable Long userId
+    ) {
+        return adminUserService.getWithdrawalReview(userId);
     }
 
 }

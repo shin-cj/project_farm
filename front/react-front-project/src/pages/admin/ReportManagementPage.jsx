@@ -429,6 +429,7 @@ function ReportManagementPage() {
           <CommonTable
             data={reports}
             rowKey="reportId"
+            showSelection={false}
             headers={[
               "신고 번호",
               "신고자 이메일",

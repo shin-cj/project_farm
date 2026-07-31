@@ -327,6 +327,9 @@ function SellerMyPage() {
           <h1>판매자 마이페이지</h1>
           <span>정산 포인트와 판매 활동 요약을 확인하세요.</span>
         </div>
+        <Link to="/seller/profile/edit">
+          개인정보 수정하기
+        </Link>
       </section>
 
       <section className="seller-dashboard-summary">

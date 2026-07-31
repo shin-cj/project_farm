@@ -1,0 +1,164 @@
+.seller-profile-edit {
+    width: min(600px, calc(100% - 40px));
+    margin: 48px auto;
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #dce6de;
+    border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(31, 76, 45, 0.08);
+    color: #173b27;
+}
+
+.seller-profile-edit-title {
+    margin: 0 0 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 21px;
+    letter-spacing: 0;
+}
+
+.seller-profile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.seller-profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.seller-profile-field > span {
+    color: #263d2e;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.seller-profile-edit input {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    padding: 0 14px;
+    border: 1px solid #ccd9cf;
+    border-radius: 6px;
+    background: #fff;
+    color: #183626;
+    font-size: 15px;
+    letter-spacing: 0;
+    box-sizing: border-box;
+    outline: none;
+    transition:
+            border-color 160ms ease,
+            box-shadow 160ms ease,
+            background-color 160ms ease;
+}
+
+.seller-profile-edit input:focus {
+    border-color: #277a47;
+    box-shadow: 0 0 0 3px rgba(39, 122, 71, 0.12);
+}
+
+.seller-profile-edit input:disabled {
+    background: #f9f9f9;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.seller-profile-address-row {
+    display: flex;
+    gap: 10px;
+}
+
+.seller-profile-address-row input {
+    flex: 1;
+}
+
+.seller-profile-edit button {
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition:
+            transform 140ms ease,
+            box-shadow 140ms ease,
+            background-color 140ms ease;
+}
+
+.seller-profile-edit button:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+.seller-profile-address-row button,
+.seller-profile-save {
+    border: 1px solid #216f3f;
+    background: #216f3f;
+    color: #fff;
+}
+
+.seller-profile-address-row button:hover:not(:disabled),
+.seller-profile-save:hover:not(:disabled) {
+    background: #185d34;
+    box-shadow: 0 5px 14px rgba(33, 111, 63, 0.2);
+}
+
+.seller-profile-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.seller-profile-actions button {
+    flex: 1;
+}
+
+.seller-profile-withdraw {
+    border: 1px solid #d4a4a0;
+    background: #fff;
+    color: #b33b32;
+}
+
+.seller-profile-withdraw:hover:not(:disabled) {
+    background: #fff4f3;
+    border-color: #c84b42;
+}
+
+.seller-profile-edit button:disabled {
+    background: #e8ede9;
+    border-color: #d7dfd9;
+    color: #8c9990;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.withdrawal-pending {
+    margin-bottom: 24px;
+    padding: 15px 18px;
+    border: 1px solid #e1bd75;
+    border-radius: 6px;
+    background: #fff9ed;
+    color: #805d1c;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .seller-profile-edit {
+        width: calc(100% - 24px);
+        margin: 24px auto;
+        padding: 24px 18px;
+    }
+
+    .seller-profile-address-row,
+    .seller-profile-actions {
+        flex-direction: column;
+    }
+
+    .seller-profile-edit-title {
+        font-size: 21px;
+    }
+}

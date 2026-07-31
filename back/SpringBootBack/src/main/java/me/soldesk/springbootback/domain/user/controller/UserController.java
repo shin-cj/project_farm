@@ -2,17 +2,12 @@ package me.soldesk.springbootback.domain.user.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.user.dto.UserProfileUpdateRequest;
 import me.soldesk.springbootback.domain.user.dto.UserRequest;
 import me.soldesk.springbootback.domain.user.dto.UserResponse;
 import me.soldesk.springbootback.domain.user.service.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,5 +40,26 @@ public class UserController {
     public UserResponse getUser(@PathVariable Long userId) {
 
         return userService.getUser(userId);
+    }
+
+    @PatchMapping("/{userId}/withdrawal-request")
+    public ResponseEntity<Map<String, String>> requestWithdrawal(@PathVariable Long userId) {
+
+        userService.requestWithdrawal(userId);
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "status", "success",
+                        "message","회원 탈퇴 승인 요청이 접수되었습니다."
+                )
+        );
+    }
+
+    @PutMapping("/{userId}")
+    public UserResponse updateUserProfile(
+        @PathVariable Long userId,
+        @Valid @RequestBody UserProfileUpdateRequest request
+    ){
+        return userService.updateUserProfile(userId, request);
     }
 }

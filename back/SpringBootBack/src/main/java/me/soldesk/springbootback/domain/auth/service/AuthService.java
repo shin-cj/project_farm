@@ -32,6 +32,10 @@ public class AuthService {
             throw new IllegalStateException("사용 정지된 계정입니다.");
         }
 
+        if("WITHDRAWN".equals(user.getStatus())){
+            throw new IllegalStateException("탈퇴 처리된 계정입니다.");
+        }
+
         return user;
     }
 
