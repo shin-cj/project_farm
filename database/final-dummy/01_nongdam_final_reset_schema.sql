@@ -504,7 +504,7 @@ CREATE TABLE reviews (
     order_item_id NUMBER,                     -- 실제 구매한 주문 상품 번호(연결 전에는 NULL 가능)
     rating NUMBER(1) NOT NULL,                -- 평점: 1점부터 5점
     content VARCHAR2(500) NOT NULL,           -- 리뷰 내용
-    image_url VARCHAR2(1000),                 -- 리뷰 이미지 주소
+    image_url BLOB,                 -- 리뷰 이미지 주소
     created_at DATE DEFAULT SYSDATE NOT NULL, -- 생성 일시
     updated_at DATE DEFAULT SYSDATE NOT NULL, -- 수정 일시
 
