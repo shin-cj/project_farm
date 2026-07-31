@@ -1,0 +1,221 @@
+.seller-received-report-viewer,
+.seller-received-report-viewer * {
+    box-sizing: border-box;
+}
+
+.seller-received-report-viewer {
+    width: 100%;
+    margin: 0 auto 24px;
+    padding: 22px;
+    border: 1px solid #e1e8df;
+    border-radius: 16px;
+    background-color: #ffffff;
+    box-shadow: 0 8px 24px rgba(36, 59, 47, 0.06);
+    color: #243b2f;
+}
+
+.seller-received-report-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
+.seller-received-report-heading p {
+    margin: 0 0 7px;
+    color: #3f7d20;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.seller-received-report-heading h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.seller-received-report-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.seller-received-report-summary span {
+    color: #6b7280;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.seller-received-report-summary strong {
+    min-width: 72px;
+    padding: 7px 11px;
+    border: 1px solid #d9e8d1;
+    border-radius: 999px;
+    background-color: #f2f8ee;
+    color: #34711f;
+    font-size: 14px;
+    text-align: center;
+}
+
+.seller-received-report-state,
+.seller-received-report-error {
+    margin: 0;
+    padding: 24px 18px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.seller-received-report-state {
+    border: 1px dashed #cbd6ce;
+    background-color: #f8faf7;
+    color: #6b7280;
+}
+
+.seller-received-report-error {
+    border: 1px solid #fecaca;
+    background-color: #fff7f7;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.seller-received-report-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.seller-received-report-list > li {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+    padding: 15px 16px;
+    border: 1px solid #e6ece4;
+    border-radius: 12px;
+    background-color: #f8faf7;
+}
+
+.seller-received-report-item-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.seller-received-report-item-header > div {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+}
+
+.seller-received-report-item-header strong {
+    overflow: hidden;
+    color: #243b2f;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seller-received-report-item-header div > span {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.seller-received-report-status {
+    flex: 0 0 auto;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background-color: #eef1ef;
+    color: #59635d;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.seller-received-report-status.pending {
+    background-color: #fff5d9;
+    color: #8a5a00;
+}
+
+.seller-received-report-status.reviewing {
+    background-color: #e8f1ff;
+    color: #245aa5;
+}
+
+.seller-received-report-status.resolved {
+    background-color: #e9f6e3;
+    color: #34711f;
+}
+
+.seller-received-report-status.rejected {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.seller-received-report-reason {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    color: #4b5563;
+    font-size: 14px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.seller-received-report-reply {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 10px 12px;
+    border-left: 3px solid #72a85b;
+    border-radius: 8px;
+    background-color: #eef6e9;
+}
+
+.seller-received-report-reply strong {
+    color: #34711f;
+    font-size: 12px;
+}
+
+.seller-received-report-reply span {
+    color: #4b5563;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.seller-received-report-list time {
+    color: #8a928d;
+    font-size: 12px;
+    text-align: right;
+}
+
+@media (max-width: 700px) {
+    .seller-received-report-viewer {
+        padding: 18px;
+    }
+
+    .seller-received-report-heading {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .seller-received-report-summary {
+        justify-content: space-between;
+    }
+
+    .seller-received-report-item-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .seller-received-report-status {
+        align-self: flex-start;
+    }
+}

@@ -671,15 +671,6 @@ function AdminCatalogApprovalPage() {
                                                 </dd>
                                             </div>
                                             <div>
-                                                <dt>당일 배송</dt>
-                                                <dd>
-                                                    {selectedDetail.product
-                                                        ?.sameDayDelivery === 'Y'
-                                                        ? '가능'
-                                                        : '불가능'}
-                                                </dd>
-                                            </div>
-                                            <div>
                                                 <dt>상품 설명</dt>
                                                 <dd>
                                                     {selectedDetail.product

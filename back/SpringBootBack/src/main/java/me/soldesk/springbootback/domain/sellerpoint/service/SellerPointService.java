@@ -31,7 +31,7 @@ public class SellerPointService {
         Farm farm = farmRepository.findById(order.getFarmId())
                 .orElseThrow(() -> new IllegalArgumentException("농장 정보가 없습니다."));
 
-        Long totalAmount = order.getFinalPrice();
+        Long totalAmount = order.getTotalProductPrice();
         Long platformFee = Math.round(totalAmount * PLATFORM_FEE_RATE);
         Long sellerPointAmount = totalAmount - platformFee;
 

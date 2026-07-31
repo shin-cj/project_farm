@@ -4,11 +4,25 @@ import orderApi from "../../api/orderApi.js";
 import userApi from "../../api/userApi.js";
 import "./OrderPage.css";
 
+const DELIVERY_FEE = 3000;
+
 const roleLabel = {
   1: "관리자",
   2: "구매자",
   3: "판매자",
 };
+
+function getProductStatusLabel(productStatus) {
+  const statusLabels = {
+    ON_SALE: "판매 중",
+    SOLD_OUT: "품절",
+    PENDING: "승인 대기",
+    HIDDEN: "판매 중지",
+    REJECTED: "승인 거절",
+  };
+
+  return statusLabels[productStatus] || "상태 정보 없음";
+}
 
 function OrderPage() {
   const navigate = useNavigate();
@@ -40,7 +54,9 @@ function OrderPage() {
     const quantity = Number(item.quantity) || 0;
     return sum + price * quantity;
   }, 0);
-
+  const deliveryFee =
+    orderItems.length > 0 ? DELIVERY_FEE : 0;
+  const finalAmount = totalAmount + deliveryFee;
   useEffect(() => {
     async function fetchUser() {
       try {
@@ -173,6 +189,8 @@ function OrderPage() {
       const params = new URLSearchParams({
         orderId: order.orderNumber,
         amount: String(order.finalPrice),
+        totalProductPrice: String(order.totalProductPrice ?? totalAmount),
+        deliveryFee: String(order.deliveryFee ?? deliveryFee),
         orderName: order.orderName,
         receiverName,
         receiverPhone,
@@ -299,7 +317,9 @@ function OrderPage() {
                 </div>
 
                 <div>
-                  <strong style={{ fontSize: "1.05rem" }}>{item.productName}</strong>
+                  <div className="order-product-heading">
+                    <strong style={{ fontSize: "1.05rem" }}>{item.productName}</strong>
+                  </div>
 
                   <div
                     style={{
@@ -321,7 +341,7 @@ function OrderPage() {
                     </p>
                     <p style={{ margin: 0 }}>원산지: {item.origin || "원산지 정보 없음"}</p>
                     <p style={{ margin: 0 }}>단위: {item.unit || "단위 정보 없음"}</p>
-                    <p style={{ margin: 0 }}>상품 상태: {item.productStatus || "상태 정보 없음"}</p>
+                    <p style={{ margin: 0 }}>상품 상태: {getProductStatusLabel(item.productStatus)}</p>
                   </div>
 
                   <p style={{ margin: "12px 0 0", color: "#68756d", lineHeight: 1.5 }}>
@@ -333,16 +353,19 @@ function OrderPage() {
           })
         )}
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "6px",
-            fontSize: "1.1rem",
-          }}
-        >
-          <span>상품 합계</span>
-          <strong>{totalAmount.toLocaleString()}원</strong>
+        <div className="order-price-summary">
+          <div>
+            <span>상품 금액</span>
+            <strong>{totalAmount.toLocaleString()}원</strong>
+          </div>
+          <div>
+            <span>배송비</span>
+            <strong>{deliveryFee.toLocaleString()}원</strong>
+          </div>
+          <div className="order-price-summary-total">
+            <span>상품 합계</span>
+            <strong>{finalAmount.toLocaleString()}원</strong>
+          </div>
         </div>
       </div>
 

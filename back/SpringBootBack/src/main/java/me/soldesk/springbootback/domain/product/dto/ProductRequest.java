@@ -54,6 +54,4 @@ public class ProductRequest {
     /** 상품 이미지 주소 */
     private String productImageUrl;
 
-    private String sameDayDelivery;
-
 }

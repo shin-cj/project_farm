@@ -46,7 +46,6 @@ public class ProductController {
             @RequestParam(required = false) String marketItemCode,
             @RequestParam(defaultValue = "RETAIL") String saleType,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "false") boolean sameDayOnly,
             @RequestParam(defaultValue = "LATEST") String sortOption,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size
@@ -57,7 +56,6 @@ public class ProductController {
                 marketItemCode,
                 saleType,
                 keyword,
-                sameDayOnly,
                 sortOption,
                 page,
                 size

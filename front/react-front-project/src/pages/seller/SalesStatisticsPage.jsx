@@ -359,7 +359,7 @@ function SalesStatisticsPage() {
         <article className="seller-statistics-card">
           <div className="seller-statistics-card-header">
             <div>
-              <h2>상품별 판매 TOP 5</h2>
+              <h2>상품별 판매 TOP 3</h2>
               <p>선택한 기간 동안 매출이 높은 상품입니다.</p>
             </div>
           </div>
