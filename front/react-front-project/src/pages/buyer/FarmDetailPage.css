@@ -313,13 +313,18 @@
     flex-wrap: wrap;
 }
 
-.farm-detail-product-link,
-.farm-detail-report-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40px;
-    box-sizing: border-box;
+.farm-detail-product-link {
+    flex-shrink: 0;
+    padding: 10px 15px;
+    border: 1px solid #3f7d20;
+    border-radius: 9px;
+    background-color: #ffffff;
+    color: #3f7d20;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .farm-detail-report-button {
