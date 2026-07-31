@@ -7,6 +7,7 @@ import {
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
 import { useAppFeedback } from "../../context/AppFeedbackContext.jsx";
+import "./OrderHistoryPage.css";
 
 function getLoginUser() {
   try {
@@ -58,7 +59,7 @@ function getCancelGuide(order) {
   }
 
   if (order.deliveryStatus === "DELIVERED") {
-    return "배송 완료 상품은 하자 접수 후 환불 가능합니다.";
+    return "환불은 배송 완료 후 하자 접수 후 가능합니다.";
   }
 
   return "";
@@ -215,21 +216,38 @@ function OrderHistoryPage() {
           <p style={{ margin: "0 0 8px", color: "#4f8c60", fontWeight: 800 }}>My Page</p>
           <h1 style={{ margin: 0, fontSize: "32px", color: "#1f2f24" }}>주문 내역</h1>
         </div>
-        <button
-          type="button"
-          onClick={fetchOrders}
-          style={{
-            padding: "11px 16px",
-            border: "1px solid #b9d5c0",
-            borderRadius: "8px",
-            background: "#ffffff",
-            color: "#2f6f42",
-            fontWeight: 800,
-            cursor: "pointer",
-          }}
-        >
-          새로고침
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={{
+              padding: "11px 16px",
+              border: "1px solid #d4ddd6",
+              borderRadius: "8px",
+              background: "#ffffff",
+              color: "#526158",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            뒤로가기
+          </button>
+          <button
+            type="button"
+            onClick={fetchOrders}
+            style={{
+              padding: "11px 16px",
+              border: "1px solid #b9d5c0",
+              borderRadius: "8px",
+              background: "#ffffff",
+              color: "#2f6f42",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            새로고침
+          </button>
+        </div>
       </div>
 
       {loading && <p style={{ color: "#5f6f64" }}>주문 내역을 불러오는 중입니다.</p>}
@@ -340,6 +358,9 @@ function OrderHistoryPage() {
                           >
                             {item.saleType === "WHOLESALE" ? "도매" : "소매"}
                           </small>
+                          <small className="order-item-farm">
+                            {order.farmName || "농장 정보 없음"}
+                          </small>
                           {item.productName}
                           <strong style={{ marginLeft: "8px", color: "#216b3a" }}>
                             {[item.unit, `${Number(item.quantity || 0).toLocaleString()}개`].filter(Boolean).join(" ")}
@@ -401,21 +422,12 @@ function OrderHistoryPage() {
                 )}
               </div>
 
-              <div style={{ display: "grid", alignContent: "center", gap: "10px" }}>
+              <div className="order-history-actions">
                 <button
                   type="button"
                   onClick={() => navigate(`/deliverypage?orderId=${order.orderId}`)}
                   disabled={!canViewDelivery(order)}
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    border: canViewDelivery(order) ? "1px solid #4f8c60" : "1px solid #d1d5db",
-                    borderRadius: "8px",
-                    background: canViewDelivery(order) ? "#ffffff" : "#f3f4f6",
-                    color: canViewDelivery(order) ? "#2f6f42" : "#9ca3af",
-                    fontWeight: 800,
-                    cursor: canViewDelivery(order) ? "pointer" : "not-allowed",
-                  }}
+                  className="order-history-action order-history-action--primary"
                 >
                   {canViewDelivery(order) ? "배송 조회" : "배송 조회 불가"}
                 </button>
@@ -424,16 +436,7 @@ function OrderHistoryPage() {
                   type="button"
                   onClick={() => handleCancelOrder(order)}
                   disabled={!canCancel || cancelingOrderId === order.orderId}
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    border: "none",
-                    borderRadius: "8px",
-                    background: canCancel ? "#b91c1c" : "#d1d5db",
-                    color: "#ffffff",
-                    fontWeight: 800,
-                    cursor: canCancel ? "pointer" : "not-allowed",
-                  }}
+                  className="order-history-action order-history-action--cancel"
                 >
                   {cancelingOrderId === order.orderId ? "취소 처리 중..." : "주문 취소"}
                 </button>
@@ -442,16 +445,7 @@ function OrderHistoryPage() {
                   type="button"
                   onClick={() => handleRequestRefund(order)}
                   disabled={!canRequestRefund}
-                  style={{
-                    width: "100%",
-                    padding: "12px 14px",
-                    border: "none",
-                    borderRadius: "8px",
-                    background: canRequestRefund ? "#92400e" : "#d1d5db",
-                    color: "#ffffff",
-                    fontWeight: 800,
-                    cursor: canRequestRefund ? "pointer" : "not-allowed",
-                  }}
+                  className="order-history-action order-history-action--refund"
                 >
                   환불 요청
                 </button>

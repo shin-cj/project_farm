@@ -134,6 +134,7 @@ public class CartService {
         response.setOrigin(product.getOrigin());
         response.setHarvestDate(product.getHarvestDate());
         response.setExpirationDate(product.getExpirationDate());
+        response.setFarmId(product.getFarmId());
         response.setFarmName(farm.getFarmName());
         response.setFarmAddress(farm.getFarmAddress());
         response.setFarmDetailAddress(farm.getFarmDetailAddress());

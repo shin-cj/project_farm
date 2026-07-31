@@ -34,8 +34,6 @@ function DeliveryStatusPage() {
     }, [orderId])
 
     const step = delivery ? statusStep[delivery.deliveryStatus] || 0 : 0
-    const isSameDayDelivery = delivery?.deliveryType === "SAME_DAY"
-
     return (
         <section className="page-card">
             <p className="page-label">Delivery</p>
@@ -93,12 +91,12 @@ function DeliveryStatusPage() {
                                     marginTop: "10px",
                                     padding: "6px 10px",
                                     borderRadius: "999px",
-                                    background: isSameDayDelivery ? "#fff4d6" : "#eef3ee",
-                                    color: isSameDayDelivery ? "#8a4b08" : "#405348",
+                                    background: "#eef3ee",
+                                    color: "#405348",
                                     fontWeight: 900,
                                 }}
                             >
-                {isSameDayDelivery ? "당일배송" : "택배배송"}
+                택배배송
               </span>
                         </div>
 
@@ -162,18 +160,8 @@ function DeliveryStatusPage() {
                             marginTop: "34px",
                         }}
                     >
-                        {isSameDayDelivery ? (
-                            <>
-                                <InfoItem label="배송 담당자" value={delivery.deliveryPersonName || "담당자 배정 전"}/>
-                                <InfoItem label="담당자 연락처" value={delivery.deliveryPersonPhone || "연락처 등록 전"}/>
-                                <InfoItem label="배송 메모" value={delivery.deliveryMemo || "등록된 메모 없음"}/>
-                            </>
-                        ) : (
-                            <>
-                                <InfoItem label="택배사" value={delivery.courierName || "택배사 등록 전"}/>
-                                <InfoItem label="송장번호" value={delivery.trackingNumber || "송장번호 등록 전"}/>
-                            </>
-                        )}
+                        <InfoItem label="택배사" value={delivery.courierName || "택배사 등록 전"}/>
+                        <InfoItem label="송장번호" value={delivery.trackingNumber || "송장번호 등록 전"}/>
                         <InfoItem label="배송 시작일" value={delivery.shippedAt || "배송 시작 전"}/>
                         <InfoItem label="배송 완료일" value={delivery.deliveredAt || "배송 완료 전"}/>
                     </div>

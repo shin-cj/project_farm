@@ -20,10 +20,6 @@ const saleTypeLabel = {
   WHOLESALE: "도매",
 };
 
-function getDeliveryTypeLabel(deliveryType) {
-  return deliveryType === "SAME_DAY" ? "당일배송" : "택배배송";
-}
-
 function isClosedOrder(order) {
   return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
 }
@@ -307,13 +303,13 @@ function AdminDeliveryManagementPage() {
                     marginLeft: isCanceled || isRefundRequested || isRefunded ? "8px" : 0,
                     padding: "6px 10px",
                     borderRadius: "999px",
-                    background: order.deliveryType === "SAME_DAY" ? "#fff4d6" : "#eef3ee",
-                    color: order.deliveryType === "SAME_DAY" ? "#8a4b08" : "#405348",
+                    background: "#eef3ee",
+                    color: "#405348",
                     fontWeight: 900,
                     fontSize: "0.82rem",
                   }}
                 >
-                  {getDeliveryTypeLabel(order.deliveryType)}
+                  택배배송
                 </span>
                 <strong style={{ display: "block", color: "#213328", fontSize: "1.05rem" }}>
                   주문번호 {order.orderNumber || order.orderId}
@@ -536,26 +532,6 @@ function AdminDeliveryManagementPage() {
                       {order.trackingNumber && (
                         <span style={{ display: "block" }}>
                           송장번호: {order.trackingNumber}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {(order.deliveryPersonName || order.deliveryPersonPhone || order.deliveryMemo) && (
-                    <div style={{ marginBottom: "10px", color: "#68756d" }}>
-                      {order.deliveryPersonName && (
-                        <span style={{ display: "block" }}>
-                          라이더: {order.deliveryPersonName}
-                        </span>
-                      )}
-                      {order.deliveryPersonPhone && (
-                        <span style={{ display: "block" }}>
-                          전화번호: {order.deliveryPersonPhone}
-                        </span>
-                      )}
-                      {order.deliveryMemo && (
-                        <span style={{ display: "block" }}>
-                          전달사항: {order.deliveryMemo}
                         </span>
                       )}
                     </div>

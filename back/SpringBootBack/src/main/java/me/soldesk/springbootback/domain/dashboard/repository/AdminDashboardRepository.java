@@ -30,11 +30,12 @@ public interface AdminDashboardRepository extends JpaRepository<User, Long> {
                AND ordered_at < :tomorrowStart)
                 AS "todayOrders",
 
-            (SELECT NVL(SUM(payment_amount), 0)
-             FROM payments
-             WHERE payment_status = 'DONE'
-               AND paid_at >= :todayStart
-               AND paid_at < :tomorrowStart)
+            (SELECT NVL(SUM(o.total_product_price), 0)
+             FROM payments p
+             JOIN orders o ON o.order_id = p.order_id
+             WHERE p.payment_status = 'DONE'
+               AND p.paid_at >= :todayStart
+               AND p.paid_at < :tomorrowStart)
                 AS "todaySales",
 
             (SELECT COUNT(*)
@@ -85,8 +86,9 @@ public interface AdminDashboardRepository extends JpaRepository<User, Long> {
            AND o.ordered_at < day_list.trend_date + 1)
             AS "orderCount",
 
-        (SELECT NVL(SUM(p.payment_amount), 0)
+        (SELECT NVL(SUM(o.total_product_price), 0)
          FROM payments p
+         JOIN orders o ON o.order_id = p.order_id
          WHERE p.payment_status = 'DONE'
            AND p.paid_at >= day_list.trend_date
            AND p.paid_at < day_list.trend_date + 1)

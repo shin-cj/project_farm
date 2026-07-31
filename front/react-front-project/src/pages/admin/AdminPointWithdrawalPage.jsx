@@ -3,6 +3,7 @@ import {
   getAdminSellerPointWithdrawals,
   updateAdminSellerPointWithdrawalStatus,
 } from "../../api/salesApi.js";
+import "./AdminPointWithdrawalPage.css";
 
 const WITHDRAWAL_STATUS_LABEL = {
   REQUESTED: "신청 완료",
@@ -22,7 +23,7 @@ const filterOptions = [
 const statusStyle = {
   REQUESTED: { background: "#fff7ed", color: "#c2410c" },
   APPROVED: { background: "#e5f4ea", color: "#216b3a" },
-  COMPLETED: { background: "#eef2ff", color: "#3730a3" },
+  COMPLETED: { background: "#edf3ef", color: "#385a45" },
   REJECTED: { background: "#fee2e2", color: "#b91c1c" },
 };
 
@@ -137,16 +138,7 @@ function AdminPointWithdrawalPage() {
         <button
           type="button"
           onClick={fetchWithdrawals}
-          style={{
-            padding: "10px 14px",
-            border: "1px solid #b9d5c0",
-            borderRadius: "8px",
-            background: "#ffffff",
-            color: "#216b3a",
-            fontWeight: 800,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-          }}
+          className="admin-withdrawal-refresh"
         >
           새로고침
         </button>
@@ -159,7 +151,7 @@ function AdminPointWithdrawalPage() {
         <SummaryCard label="지급 완료 포인트" value={formatPoint(completedPoint)} />
       </div>
 
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+      <div className="admin-withdrawal-filter">
         {filterOptions.map((option) => {
           const isActive = filter === option.value;
 
@@ -168,15 +160,7 @@ function AdminPointWithdrawalPage() {
               key={option.value}
               type="button"
               onClick={() => setFilter(option.value)}
-              style={{
-                padding: "9px 13px",
-                border: isActive ? "1px solid #216b3a" : "1px solid #dce6dd",
-                borderRadius: "999px",
-                background: isActive ? "#216b3a" : "#ffffff",
-                color: isActive ? "#ffffff" : "#405348",
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
+              className={`admin-withdrawal-filter-button${isActive ? " is-active" : ""}`}
             >
               {option.label}
             </button>
@@ -290,22 +274,12 @@ function AdminPointWithdrawalPage() {
                 )}
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gap: "10px",
-                  alignContent: "center",
-                  padding: "12px",
-                  border: "1px solid #edf2ed",
-                  borderRadius: "10px",
-                  background: "#fbfdfb",
-                }}
-              >
+              <div className="admin-withdrawal-actions">
                 <button
                   type="button"
                   onClick={() => handleChangeStatus(withdrawal.withdrawalId, "APPROVED")}
                   disabled={!canApproveOrReject}
-                  style={getButtonStyle(canApproveOrReject, "#216b3a")}
+                  className="admin-withdrawal-action admin-withdrawal-action--approve"
                 >
                   승인
                 </button>
@@ -313,7 +287,7 @@ function AdminPointWithdrawalPage() {
                   type="button"
                   onClick={() => openRejectModal(withdrawal)}
                   disabled={!canApproveOrReject}
-                  style={getButtonStyle(canApproveOrReject, "#b91c1c")}
+                  className="admin-withdrawal-action admin-withdrawal-action--reject"
                 >
                   반려
                 </button>
@@ -321,7 +295,7 @@ function AdminPointWithdrawalPage() {
                   type="button"
                   onClick={() => handleChangeStatus(withdrawal.withdrawalId, "COMPLETED")}
                   disabled={!canComplete}
-                  style={getButtonStyle(canComplete, "#4c1d95")}
+                  className="admin-withdrawal-action admin-withdrawal-action--complete"
                 >
                   지급 완료
                 </button>
@@ -333,26 +307,11 @@ function AdminPointWithdrawalPage() {
 
       {rejectTarget && (
         <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            display: "grid",
-            placeItems: "center",
-            padding: "24px",
-            background: "rgba(15, 23, 42, 0.34)",
-            zIndex: 1000,
-          }}
+          className="admin-withdrawal-modal-backdrop"
           onClick={() => setRejectTarget(null)}
         >
           <div
-            style={{
-              width: "100%",
-              maxWidth: "460px",
-              padding: "22px",
-              borderRadius: "14px",
-              background: "#ffffff",
-              boxShadow: "0 24px 70px rgba(15, 23, 42, 0.24)",
-            }}
+            className="admin-withdrawal-modal"
             onClick={(event) => event.stopPropagation()}
           >
             <p style={{ margin: "0 0 8px", color: "#b91c1c", fontWeight: 900 }}>
@@ -365,22 +324,13 @@ function AdminPointWithdrawalPage() {
               value={rejectReason}
               onChange={(event) => setRejectReason(event.target.value)}
               placeholder="예: 계좌 정보가 일치하지 않습니다."
-              style={{
-                width: "100%",
-                minHeight: "110px",
-                padding: "12px",
-                border: "1px solid #dce6dd",
-                borderRadius: "8px",
-                resize: "vertical",
-                boxSizing: "border-box",
-                font: "inherit",
-              }}
+              className="admin-withdrawal-modal-textarea"
             />
-            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "14px" }}>
-              <button type="button" onClick={() => setRejectTarget(null)} style={modalCancelButtonStyle}>
+            <div className="admin-withdrawal-modal-actions">
+              <button type="button" onClick={() => setRejectTarget(null)} className="admin-withdrawal-modal-cancel">
                 취소
               </button>
-              <button type="button" onClick={submitReject} style={modalDangerButtonStyle}>
+              <button type="button" onClick={submitReject} className="admin-withdrawal-modal-reject">
                 반려 처리
               </button>
             </div>
@@ -428,38 +378,5 @@ function InfoBox({ title, children }) {
     </div>
   );
 }
-
-function getButtonStyle(enabled, background) {
-  return {
-    width: "100%",
-    padding: "10px 12px",
-    border: "none",
-    borderRadius: "8px",
-    background: enabled ? background : "#d1d5db",
-    color: "#ffffff",
-    fontWeight: 900,
-    cursor: enabled ? "pointer" : "not-allowed",
-  };
-}
-
-const modalCancelButtonStyle = {
-  padding: "10px 14px",
-  border: "1px solid #dce6dd",
-  borderRadius: "8px",
-  background: "#ffffff",
-  color: "#405348",
-  fontWeight: 800,
-  cursor: "pointer",
-};
-
-const modalDangerButtonStyle = {
-  padding: "10px 14px",
-  border: "none",
-  borderRadius: "8px",
-  background: "#b91c1c",
-  color: "#ffffff",
-  fontWeight: 900,
-  cursor: "pointer",
-};
 
 export default AdminPointWithdrawalPage;

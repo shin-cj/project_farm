@@ -25,6 +25,7 @@ public class CartResponse {
     private LocalDate expirationDate;
 
     private String sellerName;
+    private Long farmId;
     private String farmName;
     private String farmAddress;
     private String farmDetailAddress;

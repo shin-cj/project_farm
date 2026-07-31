@@ -219,7 +219,6 @@ function SellerProductDetailPage() {
             <div><dt>현재 재고</dt><dd>{Number(product.stockQuantity ?? 0).toLocaleString()}개</dd></div>
             <div><dt>판매 방식</dt><dd>{saleTypeText}</dd></div>
             <div><dt>최소 주문 수량</dt><dd>{product.minOrderQuantity ?? 1}개</dd></div>
-            <div><dt>당일배송</dt><dd>{product.sameDayDelivery === 'Y' ? '가능' : '일반배송'}</dd></div>
           </dl>
         </article>
 

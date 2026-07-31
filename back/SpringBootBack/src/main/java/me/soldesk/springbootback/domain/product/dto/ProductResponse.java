@@ -77,8 +77,6 @@ public class ProductResponse {
     //상품을 판매하는 농장 이름
     private String farmName;
 
-    private String sameDayDelivery;
-
     private List<String> aiKeywords;
 
 }

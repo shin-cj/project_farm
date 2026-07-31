@@ -120,9 +120,6 @@ public class Product {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    @Column(name = "same_day_delivery",nullable = false)
-    private String sameDayDelivery = "N";
-
     @Column(name = "ai_keyword_1", length = 50)
     private String aiKeyword1;
 
