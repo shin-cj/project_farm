@@ -250,6 +250,9 @@ public class PaymentService {
             throw new IllegalArgumentException("취소 사유는 200자 이하로 입력해주세요.");
         }
 
+        List<Order> remainingOrders = findRemainingGroupedOrders(order);
+        long cancelAmount = calculateCancelAmount(order, remainingOrders);
+
         String authorization = "Basic " + Base64.getEncoder()
                 .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
 
@@ -258,17 +261,117 @@ public class PaymentService {
                 .header("Authorization", authorization)
                 .body(Map.of(
                         "cancelReason", cancelReason,
-                        "cancelAmount", payment.getPaymentAmount()
+                        "cancelAmount", cancelAmount
                 ))
                 .retrieve()
                 .body(Map.class);
 
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        transferDeliveryFee(order, payment, remainingOrders);
+
+        restoreOrderStock(order);
+
+        order.setOrderStatus("CANCELED");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+
+        payment.setPaymentStatus("CANCELED");
+        payment.setRefundReason(cancelReason);
+        payment.setRefundedAt(LocalDateTime.now());
+        payment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+        sellerPointService.markCanceled(orderId);
+
+        return tossResponse;
+    }
+
+    @Transactional
+    public Map<String, Object> cancelPaymentGroup(
+            Long orderId,
+            PaymentCancelRequest request
+    ) {
+        Order selectedOrder = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보가 없습니다."));
+        List<Order> activeOrders = findGroupedOrders(selectedOrder).stream()
+                .filter(order -> !List.of("CANCELED", "REFUNDED")
+                        .contains(order.getOrderStatus()))
+                .toList();
+
+        if (activeOrders.isEmpty()) {
+            throw new IllegalArgumentException("취소할 주문이 없습니다.");
+        }
+
+        for (Order order : activeOrders) {
+            if (!"PAID".equals(order.getOrderStatus())) {
+                throw new IllegalArgumentException("결제 완료 상태의 주문만 전체 취소할 수 있습니다.");
+            }
+
+            Delivery delivery = deliveryRepository.findByOrderId(order.getOrderId())
+                    .orElse(null);
+
+            if (delivery != null && "SHIPPING".equals(delivery.getDeliveryStatus())) {
+                throw new IllegalArgumentException("배송 중인 주문이 포함되어 전체 취소할 수 없습니다.");
+            }
+
+            if (delivery != null && "DELIVERED".equals(delivery.getDeliveryStatus())) {
+                throw new IllegalArgumentException("배송 완료 주문이 포함되어 전체 취소할 수 없습니다.");
+            }
+        }
+
+        String cancelReason = request != null && hasText(request.getCancelReason())
+                ? request.getCancelReason().trim()
+                : "구매자 전체 주문 취소";
+
+        if (cancelReason.length() > 200) {
+            throw new IllegalArgumentException("취소 사유는 200자 이하로 입력해주세요.");
+        }
+
+        Payment representativePayment = paymentRepository
+                .findByOrderId(activeOrders.get(0).getOrderId())
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보가 없습니다."));
+        long cancelAmount = activeOrders.stream()
+                .mapToLong(Order::getFinalPrice)
+                .sum();
+        String authorization = "Basic " + Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+
+        Map<String, Object> tossResponse = restClient.post()
+                .uri("/v1/payments/{paymentKey}/cancel", representativePayment.getPgPaymentId())
+                .header("Authorization", authorization)
+                .body(Map.of(
+                        "cancelReason", cancelReason,
+                        "cancelAmount", cancelAmount
+                ))
+                .retrieve()
+                .body(Map.class);
+
+        LocalDateTime canceledAt = LocalDateTime.now();
+
+        for (Order order : activeOrders) {
+            restoreOrderStock(order);
+            order.setOrderStatus("CANCELED");
+            order.setUpdatedAt(canceledAt);
+            orderRepository.save(order);
+
+            Payment payment = paymentRepository.findByOrderId(order.getOrderId())
+                    .orElseThrow(() -> new IllegalArgumentException("결제 정보가 없습니다."));
+            payment.setPaymentStatus("CANCELED");
+            payment.setRefundReason(cancelReason);
+            payment.setRefundedAt(canceledAt);
+            payment.setUpdatedAt(canceledAt);
+            paymentRepository.save(payment);
+            sellerPointService.markCanceled(order.getOrderId());
+        }
+
+        return tossResponse;
+    }
+
+    private void restoreOrderStock(Order order) {
+        List<OrderItem> orderItems = orderItemRepository
+                .findByOrderId(order.getOrderId());
 
         for (OrderItem item : orderItems) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
-
             int previousStockQuantity = product.getStockQuantity();
             product.setStockQuantity(previousStockQuantity + item.getQuantity());
 
@@ -287,19 +390,91 @@ public class PaymentService {
                     "결제 취소에 따른 재고 복구"
             );
         }
+    }
 
-        order.setOrderStatus("CANCELED");
-        order.setUpdatedAt(LocalDateTime.now());
-        orderRepository.save(order);
+    private List<Order> findGroupedOrders(Order order) {
+        String orderNumber = order.getOrderNumber();
 
-        payment.setPaymentStatus("CANCELED");
-        payment.setRefundReason(cancelReason);
-        payment.setRefundedAt(LocalDateTime.now());
-        payment.setUpdatedAt(LocalDateTime.now());
-        paymentRepository.save(payment);
-        sellerPointService.markCanceled(orderId);
+        if (orderNumber == null
+                || !orderNumber.matches("^ORDER-\\d+-\\d+$")) {
+            return List.of(order);
+        }
 
-        return tossResponse;
+        String orderNumberPrefix = orderNumber.substring(
+                0,
+                orderNumber.lastIndexOf('-')
+        );
+        List<Order> groupedOrders = orderRepository
+                .findByOrderNumberStartingWithOrderByOrderIdAsc(
+                        orderNumberPrefix + "-"
+                );
+
+        return groupedOrders.isEmpty() ? List.of(order) : groupedOrders;
+    }
+
+    private List<Order> findRemainingGroupedOrders(Order order) {
+        return findGroupedOrders(order).stream()
+                .filter(groupedOrder -> !groupedOrder.getOrderId()
+                        .equals(order.getOrderId()))
+                .filter(groupedOrder -> !List.of("CANCELED", "REFUNDED")
+                        .contains(groupedOrder.getOrderStatus()))
+                .toList();
+    }
+
+    private long calculateCancelAmount(
+            Order order,
+            List<Order> remainingOrders
+    ) {
+        long cancelAmount = order.getTotalProductPrice();
+
+        if (remainingOrders.isEmpty()) {
+            cancelAmount += findGroupedOrders(order).stream()
+                    .mapToLong(groupedOrder -> groupedOrder.getDeliveryFee() == null
+                            ? 0L
+                            : groupedOrder.getDeliveryFee())
+                    .sum();
+        }
+
+        return cancelAmount;
+    }
+
+    private void transferDeliveryFee(
+            Order order,
+            Payment payment,
+            List<Order> remainingOrders
+    ) {
+        if (remainingOrders.isEmpty()
+                || order.getDeliveryFee() == null
+                || order.getDeliveryFee() <= 0) {
+            return;
+        }
+
+        long transferredDeliveryFee = order.getDeliveryFee();
+        Order deliveryFeeTarget = remainingOrders.get(0);
+
+        order.setDeliveryFee(0L);
+        order.setFinalPrice(order.getTotalProductPrice());
+
+        deliveryFeeTarget.setDeliveryFee(
+                (deliveryFeeTarget.getDeliveryFee() == null
+                        ? 0L
+                        : deliveryFeeTarget.getDeliveryFee())
+                        + transferredDeliveryFee
+        );
+        deliveryFeeTarget.setFinalPrice(
+                deliveryFeeTarget.getTotalProductPrice()
+                        + deliveryFeeTarget.getDeliveryFee()
+        );
+        deliveryFeeTarget.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(deliveryFeeTarget);
+
+        Payment deliveryFeeTargetPayment = paymentRepository
+                .findByOrderId(deliveryFeeTarget.getOrderId())
+                .orElseThrow(() -> new IllegalArgumentException("남은 주문의 결제 정보가 없습니다."));
+        payment.setPaymentAmount(order.getTotalProductPrice());
+        deliveryFeeTargetPayment.setPaymentAmount(deliveryFeeTarget.getFinalPrice());
+        deliveryFeeTargetPayment.setUpdatedAt(LocalDateTime.now());
+        paymentRepository.save(deliveryFeeTargetPayment);
     }
 
     private void updateOrderReceiverInfo(Order order, PaymentConfirmRequest request) {
@@ -395,6 +570,9 @@ public class PaymentService {
             refundReason = "관리자 환불 승인";
         }
 
+        List<Order> remainingOrders = findRemainingGroupedOrders(order);
+        long cancelAmount = calculateCancelAmount(order, remainingOrders);
+
         String authorization = "Basic " + Base64.getEncoder()
                 .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
 
@@ -403,10 +581,12 @@ public class PaymentService {
                 .header("Authorization", authorization)
                 .body(Map.of(
                         "cancelReason", refundReason,
-                        "cancelAmount", payment.getPaymentAmount()
+                        "cancelAmount", cancelAmount
                 ))
                 .retrieve()
                 .body(Map.class);
+
+        transferDeliveryFee(order, payment, remainingOrders);
 
         order.setOrderStatus("REFUNDED");
         order.setUpdatedAt(LocalDateTime.now());

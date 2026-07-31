@@ -379,23 +379,40 @@ function SalesStatisticsPage() {
               </div>
             </div>
 
-            {statistics.topProducts.length === 0 ? (
-                <p className="seller-statistics-empty">판매된 상품이 없습니다.</p>
-            ) : (
-                <>
-                  <div className="seller-statistics-column-chart">
-                    {statistics.topProducts.map((product, index) => (
-                        <div
-                            className="seller-statistics-column-item"
-                            key={product.productName}
-                            onMouseEnter={(event) =>
-                                showColumnTooltip(event, {
-                                  title: product.productName,
-                                  amountLabel: "총 매출",
-                                  amount: product.sales,
-                                  countLabel: "판매 개수",
-                                  count: `${product.quantity}개`,
-                                })
+      <section className="seller-statistics-content">
+        <article className="seller-statistics-card">
+          <div className="seller-statistics-card-header">
+            <div>
+              <h2>상품별 판매 TOP 3</h2>
+              <p>선택한 기간 동안 매출이 높은 상품입니다.</p>
+            </div>
+          </div>
+
+          {statistics.topProducts.length === 0 ? (
+            <p className="seller-statistics-empty">판매된 상품이 없습니다.</p>
+          ) : (
+            <>
+              <div className="seller-statistics-column-chart">
+                {statistics.topProducts.map((product, index) => (
+                  <div
+                    className="seller-statistics-column-item"
+                    key={product.productName}
+                    onMouseEnter={(event) =>
+                      showColumnTooltip(event, {
+                        title: product.productName,
+                        amountLabel: "총 매출",
+                        amount: product.sales,
+                        countLabel: "판매 개수",
+                        count: `${product.quantity}개`,
+                      })
+                    }
+                    onMouseMove={(event) =>
+                      setHoveredColumn((current) =>
+                        current
+                          ? {
+                              ...current,
+                              x: event.clientX,
+                              y: event.clientY,
                             }
                             onMouseMove={(event) =>
                                 setHoveredColumn((current) =>

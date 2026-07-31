@@ -119,7 +119,6 @@ public class ProductService {
             String marketItemCode,
             String saleType,
             String keyword,
-            boolean sameDayOnly,
             String sortOption,
             int page,
             int size
@@ -194,15 +193,11 @@ public class ProductService {
                         ? null
                         : marketItemCode.trim();
 
-        String normalizedSameDayDelivery =
-                sameDayOnly ? "Y" : null;
-
         Page<Product> productPage = productRepository.findPublicProductPage(
                 categoryId,
                 normalizedMarketCategoryCode,
                 normalizedMarketItemCode,
                 normalizedSaleType,
-                normalizedSameDayDelivery,
                 normalizedKeyword,
                 PageRequest.of(page, size, sort)
         );
@@ -633,8 +628,6 @@ public class ProductService {
         response.setRejectionReason(product.getRejectionReason());
         response.setCreatedAt(product.getCreatedAt());
         response.setUpdatedAt(product.getUpdatedAt());
-        response.setSameDayDelivery(product.getSameDayDelivery());
-
         List<String> aiKeywords = new ArrayList<>();
 
         if(product.getAiKeyword1() != null && !product.getAiKeyword1().isBlank()){
@@ -650,8 +643,220 @@ public class ProductService {
         return response;
     }
 
-    private void validateProductRequest(ProductRequest request, boolean requireCompleteRegistration) {
-        // 기존 검증 로직 유지
+    // 상품 등록과 수정 전에 요청값을 검사합니다.
+    private void validateProductRequest(
+            ProductRequest request,
+            boolean requireCompleteRegistration
+    ) {
+
+        // 요청 데이터 자체가 없는지 확인합니다.
+        if (request == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 정보를 입력해주세요."
+            );
+        }
+
+        // 농장 번호가 비어 있는지 확인합니다.
+        if (request.getFarmId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "농장을 선택해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getMarketItemCode() == null
+                || request.getMarketItemCode().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "공공 시세 품목을 선택해주세요."
+            );
+        }
+
+        if (request.getMarketItemCode() != null
+                && !request.getMarketItemCode().isBlank()
+                && !request.getMarketItemCode().trim().matches("\\d{1,10}")) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "공공 시세 품목 코드는 숫자 10자리 이하로 입력해주세요."
+            );
+        }
+
+        // 선택한 농장이 실제 DB에 존재하는지 확인합니다.
+        Farm farm = farmRepository.findById(request.getFarmId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "선택한 농장을 찾을 수 없습니다."
+                ));
+
+        // 관리자에게 승인받은 농장인지 확인합니다.
+        if (!"APPROVED".equals(farm.getApprovalStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "승인 완료된 농장에만 상품을 등록하거나 수정할 수 있습니다."
+            );
+        }
+
+        // 카테고리 번호가 비어 있는지 확인합니다.
+        if (request.getCategoryId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "카테고리를 선택해주세요."
+            );
+        }
+
+        // 선택한 카테고리가 실제 DB에 존재하는지 확인합니다.
+        if (!categoryRepository.existsById(request.getCategoryId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "선택한 카테고리를 찾을 수 없습니다."
+            );
+        }
+
+        // 상품명이 비어 있는지 확인합니다.
+        if (request.getProductName() == null
+                || request.getProductName().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품명을 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getDescription() == null
+                || request.getDescription().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 설명을 입력해주세요."
+            );
+        }
+
+        // 가격이 비어 있거나 0원 이하인지 확인합니다.
+        if (request.getPrice() == null
+                || request.getPrice() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "가격은 1원 이상 입력해주세요."
+            );
+        }
+
+        // 재고가 비어 있거나 음수인지 확인합니다.
+        if (request.getStockQuantity() == null
+                || request.getStockQuantity() < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "재고는 0개 이상 입력해주세요."
+            );
+        }
+
+        // 판매 단위가 비어 있는지 확인합니다.
+        if (request.getUnit() == null
+                || request.getUnit().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "판매 단위를 입력해주세요."
+            );
+        }
+
+        if (request.getPackageWeightGrams() != null
+                && request.getPackageWeightGrams().signum() <= 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "판매 단위의 총중량은 0g보다 크게 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getOrigin() == null
+                || request.getOrigin().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "원산지를 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && request.getHarvestDate() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "수확일을 입력해주세요."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && request.getExpirationDate() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "유통기한을 입력해주세요."
+            );
+        }
+
+        LocalDate minimumExpirationDate = LocalDate.now().plusDays(7);
+
+        if (requireCompleteRegistration
+                && request.getExpirationDate().isBefore(minimumExpirationDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "유통기한은 오늘부터 7일 이후여야 합니다."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && request.getHarvestDate().isAfter(request.getExpirationDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "수확일은 유통기한보다 늦을 수 없습니다."
+            );
+        }
+
+        if (requireCompleteRegistration
+                && (request.getProductImageUrl() == null
+                || request.getProductImageUrl().isBlank())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "상품 이미지를 등록해주세요."
+            );
+        }
+
+        // 상품의 판매 방식은 선택한 농장의 판매 방식을 사용합니다.
+        String saleType = farm.getSaleType();
+
+        if (!"RETAIL".equals(saleType)
+                && !"WHOLESALE".equals(saleType)) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "농장의 판매 방식 정보가 올바르지 않습니다."
+            );
+        }
+
+        // 최소 주문 수량은 반드시 1개 이상이어야 합니다.
+        if (request.getMinOrderQuantity() == null
+                || request.getMinOrderQuantity() < 1) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "최소 주문 수량은 1개 이상이어야 합니다."
+            );
+        }
+
+        // 소매 상품은 1개부터 구매할 수 있도록 고정합니다.
+        if ("RETAIL".equals(saleType)
+                && request.getMinOrderQuantity() != 1) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "소매 상품의 최소 주문 수량은 1개입니다."
+            );
+        }
+
+        // 도매 상품은 최소 2개 이상 주문하도록 제한합니다.
+        if ("WHOLESALE".equals(saleType)
+                && request.getMinOrderQuantity() <= 1) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "도매 상품의 최소 주문 수량은 2개 이상이어야 합니다."
+            );
+        }
+
     }
 
     private void requestProductKeywordGeneration(Product product) {
@@ -677,7 +882,6 @@ public class ProductService {
         product.setUnit(request.getUnit());
         product.setPackageWeightGrams(request.getPackageWeightGrams());
         product.setMinOrderQuantity(request.getMinOrderQuantity());
-        product.setSameDayDelivery(request.getSameDayDelivery()==null || request.getSameDayDelivery().isBlank() ? "N" : request.getSameDayDelivery().trim().toUpperCase());
         product.setOrigin(request.getOrigin());
         product.setHarvestDate(request.getHarvestDate());
         product.setExpirationDate(request.getExpirationDate());

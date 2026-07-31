@@ -32,7 +32,10 @@ public class ProductResponse {
     private String rejectionReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String sameDayDelivery;
+
+    //상품을 판매하는 농장 이름
+    private String farmName;
+
     private List<String> aiKeywords;
     private long totalReviews; // 💡 이 필드와 자동 생성되는 setTotalReviews()를 서비스에서 사용합니다.
 }

@@ -1,0 +1,160 @@
+농담 최종 더미 - 새로 필요한 상품 이미지 목록
+저장 폴더: C:\project_farm\front\react-front-project\public\images\retail
+형식: 제품명 | URL
+주의: 아래 파일은 서로 다른 사진으로 저장하고 파일명을 URL 끝부분과 정확히 맞춥니다.
+
+평창푸른 특선 국산 흰콩 500g | /images/retail/retail-white-soybean-01.jpg
+평창푸른 특선 아오리사과 10개 | /images/retail/retail-aori-apple-01.jpg
+김제황금 특선 수박 1개 | /images/retail/retail-watermelon-02.jpg
+김제황금 특선 국산 땅콩 500g | /images/retail/retail-peanut-03.jpg
+김제황금 특선 샤인머스켓 2kg | /images/retail/retail-shine-muscat-02.jpg
+부여숲향 특선 완숙토마토 1kg | /images/retail/retail-tomato-05.jpg
+부여숲향 특선 파프리카 500g | /images/retail/retail-paprika-02.jpg
+부여숲향 특선 국산 땅콩 500g | /images/retail/retail-peanut-04.jpg
+부여숲향 특선 하우스감귤 10개 | /images/retail/retail-tangerine-02.jpg
+나주아침 특선 국산 흰콩 500g | /images/retail/retail-white-soybean-02.jpg
+나주아침 특선 적상추 500g | /images/retail/retail-red-lettuce-01.jpg
+나주아침 특선 수박 1개 | /images/retail/retail-watermelon-03.jpg
+나주아침 특선 국산 땅콩 500g | /images/retail/retail-peanut-05.jpg
+나주아침 특선 샤인머스켓 2kg | /images/retail/retail-shine-muscat-03.jpg
+나주아침 특선 하우스감귤 10개 | /images/retail/retail-tangerine-03.jpg
+남해바람 특선 국산 녹두 500g | /images/retail/retail-mung-bean-02.jpg
+남해바람 특선 완숙토마토 1kg | /images/retail/retail-tomato-06.jpg
+남해바람 특선 파프리카 500g | /images/retail/retail-paprika-03.jpg
+남해바람 특선 국산 땅콩 500g | /images/retail/retail-peanut-06.jpg
+남해바람 특선 아오리사과 10개 | /images/retail/retail-aori-apple-02.jpg
+남해바람 특선 신고배 10개 | /images/retail/retail-singo-pear-04.jpg
+남해바람 특선 백도복숭아 10개 | /images/retail/retail-white-peach-01.jpg
+홍천고원 특선 수박 1개 | /images/retail/retail-watermelon-04.jpg
+홍천고원 특선 참외 5개 | /images/retail/retail-oriental-melon-04.jpg
+홍천고원 특선 쥬키니호박 2개 | /images/retail/retail-zucchini-05.jpg
+홍천고원 특선 국산 땅콩 500g | /images/retail/retail-peanut-07.jpg
+홍천고원 특선 샤인머스켓 2kg | /images/retail/retail-shine-muscat-04.jpg
+홍천고원 특선 하우스감귤 10개 | /images/retail/retail-tangerine-04.jpg
+구례섬진 특선 일반계 찹쌀 1kg | /images/retail/retail-glutinous-rice-03.jpg
+구례섬진 특선 완숙토마토 1kg | /images/retail/retail-tomato-07.jpg
+구례섬진 특선 파프리카 500g | /images/retail/retail-paprika-04.jpg
+구례섬진 특선 대추방울토마토 1kg | /images/retail/retail-grape-cherry-tomato-01.jpg
+구례섬진 특선 국산 땅콩 500g | /images/retail/retail-peanut-08.jpg
+구례섬진 특선 신고배 10개 | /images/retail/retail-singo-pear-05.jpg
+구례섬진 특선 백도복숭아 10개 | /images/retail/retail-white-peach-02.jpg
+구례섬진 특선 샤인머스켓 2kg | /images/retail/retail-shine-muscat-05.jpg
+괴산들판 특선 국산 흰콩 500g | /images/retail/retail-white-soybean-03.jpg
+괴산들판 특선 적상추 500g | /images/retail/retail-red-lettuce-02.jpg
+괴산들판 특선 수박 1개 | /images/retail/retail-watermelon-05.jpg
+괴산들판 특선 참외 5개 | /images/retail/retail-oriental-melon-05.jpg
+괴산들판 특선 국산 땅콩 500g | /images/retail/retail-peanut-09.jpg
+괴산들판 특선 하우스감귤 10개 | /images/retail/retail-tangerine-05.jpg
+괴산들판 특선 아오리사과 10개 | /images/retail/retail-aori-apple-03.jpg
+괴산들판 특선 신고배 10개 | /images/retail/retail-singo-pear-06.jpg
+제주돌담 특선 국산 녹두 500g | /images/retail/retail-mung-bean-03.jpg
+제주돌담 특선 밤고구마 2kg | /images/retail/retail-sweet-potato-03.jpg
+제주돌담 특선 완숙토마토 1kg | /images/retail/retail-tomato-08.jpg
+제주돌담 특선 국산 흙당근 1kg | /images/retail/retail-carrot-05.jpg
+제주돌담 특선 파프리카 500g | /images/retail/retail-paprika-05.jpg
+제주돌담 특선 대추방울토마토 1kg | /images/retail/retail-cherry-tomato-01.jpg
+제주돌담 특선 국산 땅콩 500g | /images/retail/retail-peanut-10.jpg
+제주돌담 특선 백도복숭아 10개 | /images/retail/retail-white-peach-03.jpg
+제주돌담 특선 샤인머스켓 2kg | /images/retail/retail-shine-muscat-06.jpg
+제주돌담 특선 하우스감귤 10개 | /images/retail/retail-tangerine-06.jpg
+청송햇살 특선 국산 백미 20kg 도매 | /images/retail/wholesale-white-rice-20kg-01.jpg
+청송햇살 특선 일반계 찹쌀 40kg 도매 | /images/retail/wholesale-glutinous-rice-01.jpg
+청송햇살 특선 적상추 4kg 도매 | /images/retail/wholesale-red-lettuce-01.jpg
+청송햇살 특선 수박 1개 도매 | /images/retail/wholesale-watermelon-01.jpg
+청송햇살 특선 참외 10kg 도매 | /images/retail/wholesale-oriental-melon-01.jpg
+청송햇살 특선 애호박 20개 도매 | /images/retail/wholesale-korean-zucchini-01.jpg
+청송햇살 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-01.jpg
+청송햇살 특선 신고배 15kg 도매 | /images/retail/wholesale-singo-pear-01.jpg
+청송햇살 특선 백도복숭아 4kg 도매 | /images/retail/wholesale-white-peach-01.jpg
+평창푸른 특선 국산 흰콩 40kg 도매 | /images/retail/wholesale-white-soybean-01.jpg
+평창푸른 특선 국산 붉은팥 40kg 도매 | /images/retail/wholesale-red-bean-01.jpg
+평창푸른 특선 완숙토마토 5kg 도매 | /images/retail/wholesale-tomato-01.jpg
+평창푸른 특선 국산 흙당근 20kg 도매 | /images/retail/wholesale-carrot-01.jpg
+평창푸른 특선 파프리카 5kg 도매 | /images/retail/wholesale-paprika-01.jpg
+평창푸른 특선 대추방울토마토 3kg 도매 | /images/retail/wholesale-grape-cherry-tomato-01.jpg
+평창푸른 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-02.jpg
+평창푸른 특선 샤인머스켓 2kg 도매 | /images/retail/wholesale-shine-muscat-01.jpg
+평창푸른 실속 하우스감귤 3kg 도매 | /images/retail/wholesale-tangerine-01.jpg
+평창푸른 실속 후지사과 10kg 도매 | /images/retail/wholesale-fuji-apple-01.jpg
+김제황금 특선 국산 녹두 40kg 도매 | /images/retail/wholesale-mung-bean-01.jpg
+김제황금 특선 밤고구마 10kg 도매 | /images/retail/wholesale-sweet-potato-01.jpg
+김제황금 실속 적상추 4kg 도매 | /images/retail/wholesale-red-lettuce-02.jpg
+김제황금 실속 수박 1개 도매 | /images/retail/wholesale-watermelon-02.jpg
+김제황금 실속 참외 10kg 도매 | /images/retail/wholesale-oriental-melon-02.jpg
+김제황금 실속 애호박 20개 도매 | /images/retail/wholesale-korean-zucchini-02.jpg
+김제황금 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-03.jpg
+김제황금 실속 신고배 15kg 도매 | /images/retail/wholesale-singo-pear-02.jpg
+김제황금 실속 백도복숭아 4kg 도매 | /images/retail/wholesale-white-peach-02.jpg
+김제황금 특선 샤인머스켓 2kg 도매 | /images/retail/wholesale-shine-muscat-02.jpg
+부여숲향 실속 국산 백미 20kg 도매 | /images/retail/wholesale-white-rice-20kg-02.jpg
+부여숲향 실속 완숙토마토 5kg 도매 | /images/retail/wholesale-tomato-02.jpg
+부여숲향 실속 국산 흙당근 20kg 도매 | /images/retail/wholesale-carrot-02.jpg
+부여숲향 실속 파프리카 5kg 도매 | /images/retail/wholesale-paprika-02.jpg
+부여숲향 실속 대추방울토마토 3kg 도매 | /images/retail/wholesale-grape-cherry-tomato-02.jpg
+부여숲향 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-04.jpg
+부여숲향 실속 하우스감귤 3kg 도매 | /images/retail/wholesale-tangerine-02.jpg
+부여숲향 특선 아오리사과 10kg 도매 | /images/retail/wholesale-aori-apple-01.jpg
+부여숲향 특선 신고배 15kg 도매 | /images/retail/wholesale-singo-pear-03.jpg
+나주아침 실속 일반계 찹쌀 40kg 도매 | /images/retail/wholesale-glutinous-rice-02.jpg
+나주아침 실속 국산 흰콩 40kg 도매 | /images/retail/wholesale-white-soybean-02.jpg
+나주아침 특선 청상추 4kg 도매 | /images/retail/wholesale-green-lettuce-01.jpg
+나주아침 특선 수박 1개 도매 | /images/retail/wholesale-watermelon-03.jpg
+나주아침 특선 참외 10kg 도매 | /images/retail/wholesale-oriental-melon-03.jpg
+나주아침 특선 쥬키니호박 10kg 도매 | /images/retail/wholesale-zucchini-01.jpg
+나주아침 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-05.jpg
+나주아침 특선 백도복숭아 4kg 도매 | /images/retail/wholesale-white-peach-03.jpg
+나주아침 특선 샤인머스켓 2kg 도매 | /images/retail/wholesale-shine-muscat-03.jpg
+나주아침 실속 하우스감귤 3kg 도매 | /images/retail/wholesale-tangerine-03.jpg
+남해바람 특선 국산 붉은팥 40kg 도매 | /images/retail/wholesale-red-bean-02.jpg
+남해바람 실속 국산 녹두 40kg 도매 | /images/retail/wholesale-mung-bean-02.jpg
+남해바람 특선 완숙토마토 5kg 도매 | /images/retail/wholesale-tomato-03.jpg
+남해바람 특선 국산 흙당근 20kg 도매 | /images/retail/wholesale-carrot-03.jpg
+남해바람 특선 파프리카 5kg 도매 | /images/retail/wholesale-paprika-03.jpg
+남해바람 특선 대추방울토마토 3kg 도매 | /images/retail/wholesale-grape-cherry-tomato-03.jpg
+남해바람 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-06.jpg
+남해바람 실속 아오리사과 10kg 도매 | /images/retail/wholesale-aori-apple-02.jpg
+남해바람 실속 신고배 15kg 도매 | /images/retail/wholesale-singo-pear-04.jpg
+남해바람 실속 백도복숭아 4kg 도매 | /images/retail/wholesale-white-peach-04.jpg
+홍천고원 실속 밤고구마 10kg 도매 | /images/retail/wholesale-sweet-potato-02.jpg
+홍천고원 실속 청상추 4kg 도매 | /images/retail/wholesale-green-lettuce-02.jpg
+홍천고원 실속 수박 1개 도매 | /images/retail/wholesale-watermelon-04.jpg
+홍천고원 실속 참외 10kg 도매 | /images/retail/wholesale-oriental-melon-04.jpg
+홍천고원 실속 쥬키니호박 10kg 도매 | /images/retail/wholesale-zucchini-02.jpg
+홍천고원 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-07.jpg
+홍천고원 특선 샤인머스켓 2kg 도매 | /images/retail/wholesale-shine-muscat-04.jpg
+홍천고원 실속 하우스감귤 3kg 도매 | /images/retail/wholesale-tangerine-04.jpg
+홍천고원 특선 후지사과 10kg 도매 | /images/retail/wholesale-fuji-apple-02.jpg
+구례섬진 특선 국산 백미 20kg 도매 | /images/retail/wholesale-white-rice-20kg-03.jpg
+구례섬진 특선 일반계 찹쌀 40kg 도매 | /images/retail/wholesale-glutinous-rice-03.jpg
+구례섬진 실속 완숙토마토 5kg 도매 | /images/retail/wholesale-tomato-04.jpg
+구례섬진 실속 국산 흙당근 20kg 도매 | /images/retail/wholesale-carrot-04.jpg
+구례섬진 실속 파프리카 5kg 도매 | /images/retail/wholesale-paprika-04.jpg
+구례섬진 실속 대추방울토마토 3kg 도매 | /images/retail/wholesale-grape-cherry-tomato-04.jpg
+구례섬진 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-08.jpg
+구례섬진 특선 신고배 15kg 도매 | /images/retail/wholesale-singo-pear-05.jpg
+구례섬진 특선 백도복숭아 4kg 도매 | /images/retail/wholesale-white-peach-05.jpg
+구례섬진 특선 샤인머스켓 2kg 도매 | /images/retail/wholesale-shine-muscat-05.jpg
+괴산들판 특선 국산 흰콩 40kg 도매 | /images/retail/wholesale-white-soybean-03.jpg
+괴산들판 특선 국산 붉은팥 40kg 도매 | /images/retail/wholesale-red-bean-03.jpg
+괴산들판 특선 적상추 4kg 도매 | /images/retail/wholesale-red-lettuce-03.jpg
+괴산들판 특선 수박 1개 도매 | /images/retail/wholesale-watermelon-05.jpg
+괴산들판 특선 참외 10kg 도매 | /images/retail/wholesale-oriental-melon-05.jpg
+괴산들판 특선 애호박 20개 도매 | /images/retail/wholesale-korean-zucchini-03.jpg
+괴산들판 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-09.jpg
+괴산들판 실속 하우스감귤 3kg 도매 | /images/retail/wholesale-tangerine-05.jpg
+괴산들판 실속 후지사과 10kg 도매 | /images/retail/wholesale-fuji-apple-03.jpg
+괴산들판 실속 신고배 15kg 도매 | /images/retail/wholesale-singo-pear-06.jpg
+제주돌담 특선 국산 녹두 40kg 도매 | /images/retail/wholesale-mung-bean-03.jpg
+제주돌담 특선 밤고구마 10kg 도매 | /images/retail/wholesale-sweet-potato-03.jpg
+제주돌담 특선 완숙토마토 5kg 도매 | /images/retail/wholesale-tomato-05.jpg
+제주돌담 특선 국산 흙당근 20kg 도매 | /images/retail/wholesale-carrot-05.jpg
+제주돌담 특선 파프리카 5kg 도매 | /images/retail/wholesale-paprika-05.jpg
+제주돌담 특선 대추방울토마토 3kg 도매 | /images/retail/wholesale-grape-cherry-tomato-05.jpg
+제주돌담 특선 국산 땅콩 30kg 도매 | /images/retail/wholesale-peanut-10.jpg
+제주돌담 실속 백도복숭아 4kg 도매 | /images/retail/wholesale-white-peach-06.jpg
+제주돌담 특선 샤인머스켓 2kg 도매 | /images/retail/wholesale-shine-muscat-06.jpg
+제주돌담 실속 하우스감귤 3kg 도매 | /images/retail/wholesale-tangerine-06.jpg
+
+새로 필요한 이미지: 151개
+기존 이미지 재사용: 49개
+상품 이미지 합계: 200개

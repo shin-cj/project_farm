@@ -1,0 +1,188 @@
+.withdrawal-review-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(17, 31, 23, 0.46);
+}
+
+.withdrawal-review-modal {
+    width: min(560px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 26px;
+    border: 1px solid #dce5de;
+    border-radius: 8px;
+    background: #fff;
+    color: #20352a;
+    box-shadow: 0 24px 70px rgba(18, 45, 28, 0.2);
+}
+
+.withdrawal-review-modal header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid #e3e9e5;
+}
+
+.withdrawal-review-modal header p,
+.withdrawal-review-modal header h2 {
+    margin: 0;
+}
+
+.withdrawal-review-modal header p {
+    margin-bottom: 5px;
+    color: #2d7e4b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.withdrawal-review-modal header h2 {
+    font-size: 21px;
+}
+
+.withdrawal-review-modal header > button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 5px;
+    background: #f1f5f2;
+    color: #45594c;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.withdrawal-review-user {
+    display: grid;
+    gap: 5px;
+    margin: 20px 0;
+    padding: 17px;
+    border: 1px solid #e0e7e2;
+    border-radius: 7px;
+    background: #f8faf8;
+}
+
+.withdrawal-review-user strong {
+    font-size: 18px;
+}
+
+.withdrawal-review-user span,
+.withdrawal-review-user small {
+    color: #607067;
+}
+
+.withdrawal-review-checks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.withdrawal-review-checks > div {
+    display: grid;
+    gap: 8px;
+    padding: 15px;
+    border: 1px solid #dce5de;
+    border-radius: 7px;
+    background: #f7faf8;
+}
+
+.withdrawal-review-checks span {
+    color: #68766d;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.withdrawal-review-checks strong {
+    font-size: 19px;
+}
+
+.withdrawal-review-checks .blocked {
+    border-color: #efc4c0;
+    background: #fff5f4;
+    color: #a63b32;
+}
+
+.withdrawal-review-checks .clear {
+    border-color: #c9dfcf;
+    color: #23693d;
+}
+
+.withdrawal-review-result,
+.withdrawal-review-error,
+.withdrawal-review-message {
+    margin: 18px 0 0;
+    padding: 13px 15px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.withdrawal-review-result.clear {
+    background: #edf8f0;
+    color: #23693d;
+}
+
+.withdrawal-review-result.blocked,
+.withdrawal-review-error {
+    background: #fff1f0;
+    color: #a63b32;
+}
+
+.withdrawal-review-message {
+    background: #f3f6f4;
+    color: #617068;
+}
+
+.withdrawal-review-modal footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.withdrawal-review-modal footer button {
+    min-width: 126px;
+    height: 42px;
+    border-radius: 6px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.withdrawal-review-modal footer .reject {
+    border: 1px solid #cbd5ce;
+    background: #fff;
+    color: #47584e;
+}
+
+.withdrawal-review-modal footer .approve {
+    border: 1px solid #24653a;
+    background: #2d7e4b;
+    color: #fff;
+}
+
+.withdrawal-review-modal footer button:disabled {
+    border-color: #dce2de;
+    background: #eef1ef;
+    color: #99a39d;
+    cursor: not-allowed;
+}
+
+@media (max-width: 620px) {
+    .withdrawal-review-checks {
+        grid-template-columns: 1fr;
+    }
+
+    .withdrawal-review-modal footer {
+        flex-direction: column-reverse;
+    }
+
+    .withdrawal-review-modal footer button {
+        width: 100%;
+    }
+}

@@ -196,17 +196,48 @@
     transform: scale(1.04);
 }
 
-.farm-detail-sold-out {
+.farm-detail-product-sale-badge,
+.farm-detail-sold-out,
+.farm-detail-same-day {
     position: absolute;
-    top: 12px;
-    left: 12px;
     z-index: 1;
-    padding: 7px 10px;
+    padding: 7px 11px;
     border-radius: 999px;
-    background-color: rgba(31, 41, 55, 0.88);
-    color: #ffffff;
     font-size: 12px;
     font-weight: 800;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* 도매·소매 배지: 이미지 왼쪽 위 */
+.farm-detail-product-sale-badge {
+    top: 12px;
+    left: 12px;
+}
+
+.farm-detail-product-sale-badge.retail {
+    background-color: #ffffff;
+    color: #2f741b;
+}
+
+.farm-detail-product-sale-badge.wholesale {
+    background-color: #0d663a;
+    color: #ffffff;
+}
+
+/* 품절 배지: 이미지 오른쪽 위 */
+.farm-detail-sold-out {
+    top: 12px;
+    right: 12px;
+    background-color: rgba(31, 41, 55, 0.88);
+    color: #ffffff;
+}
+
+/* 당일배송 배지: 이미지 왼쪽 아래 */
+.farm-detail-same-day {
+    bottom: 12px;
+    left: 12px;
+    background-color: #e5f4ea;
+    color: #216b3a;
 }
 
 .farm-detail-product-body {
@@ -282,13 +313,18 @@
     flex-wrap: wrap;
 }
 
-.farm-detail-product-link,
-.farm-detail-report-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40px;
-    box-sizing: border-box;
+.farm-detail-product-link {
+    flex-shrink: 0;
+    padding: 10px 15px;
+    border: 1px solid #3f7d20;
+    border-radius: 9px;
+    background-color: #ffffff;
+    color: #3f7d20;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
 }
 
 .farm-detail-report-button {

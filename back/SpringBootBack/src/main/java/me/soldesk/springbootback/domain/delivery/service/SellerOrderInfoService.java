@@ -109,19 +109,6 @@ public class SellerOrderInfoService {
         String trackingNumber = deliveryOptional
                 .map(Delivery::getTrackingNumber)
                 .orElse(null);
-        String deliveryType = deliveryOptional
-                .map(Delivery::getDeliveryType)
-                .orElse(order.getDeliveryType());
-        String deliveryPersonName = deliveryOptional
-                .map(Delivery::getDeliveryPersonName)
-                .orElse(null);
-        String deliveryPersonPhone = deliveryOptional
-                .map(Delivery::getDeliveryPersonPhone)
-                .orElse(null);
-        String deliveryMemo = deliveryOptional
-                .map(Delivery::getDeliveryMemo)
-                .orElse(null);
-
         Optional<Farm> farmOptional = farmRepository.findById(order.getFarmId());
         String farmName = farmOptional
                 .map(Farm::getFarmName)
@@ -152,12 +139,8 @@ public class SellerOrderInfoService {
         response.setOrderedAt(order.getOrderedAt());
         response.setPaymentMethod(paymentMethod);
         response.setDeliveryStatus(deliveryStatus);
-        response.setDeliveryType(deliveryType);
         response.setCourierName(courierName);
         response.setTrackingNumber(trackingNumber);
-        response.setDeliveryPersonName(deliveryPersonName);
-        response.setDeliveryPersonPhone(deliveryPersonPhone);
-        response.setDeliveryMemo(deliveryMemo);
         response.setRefundReason(paymentOptional.map(Payment::getRefundReason).orElse(null));
         response.setRefundedAt(paymentOptional.map(Payment::getRefundedAt).orElse(null));
 

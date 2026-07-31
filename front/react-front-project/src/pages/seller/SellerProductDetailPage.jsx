@@ -165,18 +165,46 @@ function SellerProductDetailPage() {
                         </span>
             )}
           </div>
-        </section>
+        </div>
+      </section>
 
-        <section className="seller-product-detail-card">
-          <div className="seller-product-detail-image-wrap">
-            <CatalogImage
-                src={product.productImageUrl}
-                alt={product.productName}
-                fallbackClassName="seller-product-detail-image-fallback"
-            />
-            <span className={`seller-product-detail-status status-${product.productStatus}`}>
-                        {getProductStatusText(product.productStatus)}
-                    </span>
+      <section className="seller-product-detail-info-grid">
+        <article>
+          <h2>판매·재고 정보</h2>
+          <dl>
+            <div><dt>현재 재고</dt><dd>{Number(product.stockQuantity ?? 0).toLocaleString()}개</dd></div>
+            <div><dt>판매 방식</dt><dd>{saleTypeText}</dd></div>
+            <div><dt>최소 주문 수량</dt><dd>{product.minOrderQuantity ?? 1}개</dd></div>
+          </dl>
+        </article>
+
+        <article>
+          <h2>상품 기본 정보</h2>
+          <dl>
+            <div><dt>원산지</dt><dd>{product.origin || '-'}</dd></div>
+            <div><dt>공공 시세 품목 코드</dt><dd>{product.marketItemCode || '-'}</dd></div>
+            <div><dt>수확일</dt><dd>{formatDate(product.harvestDate)}</dd></div>
+            <div><dt>소비기한</dt><dd>{formatDate(product.expirationDate)}</dd></div>
+            <div><dt>등록일</dt><dd>{formatDate(product.createdAt)}</dd></div>
+          </dl>
+        </article>
+
+        <article>
+          <h2>연결 농장 정보</h2>
+          <dl>
+            <div><dt>농장명</dt><dd>{farm.farmName}</dd></div>
+            <div><dt>지역</dt><dd>{farm.region || '-'}</dd></div>
+            <div><dt>농장 승인</dt><dd>{farm.approvalStatus === 'APPROVED' ? '승인 완료' : '승인 대기'}</dd></div>
+            <div><dt>사업자 번호</dt><dd>{farm.businessNumber || '-'}</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section className="seller-product-stock-history-card">
+        <div className="seller-product-stock-history-heading">
+          <div>
+            <p>STOCK HISTORY</p>
+            <h2>재고 이력</h2>
           </div>
 
           <div className="seller-product-detail-summary">

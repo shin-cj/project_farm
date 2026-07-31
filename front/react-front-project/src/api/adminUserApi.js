@@ -19,6 +19,18 @@ const adminUserApi = {
                 size
             }
         });
+    },
+
+    getWithdrawalReview(userId) {
+        return httpClient.get(`/admin/users/${userId}/withdrawal-review`);
+    },
+
+    approveWithdrawal(userId) {
+        return httpClient.patch(`/admin/users/${userId}/withdrawal/approve`);
+    },
+
+    rejectWithdrawal(userId) {
+        return httpClient.patch(`/admin/users/${userId}/withdrawal/reject`);
     }
 };
 

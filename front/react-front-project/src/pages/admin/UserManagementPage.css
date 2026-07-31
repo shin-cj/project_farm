@@ -218,7 +218,7 @@
 
 .admin-user-table {
     width: 100%;
-    min-width: 1320px;
+    min-width: 1450px;
     border-collapse: collapse;
     table-layout: fixed;
     background: #ffffff;
@@ -305,6 +305,38 @@
 .admin-user-table td:nth-child(10) {
     width: 116px;
     white-space: nowrap;
+}
+
+.admin-user-table th:nth-child(11),
+.admin-user-table td:nth-child(11) {
+    width: 130px;
+}
+
+.withdrawal-review-open {
+    min-height: 34px;
+    padding: 0 11px;
+    border: 1px solid #d49b47;
+    border-radius: 5px;
+    background: #fff9ed;
+    color: #805d1c;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.withdrawal-review-open:hover {
+    border-color: #bd7f24;
+    background: #fff2d5;
+}
+
+.user-status.withdrawal_pending {
+    min-width: 96px;
+    border-color: #e1bd75;
+    background: #fff9ed;
+    color: #805d1c;
 }
 
 .admin-user-name {

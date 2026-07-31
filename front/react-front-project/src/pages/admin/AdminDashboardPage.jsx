@@ -51,6 +51,67 @@ function getStockHistoryText(changeType) {
 
 function SellerProductDetailPage() {
     const { productId } = useParams()
+    function toReportWorkItem(report){
+        return{
+            id: report.reportId,
+            kind: "REPORT",
+            data: report,
+            title: report.reportedUserEmail || `피신고자 #${report.reportedUserId ?? "-"}`,
+            subtitle: `신고자: ${report.reporterEmail || "정보 없음"}`,
+            description: report.reportReason,
+            status: report.reportStatus,
+            createdAt: report.createdAt
+        }
+    }
+
+    async function openWorkModal(type) {
+        const titles = {
+            PENDING_REPORTS: "처리가 필요한 신고",
+            RECENT_REPORTS: "최근 접수된 신고",
+            REVIEWING_REPORTS: "검토 중인 신고",
+            PENDING_FARMS: "승인 대기 농장",
+            PENDING_PRODUCTS: "승인 대기 상품",
+            ACTIVE_PENALTIES: "현재 적용 중인 페널티"
+        };
+
+        setWorkModal({
+            open: true,
+            type: type,
+            title: titles[type],
+            items: [],
+            loading: true,
+            error: ""
+        });
+
+        try {
+            let items = [];
+
+            if (type === "PENDING_REPORTS") {
+                const response =
+                    await reportApi.getAdminReports("PENDING");
+
+                items = response.data.map(toReportWorkItem);
+            }
+
+            if (type === "RECENT_REPORTS") {
+                const response =
+                    await reportApi.getAdminReports("ALL");
+
+                items = [...response.data]
+                    .sort(
+                        (a, b) =>
+                            new Date(b.createdAt) -
+                            new Date(a.createdAt)
+                    )
+                    .map(toReportWorkItem);
+            }
+
+            if (type === "REVIEWING_REPORTS") {
+                const response =
+                    await reportApi.getAdminReports("REVIEWING");
+
+                items = response.data.map(toReportWorkItem);
+            }
 
     // 🚨 [디버깅용 로그 추가]
     console.log("현재 주소창에서 추출한 productId:", productId);
@@ -237,8 +298,80 @@ function SellerProductDetailPage() {
                 </article>
             </section>
 
-            <section className="seller-product-stock-history-card">
-                <div className="seller-product-stock-history-heading">
+    return (
+        <section className="admin-dashboard-page">
+            <header className="dashboard-header">
+                <h1>관리자 대시보드</h1>
+                <p>사이트의 주요 운영 현황을 확인합니다.</p>
+            </header>
+
+            <div className="dashboard-summary-grid">
+                <button onClick={() => navigate("/admin/users")}>
+                    <span>전체 회원</span>
+                    <strong>{summary.totalMembers}명</strong>
+                </button>
+
+                <button type="button" onClick={openTodayOrdersModal}>
+                    <span>오늘 주문</span>
+                    <strong>{summary.todayOrders}건</strong>
+                </button>
+
+                <button type="button" onClick={openTodaySaleModal}>
+                    <span>오늘 매출</span>
+                    <strong>
+                        {summary.todaySales.toLocaleString()}원
+                    </strong>
+                </button>
+
+                <button onClick={() => openWorkModal("PENDING_REPORTS")}>
+                    <span>미처리 신고</span>
+                    <strong>{summary.pendingReports}건</strong>
+                </button>
+            </div>
+
+            <div className="dashboard-content-grid">
+                <section className="dashboard-work-section">
+                    <h2>처리 필요 업무</h2>
+
+                    <button onClick={() => openWorkModal("PENDING_FARMS")}>
+                        농장 승인 대기
+                        <strong>{summary.pendingFarms}건</strong>
+                    </button>
+
+                    <button onClick={() => openWorkModal("PENDING_PRODUCTS")}>
+                        상품 승인 대기
+                        <strong>{summary.pendingProducts}건</strong>
+                    </button>
+
+                    <button onClick={() => openWorkModal("REVIEWING_REPORTS")}>
+                        검토 중인 신고
+                        <strong>{summary.reviewingReports}건</strong>
+                    </button>
+
+                    <button onClick={() => openWorkModal("ACTIVE_PENALTIES")}>
+                        활성 페널티
+                        <strong>{summary.activePenalties}건</strong>
+                    </button>
+                </section>
+
+                <section className="dashboard-report-section">
+                    <h2>최근 접수된 신고</h2>
+
+                    {recentReports.map((report) => (
+                        <button
+                            key={report.reportId}
+                            onClick={() => openRecentReportDetail(report)}
+                        >
+                            <span>신고 #{report.reportId}</span>
+                            <strong>{report.reportedUserEmail || `피신고자 #${report.reportedUserId ?? "-"}`}</strong>
+                            <small>신고자: {report.reporterEmail || "정보 없음"}</small>
+                        </button>
+                    ))}
+                </section>
+            </div>
+
+            <section className="dashboard-detail-area">
+                <header className="dashboard-detail-header">
                     <div>
                         <p>STOCK HISTORY</p>
                         <h2>재고 이력</h2>
@@ -344,7 +477,62 @@ function SellerProductDetailPage() {
                                 </div>
                             ))}
                         </div>
-                    </div>
+
+                        <section className="dashboard-alert-section">
+                            <h3>주의가 필요한 항목</h3>
+
+                            <div className="dashboard-alert-list">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/reports")
+                                    }
+                                >
+                                    <span>3일 이상 미처리 신고</span>
+                                    <strong>
+                                        {details.alerts.oldPendingReports}건
+                                    </strong>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/approvals")
+                                    }
+                                >
+                                    <span>승인 대기 3일 이상 농장</span>
+                                    <strong>
+                                        {details.alerts.oldPendingFarms}건
+                                    </strong>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/approvals")
+                                    }
+                                >
+                                    <span>승인 대기 3일 이상 상품</span>
+                                    <strong>
+                                        {details.alerts.oldPendingProducts}건
+                                    </strong>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        navigate("/admin/deliveries")
+                                    }
+                                >
+                                    <span>배송 시작 후 3일 이상</span>
+                                    <strong>
+                                        {details.alerts.delayedDeliveries}건
+                                    </strong>
+                                </button>
+
+                            </div>
+                        </section>
+                    </>
                 )}
             </section>
         </main>

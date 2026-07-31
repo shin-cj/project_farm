@@ -35,6 +35,17 @@ function FarmDetailPage() {
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
 
+  function handleBack() {
+    const historyIndex = window.history.state?.idx ?? 0
+
+    if (historyIndex > 0) {
+      navigate(-1)
+      return
+    }
+
+    navigate('/farms')
+  }
+
   useEffect(() => {
     let ignore = false
 
@@ -133,9 +144,13 @@ function FarmDetailPage() {
               <h1>{farm.farmName}</h1>
             </div>
             <div className="farm-detail-actions">
-                <Link className="farm-detail-product-link" to="/products">
-                  상품 보러가기
-                </Link>
+              <button
+                  type="button"
+                  className="farm-detail-product-link"
+                  onClick={handleBack}
+              >
+                뒤로가기
+              </button>
                 <ReportButton
                   farmId={farm.farmId}
                   reporterId={reporterId}
@@ -192,15 +207,25 @@ function FarmDetailPage() {
               >
                 <Link to={`/products/${product.productId}`}>
                   <div className="farm-detail-product-image">
+
+
                     {product.productStatus === 'SOLD_OUT' && (
-                      <span className="farm-detail-sold-out">품절</span>
+                        <span className="farm-detail-sold-out">
+      품절
+    </span>
+                    )}
+
+                    {product.sameDayDelivery === 'Y' && (
+                        <span className="farm-detail-same-day">
+      당일배송
+    </span>
                     )}
 
                     <CatalogImage
-                      src={product.productImageUrl}
-                      alt={product.productName}
-                      fallbackText="상품 이미지 없음"
-                      fallbackClassName="farm-detail-image-fallback"
+                        src={product.productImageUrl}
+                        alt={product.productName}
+                        fallbackText="상품 이미지 없음"
+                        fallbackClassName="farm-detail-image-fallback"
                     />
                   </div>
 

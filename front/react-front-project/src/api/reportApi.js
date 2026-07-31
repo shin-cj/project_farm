@@ -32,6 +32,12 @@ const reportApi = {
         })
     },
 
+    getReceivedReports(sellerId) {
+        return httpClient.get("/reports/received", {
+            params: { sellerId },
+        })
+    },
+
     resolveAdminReport(reportId, resolutionData){
         return httpClient.patch(
             `/admin/reports/${reportId}/resolution`,

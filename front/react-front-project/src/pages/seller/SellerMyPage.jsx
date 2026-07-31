@@ -13,6 +13,8 @@ import {
 import { getLoginSellerId } from "../../config/devAccount.js";
 import "./SellerDashboardPage.css";
 import SellerPenaltyViewer from "../../components/penalty/SellerPenaltyViewer.jsx";
+import SellerReceivedReportViewer
+  from "../../components/report/SellerReceivedReportViewer.jsx";
 
 function formatPoint(value) {
   return `${Number(value || 0).toLocaleString()}P`;
@@ -325,6 +327,9 @@ function SellerMyPage() {
           <h1>판매자 마이페이지</h1>
           <span>정산 포인트와 판매 활동 요약을 확인하세요.</span>
         </div>
+        <Link to="/seller/profile/edit">
+          개인정보 수정하기
+        </Link>
       </section>
 
       <section className="seller-dashboard-summary">
@@ -351,7 +356,13 @@ function SellerMyPage() {
         </article>
       </section>
 
-      {sellerId && (<SellerPenaltyViewer sellerId={sellerId} />)}
+      {sellerId && (
+          <section className="seller-compliance-grid">
+            <SellerPenaltyViewer sellerId={sellerId} />
+
+            <SellerReceivedReportViewer sellerId={sellerId} />
+          </section>
+      )}
 
       <section className="seller-withdrawal-section">
         <article className="seller-withdrawal-card">
@@ -459,7 +470,7 @@ function SellerMyPage() {
         </article>
       </section>
 
-      <section className="seller-dashboard-content">
+      <section className="seller-dashboard-content seller-my-page-content">
         <article className="seller-dashboard-recent">
           <div>
             <h2>판매 활동 요약</h2>
