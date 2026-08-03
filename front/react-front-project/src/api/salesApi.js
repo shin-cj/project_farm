@@ -18,6 +18,16 @@ export function getSellerSalesStatistics(sellerId,days=30){
     });
 }
 
+export function getSellerReviews(sellerId, page = 0, size = 10) {
+    return httpClient.get("/seller/reviews", {
+        params: {
+            sellerId,
+            page,
+            size,
+        },
+    });
+}
+
 export function getSellerPointSummary(sellerId) {
     return httpClient.get("/seller/points/summary", {
         params: {

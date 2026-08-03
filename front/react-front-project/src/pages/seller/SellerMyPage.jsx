@@ -8,6 +8,7 @@ import {
   getSellerPointSummary,
   getSellerPointHistory,
   getSellerPointWithdrawals,
+  getSellerReviews,
   requestSellerPointWithdrawal,
   updateSellerDailyGoal,
 } from "../../api/salesApi.js";
@@ -16,6 +17,9 @@ import "./SellerDashboardPage.css";
 import SellerPenaltyViewer from "../../components/penalty/SellerPenaltyViewer.jsx";
 import SellerReceivedReportViewer
   from "../../components/report/SellerReceivedReportViewer.jsx";
+
+const REVIEW_PREVIEW_SIZE = 5;
+const REVIEW_PAGE_SIZE = 10;
 
 function formatPoint(value) {
   return `${Number(value || 0).toLocaleString()}P`;
@@ -32,6 +36,42 @@ function formatDateTime(value) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function getSafeRating(value) {
+  return Math.min(5, Math.max(0, Number(value) || 0));
+}
+
+function formatReviewDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value).replace("T", " ").slice(0, 16);
+  }
+
+  return date.toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function getReviewImageSrc(imageUrl) {
+  if (!imageUrl) {
+    return "";
+  }
+
+  const normalizedImageUrl = String(imageUrl);
+
+  return normalizedImageUrl.startsWith("data:")
+    ? normalizedImageUrl
+    : `data:image/jpeg;base64,${normalizedImageUrl}`;
 }
 
 const WITHDRAWAL_STATUS_LABEL = {
@@ -97,6 +137,7 @@ function SellerMyPage() {
     readyOrderCount: 0,
     shippingOrderCount: 0,
     canceledOrRefundedCount: 0,
+    reviewCount: 0,
   });
   const [pointSummary, setPointSummary] = useState({
     totalEarnedPoint: 0,
@@ -129,6 +170,50 @@ function SellerMyPage() {
   const [withdrawalMessage, setWithdrawalMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reviewPreview, setReviewPreview] = useState([]);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [isReviewListOpen, setIsReviewListOpen] = useState(false);
+  const [reviewPage, setReviewPage] = useState({
+    reviews: [],
+    currentPage: 0,
+    totalElements: 0,
+    totalPages: 0,
+  });
+  const [reviewListLoading, setReviewListLoading] = useState(false);
+  const [reviewListError, setReviewListError] = useState("");
+
+  async function loadReviewPage(page = 0) {
+    try {
+      setReviewListLoading(true);
+      setReviewListError("");
+
+      const currentSellerId = getLoginSellerId();
+
+      if (currentSellerId === null) {
+        throw new Error("로그인한 판매자 정보를 확인할 수 없습니다.");
+      }
+
+      const response = await getSellerReviews(currentSellerId, page, REVIEW_PAGE_SIZE);
+      const responseData = response.data ?? {};
+
+      setReviewPage({
+        reviews: Array.isArray(responseData.reviews) ? responseData.reviews : [],
+        currentPage: responseData.currentPage ?? 0,
+        totalElements: responseData.totalElements ?? 0,
+        totalPages: responseData.totalPages ?? 0,
+      });
+    } catch (requestError) {
+      console.error(requestError);
+      setReviewListError("전체 리뷰를 불러오지 못했습니다.");
+    } finally {
+      setReviewListLoading(false);
+    }
+  }
+
+  function handleOpenReviewList() {
+    setIsReviewListOpen(true);
+    loadReviewPage(0);
+  }
 
   useEffect(() => {
     if (!sellerName) {
@@ -170,13 +255,14 @@ function SellerMyPage() {
 
         setSellerId(sellerId);
 
-        const [farms, orders, pointResponse, dailyGoalResponse, withdrawalResponse, historyResponse] = await Promise.all([
+        const [farms, orders, pointResponse, dailyGoalResponse, withdrawalResponse, historyResponse, reviewResponse] = await Promise.all([
           getFarms(sellerId),
           getSellerOrders(sellerId),
           getSellerPointSummary(sellerId),
           getSellerDailyGoal(sellerId),
           getSellerPointWithdrawals(sellerId),
           getSellerPointHistory(sellerId),
+          getSellerReviews(sellerId, 0, REVIEW_PREVIEW_SIZE),
         ]);
 
         const productLists = await Promise.all(
@@ -196,7 +282,9 @@ function SellerMyPage() {
           readyOrderCount: activeOrders.filter((order) => order.deliveryStatus === "READY").length,
           shippingOrderCount: activeOrders.filter((order) => order.deliveryStatus === "SHIPPING").length,
           canceledOrRefundedCount: canceledOrRefundedOrders.length,
+          reviewCount: reviewResponse.data?.totalElements ?? 0,
         });
+        setReviewPreview(Array.isArray(reviewResponse.data?.reviews) ? reviewResponse.data.reviews : []);
         setPointSummary(pointResponse.data);
         setDailyGoal(dailyGoalResponse.data);
         setTargetPointInput(String(dailyGoalResponse.data.targetPoint || ""));
@@ -384,6 +472,10 @@ function SellerMyPage() {
             {formatPoint(pointSummary.canceledPoint + pointSummary.refundedPoint)}
           </strong>
         </article>
+        <article>
+          <span>리뷰 갯수</span>
+          <strong>{summary.reviewCount}개</strong>
+        </article>
       </section>
 
       {sellerId && (
@@ -393,6 +485,59 @@ function SellerMyPage() {
             <SellerReceivedReportViewer sellerId={sellerId} />
           </section>
       )}
+
+      <section className="seller-statistics-content seller-my-page-review-section">
+        <article className="seller-statistics-card wide">
+          <div className="seller-statistics-card-header">
+            <div>
+              <h2>전체 리뷰</h2>
+              <p>판매 상품에 등록된 리뷰를 확인하세요.</p>
+            </div>
+            <div className="seller-review-header-actions">
+              <strong>총 {summary.reviewCount}개</strong>
+              <button
+                type="button"
+                className="seller-review-more-button"
+                onClick={handleOpenReviewList}
+              >
+                리뷰 더보기
+              </button>
+            </div>
+          </div>
+
+          {reviewPreview.length === 0 ? (
+            <p className="seller-statistics-empty">등록된 리뷰가 없습니다.</p>
+          ) : (
+            <div className="seller-review-card-grid">
+              {reviewPreview.map((review) => (
+                <button
+                  key={review.reviewId}
+                  type="button"
+                  className="seller-review-item"
+                  onClick={() => setSelectedReview(review)}
+                  aria-haspopup="dialog"
+                >
+                  <div className="seller-review-header">
+                    <span className="seller-review-product-badge">
+                      {review.productName || "상품 정보 없음"}
+                    </span>
+                    <span className="seller-review-stars">
+                      {"★".repeat(getSafeRating(review.rating))}
+                      {"☆".repeat(5 - getSafeRating(review.rating))}
+                    </span>
+                  </div>
+                  <span className="seller-review-buyer">
+                    구매자 {review.buyerName || "알 수 없음"}
+                  </span>
+                  <p className="seller-review-content">
+                    {review.content || "작성된 리뷰 내용이 없습니다."}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </article>
+      </section>
 
       <section className="seller-withdrawal-section">
         <article className="seller-withdrawal-card">
@@ -612,6 +757,168 @@ function SellerMyPage() {
           <p>결제 완료 금액은 정산 예정으로 보관되고, 구매확정 시 출금 가능한 포인트로 전환됩니다.</p>
         </article>
       </section>
+
+      {selectedReview && (
+        <div
+          className="seller-review-modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setSelectedReview(null)}
+        >
+          <section
+            className="seller-review-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seller-review-modal-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="seller-review-modal-header">
+              <div>
+                <p>REVIEW DETAIL</p>
+                <h2 id="seller-review-modal-title">리뷰 상세</h2>
+              </div>
+              <button
+                type="button"
+                className="seller-review-modal-close"
+                onClick={() => setSelectedReview(null)}
+                aria-label="리뷰 상세 닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <dl className="seller-review-detail-list">
+              <div>
+                <dt>주문 상품</dt>
+                <dd>{selectedReview.productName || "상품 정보 없음"}</dd>
+              </div>
+              <div>
+                <dt>구매자</dt>
+                <dd>{selectedReview.buyerName || "알 수 없음"}</dd>
+              </div>
+              <div>
+                <dt>별점</dt>
+                <dd className="seller-review-stars">
+                  {"★".repeat(getSafeRating(selectedReview.rating))}
+                  {"☆".repeat(5 - getSafeRating(selectedReview.rating))}
+                </dd>
+              </div>
+              <div>
+                <dt>작성일</dt>
+                <dd>{formatReviewDate(selectedReview.createdAt)}</dd>
+              </div>
+            </dl>
+
+            <div className="seller-review-detail-content">
+              <h3>리뷰 내용</h3>
+              <p>{selectedReview.content || "작성된 리뷰 내용이 없습니다."}</p>
+            </div>
+
+            {getReviewImageSrc(selectedReview.imageUrl) && (
+              <img
+                className="seller-review-detail-image"
+                src={getReviewImageSrc(selectedReview.imageUrl)}
+                alt="리뷰 첨부 이미지"
+              />
+            )}
+          </section>
+        </div>
+      )}
+
+      {isReviewListOpen && (
+        <div
+          className="seller-review-list-modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setIsReviewListOpen(false)}
+        >
+          <section
+            className="seller-review-list-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seller-review-list-modal-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="seller-review-modal-header">
+              <div>
+                <p>ALL REVIEWS</p>
+                <h2 id="seller-review-list-modal-title">전체 리뷰</h2>
+              </div>
+              <button
+                type="button"
+                className="seller-review-modal-close"
+                onClick={() => setIsReviewListOpen(false)}
+                aria-label="전체 리뷰 닫기"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="seller-review-list-modal-body">
+              <p className="seller-review-list-summary">
+                총 {reviewPage.totalElements}개 리뷰
+              </p>
+
+              {reviewListLoading ? (
+                <p className="seller-statistics-empty">리뷰를 불러오는 중입니다.</p>
+              ) : reviewListError ? (
+                <p className="seller-statistics-empty">{reviewListError}</p>
+              ) : reviewPage.reviews.length === 0 ? (
+                <p className="seller-statistics-empty">등록된 리뷰가 없습니다.</p>
+              ) : (
+                <div className="seller-review-list">
+                  {reviewPage.reviews.map((review) => (
+                    <button
+                      key={review.reviewId}
+                      type="button"
+                      className="seller-review-list-item"
+                      onClick={() => setSelectedReview(review)}
+                      aria-haspopup="dialog"
+                    >
+                      <div className="seller-review-header">
+                        <span className="seller-review-product-badge">
+                          {review.productName || "상품 정보 없음"}
+                        </span>
+                        <span className="seller-review-stars">
+                          {"★".repeat(getSafeRating(review.rating))}
+                          {"☆".repeat(5 - getSafeRating(review.rating))}
+                        </span>
+                      </div>
+                      <div className="seller-review-list-meta">
+                        <span>구매자 {review.buyerName || "알 수 없음"}</span>
+                        <span>{formatReviewDate(review.createdAt)}</span>
+                      </div>
+                      <p className="seller-review-content">
+                        {review.content || "작성된 리뷰 내용이 없습니다."}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!reviewListLoading && !reviewListError && reviewPage.totalPages > 1 && (
+                <div className="seller-review-pagination">
+                  <button
+                    type="button"
+                    onClick={() => loadReviewPage(reviewPage.currentPage - 1)}
+                    disabled={reviewPage.currentPage <= 0}
+                  >
+                    이전
+                  </button>
+                  <span>
+                    {reviewPage.currentPage + 1} / {reviewPage.totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => loadReviewPage(reviewPage.currentPage + 1)}
+                    disabled={reviewPage.currentPage >= reviewPage.totalPages - 1}
+                  >
+                    다음
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
 
       {isSettlementModalOpen && (
         <div
