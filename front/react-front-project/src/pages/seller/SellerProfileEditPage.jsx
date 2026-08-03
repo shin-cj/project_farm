@@ -7,7 +7,7 @@ import "./SellerProfileEditPage.css";
 
 const initialForm = {
     email: "", userId: "", name: "", phone: "",
-    zonecode: "", address: "", detailAddress: "",
+    address: "", detailAddress: "",
     newPassword: "", confirmPassword: "", status: ""
 };
 
@@ -98,7 +98,6 @@ function SellerProfileEditPage() {
             oncomplete(data) {
                 setForm((prev) => ({
                     ...prev,
-                    zonecode: data.zonecode,
                     address: data.roadAddress
                 }));
             }
@@ -328,19 +327,14 @@ function SellerProfileEditPage() {
                 </label>
 
                 <div className="seller-profile-field">
-                    <span>우편번호</span>
+                    <span>주소</span>
                     <div className="seller-profile-address-row">
-                        <input type="text" value={form.zonecode} readOnly disabled={pending} />
+                        <input type="text" name="address" value={form.address} readOnly disabled={pending} />
                         <button type="button" onClick={handleOpenPostcode} disabled={pending}>
-                            우편번호 검색
+                            주소 검색
                         </button>
                     </div>
                 </div>
-
-                <label className="seller-profile-field">
-                    <span>주소</span>
-                    <input type="text" name="address" value={form.address} readOnly disabled={pending} />
-                </label>
 
                 <label className="seller-profile-field">
                     <span>상세 주소</span>

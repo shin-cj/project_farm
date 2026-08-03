@@ -792,7 +792,7 @@ function ProductDetailPage() {
                           {qna.questionTitle}
                         </span>
                         <span className="product-qna-toggle-icon" aria-hidden="true">
-                          {isSecretLocked ? '잠김' : isExpanded ? '-' : '+'}
+                          {isSecretLocked ? '' : isExpanded ? '-' : '+'}
                         </span>
                       </button>
 
