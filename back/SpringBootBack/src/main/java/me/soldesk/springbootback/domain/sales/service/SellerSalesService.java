@@ -11,6 +11,7 @@ import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.review.entity.Review;
 import me.soldesk.springbootback.domain.review.repository.ReviewRepository;
 import me.soldesk.springbootback.domain.sales.dto.*;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -98,6 +99,33 @@ public class SellerSalesService {
                         entry.getValue().soldProduct
                 ))
                 .toList();
+    }
+
+    public SellerReviewPageResponse getSellerReviews(Long sellerId, int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        List<Long> productIds = getSellerProductIds(sellerId);
+
+        if (productIds.isEmpty()) {
+            return new SellerReviewPageResponse(List.of(), safePage, safeSize, 0L, 0);
+        }
+
+        Page<Review> reviewPage = reviewRepository.findReviewsByProductIds(
+                productIds,
+                PageRequest.of(safePage, safeSize)
+        );
+
+        List<ReviewSummaryResponse> reviews = reviewPage.getContent().stream()
+                .map(this::toReviewSummary)
+                .toList();
+
+        return new SellerReviewPageResponse(
+                reviews,
+                reviewPage.getNumber(),
+                reviewPage.getSize(),
+                reviewPage.getTotalElements(),
+                reviewPage.getTotalPages()
+        );
     }
 
     private boolean isSalesOrder(Order order) {
@@ -237,13 +265,7 @@ public class SellerSalesService {
                 .count();
 
         List<SellerTimeSlotSalesResponse> timeSlotSales = createTimeSlotSales(orders);
-        List<Long> productIds = new ArrayList<>();
-        for (Long farmId : farmIds) {
-            List<Product> products = productRepository.findByFarmId(farmId);
-            for (Product findId : products) {
-                productIds.add(findId.getProductId());
-            }
-        }
+        List<Long> productIds = getSellerProductIds(sellerId);
         long reviewTotalCount = 0L;
         for (Long productId : productIds){
             long reviewCount = reviewRepository.countByProductId(productId);
@@ -256,11 +278,7 @@ public class SellerSalesService {
             List<Review> topReviews = reviewRepository.findTopReviewsByProductIds(productIds, pageable);
 
             recentReviews = topReviews.stream()
-                    .map(review -> {
-                        String userName = reviewRepository.findNameByUserId(review.getBuyerId()); // <-- 작성자 이름 필드명에 맞게 변경하세요!
-
-                        return ReviewSummaryResponse.from(review, userName);
-                    })
+                    .map(this::toReviewSummary)
                     .toList();
         }
         return new SellerSalesStatisticsResponse(
@@ -275,6 +293,20 @@ public class SellerSalesService {
                 recentReviews
         );
 
+    }
+
+    private List<Long> getSellerProductIds(Long sellerId) {
+        return farmRepository.findBySellerId(sellerId).stream()
+                .flatMap(farm -> productRepository.findByFarmId(farm.getFarmId()).stream())
+                .map(Product::getProductId)
+                .toList();
+    }
+
+    private ReviewSummaryResponse toReviewSummary(Review review) {
+        String buyerName = reviewRepository.findNameByUserId(review.getBuyerId());
+        String productName = reviewRepository.findProductNameByProductId(review.getProductId());
+
+        return ReviewSummaryResponse.from(review, productName, buyerName);
     }
 
     private List<SellerTimeSlotSalesResponse> createTimeSlotSales(List<Order> orders) {
