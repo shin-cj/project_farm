@@ -735,19 +735,21 @@ function OrderHistoryPage() {
                   <span>상품 금액</span>
                   <strong>{formatPrice(totalProductPrice)}</strong>
                 </div>
-                {hasCanceledOrder && (
-                  <div style={{ display: "flex", justifyContent: "space-between", color: "#b42318" }}>
-                    <span>취소한 금액</span>
-                    <strong>-{formatPrice(canceledAmount)}</strong>
-                  </div>
-                )}
                 <div style={{ display: "flex", justifyContent: "space-between", color: "#526158" }}>
                   <span>배송비</span>
                   <strong>{formatPrice(deliveryFee)}</strong>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", paddingTop: "10px", borderTop: "1px solid #dce6dd", color: "#1f2f24", fontSize: "18px" }}>
-                  <span>총 결제금액</span>
-                  <strong style={{ color: "#216b3a" }}>{formatPrice(displayedPaymentAmount)}</strong>
+                <div style={{ display: "grid", gap: "8px", paddingTop: "10px", borderTop: "1px solid #dce6dd" }}>
+                  {hasCanceledOrder && (
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#b42318" }}>
+                      <span>취소한 금액</span>
+                      <strong>-{formatPrice(canceledAmount)}</strong>
+                    </div>
+                  )}
+                  <div style={{ display: "flex", justifyContent: "space-between", color: "#1f2f24", fontSize: "18px" }}>
+                    <span>총 결제금액</span>
+                    <strong style={{ color: "#216b3a" }}>{formatPrice(displayedPaymentAmount)}</strong>
+                  </div>
                 </div>
                 {group.orders.length > 1 && (
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
