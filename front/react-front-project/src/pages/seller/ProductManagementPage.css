@@ -303,7 +303,15 @@
 }
 
 .seller-product-name-text {
+    flex: 1;
     min-width: 0;
+}
+
+.seller-product-name-text strong {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .seller-product-approval-note {

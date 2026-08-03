@@ -42,8 +42,13 @@ const reportApi = {
         return httpClient.patch(
             `/admin/reports/${reportId}/resolution`,
             resolutionData)
-    }
+    },
 
+    canReportProduct(reporterId, productId){
+        return httpClient.get('/reports/eligibility', {
+            params: {reporterId, productId},
+        })
+    }
 
 }
 

@@ -365,10 +365,10 @@ function QnaTable() {
                                     onChange={(event) => handleAnswerChange(selectedQna.qnaId, event.target.value)}
                                     placeholder="문의에 대한 답변을 입력해주세요."
                                     rows={6}
-                                    maxLength={500}
+                                    maxLength={255}
                                     style={{ width: '100%', padding: '13px 14px', border: '1px solid #cfdcd2', borderRadius: '6px', resize: 'vertical', boxSizing: 'border-box', color: '#26362c', font: 'inherit', lineHeight: 1.6 }}
                                 />
-                                <small>{(answerInputs[selectedQna.qnaId] || '').length}/500</small>
+                                <small>{(answerInputs[selectedQna.qnaId] || '').length}/255</small>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '14px' }}>
                                     <button
                                         type="button"

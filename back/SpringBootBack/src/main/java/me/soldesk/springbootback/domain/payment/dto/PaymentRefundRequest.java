@@ -7,6 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PaymentRefundRequest  {
-    @Size(max = 500, message = "환불 사유는 500자 이하로 입력해주세요.")
+    @Size(max = 255, message = "환불 사유는 255자 이하로 입력해주세요.")
     private String refundReason;
 }
