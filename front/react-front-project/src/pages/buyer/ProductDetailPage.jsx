@@ -412,6 +412,7 @@ function ProductDetailPage() {
       && (
           requestedListPath.startsWith('/products')
           || requestedListPath.startsWith('/seller/products')
+          || /^\/farms\/\d+$/.test(requestedListPath)
       )
   const productListPath = isAllowedListPath ? requestedListPath : '/products'
   const sortedQnaList = [...qnaList].sort((a, b) => Number(b.qnaId) - Number(a.qnaId))
