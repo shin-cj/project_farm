@@ -762,6 +762,7 @@ function ProductCreatePage() {
                             value={form.productName}
                             onChange={handleChange}
                             placeholder="예: 유기농 고구마"
+                            maxLength={150}
                             required
                         />
                     </div>
@@ -773,8 +774,10 @@ function ProductCreatePage() {
                                 value={form.description}
                                 onChange={handleChange}
                                 placeholder="상품 특징, 재배 방식, 맛 등을 입력해주세요."
+                                maxLength={3000}
                                 required
                         />
+                        <small>{form.description.length}/3000자</small>
                     </div>
 
                     <div className="product-create-row">
@@ -898,6 +901,7 @@ function ProductCreatePage() {
                                 value={form.origin}
                                 onChange={handleChange}
                                 placeholder="예: 전라남도"
+                                maxLength={100}
                                 required
                             />
                         </div>

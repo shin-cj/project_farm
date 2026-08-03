@@ -544,6 +544,7 @@ function UserProfileEditPage() {
             onChange={handleChange}
             placeholder="변경할 경우에만 입력해주세요."
             autoComplete="new-password"
+            maxLength={20}
             style={inputStyle}
           />
           <small style={{ color: '#6b7280' }}>
@@ -563,6 +564,7 @@ function UserProfileEditPage() {
             onChange={handleChange}
             placeholder="새 비밀번호를 다시 입력해주세요."
             autoComplete="new-password"
+            maxLength={20}
             style={inputStyle}
           />
           {fieldErrors.confirmPassword && (
@@ -578,6 +580,7 @@ function UserProfileEditPage() {
             value={userInfo.name}
             onChange={handleChange}
             autoComplete="name"
+            maxLength={20}
             style={inputStyle}
           />
           {fieldErrors.name && <span style={errorStyle}>{fieldErrors.name}</span>}
@@ -592,6 +595,7 @@ function UserProfileEditPage() {
             onChange={handleChange}
             placeholder="010-1234-5678"
             autoComplete="tel"
+            maxLength={13}
             style={inputStyle}
           />
           {fieldErrors.phone && <span style={errorStyle}>{fieldErrors.phone}</span>}

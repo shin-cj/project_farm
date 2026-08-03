@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.review.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.review.dto.ReviewRequest;
 import me.soldesk.springbootback.domain.review.dto.ReviewResponse;
@@ -19,7 +20,7 @@ public class ReviewController {
 
     // 1. 후기 등록 API (고정 경로는 맨 위로!)
     @PostMapping("/create")
-    public ResponseEntity<String> createReview(@RequestBody ReviewRequest request) {
+    public ResponseEntity<String> createReview(@Valid @RequestBody ReviewRequest request) {
         reviewService.createReview(request);
         return ResponseEntity.ok("후기가 성공적으로 등록되었습니다.");
     }
@@ -57,7 +58,7 @@ public class ReviewController {
 
     // 4. 후기 수정 API (PutMapping 올바르게 사용 중)
     @PutMapping("/{reviewId}")
-    public ResponseEntity<String> updateReview(@PathVariable Long reviewId, @RequestBody ReviewRequest request) {
+    public ResponseEntity<String> updateReview(@PathVariable Long reviewId,@Valid @RequestBody ReviewRequest request) {
         reviewService.updateReview(reviewId, request);
         return ResponseEntity.ok("후기가 수정되었습니다.");
     }

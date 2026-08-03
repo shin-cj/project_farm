@@ -150,6 +150,7 @@ function AdminCatalogApprovalPage() {
                 placeholder: '예: 사업자등록번호와 농장 주소를 다시 확인해주세요.',
                 confirmText: '사유 입력 완료',
                 type: 'danger',
+                maxLength: 500,
             })
 
             if(rejectionReason === null){
@@ -207,6 +208,7 @@ function AdminCatalogApprovalPage() {
                 placeholder: '예: 상품 이미지와 원산지 정보를 보완해주세요.',
                 confirmText: '사유 입력 완료',
                 type: 'danger',
+                maxLength: 500,
             })
 
             if (rejectionReason === null) {

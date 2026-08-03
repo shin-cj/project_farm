@@ -578,7 +578,7 @@ function ReportManagementPage() {
                 onChange={(e) => setAdminReply(e.target.value)}
                 placeholder="신고자에게 전달한 답변을 입력해주세요."
                 rows={5}
-                maxLength={1000}
+                maxLength={255}
                 disabled={
                     selectedReportIsFinal ||
                     replyingId === selectedReport.reportId
@@ -586,7 +586,7 @@ function ReportManagementPage() {
               />
 
               <div className="report-admin-reply-footer">
-                <span>{adminReply.length}/1000</span>
+                <span>{adminReply.length}/255</span>
 
                 <button
                   type="button"

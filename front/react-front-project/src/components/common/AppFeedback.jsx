@@ -78,7 +78,9 @@ function AppFeedback({ toast, dialog, onDismissToast, onCloseDialog }) {
                   value={inputValue}
                   placeholder={dialog.placeholder || '내용을 입력해주세요.'}
                   onChange={(event) => setInputValue(event.target.value)}
+                  maxLength={dialog.maxLength}
                 />
+                {dialog.maxLength && (<small>{inputValue.length}/{dialog.maxLength}자</small>)}
               </label>
             )}
 

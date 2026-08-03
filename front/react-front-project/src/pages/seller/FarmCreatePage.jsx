@@ -289,6 +289,7 @@ function FarmCreatePage() {
                                 value={form.farmName}
                                 onChange={handleChange}
                                 placeholder="예: 진현농장"
+                                maxLength={100}
                                 required
                             />
                         </label>
@@ -316,6 +317,7 @@ function FarmCreatePage() {
                                 value={form.businessNumber}
                                 onChange={handleChange}
                                 placeholder="예: 123-45-67890"
+                                maxLength={12}
                                 required
                             />
                         </label>
@@ -327,6 +329,7 @@ function FarmCreatePage() {
                                 value={form.region}
                                 onChange={handleChange}
                                 placeholder="예: 경기도 수원시"
+                                maxLength={100}
                                 required
                             />
                         </label>
@@ -371,8 +374,10 @@ function FarmCreatePage() {
                                 onChange={handleChange}
                                 placeholder="농장 소개를 입력해주세요."
                                 rows={5}
+                                maxLength={2000}
                                 required
                             />
+                            <small>{form.farmDescription.length}/2000자</small>
                         </label>
 
                         <label className="farm-create-field wide">

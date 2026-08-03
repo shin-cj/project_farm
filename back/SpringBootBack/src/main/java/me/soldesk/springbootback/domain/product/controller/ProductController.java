@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.product.controller;
 
+import jakarta.validation.Valid;
 import me.soldesk.springbootback.domain.product.dto.*;
 import me.soldesk.springbootback.domain.product.service.ProductImageService;
 import me.soldesk.springbootback.domain.product.service.ProductKeywordService;
@@ -68,7 +69,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ProductResponse createProduct(@RequestBody ProductRequest request) {
+    public ProductResponse createProduct(@Valid @RequestBody ProductRequest request) {
         return productService.createProduct(request);
     }
 
@@ -102,14 +103,14 @@ public class ProductController {
     }
 
     @PutMapping("/{productId}")
-    public ProductResponse updateProduct(@PathVariable Long productId, @RequestBody ProductRequest request){
+    public ProductResponse updateProduct(@PathVariable Long productId,@Valid @RequestBody ProductRequest request){
         return productService.updateProduct(productId, request);
     }
 
     @PatchMapping("/{productId}/status")
     public ProductResponse updateStatus(
             @PathVariable Long productId,
-            @RequestBody ProductStatusRequest request
+            @Valid @RequestBody ProductStatusRequest request
     ) {
         return productService.updateStatus(productId, request);
     }
@@ -124,13 +125,13 @@ public class ProductController {
     @PatchMapping("/{productId}/reject")
     public ProductResponse rejectProduct(
             @PathVariable Long productId,
-            @RequestBody ProductStatusRequest request
+            @Valid @RequestBody ProductStatusRequest request
     ) {
         return productService.rejectProduct(productId, request);
     }
 
     @PatchMapping("/{productId}/stock")
-    public ProductResponse updateStock(@PathVariable Long productId, @RequestBody ProductStockRequest request){
+    public ProductResponse updateStock(@PathVariable Long productId, @Valid @RequestBody ProductStockRequest request){
         return productService.updateStock(productId,request);
     }
 

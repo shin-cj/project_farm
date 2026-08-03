@@ -156,3 +156,10 @@ SELECT
     farm_image_url
 FROM farms
 ORDER BY farm_id;
+
+ALTER TABLE chatbot MODIFY (
+    recipe_title VARCHAR2(100 CHAR),
+    remark VARCHAR2(1000 CHAR)
+);
+
+SELECT * FROM USERS; 

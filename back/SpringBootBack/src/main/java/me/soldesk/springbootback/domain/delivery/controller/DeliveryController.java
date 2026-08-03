@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.delivery.controller;
 
+import jakarta.validation.Valid;
 import me.soldesk.springbootback.domain.delivery.dto.DeliveryRequest;
 import me.soldesk.springbootback.domain.delivery.dto.DeliveryResponse;
 import me.soldesk.springbootback.domain.delivery.service.DeliveryService;
@@ -23,7 +24,7 @@ public class DeliveryController {
     }
 
     @PostMapping("/api/seller/deliveries")
-    public DeliveryResponse registerDelivery(@RequestBody DeliveryRequest deliveryRequest){
+    public DeliveryResponse registerDelivery(@Valid @RequestBody DeliveryRequest deliveryRequest){
         return deliveryService.registerDelivery(deliveryRequest);
     }
 
@@ -34,7 +35,7 @@ public class DeliveryController {
 
     @PatchMapping("/api/admin/deliveries/{deliveryId}/status")
     public DeliveryResponse updateDeliveryStatus(
-            @PathVariable Long deliveryId,@RequestBody DeliveryRequest request){
+            @PathVariable Long deliveryId,@Valid @RequestBody DeliveryRequest request){
      return deliveryService.updateDeliveryStatus(deliveryId,request);
     }
 }
