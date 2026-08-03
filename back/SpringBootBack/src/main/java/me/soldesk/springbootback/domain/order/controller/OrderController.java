@@ -5,6 +5,7 @@ import me.soldesk.springbootback.domain.order.dto.OrderResponse;
 import me.soldesk.springbootback.domain.order.service.OrderService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,6 +41,12 @@ public class OrderController {
     @GetMapping
     public List<OrderResponse> getOrders(@RequestParam Long buyerId) {
         return orderService.getOrdersByBuyerId(buyerId);
+    }
+
+    @PostMapping("/{orderId}/purchase-confirm")
+    public OrderResponse confirmPurchase(@PathVariable Long orderId,
+                                         @RequestParam Long buyerId) {
+        return orderService.confirmPurchase(orderId, buyerId);
     }
 
 }

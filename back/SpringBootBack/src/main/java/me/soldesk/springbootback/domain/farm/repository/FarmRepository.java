@@ -37,7 +37,7 @@ public interface FarmRepository extends JpaRepository<Farm, Long> {
       AND NOT (
           o.order_status IN ('CANCELED', 'REFUNDED')
           OR (
-              o.order_status = 'PAID'
+              o.order_status IN ('PAID', 'PURCHASE_CONFIRMED')
               AND d.delivery_status = 'DELIVERED'
           )
       )

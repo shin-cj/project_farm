@@ -13,7 +13,7 @@ public interface SellerPointRepository extends JpaRepository<SellerPoint, Long> 
 
     List<SellerPoint> findBySellerIdOrderByCreatedAtDesc(Long sellerId);
 
-    List<SellerPoint> findBySellerIdAndPointStatusAndCreatedAtBetween(Long sellerId,String pointStatus,
+    List<SellerPoint> findBySellerIdAndPointStatusAndUpdatedAtBetween(Long sellerId, String pointStatus,
                                                                       java.time.LocalDateTime startDateTime,
                                                                       java.time.LocalDateTime endDateTime);
 }

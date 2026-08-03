@@ -26,6 +26,14 @@ export function getSellerPointSummary(sellerId) {
     });
 }
 
+export function getSellerPointHistory(sellerId) {
+    return httpClient.get("/seller/points/history", {
+        params: {
+            sellerId
+        }
+    });
+}
+
 export function getSellerDailyGoal(sellerId) {
     return httpClient.get("/seller/points/daily-goal", {
         params: {

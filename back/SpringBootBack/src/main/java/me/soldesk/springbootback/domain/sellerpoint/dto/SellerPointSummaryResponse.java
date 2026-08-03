@@ -8,17 +8,20 @@ import lombok.Setter;
 public class SellerPointSummaryResponse {
 
     private Long totalEarnedPoint;
+    private Long pendingPoint;
     private Long availablePoint;
     private Long canceledPoint;
     private Long refundedPoint;
     private Long totalPlatformFee;
 
     public SellerPointSummaryResponse(Long totalEarnedPoint,
+                                      Long pendingPoint,
                                       Long availablePoint,
                                       Long canceledPoint,
                                       Long refundedPoint,
                                       Long totalPlatformFee) {
         this.totalEarnedPoint = totalEarnedPoint;
+        this.pendingPoint = pendingPoint;
         this.availablePoint = availablePoint;
         this.canceledPoint = canceledPoint;
         this.refundedPoint = refundedPoint;

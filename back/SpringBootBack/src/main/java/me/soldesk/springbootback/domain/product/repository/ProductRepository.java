@@ -66,7 +66,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     WHERE oi.product_id = :productId
       AND o.order_status NOT IN ('CANCELED', 'REFUNDED')
       AND NOT (
-          o.order_status = 'PAID'
+          o.order_status IN ('PAID', 'PURCHASE_CONFIRMED')
           AND NVL(d.delivery_status, 'READY') = 'DELIVERED'
       )
     """, nativeQuery = true)
