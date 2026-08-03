@@ -3,6 +3,8 @@ package me.soldesk.springbootback.domain.report.service;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
+import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
+import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.report.dto.*;
 import me.soldesk.springbootback.domain.report.entity.Report;
@@ -27,6 +29,7 @@ public class ReportService {
     private final UserRepository  userRepository;
     private final ProductRepository  productRepository;
     private final FarmRepository farmRepository;
+    private final OrderItemRepository orderItemRepository;
 
 
     @Transactional(readOnly = true)
@@ -121,6 +124,11 @@ public class ReportService {
                 throw new IllegalArgumentException("신고할 상품 정보가 없습니다.");
             }
 
+            if(!canReportProduct(request.getReporterId(), productId)){
+                throw new IllegalArgumentException(
+                        "구매한 상품만 신고할 수 있습니다."
+                );
+            }
 
             productId = request.getProductId();
 
@@ -320,4 +328,13 @@ public class ReportService {
                 .orElseThrow(() ->
                         new IllegalArgumentException("신고 정보를 찾을 수 없습니다."));
     }
+
+    public boolean canReportProduct(Long buyerId, Long productId){
+        if(buyerId == null || productId == null){
+            return false;
+        }
+
+        return orderItemRepository.countPurchasedProduct(buyerId, productId) > 0;
+    }
+
 }

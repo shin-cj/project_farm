@@ -1537,6 +1537,7 @@
 }
 
 .seller-review-item {
+    width: 100%;
     background-color: #f9fbf8;
     border: 1px solid #e2ebd0;
     border-radius: 12px;
@@ -1544,12 +1545,43 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .seller-review-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(63, 125, 32, 0.08);
+}
+
+.seller-review-item:focus-visible {
+    outline: 3px solid #5b9d44;
+    outline-offset: 2px;
+}
+
+.seller-review-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.seller-review-more-button,
+.seller-review-pagination button {
+    border: 1px solid #3f7d20;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #3f7d20;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.seller-review-more-button {
+    padding: 8px 10px;
 }
 
 .seller-review-header {
@@ -1584,6 +1616,230 @@
     color: #333333;
     line-height: 1.5;
     word-break: break-all;
+}
+
+.seller-review-buyer {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.seller-review-modal-backdrop {
+    position: fixed;
+    z-index: 1210;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(20, 34, 25, 0.48);
+}
+
+.seller-review-modal {
+    width: min(100%, 560px);
+    max-height: min(720px, calc(100vh - 40px));
+    overflow-y: auto;
+    border: 1px solid #dbe8d7;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 20px 48px rgba(20, 34, 25, 0.24);
+}
+
+.seller-review-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px;
+    border-bottom: 1px solid #e5ede2;
+}
+
+.seller-review-modal-header p {
+    margin: 0 0 5px;
+    color: #3f7d20;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.seller-review-modal-header h2 {
+    margin: 0;
+    color: #243b2f;
+    font-size: 22px;
+}
+
+.seller-review-modal-close {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #dbe8d7;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #52645a;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.seller-review-detail-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 24px;
+}
+
+.seller-review-detail-list div {
+    min-width: 0;
+    padding: 13px 14px;
+    border-radius: 10px;
+    background: #f7faf5;
+}
+
+.seller-review-detail-list dt {
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.seller-review-detail-list dd {
+    margin: 0;
+    overflow: hidden;
+    color: #243b2f;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seller-review-detail-content {
+    margin: 0 24px 24px;
+    padding: 18px;
+    border: 1px solid #dfe9dd;
+    border-radius: 12px;
+}
+
+.seller-review-detail-content h3 {
+    margin: 0 0 10px;
+    color: #243b2f;
+    font-size: 15px;
+}
+
+.seller-review-detail-content p {
+    margin: 0;
+    color: #3e4e44;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.seller-review-detail-image {
+    display: block;
+    max-width: calc(100% - 48px);
+    max-height: 320px;
+    margin: 0 24px 24px;
+    border-radius: 12px;
+    object-fit: contain;
+}
+
+.seller-review-list-modal-backdrop {
+    position: fixed;
+    z-index: 1200;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(20, 34, 25, 0.48);
+}
+
+.seller-review-list-modal {
+    width: min(100%, 720px);
+    max-height: min(760px, calc(100vh - 40px));
+    overflow-y: auto;
+    border: 1px solid #dbe8d7;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 20px 48px rgba(20, 34, 25, 0.24);
+}
+
+.seller-review-list-modal-body {
+    padding: 20px 24px 24px;
+}
+
+.seller-review-list-summary {
+    margin: 0 0 14px;
+    color: #52645a;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.seller-review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.seller-review-list-item {
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #dfe9dd;
+    border-radius: 12px;
+    background: #ffffff;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.seller-review-list-item:hover,
+.seller-review-list-item:focus-visible {
+    border-color: #8fba7d;
+    background: #f8fbf6;
+}
+
+.seller-review-list-item:focus-visible {
+    outline: 3px solid #5b9d44;
+    outline-offset: 2px;
+}
+
+.seller-review-list-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 10px 0;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.seller-review-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.seller-review-pagination button {
+    min-width: 62px;
+    padding: 8px 12px;
+}
+
+.seller-review-pagination button:disabled {
+    border-color: #d1d9d0;
+    background: #f4f6f3;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+@media (max-width: 560px) {
+    .seller-review-header-actions,
+    .seller-review-list-meta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .seller-review-detail-list {
+        grid-template-columns: 1fr;
+    }
 }
 
 .seller-statistics-empty {
@@ -2041,6 +2297,10 @@
     margin: 0 auto 24px;
 }
 
+.seller-my-page-review-section {
+    margin-bottom: 24px;
+}
+
 .seller-compliance-grid .seller-penalty-viewer,
 .seller-compliance-grid .seller-received-report-viewer {
     min-width: 0;
@@ -2135,7 +2395,7 @@
 
 .seller-dashboard-summary1 {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 16px;
     margin-bottom: 24px;
 }

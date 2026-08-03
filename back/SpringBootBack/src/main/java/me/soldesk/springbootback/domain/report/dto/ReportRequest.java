@@ -24,7 +24,7 @@ public class ReportRequest {
 
     /** 신고 사유 */
     @NotBlank(message = "신고 사유를 입력해주세요.")
-    @Size(max = 500, message = "신고 사유는 500자 이하로 입력해주세요.")
+    @Size(max = 255, message = "신고 사유는 255자 이하로 입력해주세요.")
     private String reportReason;
 
     /** 신고 처리 상태 */

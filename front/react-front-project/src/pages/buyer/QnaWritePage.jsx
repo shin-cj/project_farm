@@ -80,11 +80,11 @@ function QnaWritePage() {
                         placeholder="문의 내용을 5자 이상 입력하세요"
                         value={questionContent}
                         onChange={(e) => setQuestionContent(e.target.value)}
-                        maxLength={500}
+                        maxLength={255}
                         required
                         style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical', boxSizing: 'border-box' }}
                     />
-                    <small>{questionContent.length}/500자</small>
+                    <small>{questionContent.length}/255자</small>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '14px' }}>

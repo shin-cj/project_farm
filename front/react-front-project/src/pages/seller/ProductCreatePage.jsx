@@ -762,9 +762,10 @@ function ProductCreatePage() {
                             value={form.productName}
                             onChange={handleChange}
                             placeholder="예: 유기농 고구마"
-                            maxLength={150}
+                            maxLength={20}
                             required
                         />
+                        <small>{form.productName.length}/20자</small>
                     </div>
 
                     <div className="product-create-field">
