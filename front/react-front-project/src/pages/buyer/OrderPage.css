@@ -2,6 +2,26 @@
   width: 100%;
 }
 
+.order-request-message-input {
+  width: 100%;
+  min-height: 88px;
+  max-height: 150px;
+  padding: 12px 14px;
+  border: 1px solid #dce6dd;
+  border-radius: 8px;
+  box-sizing: border-box;
+  color: #213328;
+  font: inherit;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  resize: vertical;
+}
+
+.order-request-message-input:focus {
+  border-color: #216b3a;
+  outline: 2px solid rgba(33, 107, 58, 0.12);
+}
+
 .order-product-heading {
   display: flex;
   align-items: center;

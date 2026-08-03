@@ -7,6 +7,7 @@ import me.soldesk.springbootback.domain.order.repository.OrderRepository;
 import me.soldesk.springbootback.domain.orderitem.entity.OrderItem;
 import me.soldesk.springbootback.domain.orderitem.repository.OrderItemRepository;
 import me.soldesk.springbootback.domain.payment.dto.PaymentConfirmRequest;
+import me.soldesk.springbootback.domain.payment.entity.Payment;
 import me.soldesk.springbootback.domain.payment.repository.PaymentRepository;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.ExpectedCount.once;
@@ -161,6 +163,97 @@ class PaymentServiceTest {
                 "결제 승인 후 내부 처리에 실패하여 결제를 자동 취소했습니다. 다시 결제해주세요.",
                 exception.getMessage()
         );
+        server.verify();
+    }
+
+    @Test
+    void confirmPaymentRejectsProductThatIsNoLongerOnSale() {
+        product.setProductStatus("HIDDEN");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> paymentService.confirmPayment(request)
+        );
+
+        assertEquals("현재 판매 중인 상품만 결제할 수 있습니다.", exception.getMessage());
+        server.verify();
+    }
+
+    @Test
+    void approveRefundRestoresAggregatedStockWithOneProductLock() {
+        order.setOrderStatus("REFUND_REQUESTED");
+
+        Payment payment = new Payment();
+        payment.setOrderId(order.getOrderId());
+        payment.setPgPaymentId(request.getPaymentKey());
+        payment.setPaymentAmount(order.getFinalPrice());
+        payment.setPaymentStatus("REFUND_REQUESTED");
+        payment.setRefundReason("상품 하자");
+
+        OrderItem firstItem = new OrderItem();
+        firstItem.setOrderId(order.getOrderId());
+        firstItem.setProductId(product.getProductId());
+        firstItem.setQuantity(2);
+
+        OrderItem secondItem = new OrderItem();
+        secondItem.setOrderId(order.getOrderId());
+        secondItem.setProductId(product.getProductId());
+        secondItem.setQuantity(3);
+
+        when(orderRepository.findById(order.getOrderId())).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderId(order.getOrderId())).thenReturn(Optional.of(payment));
+        when(orderItemRepository.findByOrderId(order.getOrderId()))
+                .thenReturn(List.of(firstItem, secondItem));
+        server.expect(once(), requestTo("https://api.tosspayments.com/v1/payments/payment-key-1/cancel"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
+
+        paymentService.approveRefund(order.getOrderId());
+
+        assertEquals(15, product.getStockQuantity());
+        assertEquals("REFUNDED", order.getOrderStatus());
+        verify(productRepository, times(1)).findByIdForUpdate(product.getProductId());
+        server.verify();
+    }
+
+    @Test
+    void approveRefundRecoversWhenTossPaymentWasAlreadyCanceled() {
+        order.setOrderStatus("REFUND_REQUESTED");
+
+        Payment payment = new Payment();
+        payment.setOrderId(order.getOrderId());
+        payment.setPgPaymentId(request.getPaymentKey());
+        payment.setPaymentAmount(order.getFinalPrice());
+        payment.setPaymentStatus("REFUND_REQUESTED");
+        payment.setRefundReason("상품 하자");
+
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrderId(order.getOrderId());
+        orderItem.setProductId(product.getProductId());
+        orderItem.setQuantity(2);
+
+        when(orderRepository.findById(order.getOrderId())).thenReturn(Optional.of(order));
+        when(paymentRepository.findByOrderId(order.getOrderId())).thenReturn(Optional.of(payment));
+        when(orderItemRepository.findByOrderId(order.getOrderId())).thenReturn(List.of(orderItem));
+
+        server.expect(once(), requestTo("https://api.tosspayments.com/v1/payments/payment-key-1/cancel"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(org.springframework.http.HttpStatus.BAD_REQUEST)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"code\":\"ALREADY_CANCELED_PAYMENT\"}"));
+        server.expect(once(), requestTo("https://api.tosspayments.com/v1/payments/payment-key-1"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(
+                        "{\"status\":\"CANCELED\",\"balanceAmount\":0}",
+                        MediaType.APPLICATION_JSON
+                ));
+
+        Map<String, Object> response = paymentService.approveRefund(order.getOrderId());
+
+        assertEquals("CANCELED", response.get("status"));
+        assertEquals("REFUNDED", order.getOrderStatus());
+        assertEquals("REFUNDED", payment.getPaymentStatus());
+        assertEquals(12, product.getStockQuantity());
         server.verify();
     }
 
