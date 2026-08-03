@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import authApi from "../../api/authApi";
 import userApi from "../../api/userApi";
 import { getLoginUser } from "../../utils/authStorage";
 import "./SellerProfileEditPage.css";
@@ -27,16 +28,36 @@ function SellerProfileEditPage() {
     const navigate = useNavigate();
     const loginUser = getLoginUser();
     const [form, setForm] = useState(initialForm);
+    const [verificationPassword, setVerificationPassword] = useState("");
+    const [passwordVerified, setPasswordVerified] = useState(false);
+    const [verifyingPassword, setVerifyingPassword] = useState(false);
+    const [verificationError, setVerificationError] = useState("");
 
     useEffect(() => {
-        userApi.getUser(loginUser.userId).then(({ data }) => {
-            setForm((prev) => ({
-                ...prev,
-                ...data,
-                phone: formatPhoneNumber(data.phone ?? ""),
-            }));
-        });
-    }, [loginUser.userId]);
+        if (!passwordVerified || !loginUser?.userId) return undefined;
+
+        let ignore = false;
+
+        userApi.getUser(loginUser.userId)
+            .then(({ data }) => {
+                if (ignore) return;
+
+                setForm((prev) => ({
+                    ...prev,
+                    ...data,
+                    phone: formatPhoneNumber(data.phone ?? ""),
+                }));
+            })
+            .catch((error) => {
+                console.error(error);
+                alert("회원 정보를 불러오지 못했습니다.");
+                navigate("/seller/mypage");
+            });
+
+        return () => {
+            ignore = true;
+        };
+    }, [loginUser?.userId, navigate, passwordVerified]);
 
     useEffect(() => {
         if (window.daum?.Postcode) return;
@@ -82,6 +103,32 @@ function SellerProfileEditPage() {
                 }));
             }
         }).open();
+    }
+
+    async function handleVerifyPassword(event) {
+        event.preventDefault();
+
+        if (verifyingPassword) return;
+
+        if (!verificationPassword) {
+            setVerificationError("비밀번호를 입력해주세요.");
+            return;
+        }
+
+        try {
+            setVerifyingPassword(true);
+            setVerificationError("");
+
+            await authApi.verifyPassword(loginUser.email, verificationPassword);
+
+            setVerificationPassword("");
+            setPasswordVerified(true);
+        } catch (error) {
+            console.error(error);
+            setVerificationError("비밀번호가 일치하지 않습니다.");
+        } finally {
+            setVerifyingPassword(false);
+        }
     }
 
     async function handleSubmit(event) {
@@ -132,11 +179,86 @@ function SellerProfileEditPage() {
         }
     }
 
+    if (!loginUser?.userId || !loginUser?.email) {
+        return <p>로그인한 판매자 정보를 확인할 수 없습니다.</p>;
+    }
+
+    if (!passwordVerified) {
+        return (
+            <div className="seller-profile-verification-backdrop">
+                <section
+                    className="seller-profile-verification-modal"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="seller-profile-verification-title"
+                >
+                    <button
+                        type="button"
+                        className="seller-profile-verification-close"
+                        onClick={() => navigate("/seller/mypage")}
+                        disabled={verifyingPassword}
+                        aria-label="비밀번호 확인 창 닫기"
+                    >
+                        ×
+                    </button>
+
+                    <h1 id="seller-profile-verification-title">비밀번호 확인</h1>
+                    <p>개인정보 보호를 위해 현재 비밀번호를 다시 입력해주세요.</p>
+
+                    <form onSubmit={handleVerifyPassword}>
+                        <label htmlFor="seller-profile-verification-password">비밀번호</label>
+                        <input
+                            id="seller-profile-verification-password"
+                            type="password"
+                            value={verificationPassword}
+                            onChange={(event) => {
+                                setVerificationPassword(event.target.value);
+                                setVerificationError("");
+                            }}
+                            placeholder="현재 비밀번호를 입력해주세요."
+                            autoComplete="current-password"
+                            autoFocus
+                            aria-invalid={Boolean(verificationError)}
+                        />
+
+                        {verificationError && (
+                            <span className="seller-profile-verification-error">
+                                {verificationError}
+                            </span>
+                        )}
+
+                        <div className="seller-profile-verification-actions">
+                            <button
+                                type="button"
+                                onClick={() => navigate("/seller/mypage")}
+                                disabled={verifyingPassword}
+                            >
+                                취소
+                            </button>
+                            <button type="submit" disabled={verifyingPassword}>
+                                {verifyingPassword ? "확인 중..." : "확인"}
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
+        );
+    }
+
     const pending = form.status === "WITHDRAWAL_PENDING";
 
     return (
         <section className="seller-profile-edit">
-            <h1 className="seller-profile-edit-title">개인정보 수정</h1>
+            <div className="seller-profile-edit-header">
+                <h1 className="seller-profile-edit-title">개인정보 수정</h1>
+                <button
+                    type="button"
+                    className="seller-profile-back-button"
+                    onClick={() => navigate("/seller/mypage")}
+                >
+                    ← 마이페이지로
+                </button>
+            </div>
 
             {pending && (
                 <div className="withdrawal-pending">
