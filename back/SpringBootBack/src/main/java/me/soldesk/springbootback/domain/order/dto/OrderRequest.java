@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.order.dto;
 
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.List;
@@ -44,6 +45,7 @@ public class OrderRequest {
     private String receiverDetailAddress;
 
     /** 諛곗넚 ?붿껌?ы빆 */
+    @Size(max = 255, message = "배송 요청사항은 255자 이하로 입력해주세요.")
     private String requestMessage;
 
     private Long cartItemId;

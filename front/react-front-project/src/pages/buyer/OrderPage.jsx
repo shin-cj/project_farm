@@ -414,7 +414,16 @@ function OrderPage() {
 
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>배송 요청사항</span>
-          <input type="text" value={requestMessage} onChange={(event) => setRequestMessage(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
+          <input
+            type="text"
+            value={requestMessage}
+            maxLength={255}
+            onChange={(event) => setRequestMessage(event.target.value)}
+            style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px", boxSizing: "border-box" }}
+          />
+          <span style={{ display: "block", marginTop: "6px", color: "#68756d", fontSize: "13px", textAlign: "right" }}>
+            {requestMessage.length}/255자
+          </span>
         </label>
       </div>
 
