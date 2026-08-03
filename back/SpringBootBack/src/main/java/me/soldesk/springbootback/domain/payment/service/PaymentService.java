@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -106,16 +107,52 @@ public class PaymentService {
             throw new IllegalArgumentException("주문 상품 정보가 없습니다.");
         }
 
-        List<Product> orderedProducts = new ArrayList<>();
+        Map<Long, Integer> requiredQuantityByProduct = new HashMap<>();
+        for (OrderItem item : orderItems) {
+            requiredQuantityByProduct.merge(
+                    item.getProductId(),
+                    item.getQuantity(),
+                    Integer::sum
+            );
+        }
+
+        Map<Long, Product> lockedProductById = new HashMap<>();
+        requiredQuantityByProduct.keySet().stream()
+                .sorted()
+                .forEach(productId -> {
+                    Product product = productRepository.findByIdForUpdate(productId)
+                            .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+                    lockedProductById.put(productId, product);
+                });
 
         for (OrderItem item : orderItems) {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+            Product product = lockedProductById.get(item.getProductId());
+
+            if (product == null) {
+                throw new IllegalArgumentException("상품 정보가 없습니다.");
+            }
 
             validateMinimumOrderQuantity(product, item.getQuantity());
+        }
 
-            if (product.getStockQuantity() < item.getQuantity()) {
+        for (Map.Entry<Long, Integer> entry : requiredQuantityByProduct.entrySet()) {
+            Product product = lockedProductById.get(entry.getKey());
+
+            if (product == null) {
+                throw new IllegalArgumentException("상품 정보가 없습니다.");
+            }
+
+            if (product.getStockQuantity() < entry.getValue()) {
                 throw new IllegalArgumentException(product.getProductName() + " 상품의 재고가 부족합니다.");
+            }
+        }
+
+        List<Product> orderedProducts = new ArrayList<>();
+        for (OrderItem item : orderItems) {
+            Product product = lockedProductById.get(item.getProductId());
+
+            if (product == null) {
+                throw new IllegalArgumentException("상품 정보가 없습니다.");
             }
 
             orderedProducts.add(product);
