@@ -166,7 +166,9 @@ function ProductDetailPage() {
       }
 
       try {
-        const response = await axios.get(`http://localhost:8080/api/qna/${productId}`)
+        const response = await axios.get(`http://localhost:8080/api/qna/${productId}`, {
+          params: userid ? { viewerId: userid } : {},
+        })
         if (!ignore) {
           setQnaList(response.data)
         }
@@ -182,7 +184,7 @@ function ProductDetailPage() {
     return () => {
       ignore = true
     }
-  }, [productId])
+  }, [productId, userid])
 
   useEffect(() => {
     setQnaPage(1)
@@ -223,7 +225,9 @@ function ProductDetailPage() {
     }
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/qna/${productId}`)
+      const response = await axios.get(`http://localhost:8080/api/qna/${productId}`, {
+        params: userid ? { viewerId: userid } : {},
+      })
       setQnaList(response.data)
     } catch {
       setQnaList([])
@@ -739,6 +743,7 @@ function ProductDetailPage() {
                 pagedQnaList.map((qna) => {
                   const isQnaOwner = Boolean(userid)
                       && Number(userid) === Number(qna.buyerId)
+                  const isSecretLocked = qna.isSecret === 1 && qna.secretContentVisible === false
                   const isExpanded = expandedQnaId === qna.qnaId
 
                   return (
@@ -751,13 +756,21 @@ function ProductDetailPage() {
                           className="product-qna-card-toggle"
                           aria-expanded={isExpanded}
                           aria-controls={`qna-detail-${qna.qnaId}`}
-                          onClick={() => setExpandedQnaId((currentId) => (
-                              currentId === qna.qnaId ? null : qna.qnaId
-                          ))}
+                          onClick={() => {
+                            if (isSecretLocked) {
+                              return
+                            }
+                            setExpandedQnaId((currentId) => (
+                                currentId === qna.qnaId ? null : qna.qnaId
+                            ))
+                          }}
                       >
-                        <span>{qna.questionTitle}</span>
+                        <span>
+                          {qna.isSecret === 1 && '비밀글 · '}
+                          {qna.questionTitle}
+                        </span>
                         <span className="product-qna-toggle-icon" aria-hidden="true">
-                          {isExpanded ? '-' : '+'}
+                          {isSecretLocked ? '잠김' : isExpanded ? '-' : '+'}
                         </span>
                       </button>
 
