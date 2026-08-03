@@ -1,3 +1,17 @@
+export const MANUAL_PRODUCT_UNIT_OPTIONS = [
+  { size: '1', name: 'kg' },
+  { size: '1', name: 'g' },
+  { size: '1', name: '개' },
+  { size: '1', name: '봉' },
+  { size: '1', name: '박스' },
+  { size: '1', name: '포대' },
+  { size: '1', name: '망' },
+  { size: '1', name: '단' },
+  { size: '1', name: '속' },
+  { size: '1', name: '마리' },
+  { size: '1', name: '리터' },
+]
+
 export function calculatePackageWeightGrams(unit) {
   const match = String(unit ?? '')
     .trim()

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createProduct, uploadProductImage } from '../../api/productApi.js'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getCategories } from '../../api/categoryApi.js'
@@ -15,6 +15,7 @@ import marketPriceApi from '../../api/marketPriceApi.js'
 import {
     calculatePackageWeightGrams,
     combineProductUnit,
+    MANUAL_PRODUCT_UNIT_OPTIONS,
     splitProductUnit,
 } from '../../utils/productWeight.js'
 
@@ -35,11 +36,13 @@ function ProductCreatePage() {
     const [isDirty, setIsDirty] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState(null)
     const [imagePreviewUrl, setImagePreviewUrl] = useState('')
+    const imageInputRef = useRef(null)
     const [formLoading, setFormLoading] = useState(true)
     const [formError, setFormError] = useState('')
     const [reloadKey, setReloadKey] = useState(0)
     const [marketUnitOptions, setMarketUnitOptions] = useState([])
     const [marketUnitLoading, setMarketUnitLoading] = useState(false)
+    const [manualMarketUnit, setManualMarketUnit] = useState(false)
 
     const [form, setForm] = useState({
         farmId: '',
@@ -153,6 +156,7 @@ function ProductCreatePage() {
         async function loadMarketUnitOptions() {
             if (!selectedSaleType || !form.marketItemCode) {
                 setMarketUnitOptions([])
+                setManualMarketUnit(false)
                 setMarketUnitLoading(false)
                 return
             }
@@ -160,11 +164,19 @@ function ProductCreatePage() {
             try {
                 setMarketUnitLoading(true)
 
-                const response = await marketPriceApi.getBuyerMainTodayPrices({
+                let response = await marketPriceApi.getBuyerMainTodayPrices({
                     seCd: selectedSaleType === 'WHOLESALE' ? '02' : '01',
                     itemCd: form.marketItemCode,
                     limit: 200,
                 })
+
+                // 선택한 거래 유형에 자료가 없는 품목은 같은 품목의 공공데이터 단위를 사용합니다.
+                if (!Array.isArray(response.data) || response.data.length === 0) {
+                    response = await marketPriceApi.getBuyerMainTodayPrices({
+                        itemCd: form.marketItemCode,
+                        limit: 200,
+                    })
+                }
                 const optionMap = new Map()
 
                 ;(Array.isArray(response.data) ? response.data : []).forEach((item) => {
@@ -180,9 +192,16 @@ function ProductCreatePage() {
                 }
 
                 const options = Array.from(optionMap.values())
-                setMarketUnitOptions(options)
+                const shouldUseManualUnit = options.length === 0
 
-                if (options.length > 0) {
+                setManualMarketUnit(shouldUseManualUnit)
+                setMarketUnitOptions(
+                    shouldUseManualUnit
+                        ? MANUAL_PRODUCT_UNIT_OPTIONS
+                        : options
+                )
+
+                if (!shouldUseManualUnit) {
                     setForm((currentForm) => {
                         const currentUnit = splitProductUnit(currentForm.unit)
                         const nextOption = options.find(
@@ -208,7 +227,8 @@ function ProductCreatePage() {
             } catch (error) {
                 if (!ignore) {
                     console.error(error)
-                    setMarketUnitOptions([])
+                    setManualMarketUnit(true)
+                    setMarketUnitOptions(MANUAL_PRODUCT_UNIT_OPTIONS)
                 }
             } finally {
                 if (!ignore) {
@@ -533,6 +553,54 @@ function ProductCreatePage() {
         navigate(returnTo)
     }
 
+    async function handleReset() {
+        if (submitting || !isDirty) {
+            return
+        }
+
+        const confirmed = await confirm({
+            title: '입력 내용을 초기화할까요?',
+            message: '선택한 농장을 제외한 상품 정보와 이미지가 모두 지워집니다.',
+            confirmText: '초기화',
+            type: 'danger',
+        })
+
+        if (!confirmed) {
+            return
+        }
+
+        if (imagePreviewUrl) {
+            URL.revokeObjectURL(imagePreviewUrl)
+        }
+
+        setForm((currentForm) => ({
+            farmId: currentForm.farmId,
+            categoryId: '',
+            marketItemCode: '',
+            productName: '',
+            description: '',
+            price: '',
+            stockQuantity: '',
+            unit: '',
+            packageWeightGrams: '',
+            minOrderQuantity:
+                selectedFarm?.saleType === 'WHOLESALE' ? '2' : '1',
+            origin: '',
+            harvestDate: '',
+            expirationDate: '',
+            productImageUrl: '',
+        }))
+        setSelectedImageFile(null)
+        setImagePreviewUrl('')
+        setMarketUnitOptions([])
+        setManualMarketUnit(false)
+        setIsDirty(false)
+
+        if (imageInputRef.current) {
+            imageInputRef.current.value = ''
+        }
+    }
+
     const formReady = farms.length > 0 && categories.length > 0
 
     if (formLoading) {
@@ -573,10 +641,21 @@ function ProductCreatePage() {
             <main className="product-create-page">
             <section className="product-create-card">
                 <div className="product-create-header">
-                    <h1 className="product-create-title">상품 등록</h1>
-                    <p className="product-create-description">
-                        판매할 농산물의 기본 정보를 입력해주세요.
-                    </p>
+                    <div>
+                        <h1 className="product-create-title">상품 등록</h1>
+                        <p className="product-create-description">
+                            판매할 농산물의 기본 정보를 입력해주세요.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="product-create-reset-button"
+                        onClick={handleReset}
+                        disabled={submitting || !isDirty}
+                    >
+                        초기화
+                    </button>
                 </div>
 
                 {!formReady && (
@@ -763,7 +842,9 @@ function ProductCreatePage() {
                                 </select>
                             </div>
                             <small className="product-package-weight-help">
-                                품목과 판매 방식을 기준으로 시세 단위가 자동 선택되며, 앞 숫자는 변경할 수 있습니다.
+                                {manualMarketUnit
+                                    ? '제공되는 시세 단위가 없어 판매 수량과 단위를 직접 선택해주세요.'
+                                    : '품목과 판매 방식을 기준으로 시세 단위가 자동 선택되며, 앞 숫자는 변경할 수 있습니다.'}
                             </small>
                         </div>
 
@@ -849,6 +930,7 @@ function ProductCreatePage() {
                             <label>상품 이미지</label>
 
                             <input
+                                ref={imageInputRef}
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                                 onChange={handleImageChange}

@@ -430,7 +430,7 @@ function BuyerHomePage() {
 
       try {
         const data = await getWeeklyPopularFarms()
-        setPopularFarms((data || []).slice(0, 3))
+        setPopularFarms((data || []).slice(0, 2))
       } catch (error) {
         setPopularFarms([])
         setPopularFarmErrorMessage('인기 농장을 불러오지 못했습니다.')
