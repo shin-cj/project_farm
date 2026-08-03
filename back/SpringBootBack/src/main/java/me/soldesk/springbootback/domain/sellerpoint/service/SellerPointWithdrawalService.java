@@ -29,6 +29,10 @@ public class SellerPointWithdrawalService {
     public SellerPointWithdrawalResponse requestWithdrawal(SellerPointWithdrawalRequest request) {
         validateRequest(request);
 
+        // 같은 판매자의 출금 요청은 하나씩 처리한 뒤 최신 출금 가능 포인트를 계산합니다.
+        userRepository.findByIdForUpdate(request.getSellerId())
+                .orElseThrow(() -> new IllegalArgumentException("판매자 정보가 없습니다."));
+
         SellerPointSummaryResponse summary = sellerPointService.getSummary(request.getSellerId());
 
         if (request.getWithdrawalAmount() > summary.getAvailablePoint()) {
