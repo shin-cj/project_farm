@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -91,6 +92,15 @@ public class PaymentService {
             throw new IllegalArgumentException("주문 금액과 결제 금액이 일치하지 않습니다.");
         }
 
+        Map<String, Object> existingPaymentResponse = findExistingConfirmedPaymentResponse(
+                paymentOrders,
+                request
+        );
+
+        if (existingPaymentResponse != null) {
+            return existingPaymentResponse;
+        }
+
         for (Order order : paymentOrders) {
             if (!"PAYMENT_WAIT".equals(order.getOrderStatus())) {
                 throw new IllegalArgumentException("이미 결제했거나 결제할 수 없는 주문입니다.");
@@ -106,16 +116,59 @@ public class PaymentService {
             throw new IllegalArgumentException("주문 상품 정보가 없습니다.");
         }
 
-        List<Product> orderedProducts = new ArrayList<>();
+        Map<Long, Integer> requiredQuantityByProduct = new HashMap<>();
+        for (OrderItem item : orderItems) {
+            requiredQuantityByProduct.merge(
+                    item.getProductId(),
+                    item.getQuantity(),
+                    Integer::sum
+            );
+        }
+
+        Map<Long, Product> lockedProductById = new HashMap<>();
+        requiredQuantityByProduct.keySet().stream()
+                .sorted()
+                .forEach(productId -> {
+                    Product product = productRepository.findByIdForUpdate(productId)
+                            .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+                    lockedProductById.put(productId, product);
+                });
+
+        // 동시에 들어온 동일 승인 요청은 상품 잠금을 기다린 뒤 여기에서 다시 확인됩니다.
+        existingPaymentResponse = findExistingConfirmedPaymentResponse(paymentOrders, request);
+
+        if (existingPaymentResponse != null) {
+            return existingPaymentResponse;
+        }
 
         for (OrderItem item : orderItems) {
-            Product product = productRepository.findById(item.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
+            Product product = lockedProductById.get(item.getProductId());
+
+            if (product == null) {
+                throw new IllegalArgumentException("상품 정보가 없습니다.");
+            }
 
             validateMinimumOrderQuantity(product, item.getQuantity());
+        }
 
-            if (product.getStockQuantity() < item.getQuantity()) {
+        for (Map.Entry<Long, Integer> entry : requiredQuantityByProduct.entrySet()) {
+            Product product = lockedProductById.get(entry.getKey());
+
+            if (product == null) {
+                throw new IllegalArgumentException("상품 정보가 없습니다.");
+            }
+
+            if (product.getStockQuantity() < entry.getValue()) {
                 throw new IllegalArgumentException(product.getProductName() + " 상품의 재고가 부족합니다.");
+            }
+        }
+
+        List<Product> orderedProducts = new ArrayList<>();
+        for (OrderItem item : orderItems) {
+            Product product = lockedProductById.get(item.getProductId());
+
+            if (product == null) {
+                throw new IllegalArgumentException("상품 정보가 없습니다.");
             }
 
             orderedProducts.add(product);
@@ -175,6 +228,60 @@ public class PaymentService {
         }
 
         return tossResponse;
+    }
+
+    private Map<String, Object> findExistingConfirmedPaymentResponse(
+            List<Order> paymentOrders,
+            PaymentConfirmRequest request
+    ) {
+        List<Payment> existingPayments = new ArrayList<>();
+
+        for (Order order : paymentOrders) {
+            paymentRepository.findByOrderId(order.getOrderId())
+                    .ifPresent(existingPayments::add);
+        }
+
+        if (existingPayments.isEmpty()) {
+            return null;
+        }
+
+        if (existingPayments.size() != paymentOrders.size()) {
+            throw new IllegalStateException("일부 주문에만 결제 정보가 저장되어 있습니다.");
+        }
+
+        boolean samePaymentKey = existingPayments.stream()
+                .allMatch(payment -> request.getPaymentKey().equals(payment.getPgPaymentId()));
+        long existingPaymentAmount = existingPayments.stream()
+                .mapToLong(Payment::getPaymentAmount)
+                .sum();
+        boolean allPaymentsCompleted = existingPayments.stream()
+                .allMatch(this::isCompletedPayment);
+
+        if (!samePaymentKey
+                || existingPaymentAmount != request.getAmount()
+                || !allPaymentsCompleted) {
+            throw new IllegalArgumentException("기존 결제 정보와 승인 요청이 일치하지 않습니다.");
+        }
+
+        Payment representativePayment = existingPayments.get(0);
+        Map<String, Object> response = new HashMap<>();
+        response.put("paymentKey", representativePayment.getPgPaymentId());
+        response.put("orderId", request.getOrderId());
+        response.put("status", representativePayment.getPaymentStatus());
+        response.put("method", representativePayment.getPaymentMethod());
+        response.put("totalAmount", existingPaymentAmount);
+        response.put("approvedAt", representativePayment.getPaidAt());
+        response.put("alreadyConfirmed", true);
+        return response;
+    }
+
+    private boolean isCompletedPayment(Payment payment) {
+        if (payment.getPaidAt() == null || payment.getPaymentStatus() == null) {
+            return false;
+        }
+
+        return List.of("DONE", "PAID")
+                .contains(payment.getPaymentStatus());
     }
 
     private List<Order> findPaymentOrders(String tossOrderId) {
