@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.qna.dto.QnaAnswerRequest;
+import me.soldesk.springbootback.domain.qna.dto.QnaAdminDeleteRequest;
 import me.soldesk.springbootback.domain.qna.dto.QnaRequest;
 import me.soldesk.springbootback.domain.qna.dto.QnaResponse;
 import me.soldesk.springbootback.domain.qna.entity.Qna;
@@ -25,15 +26,25 @@ public class QnaService {
     private final UserRepository userRepository;
 
     public List<QnaResponse> getQnasByProduct(Long productId, Long viewerId) {
-        return qnaRepository.findByProductIdOrderByCreatedAtDesc(productId).stream()
+        return qnaRepository.findByProductIdAndDeletedAtIsNullOrderByCreatedAtDesc(productId).stream()
                 .map(qna -> toViewerResponse(qna, viewerId))
                 .toList();
     }
 
     // 전체 QnA 목록 조회 메서드 (수동 강제 내림차순 정렬: 최신 글이 맨 위로)
     public List<QnaResponse> getAllQnas(Long viewerId) {
-        return qnaRepository.findAllByOrderByCreatedAtDesc().stream()
+        return qnaRepository.findByDeletedAtIsNullOrderByCreatedAtDesc().stream()
                 .map(qna -> toViewerResponse(qna, viewerId))
+                .toList();
+    }
+
+    public List<QnaResponse> getMyQnas(Long buyerId) {
+        if (buyerId == null) {
+            throw new IllegalArgumentException("구매자 정보가 필요합니다.");
+        }
+
+        return qnaRepository.findByBuyerIdOrderByCreatedAtDesc(buyerId).stream()
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -70,6 +81,8 @@ public class QnaService {
         res.setSecretContentVisible(true);
         res.setCreatedAt(qna.getCreatedAt());
         res.setAnsweredAt(qna.getAnsweredAt());
+        res.setDeletionReason(qna.getDeletionReason());
+        res.setDeletedAt(qna.getDeletedAt());
         return res;
     }
 
@@ -155,9 +168,35 @@ public class QnaService {
         qnaRepository.delete(qna);
     }
 
+    @Transactional
+    public void deleteQnaByAdmin(Long qnaId, QnaAdminDeleteRequest request) {
+        validateAdmin(request.getAdminId());
+        Qna qna = qnaRepository.findById(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 문의가 없습니다."));
+
+        if (qna.getDeletedAt() != null) {
+            throw new IllegalArgumentException("이미 삭제 처리된 문의입니다.");
+        }
+
+        qna.setQnaStatus("DELETED");
+        qna.setDeletionReason(request.getDeletionReason().trim());
+        qna.setDeletedBy(request.getAdminId());
+        qna.setDeletedAt(LocalDateTime.now());
+    }
+
     private void validateOwner(Qna qna, Long buyerId) {
         if (buyerId == null || !buyerId.equals(qna.getBuyerId())) {
             throw new IllegalArgumentException("본인이 작성한 문의만 수정하거나 삭제할 수 있습니다.");
+        }
+    }
+
+    private void validateAdmin(Long adminId) {
+        boolean isAdmin = adminId != null && userRepository.findById(adminId)
+                .map(user -> Long.valueOf(1L).equals(user.getRoleId()))
+                .orElse(false);
+
+        if (!isAdmin) {
+            throw new IllegalArgumentException("관리자만 문의를 삭제할 수 있습니다.");
         }
     }
 }
