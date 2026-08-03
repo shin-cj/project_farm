@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.order.controller;
 
+import jakarta.validation.Valid;
 import me.soldesk.springbootback.domain.order.dto.OrderRequest;
 import me.soldesk.springbootback.domain.order.dto.OrderResponse;
 import me.soldesk.springbootback.domain.order.service.OrderService;
@@ -24,12 +25,12 @@ public class OrderController {
     }
 
     @PostMapping("/from-cart")
-    public OrderResponse createOrder(@RequestBody OrderRequest request){
+    public OrderResponse createOrder(@Valid @RequestBody OrderRequest request){
         return orderService.createOrder(request);
     }
 
     @PostMapping("/from-product")
-    public OrderResponse createOrderFromProduct(@RequestBody OrderRequest request) {
+    public OrderResponse createOrderFromProduct(@Valid @RequestBody OrderRequest request) {
         return orderService.createOrderFromProduct(request);
     }
 

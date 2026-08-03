@@ -503,7 +503,7 @@ public class ProductService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고는 0개 이상 입력해주세요.");
         }
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."
                 ));
@@ -891,8 +891,21 @@ public class ProductService {
     }
 
     private void applyStockStatus(Product product) {
-        if (product.getStockQuantity() != null && product.getStockQuantity() == 0) {
+        int minimumOrderQuantity = product.getMinOrderQuantity() == null
+                || product.getMinOrderQuantity() < 1
+                ? 1
+                : product.getMinOrderQuantity();
+        int stockQuantity = product.getStockQuantity() == null
+                ? 0
+                : product.getStockQuantity();
+
+        // 승인·노출 상태는 건드리지 않고 실제 판매 상태만 재고에 따라 전환합니다.
+        if ("ON_SALE".equals(product.getProductStatus())
+                && stockQuantity < minimumOrderQuantity) {
             product.setProductStatus("SOLD_OUT");
+        } else if ("SOLD_OUT".equals(product.getProductStatus())
+                && stockQuantity >= minimumOrderQuantity) {
+            product.setProductStatus("ON_SALE");
         }
     }
 
