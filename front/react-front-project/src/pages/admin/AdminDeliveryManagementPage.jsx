@@ -21,6 +21,21 @@ const saleTypeLabel = {
   WHOLESALE: "도매",
 };
 
+const PAGE_SIZE = 6;
+
+function getPageNumbers(currentPage, totalPages) {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const startPage = Math.min(
+    Math.max(currentPage - 2, 1),
+    totalPages - 4
+  );
+
+  return Array.from({ length: 5 }, (_, index) => startPage + index);
+}
+
 function isClosedOrder(order) {
   return ["CANCELED", "REFUND_REQUESTED", "REFUNDED"].includes(order.orderStatus);
 }
@@ -59,6 +74,7 @@ function AdminDeliveryManagementPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [deliveryConfirm, setDeliveryConfirm] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   async function fetchOrders() {
     try {
@@ -66,6 +82,7 @@ function AdminDeliveryManagementPage() {
       setError("");
       const data = await getAdminOrders();
       setOrders(data.filter((order) => order.orderStatus !== "PAYMENT_WAIT"));
+      setCurrentPage(1);
     } catch (error) {
       console.error(error);
       setError("관리자 주문 목록을 불러오지 못했습니다.");
@@ -97,6 +114,19 @@ function AdminDeliveryManagementPage() {
 
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(visibleOrders.length / PAGE_SIZE));
+  const visiblePage = Math.min(currentPage, totalPages);
+  const pageNumbers = getPageNumbers(visiblePage, totalPages);
+  const paginatedOrders = visibleOrders.slice(
+    (visiblePage - 1) * PAGE_SIZE,
+    visiblePage * PAGE_SIZE
+  );
+
+  function handleFilterChange(nextFilter) {
+    setFilter(nextFilter);
+    setCurrentPage(1);
+  }
 
   async function updateDeliveryStatus(order, nextStatus) {
     if (!order.deliveryId) {
@@ -209,7 +239,7 @@ function AdminDeliveryManagementPage() {
       {message && <p style={{ color: "#216b3a", fontWeight: 700 }}>{message}</p>}
       {error && <p style={{ color: "crimson", fontWeight: 700 }}>{error}</p>}
 
-      <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "24px", flexWrap: "wrap" }}>
+      <div className="admin-delivery-toolbar">
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           {filterOptions.map((option) => {
             const isActive = filter === option.value;
@@ -218,7 +248,7 @@ function AdminDeliveryManagementPage() {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setFilter(option.value)}
+                onClick={() => handleFilterChange(option.value)}
                 style={{
                   padding: "9px 13px",
                   border: isActive ? "1px solid #216b3a" : "1px solid #dce6dd",
@@ -252,7 +282,12 @@ function AdminDeliveryManagementPage() {
         </button>
       </div>
 
-      <div style={{ display: "grid", gap: "16px", marginTop: "28px" }}>
+      <div className="admin-delivery-list-summary">
+        <strong>{filterOptions.find((option) => option.value === filter)?.label}</strong>
+        <span>총 {visibleOrders.length.toLocaleString()}건</span>
+      </div>
+
+      <div className="admin-delivery-order-grid">
         {loading && <p style={{ color: "#68756d" }}>주문 목록을 불러오는 중입니다.</p>}
 
         {!loading && visibleOrders.length === 0 && (
@@ -261,7 +296,7 @@ function AdminDeliveryManagementPage() {
           </div>
         )}
 
-        {visibleOrders.map((order) => {
+        {paginatedOrders.map((order) => {
           const isCanceled = order.orderStatus === "CANCELED";
           const isRefundRequested = order.orderStatus === "REFUND_REQUESTED";
           const isRefunded = order.orderStatus === "REFUNDED";
@@ -271,12 +306,13 @@ function AdminDeliveryManagementPage() {
           return (
             <article
               key={order.orderId}
+              className="admin-delivery-order-card"
               style={{
                 display: "grid",
-                gridTemplateColumns: "minmax(0, 1fr) 340px",
-                gap: "14px",
+                gridTemplateColumns: "minmax(0, 1fr) 158px",
+                gap: "10px",
                 alignItems: "start",
-                padding: "14px",
+                padding: "12px",
                 border: isCanceled || isRefunded ? "2px solid #dc2626" : isRefundRequested ? "2px solid #92400e" : "1px solid #dce6dd",
                 borderRadius: "10px",
                 background: isCanceled || isRefunded ? "#fff1f2" : isRefundRequested ? "#fffbeb" : "#fbfdfb",
@@ -313,11 +349,22 @@ function AdminDeliveryManagementPage() {
                 >
                   택배배송
                 </span>
-                <strong style={{ display: "block", color: "#213328", fontSize: "1.05rem" }}>
+                <strong
+                  title={`주문번호 ${order.orderNumber || order.orderId}`}
+                  style={{
+                    display: "block",
+                    overflow: "hidden",
+                    color: "#213328",
+                    fontSize: "0.9rem",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   주문번호 {order.orderNumber || order.orderId}
                 </strong>
                 {order.orderItems?.length > 0 ? (
                   <div
+                    className="admin-delivery-order-items"
                     style={{
                       display: "grid",
                       gap: "4px",
@@ -392,6 +439,7 @@ function AdminDeliveryManagementPage() {
                 </div>
 
                 <div
+                  className="admin-delivery-party-grid"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
@@ -456,7 +504,7 @@ function AdminDeliveryManagementPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gap: "10px" }}>
+              <div className="admin-delivery-status-column">
                 <div
                   style={{
                     padding: "12px",
@@ -565,6 +613,38 @@ function AdminDeliveryManagementPage() {
           );
         })}
       </div>
+
+      {!loading && visibleOrders.length > 0 && (
+        <nav className="admin-delivery-pagination" aria-label="배송 관리 페이지">
+          <button
+            type="button"
+            onClick={() => setCurrentPage(Math.max(visiblePage - 1, 1))}
+            disabled={visiblePage === 1}
+          >
+            이전
+          </button>
+
+          {pageNumbers.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              type="button"
+              className={visiblePage === pageNumber ? "is-active" : ""}
+              onClick={() => setCurrentPage(pageNumber)}
+              aria-current={visiblePage === pageNumber ? "page" : undefined}
+            >
+              {pageNumber}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => setCurrentPage(Math.min(visiblePage + 1, totalPages))}
+            disabled={visiblePage === totalPages}
+          >
+            다음
+          </button>
+        </nav>
+      )}
 
       {deliveryConfirm && (
         <div
