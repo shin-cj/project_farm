@@ -55,6 +55,10 @@ function getCancelGuide(order) {
     return "환불 완료된 주문입니다.";
   }
 
+  if (order.orderStatus === "PURCHASE_CONFIRMED") {
+    return "구매확정이 완료된 주문입니다.";
+  }
+
   if (order.orderStatus !== "PAID") {
     return "결제 완료 주문만 취소할 수 있습니다.";
   }
@@ -108,7 +112,7 @@ function groupOrdersByPayment(orders) {
 
 function OrderHistoryPage() {
   const navigate = useNavigate();
-  const { alert, prompt } = useAppFeedback();
+  const { alert, confirm, prompt } = useAppFeedback();
   const location = useLocation();
   const loginUser = getLoginUser();
   const buyerId = loginUser?.userId;
@@ -118,6 +122,7 @@ function OrderHistoryPage() {
   const [error, setError] = useState("");
   const [cancelingOrderId, setCancelingOrderId] = useState(null);
   const [cancelingOrderGroupNumber, setCancelingOrderGroupNumber] = useState(null);
+  const [confirmingOrderId, setConfirmingOrderId] = useState(null);
   const [deliveryModalOrder, setDeliveryModalOrder] = useState(null);
   const [deliveryModalData, setDeliveryModalData] = useState(null);
   const [deliveryModalLoading, setDeliveryModalLoading] = useState(false);
@@ -262,6 +267,36 @@ function OrderHistoryPage() {
       await fetchOrders();
     } catch (error) {
       alert("환불 요청에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  }
+
+  async function handleConfirmPurchase(order) {
+    if (order.orderStatus !== "PAID" || order.deliveryStatus !== "DELIVERED") {
+      alert("배송 완료된 결제 주문만 구매확정할 수 있습니다.");
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: "구매를 확정할까요?",
+      message: "구매확정 후에는 주문 취소나 일반 환불 요청으로 변경할 수 없습니다.",
+      confirmText: "구매확정",
+      cancelText: "돌아가기",
+      type: "info",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setConfirmingOrderId(order.orderId);
+      await orderApi.confirmPurchase(order.orderId, buyerId);
+      alert("구매확정이 완료되었습니다.");
+      await fetchOrders();
+    } catch (error) {
+      alert(error.response?.data?.message || "구매확정 처리에 실패했습니다.");
+    } finally {
+      setConfirmingOrderId(null);
     }
   }
 
@@ -538,6 +573,8 @@ function OrderHistoryPage() {
                   const canRequestRefund =
                     order.orderStatus === "PAID"
                     && order.deliveryStatus === "DELIVERED";
+                  const canConfirmPurchase = canRequestRefund;
+                  const isPurchaseConfirmed = order.orderStatus === "PURCHASE_CONFIRMED";
 
                   return (
                     <section
@@ -658,6 +695,23 @@ function OrderHistoryPage() {
                           className="order-history-action order-history-action--refund"
                         >
                           환불 요청
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleConfirmPurchase(order)}
+                          disabled={
+                            !canConfirmPurchase
+                            || isPurchaseConfirmed
+                            || confirmingOrderId === order.orderId
+                          }
+                          className="order-history-action order-history-action--confirm"
+                        >
+                          {confirmingOrderId === order.orderId
+                            ? "구매확정 처리 중..."
+                            : isPurchaseConfirmed
+                              ? "구매확정 완료"
+                              : "구매확정"}
                         </button>
                       </div>
                     </section>

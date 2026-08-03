@@ -79,7 +79,9 @@ public class FarmService {
         LocalDate weekStartDate = today.with(DayOfWeek.MONDAY);
         LocalDateTime startDate = weekStartDate.atStartOfDay();
         LocalDateTime endDate = weekStartDate.plusWeeks(1).atStartOfDay();
-        List<String> paidOrderStatuses = Arrays.asList("PAID", "SHIPPING", "DELIVERED");
+        List<String> paidOrderStatuses = Arrays.asList(
+                "PAID", "SHIPPING", "DELIVERED", "PURCHASE_CONFIRMED"
+        );
 
         List<Object[]> popularFarmRows = farmRepository.findWeeklyPopularFarms(
                 startDate,

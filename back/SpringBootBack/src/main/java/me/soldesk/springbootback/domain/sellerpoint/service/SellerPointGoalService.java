@@ -82,7 +82,9 @@ public class SellerPointGoalService {
         LocalDateTime endDateTime = today.plusDays(1).atStartOfDay();
 
         List<SellerPoint> todayPoints =
-                sellerPointRepository.findBySellerIdAndPointStatusAndCreatedAtBetween(sellerId,"EARNED",startDateTime,endDateTime);
+                sellerPointRepository.findBySellerIdAndPointStatusAndUpdatedAtBetween(
+                        sellerId, "EARNED", startDateTime, endDateTime
+                );
 
         return todayPoints.stream()
                 .mapToLong(SellerPoint::getSellerPoint)

@@ -102,6 +102,7 @@ public class SellerSalesService {
 
     private boolean isSalesOrder(Order order) {
         return "PAID".equals(order.getOrderStatus())
+                || "PURCHASE_CONFIRMED".equals(order.getOrderStatus())
                 || "REFUND_REQUESTED".equals(order.getOrderStatus());
     }
 
