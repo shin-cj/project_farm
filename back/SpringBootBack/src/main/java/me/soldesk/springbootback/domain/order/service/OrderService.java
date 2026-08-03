@@ -283,6 +283,31 @@ public class OrderService {
             throw new IllegalArgumentException("배송 완료된 주문만 구매확정할 수 있습니다.");
         }
 
+        return completePurchaseConfirmation(order);
+    }
+
+    @Transactional
+    public boolean confirmPurchaseAutomatically(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+
+        if (order == null || !"PAID".equals(order.getOrderStatus())) {
+            return false;
+        }
+
+        Delivery delivery = deliveryRepository.findByOrderId(orderId).orElse(null);
+
+        if (delivery == null
+                || !"DELIVERED".equals(delivery.getDeliveryStatus())
+                || delivery.getDeliveredAt() == null
+                || delivery.getDeliveredAt().plusDays(2).isAfter(LocalDateTime.now())) {
+            return false;
+        }
+
+        completePurchaseConfirmation(order);
+        return true;
+    }
+
+    private OrderResponse completePurchaseConfirmation(Order order) {
         order.setOrderStatus("PURCHASE_CONFIRMED");
         order.setUpdatedAt(LocalDateTime.now());
         orderRepository.save(order);

@@ -643,7 +643,7 @@ function SellerMyPage() {
               <article>
                 <span>정산 예정 금액</span>
                 <strong>{formatPoint(pointSummary.pendingPoint)}</strong>
-                <small>결제 완료 후 구매확정 대기</small>
+                <small>구매확정 대기 · 미확정 시 배송 완료 2일 후 자동 정산</small>
               </article>
               <article>
                 <span>정산된 금액</span>
