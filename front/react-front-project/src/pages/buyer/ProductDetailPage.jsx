@@ -784,7 +784,10 @@ function ProductDetailPage() {
                             ))
                           }}
                       >
-                        <span>
+                        <span style={{overflowWrap:'anywhere',
+                          overflow: isExpanded? 'visible' : 'hidden',
+                          whiteSpace: isExpanded? undefined : 'nowrap'
+                        }}>
                           {qna.isSecret === 1 && '비밀글 · '}
                           {qna.questionTitle}
                         </span>
