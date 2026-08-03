@@ -22,10 +22,6 @@ function getPercent(value, total) {
   return (value / total) * 100;
 }
 
-function getSafeRating(value) {
-  return Math.min(5, Math.max(0, Number(value) || 0));
-}
-
 function SalesStatisticsPage() {
   const [days, setDays] = useState(30);
   const [statistics, setStatistics] = useState({
@@ -586,39 +582,6 @@ function SalesStatisticsPage() {
 
                   <small>{timeSlot.sales.toLocaleString()}원</small>
                 </div>
-              ))}
-            </div>
-          )}
-        </article>
-      </section>
-
-      <section className="seller-statistics-content">
-        <article className="seller-statistics-card wide">
-          <div className="seller-statistics-card-header">
-            <div>
-              <h2>최근 리뷰</h2>
-              <p>판매 상품에 최근 등록된 리뷰입니다.</p>
-            </div>
-            <strong>총 {statistics.reviewTotalCount}개</strong>
-          </div>
-
-          {statistics.recentReviews.length === 0 ? (
-            <p className="seller-statistics-empty">등록된 리뷰가 없습니다.</p>
-          ) : (
-            <div className="seller-review-card-grid">
-              {statistics.recentReviews.map((review) => (
-                <article key={review.reviewId} className="seller-review-item">
-                  <div className="seller-review-header">
-                    <span className="seller-review-product-badge">
-                      {review.name || "익명"}
-                    </span>
-                    <span className="seller-review-stars">
-                      {"★".repeat(getSafeRating(review.rating))}
-                      {"☆".repeat(5 - getSafeRating(review.rating))}
-                    </span>
-                  </div>
-                  <p className="seller-review-content">{review.content}</p>
-                </article>
               ))}
             </div>
           )}

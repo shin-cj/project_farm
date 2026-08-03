@@ -72,4 +72,13 @@ public class ReviewController {
         reviewService.deleteReview(reviewId, buyerId);
         return ResponseEntity.ok("후기가 삭제되었습니다.");
     }
+
+    @DeleteMapping("/admin/{reviewId}")
+    public ResponseEntity<String> deleteReviewByAdmin(
+            @PathVariable Long reviewId,
+            @RequestParam Long adminId
+    ) {
+        reviewService.deleteReviewByAdmin(reviewId, adminId);
+        return ResponseEntity.ok("관리자 권한으로 후기가 삭제되었습니다.");
+    }
 }

@@ -5,6 +5,7 @@ import me.soldesk.springbootback.domain.review.dto.ReviewRequest;
 import me.soldesk.springbootback.domain.review.dto.ReviewResponse;
 import me.soldesk.springbootback.domain.review.entity.Review;
 import me.soldesk.springbootback.domain.review.repository.ReviewRepository;
+import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.List;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final UserRepository userRepository;
 
     // 1. 후기 등록 서비스
     @Transactional
@@ -87,6 +89,14 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
+    @Transactional
+    public void deleteReviewByAdmin(Long reviewId, Long adminId) {
+        validateAdmin(adminId);
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 후기입니다."));
+        reviewRepository.delete(review);
+    }
+
     // 4. 상품별 후기 목록 조회 서비스
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByProduct(Long productId) {
@@ -119,6 +129,16 @@ public class ReviewService {
     private void validateReviewOwner(Review review, Long buyerId) {
         if (buyerId == null || !review.getBuyerId().equals(buyerId)) {
             throw new IllegalArgumentException("본인이 작성한 리뷰만 수정하거나 삭제할 수 있습니다.");
+        }
+    }
+
+    private void validateAdmin(Long adminId) {
+        boolean isAdmin = adminId != null && userRepository.findById(adminId)
+                .map(user -> Long.valueOf(1L).equals(user.getRoleId()))
+                .orElse(false);
+
+        if (!isAdmin) {
+            throw new IllegalArgumentException("관리자만 리뷰를 삭제할 수 있습니다.");
         }
     }
 }

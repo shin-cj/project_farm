@@ -784,12 +784,15 @@ function ProductDetailPage() {
                             ))
                           }}
                       >
-                        <span>
+                        <span style={{overflowWrap:'anywhere',
+                          overflow: isExpanded? 'visible' : 'hidden',
+                          whiteSpace: isExpanded? undefined : 'nowrap'
+                        }}>
                           {qna.isSecret === 1 && '비밀글 · '}
                           {qna.questionTitle}
                         </span>
                         <span className="product-qna-toggle-icon" aria-hidden="true">
-                          {isSecretLocked ? '잠김' : isExpanded ? '-' : '+'}
+                          {isSecretLocked ? '' : isExpanded ? '-' : '+'}
                         </span>
                       </button>
 

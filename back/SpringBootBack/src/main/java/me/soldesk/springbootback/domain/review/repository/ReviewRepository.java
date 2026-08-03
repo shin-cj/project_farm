@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.review.repository;
 
 import me.soldesk.springbootback.domain.review.dto.ReviewResponse;
 import me.soldesk.springbootback.domain.review.entity.Review;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +18,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r FROM Review r WHERE r.productId IN :productIds ORDER BY r.createdAt DESC")
     List<Review> findTopReviewsByProductIds(@Param("productIds") List<Long> productIds, Pageable pageable);
+
+    @Query("SELECT r FROM Review r WHERE r.productId IN :productIds ORDER BY r.createdAt DESC")
+    Page<Review> findReviewsByProductIds(@Param("productIds") List<Long> productIds, Pageable pageable);
 
     @Query("SELECT COUNT(r) FROM Review r WHERE r.productId = :productId")
     long countByProductId(@Param("productId") Long productId);

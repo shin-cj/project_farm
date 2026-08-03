@@ -3,29 +3,31 @@ package me.soldesk.springbootback.domain.sales.dto;
 import lombok.Getter;
 import me.soldesk.springbootback.domain.review.entity.Review;
 
+import java.time.LocalDateTime;
+
 @Getter
 public class ReviewSummaryResponse {
     private Long reviewId;
+    private Long productId;
+    private String productName;
+    private String buyerName;
     private String content;
     private int rating;
-    private String name; // 상품명 또는 작성자 이름
+    private byte[] imageUrl;
+    private LocalDateTime createdAt;
 
-    // 💡 생성자
-    public ReviewSummaryResponse(Long reviewId, String content, int rating, String name) {
-        this.reviewId = reviewId;
-        this.content = content;
-        this.rating = rating;
-        this.name = name;
+    public ReviewSummaryResponse(Review review, String productName, String buyerName) {
+        this.reviewId = review.getReviewId();
+        this.productId = review.getProductId();
+        this.productName = productName;
+        this.buyerName = buyerName;
+        this.content = review.getContent();
+        this.rating = review.getRating();
+        this.imageUrl = review.getImageUrl();
+        this.createdAt = review.getCreatedAt();
     }
 
-    // 💡 팩토리 메서드 (엔티티와 외부 데이터를 조합해서 생성)
-    public static ReviewSummaryResponse from(Review review, String name) {
-        return new ReviewSummaryResponse(
-                review.getReviewId(),
-                review.getContent(),
-                review.getRating(),
-                name
-        );
+    public static ReviewSummaryResponse from(Review review, String productName, String buyerName) {
+        return new ReviewSummaryResponse(review, productName, buyerName);
     }
-
 }

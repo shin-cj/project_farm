@@ -80,4 +80,16 @@ public class Qna {
     @Column(name = "answered_at", nullable = true)
     private LocalDateTime answeredAt;
 
+    /** 관리자가 문의를 숨긴 사유 */
+    @Column(name = "deletion_reason", length = 500)
+    private String deletionReason;
+
+    /** 문의를 숨김 처리한 관리자 번호 */
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
+    /** 문의가 관리자에 의해 숨김 처리된 일시 */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
 }

@@ -619,9 +619,7 @@
 
 .product-qna-card-toggle > span:first-child {
   min-width: 0;
-  overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .product-qna-card-toggle:hover {
