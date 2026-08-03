@@ -66,6 +66,42 @@ function formatPrice(value) {
   return `${Number(value || 0).toLocaleString()}원`;
 }
 
+function getRefundApprovalErrorMessage(error) {
+  const message = error?.message || "";
+
+  if (message.includes("더미 주문") || message.includes("결제 정보를 찾을 수 없습니다")) {
+    return "환불할 실제 토스 결제를 찾지 못했습니다. SQL 더미 주문이 아닌 화면에서 직접 결제한 주문으로 테스트해주세요.";
+  }
+
+  if (message.includes("결제 키가 일치하지 않습니다")) {
+    return "토스 테스트 키가 서로 다릅니다. 팀원의 프론트 클라이언트 키와 백엔드 시크릿 키가 같은 테스트 상점에서 발급된 키인지 확인해주세요.";
+  }
+
+  if (message.includes("이미 취소된 결제")) {
+    return "토스에서는 이미 취소된 결제입니다. DB의 주문·결제 상태와 토스의 남은 결제 금액을 확인해주세요.";
+  }
+
+  if (message.includes("취소 가능 금액") || message.includes("환불 요청 금액")) {
+    return "환불 금액이 토스의 남은 결제 금액과 다릅니다. 이전 부분 취소 내역과 주문별 결제 금액을 확인해주세요.";
+  }
+
+  if (message.includes("요청이 일시적으로 많습니다") || error?.status === 429) {
+    return "토스 요청량이 많아 환불을 처리하지 못했습니다. 잠시 후 다시 승인해주세요.";
+  }
+
+  if (message.includes("환불 요청 상태")
+      || message.includes("주문 정보가 없습니다")
+      || message.includes("결제 정보가 없습니다")) {
+    return message;
+  }
+
+  if (error?.status >= 500 || error?.code === "SYSTEM_ERROR") {
+    return "서버에서 환불을 처리하지 못했습니다. 백엔드 콘솔의 토스 오류 로그를 확인해주세요.";
+  }
+
+  return message || "환불 승인에 실패했습니다. 주문 상태와 결제 정보를 확인해주세요.";
+}
+
 function AdminDeliveryManagementPage() {
   const { alert, confirm, prompt } = useAppFeedback();
   const [orders, setOrders] = useState([]);
@@ -197,10 +233,18 @@ function AdminDeliveryManagementPage() {
 
     try {
       await approveRefund(order.orderId);
-      alert("환불이 승인되었습니다.");
+      alert({
+        message: "환불이 승인되었습니다.",
+        type: "success",
+      });
       await fetchOrders();
     } catch (error) {
-      alert("환불 승인에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      console.error(error);
+      alert({
+        message: getRefundApprovalErrorMessage(error),
+        type: "error",
+        duration: 7000,
+      });
     }
   }
 

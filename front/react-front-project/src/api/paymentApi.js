@@ -1,5 +1,26 @@
 const API_BASE_URL = "";
 
+async function createPaymentApiError(response, fallbackMessage) {
+  const responseText = await response.text();
+  let errorCode = "REQUEST_FAILED";
+  let errorMessage = fallbackMessage;
+
+  if (responseText) {
+    try {
+      const errorResponse = JSON.parse(responseText);
+      errorCode = errorResponse.error || errorCode;
+      errorMessage = errorResponse.message || fallbackMessage;
+    } catch {
+      errorMessage = responseText;
+    }
+  }
+
+  const error = new Error(errorMessage);
+  error.code = errorCode;
+  error.status = response.status;
+  return error;
+}
+
 export async function cancelPayment(
   orderId,
   cancelReason = "구매자 요청",
@@ -17,8 +38,7 @@ export async function cancelPayment(
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "결제 취소에 실패했습니다.");
+    throw await createPaymentApiError(response, "결제 취소에 실패했습니다.");
   }
 
   return response.json();
@@ -39,8 +59,7 @@ export async function cancelPaymentGroup(
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "전체 주문 취소에 실패했습니다.");
+    throw await createPaymentApiError(response, "전체 주문 취소에 실패했습니다.");
   }
 
   return response.json();
@@ -58,8 +77,7 @@ export async function requestRefund(orderId, refundReason = "상품 하자") {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "환불 요청에 실패했습니다.");
+    throw await createPaymentApiError(response, "환불 요청에 실패했습니다.");
   }
 
   return response.json();
@@ -71,8 +89,7 @@ export async function approveRefund(orderId) {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "환불 승인에 실패했습니다.");
+    throw await createPaymentApiError(response, "환불 승인에 실패했습니다.");
   }
 
   return response.json();
@@ -90,8 +107,7 @@ export async function rejectRefund(orderId, rejectReason = "환불 기준에 맞
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || "환불 반려에 실패했습니다.");
+    throw await createPaymentApiError(response, "환불 반려에 실패했습니다.");
   }
 
   return response.json();

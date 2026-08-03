@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class PaymentService {
@@ -753,9 +754,86 @@ public class PaymentService {
                 return response;
             } catch (RuntimeException lookupException) {
                 cancelException.addSuppressed(lookupException);
-                throw cancelException;
+                throw toPaymentCancelException(cancelException);
             }
         }
+    }
+
+    private IllegalArgumentException toPaymentCancelException(RestClientException exception) {
+        String responseBody = "";
+        int statusCode = 0;
+
+        if (exception instanceof RestClientResponseException responseException) {
+            responseBody = responseException.getResponseBodyAsString();
+            statusCode = responseException.getStatusCode().value();
+        }
+
+        log.warn(
+                "토스 결제 취소 실패. statusCode={}, responseBody={}",
+                statusCode,
+                responseBody,
+                exception
+        );
+
+        String normalizedBody = responseBody == null ? "" : responseBody.toUpperCase();
+
+        if (normalizedBody.contains("NOT_FOUND_PAYMENT")) {
+            return new IllegalArgumentException(
+                    "토스 결제 정보를 찾을 수 없습니다. 더미 주문이거나 실제 결제 키가 아닌지 확인해주세요.",
+                    exception
+            );
+        }
+
+        if (normalizedBody.contains("UNAUTHORIZED_KEY")
+                || normalizedBody.contains("INVALID_API_KEY")
+                || statusCode == 401
+                || statusCode == 403) {
+            return new IllegalArgumentException(
+                    "토스 결제 키가 일치하지 않습니다. 프론트 클라이언트 키와 백엔드 시크릿 키가 같은 테스트 상점의 키인지 확인해주세요.",
+                    exception
+            );
+        }
+
+        if (normalizedBody.contains("ALREADY_CANCELED_PAYMENT")) {
+            return new IllegalArgumentException(
+                    "토스에서는 이미 취소된 결제지만 프로젝트 주문 상태와 취소 금액이 일치하지 않습니다. 결제 내역과 DB 상태를 확인해주세요.",
+                    exception
+            );
+        }
+
+        if (normalizedBody.contains("NOT_CANCELABLE_AMOUNT")
+                || normalizedBody.contains("EXCEED_MAX_REFUND_DUE")) {
+            return new IllegalArgumentException(
+                    "환불 요청 금액이 토스의 취소 가능 금액과 일치하지 않습니다. 부분 취소 내역과 남은 결제 금액을 확인해주세요.",
+                    exception
+            );
+        }
+
+        if (normalizedBody.contains("NOT_CANCELABLE_PAYMENT")) {
+            return new IllegalArgumentException(
+                    "현재 상태에서는 취소할 수 없는 결제입니다. 토스 결제 상태를 확인해주세요.",
+                    exception
+            );
+        }
+
+        if (normalizedBody.contains("TOO_MANY_REQUESTS") || statusCode == 429) {
+            return new IllegalArgumentException(
+                    "토스 결제 요청이 일시적으로 많습니다. 잠시 후 다시 환불 승인해주세요.",
+                    exception
+            );
+        }
+
+        if (statusCode >= 500) {
+            return new IllegalArgumentException(
+                    "토스 결제 서버에서 환불을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.",
+                    exception
+            );
+        }
+
+        return new IllegalArgumentException(
+                "토스 환불 승인에 실패했습니다. 결제 키와 취소 가능 금액을 확인해주세요.",
+                exception
+        );
     }
 
     private void transferDeliveryFee(
