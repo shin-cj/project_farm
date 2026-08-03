@@ -2,6 +2,8 @@
 import axios from 'axios';
 
 function QnaTable() {
+    const loginUser = JSON.parse(localStorage.getItem('loginUser') || 'null');
+    const adminId = loginUser?.userId;
     const [qnas, setQnas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [answerInputs, setAnswerInputs] = useState({});
@@ -16,7 +18,9 @@ function QnaTable() {
 
     const fetchQnas = useCallback(async () => {
         try {
-            const response = await axios.get('/api/qna/all');
+            const response = await axios.get('/api/qna/all', {
+                params: adminId ? { viewerId: adminId } : {},
+            });
             setQnas(response.data);
         } catch (error) {
             console.error("QnA 목록을 불러오지 못했습니다.", error);
@@ -24,7 +28,7 @@ function QnaTable() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [adminId]);
 
     useEffect(() => {
         fetchQnas();

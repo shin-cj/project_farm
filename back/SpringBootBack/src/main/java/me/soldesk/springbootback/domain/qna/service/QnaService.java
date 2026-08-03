@@ -1,11 +1,14 @@
 package me.soldesk.springbootback.domain.qna.service;
 
 import lombok.RequiredArgsConstructor;
+import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
+import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.qna.dto.QnaAnswerRequest;
 import me.soldesk.springbootback.domain.qna.dto.QnaRequest;
 import me.soldesk.springbootback.domain.qna.dto.QnaResponse;
 import me.soldesk.springbootback.domain.qna.entity.Qna;
 import me.soldesk.springbootback.domain.qna.repository.QnaRepository;
+import me.soldesk.springbootback.domain.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,17 +20,20 @@ import java.util.List;
 public class QnaService {
 
     private final QnaRepository qnaRepository;
+    private final ProductRepository productRepository;
+    private final FarmRepository farmRepository;
+    private final UserRepository userRepository;
 
-    public List<QnaResponse> getQnasByProduct(Long productId) {
+    public List<QnaResponse> getQnasByProduct(Long productId, Long viewerId) {
         return qnaRepository.findByProductIdOrderByCreatedAtDesc(productId).stream()
-                .map(this::toResponse)
+                .map(qna -> toViewerResponse(qna, viewerId))
                 .toList();
     }
 
     // 전체 QnA 목록 조회 메서드 (수동 강제 내림차순 정렬: 최신 글이 맨 위로)
-    public List<QnaResponse> getAllQnas() {
+    public List<QnaResponse> getAllQnas(Long viewerId) {
         return qnaRepository.findAllByOrderByCreatedAtDesc().stream()
-                .map(this::toResponse)
+                .map(qna -> toViewerResponse(qna, viewerId))
                 .toList();
     }
 
@@ -61,15 +67,59 @@ public class QnaService {
         res.setAnsweredBy(qna.getAnsweredBy());
         res.setQnaStatus(qna.getQnaStatus());
         res.setIsSecret(qna.getIsSecret());
+        res.setSecretContentVisible(true);
         res.setCreatedAt(qna.getCreatedAt());
         res.setAnsweredAt(qna.getAnsweredAt());
         return res;
     }
 
-    public QnaResponse getQnaDetail(Long qnaId) {
+    public QnaResponse getQnaDetail(Long qnaId, Long viewerId) {
         Qna qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 문의가 없습니다."));
-        return toResponse(qna);
+        return toViewerResponse(qna, viewerId);
+    }
+
+    private QnaResponse toViewerResponse(Qna qna, Long viewerId) {
+        QnaResponse response = toResponse(qna);
+        boolean canViewContent = canViewSecretContent(qna, viewerId);
+        response.setSecretContentVisible(canViewContent);
+
+        if (!canViewContent) {
+            response.setBuyerName("비공개");
+            response.setQuestionTitle("비밀 문의입니다.");
+            response.setQuestionContent("작성자와 판매자만 확인할 수 있습니다.");
+            response.setAnswerContent(null);
+            response.setAnsweredBy(null);
+        }
+
+        return response;
+    }
+
+    private boolean canViewSecretContent(Qna qna, Long viewerId) {
+        if (!Integer.valueOf(1).equals(qna.getIsSecret())) {
+            return true;
+        }
+
+        if (viewerId == null) {
+            return false;
+        }
+
+        if (viewerId.equals(qna.getBuyerId())) {
+            return true;
+        }
+
+        boolean isAdmin = userRepository.findById(viewerId)
+                .map(user -> Long.valueOf(1L).equals(user.getRoleId()))
+                .orElse(false);
+
+        if (isAdmin) {
+            return true;
+        }
+
+        return productRepository.findById(qna.getProductId())
+                .flatMap(product -> farmRepository.findById(product.getFarmId()))
+                .map(farm -> viewerId.equals(farm.getSellerId()))
+                .orElse(false);
     }
 
     @Transactional

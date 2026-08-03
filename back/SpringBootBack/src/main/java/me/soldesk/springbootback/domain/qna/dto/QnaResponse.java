@@ -50,6 +50,9 @@ public class QnaResponse {
     /** 비밀 문의 여부: 0 공개, 1 비밀 */
     private Integer isSecret;
 
+    /** 현재 조회자가 비밀 문의의 원문을 볼 수 있는지 여부 */
+    private boolean secretContentVisible;
+
     /** 문의 작성 일시 */
     private LocalDateTime createdAt;
 
@@ -66,6 +69,7 @@ public class QnaResponse {
         this.answeredBy = qna.getAnsweredBy();
         this.qnaStatus = qna.getQnaStatus();
         this.isSecret = qna.getIsSecret();
+        this.secretContentVisible = !Integer.valueOf(1).equals(qna.getIsSecret());
         this.createdAt = qna.getCreatedAt();
         this.answeredAt = qna.getAnsweredAt();
     }

@@ -316,6 +316,27 @@
     letter-spacing: 0;
 }
 
+.dashboard-trend-heading {
+    display: grid;
+    gap: 6px;
+}
+
+.dashboard-trend-heading p {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    color: #6b786f;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.dashboard-trend-heading p strong {
+    color: #176335;
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+}
+
 .dashboard-trend-tabs {
     display: inline-flex;
     align-items: center;
