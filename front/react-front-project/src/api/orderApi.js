@@ -20,6 +20,12 @@ const orderApi = {
         return httpClient.post("/orders/from-product", request)
     },
 
+    confirmPurchase(orderId, buyerId) {
+        return httpClient.post(`/orders/${orderId}/purchase-confirm`, null, {
+            params: { buyerId },
+        })
+    },
+
 
 
 }

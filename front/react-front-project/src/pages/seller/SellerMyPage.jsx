@@ -6,6 +6,7 @@ import { getSellerOrders } from "../../api/deliveryApi.js";
 import {
   getSellerDailyGoal,
   getSellerPointSummary,
+  getSellerPointHistory,
   getSellerPointWithdrawals,
   requestSellerPointWithdrawal,
   updateSellerDailyGoal,
@@ -38,6 +39,13 @@ const WITHDRAWAL_STATUS_LABEL = {
   APPROVED: "승인 완료",
   REJECTED: "반려",
   COMPLETED: "지급 완료",
+};
+
+const SETTLEMENT_STATUS_LABEL = {
+  PENDING: "정산 예정",
+  EARNED: "정산 완료",
+  CANCELED: "주문 취소",
+  REFUNDED: "환불 회수",
 };
 
 const MIN_WITHDRAWAL_POINT = 5000;
@@ -92,6 +100,7 @@ function SellerMyPage() {
   });
   const [pointSummary, setPointSummary] = useState({
     totalEarnedPoint: 0,
+    pendingPoint: 0,
     availablePoint: 0,
     canceledPoint: 0,
     refundedPoint: 0,
@@ -107,6 +116,8 @@ function SellerMyPage() {
   const [goalSaving, setGoalSaving] = useState(false);
   const [goalMessage, setGoalMessage] = useState("");
   const [withdrawals, setWithdrawals] = useState([]);
+  const [settlementHistory, setSettlementHistory] = useState([]);
+  const [isSettlementModalOpen, setIsSettlementModalOpen] = useState(false);
   const sellerName = getLoginSellerName();
   const [withdrawalForm, setWithdrawalForm] = useState({
     withdrawalAmount: "",
@@ -131,6 +142,21 @@ function SellerMyPage() {
   }, [sellerName]);
 
   useEffect(() => {
+    if (!isSettlementModalOpen) {
+      return undefined;
+    }
+
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        setIsSettlementModalOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isSettlementModalOpen]);
+
+  useEffect(() => {
     async function loadSellerMyPage() {
       try {
         setLoading(true);
@@ -144,12 +170,13 @@ function SellerMyPage() {
 
         setSellerId(sellerId);
 
-        const [farms, orders, pointResponse, dailyGoalResponse, withdrawalResponse] = await Promise.all([
+        const [farms, orders, pointResponse, dailyGoalResponse, withdrawalResponse, historyResponse] = await Promise.all([
           getFarms(sellerId),
           getSellerOrders(sellerId),
           getSellerPointSummary(sellerId),
           getSellerDailyGoal(sellerId),
           getSellerPointWithdrawals(sellerId),
+          getSellerPointHistory(sellerId),
         ]);
 
         const productLists = await Promise.all(
@@ -174,6 +201,7 @@ function SellerMyPage() {
         setDailyGoal(dailyGoalResponse.data);
         setTargetPointInput(String(dailyGoalResponse.data.targetPoint || ""));
         setWithdrawals(withdrawalResponse.data);
+        setSettlementHistory(historyResponse.data);
       } catch (error) {
         console.error(error);
         setError("판매자 마이페이지 정보를 불러오지 못했습니다.");
@@ -217,13 +245,15 @@ function SellerMyPage() {
   }
 
   async function refreshPointAndWithdrawals(currentSellerId) {
-    const [pointResponse, withdrawalResponse] = await Promise.all([
+    const [pointResponse, withdrawalResponse, historyResponse] = await Promise.all([
       getSellerPointSummary(currentSellerId),
       getSellerPointWithdrawals(currentSellerId),
+      getSellerPointHistory(currentSellerId),
     ]);
 
     setPointSummary(pointResponse.data);
     setWithdrawals(withdrawalResponse.data);
+    setSettlementHistory(historyResponse.data);
   }
 
   function handleWithdrawalFormChange(event) {
@@ -371,7 +401,12 @@ function SellerMyPage() {
               <p>Point Withdrawal</p>
               <h2>포인트 출금 신청</h2>
             </div>
-            <strong>{formatPoint(pointSummary.availablePoint)}</strong>
+            <div className="seller-withdrawal-balance">
+              <strong>{formatPoint(pointSummary.availablePoint)}</strong>
+              <button type="button" onClick={() => setIsSettlementModalOpen(true)}>
+                정산 내역 보기
+              </button>
+            </div>
           </div>
 
           <form className="seller-withdrawal-form" onSubmit={handleRequestWithdrawal}>
@@ -574,9 +609,80 @@ function SellerMyPage() {
             <Link to="/seller/statistics">이동</Link>
           </div>
 
-          <p>포인트는 결제 완료 시 적립되고, 취소/환불 시 회수 상태로 변경됩니다.</p>
+          <p>결제 완료 금액은 정산 예정으로 보관되고, 구매확정 시 출금 가능한 포인트로 전환됩니다.</p>
         </article>
       </section>
+
+      {isSettlementModalOpen && (
+        <div
+          className="seller-settlement-modal-backdrop"
+          onClick={() => setIsSettlementModalOpen(false)}
+        >
+          <section
+            className="seller-settlement-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seller-settlement-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="seller-settlement-modal-head">
+              <div>
+                <p>Settlement</p>
+                <h2 id="seller-settlement-modal-title">포인트 정산 내역</h2>
+                <span>구매확정 여부에 따른 포인트 정산 상태입니다.</span>
+              </div>
+              <button
+                type="button"
+                aria-label="정산 내역 닫기"
+                onClick={() => setIsSettlementModalOpen(false)}
+              >
+                x
+              </button>
+            </header>
+
+            <div className="seller-settlement-summary">
+              <article>
+                <span>정산 예정 금액</span>
+                <strong>{formatPoint(pointSummary.pendingPoint)}</strong>
+                <small>구매확정 대기 · 미확정 시 배송 완료 2일 후 자동 정산</small>
+              </article>
+              <article>
+                <span>정산된 금액</span>
+                <strong>{formatPoint(pointSummary.totalEarnedPoint)}</strong>
+                <small>구매확정되어 적립된 누적 포인트</small>
+              </article>
+            </div>
+
+            <div className="seller-settlement-history-head">
+              <h3>주문별 정산 내역</h3>
+              <span>총 {settlementHistory.length}건</span>
+            </div>
+
+            <div className="seller-settlement-history">
+              {settlementHistory.length === 0 ? (
+                <p className="seller-settlement-empty">아직 정산 내역이 없습니다.</p>
+              ) : (
+                settlementHistory.map((settlement) => (
+                  <article key={settlement.pointId}>
+                    <div>
+                      <strong>{settlement.orderNumber}</strong>
+                      <span>
+                        결제 상품 금액 {formatPoint(settlement.totalAmount)} · {formatDateTime(settlement.createdAt)}
+                      </span>
+                    </div>
+                    <div className="seller-settlement-history-amount">
+                      <strong>{formatPoint(settlement.sellerPoint)}</strong>
+                      <em className={`settlement-status ${settlement.pointStatus.toLowerCase()}`}>
+                        {SETTLEMENT_STATUS_LABEL[settlement.pointStatus] || settlement.pointStatus}
+                      </em>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

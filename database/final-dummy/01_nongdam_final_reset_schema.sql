@@ -308,7 +308,8 @@ CREATE TABLE product_stock_histories (
             'INITIAL_STOCK',
             'MANUAL_ADJUSTMENT',
             'PAYMENT_DEDUCTION',
-            'PAYMENT_CANCEL_RESTORE'
+            'PAYMENT_CANCEL_RESTORE',
+            'PAYMENT_REFUND_RESTORE'
         )),
     CONSTRAINT ck_stock_histories_quantity
         CHECK (previous_quantity >= 0 AND current_quantity >= 0)

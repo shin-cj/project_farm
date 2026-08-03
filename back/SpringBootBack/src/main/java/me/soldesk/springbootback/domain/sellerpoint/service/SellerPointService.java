@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.farm.entity.Farm;
 import me.soldesk.springbootback.domain.farm.repository.FarmRepository;
 import me.soldesk.springbootback.domain.order.entity.Order;
+import me.soldesk.springbootback.domain.order.repository.OrderRepository;
+import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointHistoryResponse;
 import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointSummaryResponse;
 import me.soldesk.springbootback.domain.sellerpoint.entity.SellerPoint;
 import me.soldesk.springbootback.domain.sellerpoint.repository.SellerPointRepository;
@@ -22,6 +24,7 @@ public class SellerPointService {
     private final SellerPointRepository sellerPointRepository;
     private final SellerPointWithdrawalRepository sellerPointWithdrawalRepository;
     private final FarmRepository farmRepository;
+    private final OrderRepository orderRepository;
 
     public void earnPoint(Order order) {
         if (sellerPointRepository.findByOrderId(order.getOrderId()).isPresent()) {
@@ -41,8 +44,29 @@ public class SellerPointService {
         sellerPoint.setTotalAmount(totalAmount);
         sellerPoint.setPlatformFee(platformFee);
         sellerPoint.setSellerPoint(sellerPointAmount);
-        sellerPoint.setPointStatus("EARNED");
+        sellerPoint.setPointStatus("PENDING");
 
+        sellerPointRepository.save(sellerPoint);
+    }
+
+    public void settlePoint(Order order) {
+        SellerPoint sellerPoint = sellerPointRepository.findByOrderId(order.getOrderId())
+                .orElseGet(() -> {
+                    earnPoint(order);
+                    return sellerPointRepository.findByOrderId(order.getOrderId())
+                            .orElseThrow(() -> new IllegalStateException("정산 포인트를 생성하지 못했습니다."));
+                });
+
+        if ("EARNED".equals(sellerPoint.getPointStatus())) {
+            return;
+        }
+
+        if (!"PENDING".equals(sellerPoint.getPointStatus())) {
+            throw new IllegalArgumentException("취소 또는 환불된 주문은 정산할 수 없습니다.");
+        }
+
+        sellerPoint.setPointStatus("EARNED");
+        sellerPoint.setUpdatedAt(LocalDateTime.now());
         sellerPointRepository.save(sellerPoint);
     }
 
@@ -59,6 +83,11 @@ public class SellerPointService {
 
         Long totalEarnedPoint = sellerPoints.stream()
                 .filter(point -> "EARNED".equals(point.getPointStatus()))
+                .mapToLong(SellerPoint::getSellerPoint)
+                .sum();
+
+        Long pendingPoint = sellerPoints.stream()
+                .filter(point -> "PENDING".equals(point.getPointStatus()))
                 .mapToLong(SellerPoint::getSellerPoint)
                 .sum();
 
@@ -87,11 +116,34 @@ public class SellerPointService {
 
         return new SellerPointSummaryResponse(
                 totalEarnedPoint,
+                pendingPoint,
                 availablePoint,
                 canceledPoint,
                 refundedPoint,
                 totalPlatformFee
         );
+    }
+
+    public List<SellerPointHistoryResponse> getHistory(Long sellerId) {
+        return sellerPointRepository.findBySellerIdOrderByCreatedAtDesc(sellerId).stream()
+                .map(this::toHistoryResponse)
+                .toList();
+    }
+
+    private SellerPointHistoryResponse toHistoryResponse(SellerPoint sellerPoint) {
+        SellerPointHistoryResponse response = new SellerPointHistoryResponse();
+        response.setPointId(sellerPoint.getPointId());
+        response.setOrderId(sellerPoint.getOrderId());
+        response.setOrderNumber(orderRepository.findById(sellerPoint.getOrderId())
+                .map(Order::getOrderNumber)
+                .orElse("주문 정보 없음"));
+        response.setTotalAmount(sellerPoint.getTotalAmount());
+        response.setPlatformFee(sellerPoint.getPlatformFee());
+        response.setSellerPoint(sellerPoint.getSellerPoint());
+        response.setPointStatus(sellerPoint.getPointStatus());
+        response.setCreatedAt(sellerPoint.getCreatedAt());
+        response.setUpdatedAt(sellerPoint.getUpdatedAt());
+        return response;
     }
 
     private void updatePointStatus(Long orderId, String pointStatus) {

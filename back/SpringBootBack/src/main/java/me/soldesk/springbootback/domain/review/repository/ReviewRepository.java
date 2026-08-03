@@ -27,7 +27,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "JOIN deliveries d ON d.order_id = o.order_id " +
             "WHERE o.buyer_id = :buyerId " +
             "AND oi.product_id = :productId " +
-            "AND o.order_status = 'PAID' " +
+            "AND o.order_status IN ('PAID', 'PURCHASE_CONFIRMED') " +
             "AND d.delivery_status = 'DELIVERED' " +
             "AND NOT EXISTS (" +
             "    SELECT 1 FROM reviews r WHERE r.order_item_id = oi.order_item_id" +

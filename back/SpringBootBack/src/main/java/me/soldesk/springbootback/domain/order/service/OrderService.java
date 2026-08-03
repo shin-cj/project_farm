@@ -19,6 +19,7 @@ import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.user.entity.User;
 import me.soldesk.springbootback.domain.user.repository.UserRepository;
+import me.soldesk.springbootback.domain.sellerpoint.service.SellerPointService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Service
 public class OrderService {
@@ -41,6 +43,7 @@ public class OrderService {
     private final DeliveryRepository deliveryRepository;
     private final FarmRepository farmRepository;
     private final UserRepository userRepository;
+    private final SellerPointService sellerPointService;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -50,7 +53,8 @@ public class OrderService {
             PaymentRepository paymentRepository,
             DeliveryRepository deliveryRepository,
             FarmRepository farmRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            SellerPointService sellerPointService
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -60,6 +64,7 @@ public class OrderService {
         this.deliveryRepository = deliveryRepository;
         this.farmRepository = farmRepository;
         this.userRepository = userRepository;
+        this.sellerPointService = sellerPointService;
     }
 
     @Transactional
@@ -254,6 +259,63 @@ public class OrderService {
                 .toList();
     }
 
+    @Transactional
+    public OrderResponse confirmPurchase(Long orderId, Long buyerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문 정보를 찾을 수 없습니다."));
+
+        if (buyerId == null || !buyerId.equals(order.getBuyerId())) {
+            throw new IllegalArgumentException("본인의 주문만 구매확정할 수 있습니다.");
+        }
+
+        if ("PURCHASE_CONFIRMED".equals(order.getOrderStatus())) {
+            return toOrderResponse(order);
+        }
+
+        if (!"PAID".equals(order.getOrderStatus())) {
+            throw new IllegalArgumentException("결제 완료 주문만 구매확정할 수 있습니다.");
+        }
+
+        Delivery delivery = deliveryRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("배송 정보를 찾을 수 없습니다."));
+
+        if (!"DELIVERED".equals(delivery.getDeliveryStatus())) {
+            throw new IllegalArgumentException("배송 완료된 주문만 구매확정할 수 있습니다.");
+        }
+
+        return completePurchaseConfirmation(order);
+    }
+
+    @Transactional
+    public boolean confirmPurchaseAutomatically(Long orderId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+
+        if (order == null || !"PAID".equals(order.getOrderStatus())) {
+            return false;
+        }
+
+        Delivery delivery = deliveryRepository.findByOrderId(orderId).orElse(null);
+
+        if (delivery == null
+                || !"DELIVERED".equals(delivery.getDeliveryStatus())
+                || delivery.getDeliveredAt() == null
+                || delivery.getDeliveredAt().plusDays(2).isAfter(LocalDateTime.now())) {
+            return false;
+        }
+
+        completePurchaseConfirmation(order);
+        return true;
+    }
+
+    private OrderResponse completePurchaseConfirmation(Order order) {
+        order.setOrderStatus("PURCHASE_CONFIRMED");
+        order.setUpdatedAt(LocalDateTime.now());
+        orderRepository.save(order);
+        sellerPointService.settlePoint(order);
+
+        return toOrderResponse(order);
+    }
+
     private OrderResponse toOrderResponse(Order order) {
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getOrderId());
 
@@ -344,8 +406,8 @@ public class OrderService {
     }
 
     private void validateOrderableProduct(Product product) {
-        if ("DELETED".equals(product.getProductStatus())) {
-            throw new IllegalArgumentException("삭제된 상품은 주문할 수 없습니다.");
+        if (!"ON_SALE".equals(product.getProductStatus())) {
+            throw new IllegalArgumentException("현재 판매 중인 상품만 주문할 수 있습니다.");
         }
     }
 

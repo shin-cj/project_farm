@@ -372,14 +372,12 @@ function OrderPage() {
       <div style={{ display: "grid", gap: "18px", marginTop: "28px" }}>
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>주문자</span>
-          <input type="text" value={receiverName} onChange={(event) => setReceiverName(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }}
-                      maxLength={50}/>
+          <input type="text" value={receiverName} onChange={(event) => setReceiverName(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
         </label>
 
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>전화번호</span>
-          <input type="text" value={receiverPhone} onChange={(event) => setReceiverPhone(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }}
-                maxLength={20}/>
+          <input type="text" value={receiverPhone} onChange={(event) => setReceiverPhone(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
         </label>
 
         <label>
@@ -416,11 +414,18 @@ function OrderPage() {
 
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>배송 요청사항</span>
-          <input type="text" value={requestMessage} onChange={(event) => setRequestMessage(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }}
-                maxLength={500}/>
-          <small>{requestMessage.length}/500자</small>
+          <textarea
+            value={requestMessage}
+            maxLength={255}
+            onChange={(event) => setRequestMessage(event.target.value.slice(0, 255))}
+            rows={3}
+            className="order-request-message-input"
+            placeholder="배송 시 참고할 내용을 입력해주세요."
+          />
+          <span style={{ display: "block", marginTop: "6px", color: "#68756d", fontSize: "13px", textAlign: "right" }}>
+            {requestMessage.length}/255자
+          </span>
         </label>
-
       </div>
 
       <div

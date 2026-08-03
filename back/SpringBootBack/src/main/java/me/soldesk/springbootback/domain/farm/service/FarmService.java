@@ -18,7 +18,6 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -79,13 +78,13 @@ public class FarmService {
         LocalDate weekStartDate = today.with(DayOfWeek.MONDAY);
         LocalDateTime startDate = weekStartDate.atStartOfDay();
         LocalDateTime endDate = weekStartDate.plusWeeks(1).atStartOfDay();
-        List<String> paidOrderStatuses = Arrays.asList("PAID", "SHIPPING", "DELIVERED");
+        List<String> paidOrderStatuses = List.of("PAID");
 
         List<Object[]> popularFarmRows = farmRepository.findWeeklyPopularFarms(
                 startDate,
                 endDate,
                 paidOrderStatuses,
-                PageRequest.of(0, 3)
+                PageRequest.of(0, 2)
         );
 
         List<PopularFarmResponse> responses = new ArrayList<>();
@@ -111,7 +110,7 @@ public class FarmService {
         List<Farm> fallbackFarms = farmRepository.findByApprovalStatusOrderByFarmIdDesc("APPROVED");
 
         for (Farm farm : fallbackFarms) {
-            if (responses.size() >= 3) {
+            if (responses.size() >= 2) {
                 break;
             }
 

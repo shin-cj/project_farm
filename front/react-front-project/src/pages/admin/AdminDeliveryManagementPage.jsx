@@ -6,6 +6,7 @@ import {
   ORDER_STATUS_LABEL,
 } from "../../constants/statusLabels.js";
 import { useAppFeedback } from "../../context/AppFeedbackContext.jsx";
+import "./AdminDeliveryManagementPage.css";
 
 const filterOptions = [
   { value: "ALL", label: "전체" },
@@ -393,7 +394,7 @@ function AdminDeliveryManagementPage() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                     gap: "8px",
                     marginTop: "8px",
                   }}
@@ -406,6 +407,7 @@ function AdminDeliveryManagementPage() {
                       background: "#ffffff",
                       color: "#405348",
                       lineHeight: 1.45,
+                      minWidth: 0,
                     }}
                   >
                     <strong style={{ display: "block", color: "#213328", marginBottom: "6px" }}>
@@ -421,9 +423,10 @@ function AdminDeliveryManagementPage() {
                       주소: {[order.receiverAddress, order.receiverDetailAddress].filter(Boolean).join(" ") || "주소 정보 없음"}
                     </span>
                     {order.requestMessage && (
-                      <span style={{ display: "block", color: "#216b3a", fontWeight: 800 }}>
-                        요청사항: {order.requestMessage}
-                      </span>
+                      <div className="admin-delivery-request-message">
+                        <strong>배송 요청사항</strong>
+                        <span>{order.requestMessage}</span>
+                      </div>
                     )}
                   </div>
 

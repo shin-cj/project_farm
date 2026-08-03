@@ -25,9 +25,6 @@ import DeliveryStatusPage from '../pages/buyer/DeliveryStatusPage.jsx'
 import QnaWritePage from '../pages/buyer/QnaWritePage.jsx'
 import ReviewWritePage from '../pages/buyer/ReviewWritePage.jsx'
 
-import QnaFormPage from '../pages/admin/QnaFormPage'
-import QnaListPage from '../pages/admin/QnaListPage'
-
 import SellerDashboardPage from '../pages/seller/SellerDashboardPage'
 import SellerMyPage from '../pages/seller/SellerMyPage'
 import FarmManagementPage from '../pages/seller/FarmManagementPage'
@@ -88,10 +85,6 @@ function AppRoutes() {
         <Route path="/reviews/write" element={<ReviewWritePage />} />
         <Route path="/reviews/edit/:id" element={<ReviewWritePage />} />
 
-        <Route path="/qna/create" element={<QnaFormPage />} />
-        <Route path="/qna/edit/:id" element={<QnaFormPage />} />
-        <Route path="/qna/list" element={<QnaListPage />} />
-        <Route path="/qna/list/:productId" element={<QnaListPage />} />
       </Route>
 
       <Route element={<RoleRoute allowedRoleIds={[3]} />}>
@@ -123,8 +116,6 @@ function AppRoutes() {
           <Route path="deliveries" element={<AdminDeliveryManagementPage />} />
           <Route path="point-withdrawals" element={<AdminPointWithdrawalPage />} />
           <Route path="market-prices" element={<MarketPriceManagementPage />} />
-          <Route path="qna/write" element={<QnaFormPage />} />
-          <Route path="qna/edit/:id" element={<QnaFormPage />} />
         </Route>
       </Route>
 

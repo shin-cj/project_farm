@@ -65,8 +65,9 @@ public class QnaController {
 
     // 7. QnA 삭제 API: DELETE /api/qna/{qnaId}
     @DeleteMapping("/{qnaId}")
-    public ResponseEntity<String> deleteQna(@PathVariable Long qnaId) {
-        qnaService.deleteQna(qnaId);
+    public ResponseEntity<String> deleteQna(@PathVariable Long qnaId,
+                                            @RequestParam Long buyerId) {
+        qnaService.deleteQna(qnaId, buyerId);
         return ResponseEntity.ok("삭제 완료");
     }
 }

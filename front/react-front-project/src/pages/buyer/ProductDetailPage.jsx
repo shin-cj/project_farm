@@ -66,8 +66,18 @@ function ProductDetailPage() {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [qnaList, setQnaList] = useState([])
+  const [qnaPage, setQnaPage] = useState(1)
+  const [expandedQnaId, setExpandedQnaId] = useState(null)
   const [answerInputs, setAnswerInputs] = useState({})
   const [reviewList, setReviewList] = useState([])
+  const [reviewPage, setReviewPage] = useState(1)
+  const [editingQna, setEditingQna] = useState(null)
+  const [qnaEditForm, setQnaEditForm] = useState({
+    questionTitle: '',
+    questionContent: '',
+    isSecret: false,
+  })
+  const [isQnaSaving, setIsQnaSaving] = useState(false)
 
   useEffect(() => {
     if (!isOrderModalOpen) {
@@ -83,6 +93,21 @@ function ProductDetailPage() {
     window.addEventListener('keydown', closeModalWithEscape)
     return () => window.removeEventListener('keydown', closeModalWithEscape)
   }, [isOrderModalOpen])
+
+  useEffect(() => {
+    if (!editingQna) {
+      return undefined
+    }
+
+    function closeQnaModalWithEscape(event) {
+      if (event.key === 'Escape' && !isQnaSaving) {
+        setEditingQna(null)
+      }
+    }
+
+    window.addEventListener('keydown', closeQnaModalWithEscape)
+    return () => window.removeEventListener('keydown', closeQnaModalWithEscape)
+  }, [editingQna, isQnaSaving])
 
   useEffect(() => {
     let ignore = false
@@ -160,6 +185,12 @@ function ProductDetailPage() {
   }, [productId])
 
   useEffect(() => {
+    setQnaPage(1)
+    setExpandedQnaId(null)
+    setReviewPage(1)
+  }, [productId])
+
+  useEffect(() => {
     let ignore = false
 
     async function fetchReviews() {
@@ -200,16 +231,70 @@ function ProductDetailPage() {
   }
 
   async function handleDeleteQna(qnaId) {
+    if (!userid) {
+      alert('로그인이 필요한 기능입니다.')
+      navigate('/login')
+      return
+    }
+
     if (!window.confirm('정말 이 문의를 삭제하시겠습니까?')) {
       return
     }
 
     try {
-      await axios.delete(`http://localhost:8080/api/qna/${qnaId}`)
+      await axios.delete(`http://localhost:8080/api/qna/${qnaId}`, {
+        params: { buyerId: userid },
+      })
       alert('삭제 완료되었습니다.')
       await reloadQnas()
-    } catch {
-      alert('삭제 중 오류가 발생했습니다.')
+    } catch (error) {
+      alert(error.response?.data?.message || '삭제 중 오류가 발생했습니다.')
+    }
+  }
+
+  function openQnaEditModal(qna) {
+    const isOwner = Boolean(userid) && Number(userid) === Number(qna.buyerId)
+
+    if (!isOwner) {
+      alert('본인이 작성한 문의만 수정할 수 있습니다.')
+      return
+    }
+
+    setEditingQna(qna)
+    setQnaEditForm({
+      questionTitle: qna.questionTitle || '',
+      questionContent: qna.questionContent || '',
+      isSecret: Number(qna.isSecret) === 1,
+    })
+  }
+
+  async function handleUpdateQna(event) {
+    event.preventDefault()
+
+    const questionTitle = qnaEditForm.questionTitle.trim()
+    const questionContent = qnaEditForm.questionContent.trim()
+
+    if (!questionTitle || !questionContent) {
+      alert('문의 제목과 내용을 모두 입력해주세요.')
+      return
+    }
+
+    try {
+      setIsQnaSaving(true)
+      await axios.put(`http://localhost:8080/api/qna/${editingQna.qnaId}`, {
+        productId: editingQna.productId,
+        buyerId: Number(userid),
+        questionTitle,
+        questionContent,
+        isSecret: qnaEditForm.isSecret ? 1 : 0,
+      })
+      await reloadQnas()
+      setEditingQna(null)
+      alert('문의가 수정되었습니다.')
+    } catch (error) {
+      alert(error.response?.data?.message || '문의 수정 중 오류가 발생했습니다.')
+    } finally {
+      setIsQnaSaving(false)
     }
   }
 
@@ -327,10 +412,25 @@ function ProductDetailPage() {
       && (
           requestedListPath.startsWith('/products')
           || requestedListPath.startsWith('/seller/products')
+          || /^\/farms\/\d+$/.test(requestedListPath)
       )
   const productListPath = isAllowedListPath ? requestedListPath : '/products'
   const sortedQnaList = [...qnaList].sort((a, b) => Number(b.qnaId) - Number(a.qnaId))
+  const qnaPageSize = 5
+  const qnaPageCount = Math.max(1, Math.ceil(sortedQnaList.length / qnaPageSize))
+  const currentQnaPage = Math.min(qnaPage, qnaPageCount)
+  const pagedQnaList = sortedQnaList.slice(
+      (currentQnaPage - 1) * qnaPageSize,
+      currentQnaPage * qnaPageSize,
+  )
   const sortedReviewList = [...reviewList].sort((a, b) => Number(b.reviewId || b.id) - Number(a.reviewId || a.id))
+  const reviewPageSize = 5
+  const reviewPageCount = Math.max(1, Math.ceil(sortedReviewList.length / reviewPageSize))
+  const currentReviewPage = Math.min(reviewPage, reviewPageCount)
+  const pagedReviewList = sortedReviewList.slice(
+      (currentReviewPage - 1) * reviewPageSize,
+      currentReviewPage * reviewPageSize,
+  )
 
   function handleDecreaseQuantity() {
     const currentQuantity = Number(quantity) || minimumOrderQuantity
@@ -340,6 +440,19 @@ function ProductDetailPage() {
   function handleIncreaseQuantity() {
     const currentQuantity = Number(quantity) || minimumOrderQuantity
     setQuantity(Math.min(stockQuantity, currentQuantity + 1))
+  }
+
+  function handleOpenOrderModal() {
+    if (!isPurchasable) {
+      alert(
+          product.productStatus === 'SOLD_OUT'
+              ? '품절된 상품입니다.'
+              : unavailableMessage,
+      )
+      return
+    }
+
+    setIsOrderModalOpen(true)
   }
 
   function handleDirectOrder() {
@@ -535,8 +648,8 @@ function ProductDetailPage() {
               <button
                   type="button"
                   className="product-detail-order-link"
-                  onClick={() => setIsOrderModalOpen(true)}
-                  disabled={!isPurchasable || !isValidQuantity}
+                  onClick={handleOpenOrderModal}
+                  disabled={isPurchasable && !isValidQuantity}
               >
                 바로 주문하기
               </button>
@@ -575,6 +688,7 @@ function ProductDetailPage() {
             </section>
         )}
 
+        <div className="product-community-grid">
         <section
             className="product-qna-section"
             style={{
@@ -622,18 +736,34 @@ function ProductDetailPage() {
                   등록된 문의가 없습니다.
                 </p>
             ) : (
-                sortedQnaList.map((qna) => (
-                    <div
+                pagedQnaList.map((qna) => {
+                  const isQnaOwner = Boolean(userid)
+                      && Number(userid) === Number(qna.buyerId)
+                  const isExpanded = expandedQnaId === qna.qnaId
+
+                  return (
+                    <article
                         key={qna.qnaId}
-                        style={{
-                          border: '1px solid #e0e0e0',
-                          borderRadius: '6px',
-                          padding: '15px',
-                          marginBottom: '15px',
-                          background: '#fafafa',
-                        }}
+                        className={`product-qna-card${isExpanded ? ' is-expanded' : ''}`}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                      <button
+                          type="button"
+                          className="product-qna-card-toggle"
+                          aria-expanded={isExpanded}
+                          aria-controls={`qna-detail-${qna.qnaId}`}
+                          onClick={() => setExpandedQnaId((currentId) => (
+                              currentId === qna.qnaId ? null : qna.qnaId
+                          ))}
+                      >
+                        <span>{qna.questionTitle}</span>
+                        <span className="product-qna-toggle-icon" aria-hidden="true">
+                          {isExpanded ? '-' : '+'}
+                        </span>
+                      </button>
+
+                      {isExpanded && (
+                      <div id={`qna-detail-${qna.qnaId}`} className="product-qna-card-detail">
+                      <div className="product-qna-card-meta">
                         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
     <span style={{ fontWeight: 'bold', color: qna.qnaStatus === 'ANSWERED' ? '#2e7d32' : '#f57c00' }}>
       [{qna.qnaStatus === 'ANSWERED' ? '답변 완료' : '답변 대기중'}]
@@ -651,15 +781,15 @@ function ProductDetailPage() {
                         </div>
                       </div>
 
-                      <h4 style={{ margin: '0 0 8px 0', fontSize: '16px' }}>{qna.questionTitle}</h4>
                       <p style={{ margin: '0 0 12px 0', color: '#333', whiteSpace: 'pre-wrap' }}>
                         {qna.questionContent}
                       </p>
 
+                      {isQnaOwner && (
                       <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
                         <button
                             type="button"
-                            onClick={() => navigate(`/qna/edit/${qna.qnaId}`)}
+                            onClick={() => openQnaEditModal(qna)}
                             style={{ padding: '4px 10px', background: '#6c757d', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '3px', fontSize: '12px' }}
                         >
                           수정
@@ -672,6 +802,7 @@ function ProductDetailPage() {
                           삭제
                         </button>
                       </div>
+                      )}
 
                       <div style={{ marginTop: '10px', background: '#f1f8e9', padding: '12px', borderRadius: '6px', borderLeft: '3px solid #2e7d32' }}>
                         <strong>관리자 답변</strong>
@@ -708,8 +839,52 @@ function ProductDetailPage() {
                             </p>
                         )}
                       </div>
-                    </div>
-                ))
+                      </div>
+                      )}
+                    </article>
+                  )
+                })
+            )}
+
+            {sortedQnaList.length > qnaPageSize && (
+                <nav className="product-qna-pagination" aria-label="상품 문의 페이지">
+                  <button
+                      type="button"
+                      onClick={() => {
+                        setQnaPage((page) => Math.max(1, page - 1))
+                        setExpandedQnaId(null)
+                      }}
+                      disabled={currentQnaPage === 1}
+                  >
+                    이전
+                  </button>
+
+                  {Array.from({ length: qnaPageCount }, (_, index) => index + 1).map((pageNumber) => (
+                      <button
+                          key={pageNumber}
+                          type="button"
+                          className={pageNumber === currentQnaPage ? 'is-active' : ''}
+                          aria-current={pageNumber === currentQnaPage ? 'page' : undefined}
+                          onClick={() => {
+                            setQnaPage(pageNumber)
+                            setExpandedQnaId(null)
+                          }}
+                      >
+                        {pageNumber}
+                      </button>
+                  ))}
+
+                  <button
+                      type="button"
+                      onClick={() => {
+                        setQnaPage((page) => Math.min(qnaPageCount, page + 1))
+                        setExpandedQnaId(null)
+                      }}
+                      disabled={currentQnaPage === qnaPageCount}
+                  >
+                    다음
+                  </button>
+                </nav>
             )}
           </div>
         </section>
@@ -779,7 +954,7 @@ function ProductDetailPage() {
                   등록된 후기가 없습니다.
                 </p>
             ) : (
-                sortedReviewList.map((review) => {
+                pagedReviewList.map((review) => {
                   const reviewId = review.reviewId || review.id
                   const isReviewOwner = Boolean(userid)
                       && Number(userid) === Number(review.buyerId)
@@ -859,8 +1034,120 @@ function ProductDetailPage() {
                   );
                 })
             )}
+
+            {sortedReviewList.length > reviewPageSize && (
+                <nav className="product-review-pagination" aria-label="상품 후기 페이지">
+                  <button
+                      type="button"
+                      onClick={() => setReviewPage((page) => Math.max(1, page - 1))}
+                      disabled={currentReviewPage === 1}
+                  >
+                    이전
+                  </button>
+
+                  {Array.from({ length: reviewPageCount }, (_, index) => index + 1).map((pageNumber) => (
+                      <button
+                          key={pageNumber}
+                          type="button"
+                          className={pageNumber === currentReviewPage ? 'is-active' : ''}
+                          aria-current={pageNumber === currentReviewPage ? 'page' : undefined}
+                          onClick={() => setReviewPage(pageNumber)}
+                      >
+                        {pageNumber}
+                      </button>
+                  ))}
+
+                  <button
+                      type="button"
+                      onClick={() => setReviewPage((page) => Math.min(reviewPageCount, page + 1))}
+                      disabled={currentReviewPage === reviewPageCount}
+                  >
+                    다음
+                  </button>
+                </nav>
+            )}
           </div>
         </section>
+        </div>
+
+        {editingQna && (
+            <div
+                className="qna-edit-modal-backdrop"
+                onClick={() => !isQnaSaving && setEditingQna(null)}
+            >
+              <form
+                  className="qna-edit-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="qna-edit-modal-title"
+                  onSubmit={handleUpdateQna}
+                  onClick={(event) => event.stopPropagation()}
+              >
+                <div className="qna-edit-modal-header">
+                  <div>
+                    <span>Product Q&amp;A</span>
+                    <h2 id="qna-edit-modal-title">문의 수정</h2>
+                  </div>
+                  <button
+                      type="button"
+                      aria-label="문의 수정 닫기"
+                      onClick={() => setEditingQna(null)}
+                      disabled={isQnaSaving}
+                  >
+                    x
+                  </button>
+                </div>
+
+                <label>
+                  제목
+                  <input
+                      type="text"
+                      value={qnaEditForm.questionTitle}
+                      onChange={(event) => setQnaEditForm((current) => ({
+                        ...current,
+                        questionTitle: event.target.value,
+                      }))}
+                      maxLength={100}
+                      required
+                  />
+                </label>
+
+                <label>
+                  문의 내용
+                  <textarea
+                      value={qnaEditForm.questionContent}
+                      onChange={(event) => setQnaEditForm((current) => ({
+                        ...current,
+                        questionContent: event.target.value,
+                      }))}
+                      rows={7}
+                      required
+                  />
+                </label>
+
+                <label className="qna-edit-secret-option">
+                  <input
+                      type="checkbox"
+                      checked={qnaEditForm.isSecret}
+                      onChange={(event) => setQnaEditForm((current) => ({
+                        ...current,
+                        isSecret: event.target.checked,
+                      }))}
+                  />
+                  비밀 문의로 등록
+                </label>
+
+                <div className="qna-edit-modal-actions">
+                  <button type="button" onClick={() => setEditingQna(null)} disabled={isQnaSaving}>
+                    취소
+                  </button>
+                  <button type="submit" disabled={isQnaSaving}>
+                    {isQnaSaving ? '수정 중...' : '수정 완료'}
+                  </button>
+                </div>
+              </form>
+            </div>
+        )}
 
         {isOrderModalOpen && (
             <div className="product-order-modal-backdrop" onClick={() => setIsOrderModalOpen(false)}>

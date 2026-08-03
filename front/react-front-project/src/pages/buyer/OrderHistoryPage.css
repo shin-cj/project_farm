@@ -87,6 +87,18 @@
   color: #205332;
 }
 
+.order-history-action--confirm {
+  border-color: #2f7546;
+  background: #ffffff;
+  color: #245f38;
+}
+
+.order-history-action--confirm:not(:disabled):hover {
+  border-color: #245f38;
+  background: #eaf4ec;
+  color: #1d4f2f;
+}
+
 .order-history-action:disabled {
   border-color: #e1e5e2;
   background: #f3f5f4;

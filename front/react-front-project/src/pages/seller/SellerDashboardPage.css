@@ -164,6 +164,36 @@
     white-space: nowrap;
 }
 
+.seller-withdrawal-balance {
+    display: flex;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.seller-withdrawal-balance strong {
+    color: #216b3a;
+    font-size: 24px;
+    white-space: nowrap;
+}
+
+.seller-withdrawal-balance button {
+    padding: 7px 11px;
+    border: 1px solid #b9cfbe;
+    border-radius: 8px;
+    background: #f7faf8;
+    color: #2c6840;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.seller-withdrawal-balance button:hover {
+    border-color: #2f7546;
+    background: #eaf4ec;
+}
+
 .seller-withdrawal-form {
     display: grid;
     gap: 12px;
@@ -302,6 +332,223 @@
 .withdrawal-status.completed {
     color: #4c1d95;
     background-color: #ede9fe;
+}
+
+.seller-settlement-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(20, 38, 27, 0.52);
+}
+
+.seller-settlement-modal {
+    width: min(760px, 100%);
+    max-height: min(760px, calc(100vh - 48px));
+    overflow: hidden;
+    border: 1px solid #d6e2d8;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 26px 80px rgba(20, 49, 29, 0.24);
+}
+
+.seller-settlement-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 24px 26px 20px;
+    border-bottom: 1px solid #e2eae3;
+}
+
+.seller-settlement-modal-head p {
+    margin: 0 0 5px;
+    color: #3f7d20;
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.seller-settlement-modal-head h2 {
+    margin: 0;
+    color: #203529;
+    font-size: 24px;
+}
+
+.seller-settlement-modal-head span {
+    display: block;
+    margin-top: 7px;
+    color: #6d7a70;
+    font-size: 13px;
+}
+
+.seller-settlement-modal-head > button {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #d6e1d8;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #55635a;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.seller-settlement-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 22px 26px 0;
+    border: 1px solid #dce7de;
+    border-radius: 8px;
+    background: #f7faf7;
+}
+
+.seller-settlement-summary article {
+    display: grid;
+    gap: 6px;
+    padding: 18px 20px;
+}
+
+.seller-settlement-summary article + article {
+    border-left: 1px solid #dce7de;
+}
+
+.seller-settlement-summary span {
+    color: #59695f;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.seller-settlement-summary strong {
+    color: #216b3a;
+    font-size: 25px;
+}
+
+.seller-settlement-summary small {
+    color: #7b877f;
+    font-size: 12px;
+}
+
+.seller-settlement-history-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 26px 12px;
+}
+
+.seller-settlement-history-head h3 {
+    margin: 0;
+    color: #273c2f;
+    font-size: 17px;
+}
+
+.seller-settlement-history-head span {
+    color: #738078;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.seller-settlement-history {
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 0 26px 26px;
+}
+
+.seller-settlement-history > article {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 15px 2px;
+    border-top: 1px solid #e7ede8;
+}
+
+.seller-settlement-history > article > div:first-child {
+    display: grid;
+    min-width: 0;
+    gap: 5px;
+}
+
+.seller-settlement-history > article > div:first-child strong {
+    overflow: hidden;
+    color: #273c2f;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seller-settlement-history > article > div:first-child span {
+    color: #748078;
+    font-size: 12px;
+}
+
+.seller-settlement-history-amount {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.seller-settlement-history-amount > strong {
+    color: #216b3a;
+    font-size: 17px;
+}
+
+.settlement-status {
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: #edf1ee;
+    color: #536159;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 900;
+}
+
+.settlement-status.pending {
+    background: #fff4d6;
+    color: #95630b;
+}
+
+.settlement-status.earned {
+    background: #e5f4ea;
+    color: #216b3a;
+}
+
+.settlement-status.canceled,
+.settlement-status.refunded {
+    background: #fee9e9;
+    color: #a12a2a;
+}
+
+.seller-settlement-empty {
+    margin: 0;
+    padding: 34px 0;
+    border-top: 1px solid #e7ede8;
+    color: #77837b;
+    text-align: center;
+}
+
+@media (max-width: 640px) {
+    .seller-settlement-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .seller-settlement-summary article + article {
+        border-top: 1px solid #dce7de;
+        border-left: 0;
+    }
+
+    .seller-settlement-history > article {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .seller-settlement-history-amount {
+        align-items: flex-start;
+    }
 }
 
 .seller-daily-goal-card {

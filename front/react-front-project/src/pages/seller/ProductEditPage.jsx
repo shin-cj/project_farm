@@ -19,6 +19,7 @@ import marketPriceApi from '../../api/marketPriceApi.js'
 import {
     calculatePackageWeightGrams,
     combineProductUnit,
+    MANUAL_PRODUCT_UNIT_OPTIONS,
     splitProductUnit,
 } from '../../utils/productWeight.js'
 
@@ -46,6 +47,7 @@ function ProductEditPage() {
     const [productStatus, setProductStatus] = useState('PENDING')
     const [marketUnitOptions, setMarketUnitOptions] = useState([])
     const [marketUnitLoading, setMarketUnitLoading] = useState(false)
+    const [manualMarketUnit, setManualMarketUnit] = useState(false)
 
     const [form, setForm] = useState({
         farmId: '',
@@ -175,6 +177,7 @@ function ProductEditPage() {
         async function loadMarketUnitOptions() {
             if (!selectedSaleType || !form.marketItemCode) {
                 setMarketUnitOptions([])
+                setManualMarketUnit(false)
                 setMarketUnitLoading(false)
                 return
             }
@@ -182,11 +185,19 @@ function ProductEditPage() {
             try {
                 setMarketUnitLoading(true)
 
-                const response = await marketPriceApi.getBuyerMainTodayPrices({
+                let response = await marketPriceApi.getBuyerMainTodayPrices({
                     seCd: selectedSaleType === 'WHOLESALE' ? '02' : '01',
                     itemCd: form.marketItemCode,
                     limit: 200,
                 })
+
+                // 선택한 거래 유형에 자료가 없는 품목은 같은 품목의 공공데이터 단위를 사용합니다.
+                if (!Array.isArray(response.data) || response.data.length === 0) {
+                    response = await marketPriceApi.getBuyerMainTodayPrices({
+                        itemCd: form.marketItemCode,
+                        limit: 200,
+                    })
+                }
                 const optionMap = new Map()
 
                 ;(Array.isArray(response.data) ? response.data : []).forEach((item) => {
@@ -202,9 +213,16 @@ function ProductEditPage() {
                 }
 
                 const options = Array.from(optionMap.values())
-                setMarketUnitOptions(options)
+                const shouldUseManualUnit = options.length === 0
 
-                if (options.length > 0) {
+                setManualMarketUnit(shouldUseManualUnit)
+                setMarketUnitOptions(
+                    shouldUseManualUnit
+                        ? MANUAL_PRODUCT_UNIT_OPTIONS
+                        : options
+                )
+
+                if (!shouldUseManualUnit) {
                     setForm((currentForm) => {
                         const currentUnit = splitProductUnit(currentForm.unit)
                         const nextOption = options.find(
@@ -230,7 +248,8 @@ function ProductEditPage() {
             } catch (error) {
                 if (!ignore) {
                     console.error(error)
-                    setMarketUnitOptions([])
+                    setManualMarketUnit(true)
+                    setMarketUnitOptions(MANUAL_PRODUCT_UNIT_OPTIONS)
                 }
             } finally {
                 if (!ignore) {
@@ -719,7 +738,9 @@ function ProductEditPage() {
                                 </select>
                             </div>
                             <small className="product-package-weight-help">
-                                품목과 판매 방식을 기준으로 시세 단위가 자동 선택되며, 앞 숫자는 변경할 수 있습니다.
+                                {manualMarketUnit
+                                    ? '제공되는 시세 단위가 없어 판매 수량과 단위를 직접 선택해주세요.'
+                                    : '품목과 판매 방식을 기준으로 시세 단위가 자동 선택되며, 앞 숫자는 변경할 수 있습니다.'}
                             </small>
                         </div>
 

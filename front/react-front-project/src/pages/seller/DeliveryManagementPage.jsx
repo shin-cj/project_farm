@@ -858,7 +858,10 @@ function DeliveryManagementPage() {
                   ))}
                 </div>
               )}
-              <p style={{ margin: "6px 0 0", color: "#405348" }}>요청사항: {selectedOrder.requestMessage || "없음"}</p>
+              <div className="seller-delivery-request-message">
+                <strong>배송 요청사항</strong>
+                <p>{selectedOrder.requestMessage || "없음"}</p>
+              </div>
                   {isDeliveryLocked && (
                 <p style={{ padding: "12px", borderRadius: "10px", background: "#ffffff", color: isClosedOrder(selectedOrder) ? "#dc2626" : "#216b3a", fontWeight: 800 }}>
                   {isClosedOrder(selectedOrder) ? "취소 또는 환불 처리 중인 주문이라 배송 등록을 할 수 없습니다." : "배송 완료된 주문은 배송 정보를 수정할 수 없습니다."}

@@ -1,9 +1,11 @@
 package me.soldesk.springbootback.domain.product.repository;
 
+import jakarta.persistence.LockModeType;
 import me.soldesk.springbootback.domain.product.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +13,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    /** 결제 중 같은 상품의 재고가 동시에 변경되지 않도록 상품 행을 잠급니다. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Product p WHERE p.productId = :productId")
+    Optional<Product> findByIdForUpdate(@Param("productId") Long productId);
 
     List<Product> findByCategoryId(Long categoryId);
     @Query(value = """
@@ -66,7 +73,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     WHERE oi.product_id = :productId
       AND o.order_status NOT IN ('CANCELED', 'REFUNDED')
       AND NOT (
-          o.order_status = 'PAID'
+          o.order_status IN ('PAID', 'PURCHASE_CONFIRMED')
           AND NVL(d.delivery_status, 'READY') = 'DELIVERED'
       )
     """, nativeQuery = true)
