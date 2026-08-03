@@ -458,6 +458,12 @@ function ProductListPage() {
                                         : 'product-card'
                                 }
                             >
+
+                                <Link
+                                    to={`/products/${product.productId}`}
+                                    state={{from: productListPath}}
+                                    className="product-card-link"
+                                >
                                 <div className="product-image-box">
                                     <span
                                         className={
@@ -494,13 +500,9 @@ function ProductListPage() {
                                         </span>
                                     </p>
 
-                                    <Link
-                                        to={`/products/${product.productId}`}
-                                        state={{from: productListPath}}
-                                        className="product-name"
-                                    >
+                                    <strong className="product-name">
                                         {product.productName}
-                                    </Link>
+                                    </strong>
 
                                     {Array.isArray(product.aiKeywords)
                                         && product.aiKeywords.length > 0 && (
@@ -548,6 +550,8 @@ function ProductListPage() {
                                         </div>
                                     </div>
                                 </div>
+                                </Link>
+
                             </article>
                         ))}
                     </div>

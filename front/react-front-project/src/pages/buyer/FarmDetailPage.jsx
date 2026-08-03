@@ -36,13 +36,6 @@ function FarmDetailPage() {
   const [reloadKey, setReloadKey] = useState(0)
 
   function handleBack() {
-    const historyIndex = window.history.state?.idx ?? 0
-
-    if (historyIndex > 0) {
-      navigate(-1)
-      return
-    }
-
     navigate('/farms')
   }
 
@@ -149,7 +142,7 @@ function FarmDetailPage() {
                   className="farm-detail-product-link"
                   onClick={handleBack}
               >
-                뒤로가기
+                농장 목록으로
               </button>
                 <ReportButton
                   farmId={farm.farmId}
@@ -205,7 +198,10 @@ function FarmDetailPage() {
                   product.productStatus === 'SOLD_OUT' ? 'sold-out' : ''
                 }`}
               >
-                <Link to={`/products/${product.productId}`}>
+                <Link
+                  to={`/products/${product.productId}`}
+                  state={{from: `/farms/${farmId}`}}
+                >
                   <div className="farm-detail-product-image">
 
 
