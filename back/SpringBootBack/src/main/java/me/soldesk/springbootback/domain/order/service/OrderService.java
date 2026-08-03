@@ -406,8 +406,8 @@ public class OrderService {
     }
 
     private void validateOrderableProduct(Product product) {
-        if ("DELETED".equals(product.getProductStatus())) {
-            throw new IllegalArgumentException("삭제된 상품은 주문할 수 없습니다.");
+        if (!"ON_SALE".equals(product.getProductStatus())) {
+            throw new IllegalArgumentException("현재 판매 중인 상품만 주문할 수 있습니다.");
         }
     }
 

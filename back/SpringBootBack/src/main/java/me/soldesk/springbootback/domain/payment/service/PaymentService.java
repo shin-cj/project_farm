@@ -25,13 +25,18 @@ import me.soldesk.springbootback.domain.product.entity.Product;
 import me.soldesk.springbootback.domain.product.repository.ProductRepository;
 import me.soldesk.springbootback.domain.sellerpoint.service.SellerPointService;
 import me.soldesk.springbootback.domain.stockhistory.service.ProductStockHistoryService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Service
 public class PaymentService {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
 
     private final RestClient restClient;
     private final String secretKey;
@@ -148,6 +153,7 @@ public class PaymentService {
                 throw new IllegalArgumentException("상품 정보가 없습니다.");
             }
 
+            validateOrderableProduct(product);
             validateMinimumOrderQuantity(product, item.getQuantity());
         }
 
@@ -174,20 +180,94 @@ public class PaymentService {
             orderedProducts.add(product);
         }
 
-        String authorization = "Basic " + Base64.getEncoder()
-                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+        Map<String, Object> tossResponse = confirmOrRecoverTossPayment(request);
 
-        Map<String, Object> tossResponse = restClient.post()
-                .uri("/v1/payments/confirm")
-                .header("Authorization", authorization)
-                .body(Map.of(
-                        "paymentKey", request.getPaymentKey(),
-                        "orderId", request.getOrderId(),
-                        "amount", request.getAmount()
-                ))
+        try {
+            persistConfirmedPayment(
+                    request,
+                    paymentOrders,
+                    orderItems,
+                    orderedProducts,
+                    tossResponse
+            );
+
+            // save()는 SQL 실행을 미룰 수 있으므로 여기서 강제로 반영해 DB 오류를 잡습니다.
+            paymentRepository.flush();
+            return tossResponse;
+        } catch (RuntimeException localProcessingException) {
+            compensateConfirmedPayment(request, localProcessingException);
+            throw new IllegalStateException(
+                    "결제 승인 후 내부 처리에 실패하여 결제를 자동 취소했습니다. 다시 결제해주세요.",
+                    localProcessingException
+            );
+        }
+    }
+
+    private Map<String, Object> confirmOrRecoverTossPayment(PaymentConfirmRequest request) {
+        try {
+            Map<String, Object> response = restClient.post()
+                    .uri("/v1/payments/confirm")
+                    .header("Authorization", createAuthorizationHeader())
+                    .body(Map.of(
+                            "paymentKey", request.getPaymentKey(),
+                            "orderId", request.getOrderId(),
+                            "amount", request.getAmount()
+                    ))
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response == null) {
+                throw new IllegalStateException("토스 결제 승인 응답이 없습니다.");
+            }
+
+            return response;
+        } catch (RestClientException confirmException) {
+            // 토스 승인은 성공했지만 응답 수신에 실패했을 수 있으므로 결제 상태를 다시 조회합니다.
+            try {
+                return findConfirmedTossPayment(request);
+            } catch (RuntimeException lookupException) {
+                confirmException.addSuppressed(lookupException);
+                throw confirmException;
+            }
+        }
+    }
+
+    private Map<String, Object> findConfirmedTossPayment(PaymentConfirmRequest request) {
+        Map<String, Object> response = restClient.get()
+                .uri("/v1/payments/{paymentKey}", request.getPaymentKey())
+                .header("Authorization", createAuthorizationHeader())
                 .retrieve()
                 .body(Map.class);
 
+        if (response == null) {
+            throw new IllegalStateException("토스 결제 조회 응답이 없습니다.");
+        }
+
+        String tossOrderId = String.valueOf(response.get("orderId"));
+        String status = String.valueOf(response.get("status"));
+        long totalAmount = getLongValue(response.get("totalAmount"));
+
+        if (!request.getOrderId().equals(tossOrderId)
+                || request.getAmount() != totalAmount
+                || !"DONE".equals(status)) {
+            throw new IllegalStateException("토스 결제 조회 결과가 승인 요청과 일치하지 않습니다.");
+        }
+
+        log.warn(
+                "토스 승인 응답 오류 후 결제 조회로 승인 상태를 복구했습니다. orderId={}, paymentKey={}",
+                request.getOrderId(),
+                request.getPaymentKey()
+        );
+        return response;
+    }
+
+    private void persistConfirmedPayment(
+            PaymentConfirmRequest request,
+            List<Order> paymentOrders,
+            List<OrderItem> orderItems,
+            List<Product> orderedProducts,
+            Map<String, Object> tossResponse
+    ) {
         for (int i = 0; i < orderItems.size(); i++) {
             OrderItem item = orderItems.get(i);
             Product product = orderedProducts.get(i);
@@ -226,8 +306,58 @@ public class PaymentService {
             orderRepository.save(order);
             sellerPointService.earnPoint(order);
         }
+    }
 
-        return tossResponse;
+    private void compensateConfirmedPayment(
+            PaymentConfirmRequest request,
+            RuntimeException localProcessingException
+    ) {
+        try {
+            restClient.post()
+                    .uri("/v1/payments/{paymentKey}/cancel", request.getPaymentKey())
+                    .header("Authorization", createAuthorizationHeader())
+                    .body(Map.of(
+                            "cancelReason", "결제 승인 후 내부 처리 실패",
+                            "cancelAmount", request.getAmount()
+                    ))
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.warn(
+                    "내부 처리 실패로 토스 결제를 자동 취소했습니다. orderId={}, paymentKey={}",
+                    request.getOrderId(),
+                    request.getPaymentKey()
+            );
+        } catch (RuntimeException compensationException) {
+            localProcessingException.addSuppressed(compensationException);
+            log.error(
+                    "토스 승인 후 내부 처리와 자동 취소가 모두 실패했습니다. 수동 확인이 필요합니다. orderId={}, paymentKey={}",
+                    request.getOrderId(),
+                    request.getPaymentKey(),
+                    compensationException
+            );
+            throw new IllegalStateException(
+                    "결제는 승인되었지만 주문 저장과 자동 취소에 실패했습니다. 관리자 확인이 필요합니다.",
+                    localProcessingException
+            );
+        }
+    }
+
+    private String createAuthorizationHeader() {
+        return "Basic " + Base64.getEncoder()
+                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
+    }
+
+    private long getLongValue(Object value) {
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException exception) {
+            throw new IllegalStateException("토스 결제 금액 형식이 올바르지 않습니다.", exception);
+        }
     }
 
     private Map<String, Object> findExistingConfirmedPaymentResponse(
@@ -360,18 +490,19 @@ public class PaymentService {
         List<Order> remainingOrders = findRemainingGroupedOrders(order);
         long cancelAmount = calculateCancelAmount(order, remainingOrders);
 
-        String authorization = "Basic " + Base64.getEncoder()
-                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
-
-        Map<String, Object> tossResponse = restClient.post()
-                .uri("/v1/payments/{paymentKey}/cancel", payment.getPgPaymentId())
-                .header("Authorization", authorization)
-                .body(Map.of(
-                        "cancelReason", cancelReason,
-                        "cancelAmount", cancelAmount
-                ))
-                .retrieve()
-                .body(Map.class);
+        long expectedBalanceAmount = calculateExpectedTossBalance(
+                findGroupedOrders(order).stream()
+                        .filter(groupedOrder -> !List.of("CANCELED", "REFUNDED")
+                                .contains(groupedOrder.getOrderStatus()))
+                        .toList(),
+                cancelAmount
+        );
+        Map<String, Object> tossResponse = cancelOrRecoverTossPayment(
+                payment.getPgPaymentId(),
+                cancelReason,
+                cancelAmount,
+                expectedBalanceAmount
+        );
 
         transferDeliveryFee(order, payment, remainingOrders);
 
@@ -438,18 +569,13 @@ public class PaymentService {
         long cancelAmount = activeOrders.stream()
                 .mapToLong(Order::getFinalPrice)
                 .sum();
-        String authorization = "Basic " + Base64.getEncoder()
-                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
-
-        Map<String, Object> tossResponse = restClient.post()
-                .uri("/v1/payments/{paymentKey}/cancel", representativePayment.getPgPaymentId())
-                .header("Authorization", authorization)
-                .body(Map.of(
-                        "cancelReason", cancelReason,
-                        "cancelAmount", cancelAmount
-                ))
-                .retrieve()
-                .body(Map.class);
+        long expectedBalanceAmount = calculateExpectedTossBalance(activeOrders, cancelAmount);
+        Map<String, Object> tossResponse = cancelOrRecoverTossPayment(
+                representativePayment.getPgPaymentId(),
+                cancelReason,
+                cancelAmount,
+                expectedBalanceAmount
+        );
 
         LocalDateTime canceledAt = LocalDateTime.now();
 
@@ -484,11 +610,24 @@ public class PaymentService {
         List<OrderItem> orderItems = orderItemRepository
                 .findByOrderId(order.getOrderId());
 
+        Map<Long, Integer> restoreQuantityByProduct = new HashMap<>();
         for (OrderItem item : orderItems) {
-            Product product = productRepository.findById(item.getProductId())
+            restoreQuantityByProduct.merge(
+                    item.getProductId(),
+                    item.getQuantity(),
+                    Integer::sum
+            );
+        }
+
+        restoreQuantityByProduct.keySet().stream()
+                .sorted()
+                .forEach(productId -> {
+            Product product = productRepository.findByIdForUpdate(productId)
                     .orElseThrow(() -> new IllegalArgumentException("상품 정보가 없습니다."));
             int previousStockQuantity = product.getStockQuantity();
-            product.setStockQuantity(previousStockQuantity + item.getQuantity());
+            product.setStockQuantity(
+                    previousStockQuantity + restoreQuantityByProduct.get(productId)
+            );
 
             if (product.getStockQuantity() >= getMinimumOrderQuantity(product)
                     && "SOLD_OUT".equals(product.getProductStatus())) {
@@ -498,13 +637,13 @@ public class PaymentService {
             productRepository.save(product);
             productStockHistoryService.record(
                     product.getProductId(),
-                    item.getOrderId(),
+                    order.getOrderId(),
                     changeType,
                     previousStockQuantity,
                     product.getStockQuantity(),
                     changeReason
             );
-        }
+        });
     }
 
     private List<Order> findGroupedOrders(Order order) {
@@ -551,6 +690,72 @@ public class PaymentService {
         }
 
         return cancelAmount;
+    }
+
+    private long calculateExpectedTossBalance(List<Order> activeOrders, long cancelAmount) {
+        long activeAmount = activeOrders.stream()
+                .mapToLong(Order::getFinalPrice)
+                .sum();
+        return Math.max(activeAmount - cancelAmount, 0L);
+    }
+
+    private Map<String, Object> cancelOrRecoverTossPayment(
+            String paymentKey,
+            String cancelReason,
+            long cancelAmount,
+            long expectedBalanceAmount
+    ) {
+        try {
+            Map<String, Object> response = restClient.post()
+                    .uri("/v1/payments/{paymentKey}/cancel", paymentKey)
+                    .header("Authorization", createAuthorizationHeader())
+                    .body(Map.of(
+                            "cancelReason", cancelReason,
+                            "cancelAmount", cancelAmount
+                    ))
+                    .retrieve()
+                    .body(Map.class);
+
+            if (response == null) {
+                throw new IllegalStateException("토스 결제 취소 응답이 없습니다.");
+            }
+
+            return response;
+        } catch (RestClientException cancelException) {
+            try {
+                Map<String, Object> response = restClient.get()
+                        .uri("/v1/payments/{paymentKey}", paymentKey)
+                        .header("Authorization", createAuthorizationHeader())
+                        .retrieve()
+                        .body(Map.class);
+
+                if (response == null) {
+                    throw new IllegalStateException("토스 결제 조회 응답이 없습니다.");
+                }
+
+                String status = String.valueOf(response.get("status"));
+                long balanceAmount = getLongValue(response.get("balanceAmount"));
+                boolean canceledStatus = List.of("CANCELED", "PARTIAL_CANCELED")
+                        .contains(status);
+
+                if (!canceledStatus || balanceAmount != expectedBalanceAmount) {
+                    throw new IllegalStateException(
+                            "토스 결제 취소 상태가 현재 주문 정보와 일치하지 않습니다."
+                    );
+                }
+
+                log.warn(
+                        "토스 취소 응답 오류 후 결제 조회로 취소 상태를 복구했습니다. paymentKey={}, status={}, balanceAmount={}",
+                        paymentKey,
+                        status,
+                        balanceAmount
+                );
+                return response;
+            } catch (RuntimeException lookupException) {
+                cancelException.addSuppressed(lookupException);
+                throw cancelException;
+            }
+        }
     }
 
     private void transferDeliveryFee(
@@ -625,6 +830,12 @@ public class PaymentService {
         }
     }
 
+    private void validateOrderableProduct(Product product) {
+        if (!"ON_SALE".equals(product.getProductStatus())) {
+            throw new IllegalArgumentException("현재 판매 중인 상품만 결제할 수 있습니다.");
+        }
+    }
+
     private int getMinimumOrderQuantity(Product product) {
         Integer minimumOrderQuantity = product.getMinOrderQuantity();
         return minimumOrderQuantity == null || minimumOrderQuantity < 1
@@ -688,18 +899,19 @@ public class PaymentService {
         List<Order> remainingOrders = findRemainingGroupedOrders(order);
         long cancelAmount = calculateCancelAmount(order, remainingOrders);
 
-        String authorization = "Basic " + Base64.getEncoder()
-                .encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8));
-
-        Map<String, Object> tossResponse = restClient.post()
-                .uri("/v1/payments/{paymentKey}/cancel", payment.getPgPaymentId())
-                .header("Authorization", authorization)
-                .body(Map.of(
-                        "cancelReason", refundReason,
-                        "cancelAmount", cancelAmount
-                ))
-                .retrieve()
-                .body(Map.class);
+        long expectedBalanceAmount = calculateExpectedTossBalance(
+                findGroupedOrders(order).stream()
+                        .filter(groupedOrder -> !List.of("CANCELED", "REFUNDED")
+                                .contains(groupedOrder.getOrderStatus()))
+                        .toList(),
+                cancelAmount
+        );
+        Map<String, Object> tossResponse = cancelOrRecoverTossPayment(
+                payment.getPgPaymentId(),
+                refundReason,
+                cancelAmount,
+                expectedBalanceAmount
+        );
 
         transferDeliveryFee(order, payment, remainingOrders);
 
