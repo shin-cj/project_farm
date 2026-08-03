@@ -6,6 +6,8 @@ function QnaEditPage() {
     // 1. URL 파라미터 가져오기 (qnaId와 productId)
     const { qnaId, productId } = useParams();
     const navigate = useNavigate();
+    const loginUser = JSON.parse(localStorage.getItem('loginUser') || 'null');
+    const viewerId = loginUser?.userId;
 
     // 2. 상태 관리 (질문 제목, 내용, 비밀글 여부)
     const [qna, setQna] = useState({
@@ -16,7 +18,9 @@ function QnaEditPage() {
 
     // 3. 페이지 로드 시 기존 글 데이터 불러오기
     useEffect(() => {
-        axios.get(`/api/qna/detail/${qnaId}`)
+        axios.get(`/api/qna/detail/${qnaId}`, {
+            params: viewerId ? { viewerId } : {},
+        })
             .then(res => {
                 setQna({
                     title: res.data.questionTitle,
@@ -28,7 +32,7 @@ function QnaEditPage() {
                 console.error("데이터를 불러오는 중 오류 발생:", error);
                 alert("문의 내용을 불러오는데 실패했습니다.");
             });
-    }, [qnaId]);
+    }, [qnaId, viewerId]);
 
     // 4. 수정 요청 처리
     const handleUpdate = async (e) => {

@@ -20,8 +20,9 @@ public class QnaController {
 
     // 0. 기본 /api/qna 경로로 GET 요청이 올 때 (Method Not Allowed 방지용)
     @GetMapping
-    public ResponseEntity<List<QnaResponse>> getAllQnaListAlt() {
-        return ResponseEntity.ok(qnaService.getAllQnas());
+    public ResponseEntity<List<QnaResponse>> getAllQnaListAlt(
+            @RequestParam(required = false) Long viewerId) {
+        return ResponseEntity.ok(qnaService.getAllQnas(viewerId));
     }
 
     // 1. QnA 등록 API (POST /api/qna)
@@ -33,20 +34,25 @@ public class QnaController {
 
     // 2. 상품별 QnA 목록 조회 API: GET /api/qna/{productId}
     @GetMapping("/{productId}")
-    public ResponseEntity<List<QnaResponse>> getQnaList(@PathVariable Long productId) {
-        return ResponseEntity.ok(qnaService.getQnasByProduct(productId));
+    public ResponseEntity<List<QnaResponse>> getQnaList(
+            @PathVariable Long productId,
+            @RequestParam(required = false) Long viewerId) {
+        return ResponseEntity.ok(qnaService.getQnasByProduct(productId, viewerId));
     }
 
     // 3. 전체 QnA 목록 조회 API: GET /api/qna/all
     @GetMapping("/all")
-    public ResponseEntity<List<QnaResponse>> getAllQnaList() {
-        return ResponseEntity.ok(qnaService.getAllQnas());
+    public ResponseEntity<List<QnaResponse>> getAllQnaList(
+            @RequestParam(required = false) Long viewerId) {
+        return ResponseEntity.ok(qnaService.getAllQnas(viewerId));
     }
 
     // 4. QnA 상세 조회 API: GET /api/qna/detail/{qnaId}
     @GetMapping("/detail/{qnaId}")
-    public ResponseEntity<QnaResponse> getQnaDetail(@PathVariable Long qnaId) {
-        return ResponseEntity.ok(qnaService.getQnaDetail(qnaId));
+    public ResponseEntity<QnaResponse> getQnaDetail(
+            @PathVariable Long qnaId,
+            @RequestParam(required = false) Long viewerId) {
+        return ResponseEntity.ok(qnaService.getQnaDetail(qnaId, viewerId));
     }
 
     // 5. QnA 수정 API: PUT /api/qna/{qnaId}
