@@ -656,9 +656,10 @@ function ProductEditPage() {
                             name="productName"
                             value={form.productName}
                             onChange={handleChange}
-                            maxLength={150}
+                            maxLength={20}
                             required
                         />
+                        <small>{form.productName.length}/20자</small>
                     </div>
 
                     <div className="product-create-field">

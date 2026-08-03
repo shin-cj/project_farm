@@ -416,14 +416,14 @@ function OrderPage() {
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>배송 요청사항</span>
           <textarea
             value={requestMessage}
-            maxLength={500}
-            onChange={(event) => setRequestMessage(event.target.value.slice(0, 500))}
+            maxLength={255}
+            onChange={(event) => setRequestMessage(event.target.value.slice(0, 255))}
             rows={3}
             className="order-request-message-input"
             placeholder="배송 시 참고할 내용을 입력해주세요."
           />
           <span style={{ display: "block", marginTop: "6px", color: "#68756d", fontSize: "13px", textAlign: "right" }}>
-            {requestMessage.length}/500자
+            {requestMessage.length}/255자
           </span>
         </label>
       </div>

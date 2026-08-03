@@ -11,6 +11,7 @@ import { useAppFeedback } from '../../context/AppFeedbackContext.jsx'
 import { getApiErrorMessage } from '../../utils/apiError.js'
 import { canWriteReview } from '../../api/reviewApi.js'
 import './ProductDetailPage.css'
+import reportApi from "../../api/reportApi.js";
 
 function getStoredLoginUser() {
   try {
@@ -77,7 +78,24 @@ function ProductDetailPage() {
     questionContent: '',
     isSecret: false,
   })
+  const [canReport, setCanReport] = useState(false)
+
   const [isQnaSaving, setIsQnaSaving] = useState(false)
+
+
+  useEffect(() => {
+    if(!userid || !productId){
+      setCanReport(false)
+      return
+    }
+
+    reportApi.canReportProduct(userid, productId)
+        .then((response) => {
+          setCanReport(response.data?.eligible === true)
+        })
+        .catch(() => setCanReport(false))
+
+  }, [userid, productId])
 
   useEffect(() => {
     if (!isOrderModalOpen) {
@@ -653,7 +671,7 @@ function ProductDetailPage() {
               >
                 바로 주문하기
               </button>
-
+              {canReport && (
               <ReportButton
                   productId={product.productId}
                   reporterId={userid}
@@ -661,6 +679,7 @@ function ProductDetailPage() {
                   targetLabel={product.productName}
                   className="product-detail-report-button"
               />
+              )}
             </div>
 
             {!isPurchasable && (
@@ -821,10 +840,10 @@ function ProductDetailPage() {
                           placeholder="관리자 답변을 입력하세요..."
                           value={answerInputs[qna.qnaId] || ''}
                           onChange={(event) => handleAnswerChange(qna.qnaId, event.target.value)}
-                          maxLength={500}
+                          maxLength={255}
                           style={{ width: '100%', height: '50px', padding: '8px', marginBottom: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc' }}
                       />
-                              <small>{(answerInputs[qna.qnaId] || '').length}/500</small>
+                              <small>{(answerInputs[qna.qnaId] || '').length}/255</small>
                               <button
                                   type="button"
                                   onClick={() => handleAnswerSubmit(qna.qnaId)}
