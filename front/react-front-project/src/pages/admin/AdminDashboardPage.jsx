@@ -344,6 +344,10 @@ function AdminDashboardPage() {
     }
 
     const trends = details?.trends ?? [];
+    const periodSalesTotal = trends.reduce(
+        (total, item) => total + Number(item.salesAmount ?? 0),
+        0
+    );
 
     const selectedMetric =
         TREND_METRICS[trendMetric];
@@ -474,7 +478,13 @@ function AdminDashboardPage() {
                         <div className="dashboard-bottom-grid">
                             <section className="dashboard-trend-section">
                                 <header>
-                                    <h3>최근 운영 추이</h3>
+                                    <div className="dashboard-trend-heading">
+                                        <h3>최근 운영 추이</h3>
+                                        <p>
+                                            최근 {period}일 매출 합계
+                                            <strong>{formatNumber(periodSalesTotal)}원</strong>
+                                        </p>
+                                    </div>
 
                                     <div className="dashboard-trend-tabs">
                                         {Object.entries(TREND_METRICS).map(([key, metric]) => (
