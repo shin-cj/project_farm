@@ -224,9 +224,23 @@ function ProductManagementPage() {
   }
 
   function handleStockInputChange(productId, value){
-    setStockInputs((currentInputs) => ({
-      ...currentInputs, [productId]: value
-    }))
+    if (value === "") {
+      setStockInputs((prev) => ({ ...prev, [productId]: 0 }));
+      return;
+    }
+
+    let numValue = parseInt(value, 10);
+
+    if (numValue > 9999) {
+      numValue = 9999;
+    } else if (numValue < 0) {
+      numValue = 0;
+    }
+
+    setStockInputs((prev) => ({
+      ...prev,
+      [productId]: numValue.toString()
+    }));
   }
 
   function handleStockReasonChange(productId, value) {
@@ -662,6 +676,7 @@ function ProductManagementPage() {
                               className="seller-product-stock-quantity-input"
                               type="number"
                               min="0"
+                              max="9999"
                               step="1"
                               value={
                                   stockInputs[product.productId]
