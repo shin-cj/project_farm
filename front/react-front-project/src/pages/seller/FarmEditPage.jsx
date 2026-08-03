@@ -364,9 +364,10 @@ function FarmEditPage() {
                                 name="farmName"
                                 value={form.farmName}
                                 onChange={handleChange}
-                                maxLength={100}
+                                maxLength={20}
                                 required
                             />
+                            <small>{form.farmName.length}/20자</small>
                         </label>
 
                         <label className="farm-create-field">

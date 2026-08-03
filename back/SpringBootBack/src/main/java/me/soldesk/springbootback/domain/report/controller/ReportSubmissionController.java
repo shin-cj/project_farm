@@ -9,6 +9,7 @@ import me.soldesk.springbootback.domain.report.service.ReportService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -36,6 +37,17 @@ public class ReportSubmissionController {
 
         return reportService.createReport(request);
 
+    }
+
+    @GetMapping("/eligibility")
+    public Map<String, Boolean> canReportProduct(
+        @RequestParam Long reporterId,
+        @RequestParam Long productId
+    ){
+        return Map.of(
+                "eligible",
+                reportService.canReportProduct(reporterId, productId)
+        );
     }
 
 }

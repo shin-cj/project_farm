@@ -47,7 +47,7 @@ public class OrderRequest {
     private String receiverDetailAddress;
 
     /** 諛곗넚 ?붿껌?ы빆 */
-    @Size(max = 500, message = "배송 요청사항은 500자 이하로 입력해주세요.")
+    @Size(max = 255, message = "배송 요청사항은 255자 이하로 입력해주세요.")
     private String requestMessage;
 
     private Long cartItemId;

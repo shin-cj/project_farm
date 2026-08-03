@@ -94,6 +94,11 @@
     margin-bottom: 16px;
 }
 
+.farm-management-card-header > div:first-child {
+    flex: 1;
+    min-width: 0;
+}
+
 .farm-management-region {
     margin: 0 0 6px;
     color: #16a34a;
@@ -104,6 +109,9 @@
 .farm-management-card h2 {
     margin: 0;
     font-size: 21px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .farm-management-status {

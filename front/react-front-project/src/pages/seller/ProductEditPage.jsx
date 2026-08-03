@@ -337,6 +337,36 @@ function ProductEditPage() {
             return
         }
 
+        if (name === 'price') {
+            let numValue = value === '' ? 0 : Number(value);
+
+            // 최대값 99,999,999 초과 시 강제로 99999999로 고정
+            if (numValue !== '' && numValue > 99999999) {
+                numValue = 99999999;
+            }
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                price: numValue === '' ? 0 : String(numValue),
+            }));
+            return;
+        }
+
+        if (name === 'stockQuantity') {
+            let numValue = value === '' ? 0 : Number(value);
+
+            // 최대값 9,999 초과 시 강제로 9999로 고정
+            if (numValue !== '' && numValue > 9999) {
+                numValue = 9999;
+            }
+
+            setForm((currentForm) => ({
+                ...currentForm,
+                stockQuantity: numValue === '' ? 0 : String(numValue),
+            }));
+            return;
+        }
+
         setForm((currentForm) => ({
             ...currentForm,
             [name]: value,
@@ -360,10 +390,24 @@ function ProductEditPage() {
     }
 
     function handleUnitSizeChange(event) {
-        const nextUnit = combineProductUnit(event.target.value, selectedUnitName)
-        const calculatedWeight = calculatePackageWeightGrams(nextUnit)
 
-        setIsDirty(true)
+        let { value } = event.target;
+
+        setIsDirty(true);
+
+        let numValue = value === '' || value === null ? 0 : Number(value);
+
+        if (numValue > 100) {
+            numValue = 100;
+        } else if (numValue < 0) {
+            numValue = 0;
+        }
+
+        const validSizeValue = String(numValue);
+
+        const nextUnit = combineProductUnit(validSizeValue, selectedUnitName);
+        const calculatedWeight = calculatePackageWeightGrams(nextUnit);
+
         setForm((currentForm) => ({
             ...currentForm,
             unit: nextUnit,
@@ -656,9 +700,10 @@ function ProductEditPage() {
                             name="productName"
                             value={form.productName}
                             onChange={handleChange}
-                            maxLength={150}
+                            maxLength={20}
                             required
                         />
+                        <small>{form.productName.length}/20자</small>
                     </div>
 
                     <div className="product-create-field">
@@ -683,6 +728,7 @@ function ProductEditPage() {
                                 value={form.price}
                                 onChange={handleChange}
                                 min="1"
+                                max="99999999"
                                 required
                             />
                         </div>
@@ -696,6 +742,7 @@ function ProductEditPage() {
                                 value={form.stockQuantity}
                                 onChange={handleChange}
                                 min="0"
+                                max="9999"
                                 required
                             />
                         </div>
@@ -709,6 +756,7 @@ function ProductEditPage() {
                                     onChange={handleUnitSizeChange}
                                     placeholder="수량"
                                     min="0.01"
+                                    max="100"
                                     step="0.01"
                                     disabled={
                                         marketUnitLoading
