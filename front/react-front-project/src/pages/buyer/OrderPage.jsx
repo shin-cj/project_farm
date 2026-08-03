@@ -372,12 +372,14 @@ function OrderPage() {
       <div style={{ display: "grid", gap: "18px", marginTop: "28px" }}>
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>주문자</span>
-          <input type="text" value={receiverName} onChange={(event) => setReceiverName(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
+          <input type="text" value={receiverName} onChange={(event) => setReceiverName(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }}
+                      maxLength={50}/>
         </label>
 
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>전화번호</span>
-          <input type="text" value={receiverPhone} onChange={(event) => setReceiverPhone(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
+          <input type="text" value={receiverPhone} onChange={(event) => setReceiverPhone(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }}
+                maxLength={20}/>
         </label>
 
         <label>
@@ -414,8 +416,11 @@ function OrderPage() {
 
         <label>
           <span style={{ display: "block", marginBottom: "8px", fontWeight: 700 }}>배송 요청사항</span>
-          <input type="text" value={requestMessage} onChange={(event) => setRequestMessage(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }} />
+          <input type="text" value={requestMessage} onChange={(event) => setRequestMessage(event.target.value)} style={{ width: "100%", padding: "12px 14px", border: "1px solid #dce6dd", borderRadius: "8px" }}
+                maxLength={500}/>
+          <small>{requestMessage.length}/500자</small>
         </label>
+
       </div>
 
       <div

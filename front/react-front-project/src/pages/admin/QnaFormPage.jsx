@@ -126,6 +126,7 @@ function QnaFormPage() {
                         placeholder="제목을 입력하세요"
                         value={qna.questionTitle}
                         onChange={(e) => setQna({...qna, questionTitle: e.target.value})}
+                        maxLength={200}
                         required
                         style={{ padding: '8px' }}
                     />

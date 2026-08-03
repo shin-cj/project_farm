@@ -1,5 +1,7 @@
 package me.soldesk.springbootback.domain.report.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +23,8 @@ public class ReportRequest {
     private String reportType;
 
     /** 신고 사유 */
+    @NotBlank(message = "신고 사유를 입력해주세요.")
+    @Size(max = 500, message = "신고 사유는 500자 이하로 입력해주세요.")
     private String reportReason;
 
     /** 신고 처리 상태 */

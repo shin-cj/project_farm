@@ -175,8 +175,10 @@ function QnaListPage() {
                                         placeholder="관리자 답변을 입력하세요..."
                                         value={answerInputs[qna.qnaId] || ''}
                                         onChange={(e) => handleAnswerChange(qna.qnaId, e.target.value)}
+                                        maxLength={500}
                                         style={{ width: '100%', height: '60px', padding: '8px', marginBottom: '5px', boxSizing: 'border-box' }}
                                     />
+                                    <small>{(answerInputs[qna.qnaId] || '').length}/500</small>
                                     <button
                                         onClick={() => handleAnswerSubmit(qna.qnaId)}
                                         style={{ padding: '6px 12px', background: '#28a745', color: 'white', border: 'none', cursor: 'pointer', borderRadius: '4px' }}

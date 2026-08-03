@@ -1,5 +1,7 @@
 package me.soldesk.springbootback.domain.order.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.List;
@@ -32,9 +34,13 @@ public class OrderRequest {
     private String orderStatus;
 
     /** ?섎졊???대쫫 */
+    @NotBlank(message = "수령인 이름을 입력해주세요.")
+    @Size(max = 50, message = "수령인 이름은 50자 이하로 입력해주세요.")
     private String receiverName;
 
     /** ?섎졊???꾪솕踰덊샇 */
+    @NotBlank(message = "전화번호를 입력해주세요.")
+    @Size(max = 20, message = "전화번호는 20자 이하로 입력해주세요.")
     private String receiverPhone;
 
     /** 諛곗넚 湲곕낯 二쇱냼 */
@@ -44,6 +50,7 @@ public class OrderRequest {
     private String receiverDetailAddress;
 
     /** 諛곗넚 ?붿껌?ы빆 */
+    @Size(max = 500, message = "배송 요청사항은 500자 이하로 입력해주세요.")
     private String requestMessage;
 
     private Long cartItemId;

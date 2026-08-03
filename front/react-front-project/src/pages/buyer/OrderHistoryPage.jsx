@@ -220,6 +220,7 @@ function OrderHistoryPage() {
       initialValue: "구매자 요청",
       confirmText: "취소 요청",
       type: "danger",
+      maxLength: 500,
     });
     if (cancelReason === null) {
       return;
@@ -251,6 +252,7 @@ function OrderHistoryPage() {
       initialValue: "상품 하자",
       confirmText: "환불 요청",
       type: "danger",
+      maxLength: 500,
     });
     if (refundReason === null) {
       return;
@@ -289,6 +291,7 @@ function OrderHistoryPage() {
       initialValue: "구매자 요청",
       confirmText: "전체 주문 취소",
       type: "danger",
+      maxLength: 500,
     });
 
     if (cancelReason === null) {

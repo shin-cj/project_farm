@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.qna.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.qna.dto.QnaAnswerRequest;
 import me.soldesk.springbootback.domain.qna.dto.QnaRequest;
@@ -25,7 +26,7 @@ public class QnaController {
 
     // 1. QnA 등록 API (POST /api/qna)
     @PostMapping
-    public ResponseEntity<String> createQna(@RequestBody QnaRequest request) {
+    public ResponseEntity<String> createQna(@Valid @RequestBody QnaRequest request) {
         qnaService.createQna(request);
         return ResponseEntity.ok("문의가 등록되었습니다.");
     }
@@ -50,14 +51,14 @@ public class QnaController {
 
     // 5. QnA 수정 API: PUT /api/qna/{qnaId}
     @PutMapping("/{qnaId}")
-    public ResponseEntity<String> updateQna(@PathVariable Long qnaId, @RequestBody QnaRequest request) {
+    public ResponseEntity<String> updateQna(@PathVariable Long qnaId, @Valid @RequestBody QnaRequest request) {
         qnaService.updateQna(qnaId, request);
         return ResponseEntity.ok("수정 완료");
     }
 
     // 6. 관리자 답변 등록/수정 API: PUT /api/qna/{qnaId}/answer
     @PutMapping("/{qnaId}/answer")
-    public ResponseEntity<String> updateAnswer(@PathVariable Long qnaId, @RequestBody QnaAnswerRequest request) {
+    public ResponseEntity<String> updateAnswer(@PathVariable Long qnaId, @Valid @RequestBody QnaAnswerRequest request) {
         qnaService.updateAnswer(qnaId, request);
         return ResponseEntity.ok("답변 등록 완료");
     }

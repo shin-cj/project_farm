@@ -194,6 +194,7 @@ function QnaListPage() {
                                         placeholder="관리자 답변을 입력하세요..."
                                         value={answerInputs[qna.qnaId] || ''}
                                         onChange={(e) => handleAnswerChange(qna.qnaId, e.target.value)}
+                                        maxLength={500}
                                         style={{ width: '100%', height: '60px', padding: '8px', marginBottom: '5px', boxSizing: 'border-box' }}
                                     />
                                     <button

@@ -1,5 +1,7 @@
 package me.soldesk.springbootback.domain.review.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,6 +25,8 @@ public class ReviewRequest {
     private Integer rating;
 
     /** 리뷰 내용 */
+    @NotBlank(message = "후기 내용을 입력해주세요.")
+    @Size(max = 500, message = "후기 내용은 500자 이하로 입력해주세요.")
     private String content;
 
     /** 리뷰 이미지 주소 */

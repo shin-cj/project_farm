@@ -637,6 +637,7 @@ function ProductEditPage() {
                             name="productName"
                             value={form.productName}
                             onChange={handleChange}
+                            maxLength={150}
                             required
                         />
                     </div>
@@ -648,7 +649,9 @@ function ProductEditPage() {
                             name="description"
                             value={form.description}
                             onChange={handleChange}
+                            maxLength={3000}
                         />
+                        <small>{form.description.length}/3000자</small>
                     </div>
 
                     <div className="product-create-row">
@@ -771,6 +774,7 @@ function ProductEditPage() {
                                 name="origin"
                                 value={form.origin}
                                 onChange={handleChange}
+                                maxLength={100}
                             />
                         </div>
 

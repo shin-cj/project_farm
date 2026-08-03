@@ -1,6 +1,7 @@
 package me.soldesk.springbootback.domain.report.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.report.dto.ReportRequest;
 import me.soldesk.springbootback.domain.report.dto.ReportResponse;
@@ -31,7 +32,7 @@ public class ReportSubmissionController {
     }
 
     @PostMapping
-    public ReportResponse createReport(@RequestBody ReportRequest request){
+    public ReportResponse createReport(@Valid @RequestBody ReportRequest request){
 
         return reportService.createReport(request);
 

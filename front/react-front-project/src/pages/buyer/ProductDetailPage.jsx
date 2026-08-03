@@ -690,8 +690,10 @@ function ProductDetailPage() {
                           placeholder="관리자 답변을 입력하세요..."
                           value={answerInputs[qna.qnaId] || ''}
                           onChange={(event) => handleAnswerChange(qna.qnaId, event.target.value)}
+                          maxLength={500}
                           style={{ width: '100%', height: '50px', padding: '8px', marginBottom: '8px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #ccc' }}
                       />
+                              <small>{(answerInputs[qna.qnaId] || '').length}/500</small>
                               <button
                                   type="button"
                                   onClick={() => handleAnswerSubmit(qna.qnaId)}

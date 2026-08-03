@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.report.controller;
 
+import jakarta.validation.Valid;
 import jakarta.websocket.server.PathParam;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.report.dto.ReportReplyRequest;
@@ -35,14 +36,14 @@ public class ReportController {
     @PatchMapping("/{reportId}/reply")
     public ReportResponse replyToReport(
             @PathVariable Long reportId,
-            @RequestBody ReportReplyRequest request
+            @Valid @RequestBody ReportReplyRequest request
             ){
         return reportService.replyToReport(reportId, request);
     }
     @PatchMapping("/{reportId}/resolution")
     public ReportResponse resolveReport(
             @PathVariable Long reportId,
-            @RequestBody ReportResolutionRequest request){
+            @Valid @RequestBody ReportResolutionRequest request){
         return reportService.resolveReport(reportId, request);
     }
 

@@ -2,6 +2,7 @@ package me.soldesk.springbootback.domain.payment.controller;
 
 import java.util.Map;
 
+import jakarta.validation.Valid;
 import me.soldesk.springbootback.domain.payment.dto.PaymentCancelRequest;
 import me.soldesk.springbootback.domain.payment.dto.PaymentConfirmRequest;
 import me.soldesk.springbootback.domain.payment.dto.PaymentRefundRejectRequest;
@@ -24,26 +25,26 @@ public class PaymentController {
     }
 
     @PostMapping("/confirm")
-    public Map<String, Object> confirmPayment(@RequestBody PaymentConfirmRequest request) {
+    public Map<String, Object> confirmPayment(@Valid @RequestBody PaymentConfirmRequest request) {
         return paymentService.confirmPayment(request);
     }
 
     @PostMapping("/{orderId}/cancel")
     public Map<String, Object> cancelPayment(@PathVariable Long orderId,
-                                             @RequestBody PaymentCancelRequest request) {
+                                             @Valid @RequestBody PaymentCancelRequest request) {
         return paymentService.cancelPayment(orderId, request);
     }
 
     @PostMapping("/{orderId}/cancel-group")
     public Map<String, Object> cancelPaymentGroup(
             @PathVariable Long orderId,
-            @RequestBody PaymentCancelRequest request
+            @Valid @RequestBody PaymentCancelRequest request
     ) {
         return paymentService.cancelPaymentGroup(orderId, request);
     }
 
     @PostMapping("/{orderId}/refund-request")
-    public Map<String,Object> requestRefund(@PathVariable Long orderId,@RequestBody PaymentRefundRequest request){
+    public Map<String,Object> requestRefund(@PathVariable Long orderId,@Valid @RequestBody PaymentRefundRequest request){
         return paymentService.requestRefund(orderId,request);
     }
 
@@ -55,7 +56,7 @@ public class PaymentController {
     @PostMapping("/{orderId}/refund-reject")
     public Map<String, Object> rejectRefund(
             @PathVariable Long orderId,
-            @RequestBody PaymentRefundRejectRequest request
+            @Valid @RequestBody PaymentRefundRejectRequest request
     ) {
         return paymentService.rejectRefund(orderId, request);
     }

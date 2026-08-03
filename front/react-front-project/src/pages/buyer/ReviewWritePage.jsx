@@ -159,9 +159,16 @@ function ReviewWritePage() {
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="상품에 대한 솔직한 후기를 남겨주세요."
                         rows="6"
+                        maxLength={500}
                         required
                         style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical' }}
                     />
+                    <small style={{
+                        display: 'block',
+                        marginTop: '5px',
+                        color:'#777',
+                        textAlign: 'right'
+                    }}>{content.length}/500자</small>
                 </div>
 
                 <div>

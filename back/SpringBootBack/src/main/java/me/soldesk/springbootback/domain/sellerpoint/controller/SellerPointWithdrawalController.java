@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.sellerpoint.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointWithdrawalRequest;
 import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointWithdrawalResponse;
@@ -26,7 +27,7 @@ public class SellerPointWithdrawalController {
     }
 
     @PostMapping
-    public SellerPointWithdrawalResponse requestWithdrawal(@RequestBody SellerPointWithdrawalRequest request) {
+    public SellerPointWithdrawalResponse requestWithdrawal(@Valid @RequestBody SellerPointWithdrawalRequest request) {
         return sellerPointWithdrawalService.requestWithdrawal(request);
     }
 }

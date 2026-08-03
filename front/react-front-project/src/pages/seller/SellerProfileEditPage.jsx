@@ -157,6 +157,7 @@ function SellerProfileEditPage() {
                         name="newPassword"
                         value={form.newPassword}
                         onChange={handleChange}
+                        maxLength={20}
                         placeholder="변경할 경우에만 입력해주세요."
                         disabled={pending}
                     />
@@ -169,6 +170,7 @@ function SellerProfileEditPage() {
                         name="confirmPassword"
                         value={form.confirmPassword}
                         onChange={handleChange}
+                        maxLength={20}
                         placeholder="새 비밀번호를 다시 입력해주세요."
                         disabled={pending}
                     />
@@ -181,6 +183,7 @@ function SellerProfileEditPage() {
                         name="name"
                         value={form.name}
                         onChange={handleChange}
+                        maxLength={20}
                         disabled={pending}
                         required
                     />

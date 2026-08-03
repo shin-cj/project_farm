@@ -67,9 +67,11 @@ function QnaWritePage() {
                         placeholder="제목을 입력하세요"
                         value={questionTitle}
                         onChange={(e) => setQuestionTitle(e.target.value)}
+                        maxLength={200}
                         required
                         style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
                     />
+                    <small>{questionTitle.length}/200자</small>
                 </div>
                 <div>
                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>내용</label>
@@ -78,9 +80,11 @@ function QnaWritePage() {
                         placeholder="문의 내용을 5자 이상 입력하세요"
                         value={questionContent}
                         onChange={(e) => setQuestionContent(e.target.value)}
+                        maxLength={500}
                         required
                         style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', resize: 'vertical', boxSizing: 'border-box' }}
                     />
+                    <small>{questionContent.length}/500자</small>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', fontSize: '14px' }}>
