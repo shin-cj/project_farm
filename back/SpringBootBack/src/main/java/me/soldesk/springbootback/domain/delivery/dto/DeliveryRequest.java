@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.delivery.dto;
 
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
@@ -15,9 +16,11 @@ public class DeliveryRequest {
     private Long orderId;
 
     /** 택배사 이름 */
+    @Size(max = 50, message = "택배사 이름은 50자 이하이어야 합니다.")
     private String courierName;
 
     /** 송장번호 */
+    @Size(max = 100, message = "송장번호는 100자 이하이어야 합니다.")
     private String trackingNumber;
 
     /** 배송 처리 상태 */

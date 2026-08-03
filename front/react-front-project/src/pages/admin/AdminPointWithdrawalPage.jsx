@@ -347,8 +347,10 @@ function AdminPointWithdrawalPage() {
               value={rejectReason}
               onChange={(event) => setRejectReason(event.target.value)}
               placeholder="예: 계좌 정보가 일치하지 않습니다."
+              maxLength={255}
               className="admin-withdrawal-modal-textarea"
             />
+            <small>{rejectReason.length}/255자</small>
             <div className="admin-withdrawal-modal-actions">
               <button type="button" onClick={() => setRejectTarget(null)} className="admin-withdrawal-modal-cancel">
                 취소

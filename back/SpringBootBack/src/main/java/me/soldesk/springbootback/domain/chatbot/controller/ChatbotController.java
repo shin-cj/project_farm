@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.chatbot.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.chatbot.dto.*;
 import me.soldesk.springbootback.domain.chatbot.service.ChatbotService;
@@ -20,7 +21,7 @@ public class ChatbotController {
 
     @PostMapping("/recipes")
     public ResponseEntity<ChatbotResponse> recommend(
-            @RequestBody ChatbotRequest request
+            @Valid @RequestBody ChatbotRequest request
             ){
             ChatbotResponse response = chatbotService.recommendRecipe(request);
             return ResponseEntity.ok(response);
@@ -28,7 +29,7 @@ public class ChatbotController {
 
     @PostMapping("/recipes/save")
     public ResponseEntity<ChatbotResponse> saveRecipe(
-            @RequestBody ChatbotSaveRequest request
+            @Valid @RequestBody ChatbotSaveRequest request
             ){
         ChatbotResponse response = chatbotService.saveRecipe(request);
         return ResponseEntity.ok(response);

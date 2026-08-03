@@ -1,5 +1,7 @@
 package me.soldesk.springbootback.domain.chatbot.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +16,8 @@ public class ChatbotRequest {
     private Long userId;
 
     /** 사용자가 입력한 질문 또는 요청 내용 */
+    @NotBlank(message = "질문을 입력해주세요.")
+    @Size(max = 500, message = "질문은 500자 이하로 입력해주세요.")
     private String obj1;
 
     /** AI가 추천한 레시피 내용 */

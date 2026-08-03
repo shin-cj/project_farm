@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.sellerpoint.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointWithdrawalResponse;
 import me.soldesk.springbootback.domain.sellerpoint.dto.SellerPointWithdrawalStatusRequest;
@@ -27,7 +28,7 @@ public class AdminSellerPointWithdrawalController {
 
     @PatchMapping("/{withdrawalId}/status")
     public SellerPointWithdrawalResponse updateWithdrawalStatus(@PathVariable Long withdrawalId,
-                                                                @RequestBody SellerPointWithdrawalStatusRequest request) {
+                                                                @Valid @RequestBody SellerPointWithdrawalStatusRequest request) {
         return sellerPointWithdrawalService.updateWithdrawalStatus(withdrawalId, request);
     }
 }

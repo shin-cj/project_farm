@@ -364,6 +364,7 @@ function FarmEditPage() {
                                 name="farmName"
                                 value={form.farmName}
                                 onChange={handleChange}
+                                maxLength={100}
                                 required
                             />
                         </label>
@@ -394,6 +395,7 @@ function FarmEditPage() {
                                 value={form.businessNumber}
                                 onChange={handleChange}
                                 placeholder="예: 123-45-67890"
+                                maxLength={12}
                                 required
                             />
                         </label>
@@ -404,6 +406,7 @@ function FarmEditPage() {
                                 name="region"
                                 value={form.region}
                                 onChange={handleChange}
+                                maxLength={100}
                                 required
                             />
                         </label>
@@ -445,6 +448,7 @@ function FarmEditPage() {
                                 value={form.farmDescription}
                                 onChange={handleChange}
                                 rows={5}
+                                maxLength={2000}
                             />
                         </label>
 

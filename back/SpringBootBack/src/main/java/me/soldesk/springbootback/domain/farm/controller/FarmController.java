@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.farm.controller;
 
+import jakarta.validation.Valid;
 import me.soldesk.springbootback.domain.farm.dto.*;
 import me.soldesk.springbootback.domain.farm.service.FarmImageService;
 import me.soldesk.springbootback.domain.farm.service.FarmService;
@@ -54,19 +55,19 @@ public class FarmController {
     }
 
     @PostMapping
-    public FarmResponse createFarm(@RequestBody FarmRequest request){
+    public FarmResponse createFarm(@Valid @RequestBody FarmRequest request){
         return farmService.createFarm(request);
     }
 
     @PutMapping("/{farmId}")
-    public FarmResponse updateFarm(@PathVariable Long farmId, @RequestBody FarmRequest request){
+    public FarmResponse updateFarm(@PathVariable Long farmId,@Valid @RequestBody FarmRequest request){
         return farmService.updateFarm(farmId, request);
     }
 
     @PatchMapping("/{farmId}/approval")
     public FarmResponse updateApprovalStatus(
             @PathVariable Long farmId,
-            @RequestBody FarmApprovalRequest request
+            @Valid @RequestBody FarmApprovalRequest request
     ) {
         return farmService.updateApprovalStatus(farmId, request);
     }

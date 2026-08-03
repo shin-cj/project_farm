@@ -1,5 +1,7 @@
 package me.soldesk.springbootback.domain.qna.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import java.time.LocalDateTime;
@@ -17,9 +19,13 @@ public class QnaRequest {
     private Long buyerId;
 
     /** 문의 제목 */
+    @NotBlank(message = "문의 제목을 입력해주세요.")
+    @Size(max = 200, message = "문의 제목은 200자 이하로 입력해주세요.")
     private String questionTitle;
 
     /** 문의 내용 */
+    @NotBlank(message = "문의 내용을 입력해주세요.")
+    @Size(min = 5, max = 500, message = "문의 내용은 5자이상 500자 이하로 입력해주세요.")
     private String questionContent;
 
     /** 답변 내용 */

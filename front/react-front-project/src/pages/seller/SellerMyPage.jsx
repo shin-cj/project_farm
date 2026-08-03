@@ -458,6 +458,7 @@ function SellerMyPage() {
                 inputMode="numeric"
                 value={withdrawalForm.accountNumber}
                 onChange={handleWithdrawalFormChange}
+                maxLength={30}
                 placeholder="숫자만 입력, 하이픈 제외"
               />
             </label>

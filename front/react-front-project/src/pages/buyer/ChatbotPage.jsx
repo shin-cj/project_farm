@@ -207,6 +207,11 @@ function ChatbotPage() {
       return
     }
 
+    if(question.length > 500){
+        alert('질문은 500자 이하로 입력해주세요.')
+        return
+    }
+
     setConversations(previous =>
       previous.map(conversation =>
       conversation.id === activeConversationId && conversation.title === "새 대화" ? {
@@ -531,11 +536,12 @@ function ChatbotPage() {
                 onKeyDown={handleMessageKeyDown}
                 placeholder="원하는 음식이나 예산을 입력 해주세요."
                 rows={2}
+                maxLength={500}
               />
               <button type="button" onClick={handleSubmit} disabled={loading} title="질문 전송">
                 →
               </button>
-              <small>AI가 생성한 내용은 참고용이며 정확하지 않을 수 있습니다.</small>
+              <small>{message.length}/500자 · AI가 생성한 내용은 참고용이며 정확하지 않을 수 있습니다.</small>
             </div>
           </aside>
 

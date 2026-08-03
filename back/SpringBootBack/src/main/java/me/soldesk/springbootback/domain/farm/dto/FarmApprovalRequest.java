@@ -1,5 +1,6 @@
 package me.soldesk.springbootback.domain.farm.dto;
 
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,5 +13,6 @@ public class FarmApprovalRequest {
     private String approvalStatus;
 
     /** 관리자가 농장 거절 시 작성한 사유 */
+    @Size(max = 500, message = "농장 거절 사유는 500자 이하로 입력해주세요.")
     private String rejectionReason;
 }
