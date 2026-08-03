@@ -441,6 +441,19 @@ function ProductDetailPage() {
     setQuantity(Math.min(stockQuantity, currentQuantity + 1))
   }
 
+  function handleOpenOrderModal() {
+    if (!isPurchasable) {
+      alert(
+          product.productStatus === 'SOLD_OUT'
+              ? '품절된 상품입니다.'
+              : unavailableMessage,
+      )
+      return
+    }
+
+    setIsOrderModalOpen(true)
+  }
+
   function handleDirectOrder() {
     if (!isPurchasable) {
       alert(unavailableMessage)
@@ -634,8 +647,8 @@ function ProductDetailPage() {
               <button
                   type="button"
                   className="product-detail-order-link"
-                  onClick={() => setIsOrderModalOpen(true)}
-                  disabled={!isPurchasable || !isValidQuantity}
+                  onClick={handleOpenOrderModal}
+                  disabled={isPurchasable && !isValidQuantity}
               >
                 바로 주문하기
               </button>

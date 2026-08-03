@@ -81,6 +81,16 @@ class ProductServiceTest {
         assertEquals("HIDDEN", response.getProductStatus());
     }
 
+    @Test
+    void publicProductDetailAllowsSoldOutProduct() {
+        product.setProductStatus("SOLD_OUT");
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        ProductResponse response = productService.getProduct(1L, true);
+
+        assertEquals("SOLD_OUT", response.getProductStatus());
+    }
+
     private ProductStockRequest stockRequest(int quantity) {
         ProductStockRequest request = new ProductStockRequest();
         request.setStockQuantity(quantity);

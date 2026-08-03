@@ -916,7 +916,8 @@ public class ProductService {
     }
 
     private void validatePublicProduct(Product product) {
-        if (!"ON_SALE".equals(product.getProductStatus())) {
+        if (!"ON_SALE".equals(product.getProductStatus())
+                && !"SOLD_OUT".equals(product.getProductStatus())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "판매 중인 상품이 아닙니다.");
         }
     }
