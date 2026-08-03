@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
+import axios from 'axios';
 import { getAllReviews } from '../../api/reviewApi.js';
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx';
 
 function ReviewTable() {
+    const { alert, confirm } = useAppFeedback();
+    const loginUser = JSON.parse(localStorage.getItem('loginUser') || 'null');
+    const adminId = loginUser?.userId;
     const [reviews, setReviews] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [selectedReview, setSelectedReview] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // 페이징 관련 상태 (페이지당 최대 5개씩 표시)
     const [currentPage, setCurrentPage] = useState(1);
@@ -55,6 +61,40 @@ function ReviewTable() {
     const totalPages = Math.ceil(reviews.length / itemsPerPage) || 1;
     const startIndex = (currentPage - 1) * itemsPerPage;
     const currentReviews = reviews.slice(startIndex, startIndex + itemsPerPage);
+
+    async function handleDeleteReview(reviewId) {
+        const confirmed = await confirm({
+            title: '리뷰 삭제',
+            message: '선택한 리뷰를 삭제하시겠습니까? 삭제한 리뷰는 복구할 수 없습니다.',
+            confirmText: '삭제',
+            cancelText: '취소',
+            type: 'danger',
+        });
+
+        if (!confirmed) return;
+
+        try {
+            setIsDeleting(true);
+            await axios.delete(`/api/reviews/admin/${reviewId}`, {
+                params: { adminId },
+            });
+            setReviews((current) => {
+                const next = current.filter((review) => review.reviewId !== reviewId);
+                setCurrentPage((page) => Math.min(page, Math.max(1, Math.ceil(next.length / itemsPerPage))));
+                return next;
+            });
+            setSelectedReview(null);
+            alert({ message: '리뷰가 삭제되었습니다.', type: 'success' });
+        } catch (deleteError) {
+            console.error('관리자 리뷰 삭제 실패:', deleteError);
+            alert({
+                message: deleteError.response?.data?.message || '리뷰를 삭제하지 못했습니다.',
+                type: 'error',
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    }
 
     return (
         <div style={{ fontFamily: 'inherit' }}>
@@ -241,6 +281,24 @@ function ReviewTable() {
                                     />
                                 </div>
                             )}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '22px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedReview(null)}
+                                    disabled={isDeleting}
+                                    style={{ padding: '10px 18px', border: '1px solid #cfdcd2', borderRadius: '6px', background: '#fff', color: '#52645a', fontWeight: 700, cursor: 'pointer' }}
+                                >
+                                    닫기
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleDeleteReview(selectedReview.reviewId)}
+                                    disabled={isDeleting}
+                                    style={{ padding: '10px 18px', border: '1px solid #b42318', borderRadius: '6px', background: '#b42318', color: '#fff', fontWeight: 700, cursor: isDeleting ? 'wait' : 'pointer' }}
+                                >
+                                    {isDeleting ? '삭제 중...' : '삭제'}
+                                </button>
+                            </div>
                         </div>
                     </section>
                 </div>

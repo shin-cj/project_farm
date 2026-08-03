@@ -25,7 +25,7 @@ public class QnaRequest {
 
     /** 문의 내용 */
     @NotBlank(message = "문의 내용을 입력해주세요.")
-    @Size(min = 5, max = 500, message = "문의 내용은 5자이상 500자 이하로 입력해주세요.")
+    @Size(min = 5, max = 255, message = "문의 내용은 5자 이상 255자 이하로 입력해주세요.")
     private String questionContent;
 
     /** 답변 내용 */

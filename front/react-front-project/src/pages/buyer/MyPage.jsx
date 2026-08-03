@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import orderApi from "../../api/orderApi.js";
 import MyReportSummaryCard from "../../components/report/MyReportSummaryCard.jsx";
 import {
@@ -54,6 +55,9 @@ function MyPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [myQnas, setMyQnas] = useState([]);
+  const [qnaLoading, setQnaLoading] = useState(true);
+  const [qnaError, setQnaError] = useState("");
 
   async function fetchOrders() {
     if (!buyerId) {
@@ -77,6 +81,46 @@ function MyPage() {
 
   useEffect(() => {
     fetchOrders();
+  }, [buyerId]);
+
+  useEffect(() => {
+    if (!buyerId) {
+      setMyQnas([]);
+      setQnaLoading(false);
+      return;
+    }
+
+    let ignore = false;
+
+    async function fetchMyQnas() {
+      try {
+        setQnaLoading(true);
+        setQnaError("");
+        const response = await axios.get("/api/qna/my", {
+          params: { buyerId },
+        });
+
+        if (!ignore) {
+          setMyQnas(Array.isArray(response.data) ? response.data : []);
+        }
+      } catch (requestError) {
+        console.error("내 문의 내역 조회 실패:", requestError);
+        if (!ignore) {
+          setMyQnas([]);
+          setQnaError("문의 내역을 불러오지 못했습니다.");
+        }
+      } finally {
+        if (!ignore) {
+          setQnaLoading(false);
+        }
+      }
+    }
+
+    void fetchMyQnas();
+
+    return () => {
+      ignore = true;
+    };
   }, [buyerId]);
 
   const activeOrders = orders.filter((order) => !isClosedOrder(order));
@@ -354,6 +398,120 @@ function MyPage() {
 
             <SavedRecipePanel userId={buyerId} />
           </div>
+
+          <section
+            style={{
+              marginTop: "18px",
+              overflow: "hidden",
+              border: "1px solid #dce6dd",
+              borderRadius: "8px",
+              background: "#ffffff",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "12px",
+                padding: "16px 18px",
+                borderBottom: "1px solid #edf1eb",
+              }}
+            >
+              <div>
+                <h2 style={{ margin: 0, color: "#1f2f24", fontSize: "20px" }}>내 문의 내역</h2>
+                <p style={{ margin: "5px 0 0", color: "#68756d", fontSize: "13px" }}>
+                  작성한 상품 문의와 관리자 처리 결과를 확인할 수 있습니다.
+                </p>
+              </div>
+              <strong style={{ color: "#216b3a", whiteSpace: "nowrap" }}>{myQnas.length}건</strong>
+            </div>
+
+            {qnaLoading ? (
+              <p style={{ margin: 0, padding: "24px", color: "#68756d" }}>문의 내역을 불러오는 중입니다.</p>
+            ) : qnaError ? (
+              <p style={{ margin: 0, padding: "24px", color: "#b42318", fontWeight: 700 }}>{qnaError}</p>
+            ) : myQnas.length === 0 ? (
+              <p style={{ margin: 0, padding: "24px", color: "#68756d" }}>문의하신 내역이 없습니다.</p>
+            ) : (
+              <div style={{ maxHeight: "420px", overflowY: "auto" }}>
+                {myQnas.map((qna, index) => {
+                  const isDeleted = qna.qnaStatus === "DELETED" || Boolean(qna.deletedAt);
+                  const isAnswered = qna.qnaStatus === "ANSWERED" || Boolean(qna.answerContent);
+
+                  return (
+                    <article
+                      key={qna.qnaId}
+                      style={{
+                        padding: "17px 18px",
+                        borderTop: index === 0 ? "none" : "1px solid #edf1eb",
+                        background: isDeleted ? "#fffafa" : "#ffffff",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "16px", alignItems: "flex-start" }}>
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ color: "#68756d", fontSize: "12px", fontWeight: 700 }}>
+                            {qna.productName || "상품 정보 없음"}
+                          </span>
+                          <h3 style={{ margin: "5px 0 7px", color: "#1f2f24", fontSize: "16px", wordBreak: "break-word" }}>
+                            {qna.questionTitle}
+                          </h3>
+                          <p style={{ margin: 0, color: "#526357", lineHeight: 1.6, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            {qna.questionContent}
+                          </p>
+                        </div>
+                        <span
+                          style={{
+                            flex: "0 0 auto",
+                            padding: "5px 9px",
+                            borderRadius: "999px",
+                            background: isDeleted ? "#fee4e2" : isAnswered ? "#e5f4ea" : "#fff4d6",
+                            color: isDeleted ? "#b42318" : isAnswered ? "#216b3a" : "#9a6700",
+                            fontSize: "12px",
+                            fontWeight: 800,
+                          }}
+                        >
+                          {isDeleted ? "삭제됨" : isAnswered ? "답변 완료" : "답변 대기"}
+                        </span>
+                      </div>
+
+                      {isDeleted && (
+                        <div
+                          style={{
+                            marginTop: "13px",
+                            padding: "12px 14px",
+                            border: "1px solid #f4c7c3",
+                            borderRadius: "6px",
+                            background: "#fff1f0",
+                            color: "#912018",
+                          }}
+                        >
+                          <strong style={{ display: "block", marginBottom: "5px", fontSize: "13px" }}>삭제 사유</strong>
+                          <p style={{ margin: 0, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            {qna.deletionReason || "관리자 정책에 따라 삭제 처리되었습니다."}
+                          </p>
+                        </div>
+                      )}
+
+                      {!isDeleted && qna.answerContent && (
+                        <div style={{ marginTop: "13px", padding: "12px 14px", borderRadius: "6px", background: "#f3f8f4", color: "#31563d" }}>
+                          <strong style={{ display: "block", marginBottom: "5px", fontSize: "13px" }}>답변</strong>
+                          <p style={{ margin: 0, lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                            {qna.answerContent}
+                          </p>
+                        </div>
+                      )}
+
+                      <small style={{ display: "block", marginTop: "10px", color: "#879188" }}>
+                        문의일 {formatDate(qna.createdAt)}
+                        {isDeleted && qna.deletedAt ? ` · 삭제일 ${formatDate(qna.deletedAt)}` : ""}
+                      </small>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         </>
       )}
     </section>

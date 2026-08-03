@@ -183,7 +183,7 @@ function AdminDeliveryManagementPage() {
       initialValue: "환불 기준에 맞지 않습니다.",
       confirmText: "반려 처리",
       type: "danger",
-      maxLength: 500,
+      maxLength: 255,
     });
     if (rejectReason === null) {
       return;

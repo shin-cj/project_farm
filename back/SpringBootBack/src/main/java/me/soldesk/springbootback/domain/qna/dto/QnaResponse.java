@@ -59,6 +59,12 @@ public class QnaResponse {
     /** 답변 작성 일시 */
     private LocalDateTime answeredAt;
 
+    /** 관리자 삭제 사유 */
+    private String deletionReason;
+
+    /** 관리자 삭제 일시 */
+    private LocalDateTime deletedAt;
+
     public QnaResponse(Qna qna) {
         this.qnaId = qna.getQnaId();
         this.productId = qna.getProductId();
@@ -72,5 +78,7 @@ public class QnaResponse {
         this.secretContentVisible = !Integer.valueOf(1).equals(qna.getIsSecret());
         this.createdAt = qna.getCreatedAt();
         this.answeredAt = qna.getAnsweredAt();
+        this.deletionReason = qna.getDeletionReason();
+        this.deletedAt = qna.getDeletedAt();
     }
 }

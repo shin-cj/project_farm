@@ -1,13 +1,16 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
+import { useAppFeedback } from '../../context/AppFeedbackContext.jsx';
 
 function QnaTable() {
+    const { alert, prompt } = useAppFeedback();
     const loginUser = JSON.parse(localStorage.getItem('loginUser') || 'null');
     const adminId = loginUser?.userId;
     const [qnas, setQnas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [answerInputs, setAnswerInputs] = useState({});
     const [selectedQna, setSelectedQna] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // 탭 상태
     const [activeTab, setActiveTab] = useState('ALL');
@@ -56,13 +59,14 @@ function QnaTable() {
     }, [selectedQna]);
 
     const handleAnswerChange = (qnaId, value) => {
-        setAnswerInputs({ ...answerInputs, [qnaId]: value });
+        setAnswerInputs((current) => ({ ...current, [qnaId]: value }));
     };
 
     const handleAnswerSubmit = async (qnaId) => {
         const content = answerInputs[qnaId];
+
         if (!content || !content.trim()) {
-            alert('답변 내용을 입력해주세요.');
+            alert({ message: '답변 내용을 입력해주세요.', type: 'error' });
             return;
         }
 
@@ -71,25 +75,19 @@ function QnaTable() {
         try {
             await axios.put(`/api/qna/${qnaId}/answer`, {
                 answerContent: content,
-                adminId: 1
+                adminId,
             });
 
-            alert('답변이 성공적으로 등록되었습니다!');
-
-            setQnas(prevQnas =>
-                prevQnas.map(qna => {
-                    if (qna.qnaId === qnaId) {
-                        return {
-                            ...qna,
-                            answerContent: content,
-                            qnaStatus: 'ANSWERED',
-                            answeredAt: currentTime
-                        };
+            setQnas((currentQnas) => currentQnas.map((qna) => (
+                qna.qnaId === qnaId
+                    ? {
+                        ...qna,
+                        answerContent: content,
+                        qnaStatus: 'ANSWERED',
+                        answeredAt: currentTime,
                     }
-                    return qna;
-                })
-            );
-
+                    : qna
+            )));
             setSelectedQna((currentQna) => currentQna?.qnaId === qnaId
                 ? {
                     ...currentQna,
@@ -99,11 +97,13 @@ function QnaTable() {
                 }
                 : currentQna
             );
-
-            setAnswerInputs({ ...answerInputs, [qnaId]: '' });
-        } catch (error) {
-            console.error('답변 등록 실패:', error);
-            alert('답변 등록에 실패했습니다.');
+            alert({ message: '답변이 등록되었습니다.', type: 'success' });
+        } catch (answerError) {
+            console.error('답변 등록 실패:', answerError);
+            alert({
+                message: answerError.response?.data?.message || '답변을 등록하지 못했습니다.',
+                type: 'error',
+            });
         }
     };
 
@@ -133,11 +133,56 @@ function QnaTable() {
 
     const openQnaModal = (qna) => {
         setSelectedQna(qna);
-        setAnswerInputs((currentInputs) => ({
-            ...currentInputs,
+        setAnswerInputs((current) => ({
+            ...current,
             [qna.qnaId]: qna.answerContent || '',
         }));
     };
+
+    async function handleDeleteQna(qnaId) {
+        const deletionReason = await prompt({
+            title: '문의 삭제',
+            message: '구매자에게 안내할 삭제 사유를 입력해주세요.',
+            inputLabel: '삭제 사유',
+            placeholder: '예: 개인정보가 포함되어 관리자에 의해 숨김 처리되었습니다.',
+            maxLength: 500,
+            confirmText: '삭제 처리',
+            cancelText: '취소',
+            type: 'danger',
+        });
+
+        if (deletionReason === null) return;
+
+        if (!deletionReason.trim()) {
+            alert({ message: '삭제 사유를 입력해주세요.', type: 'error' });
+            return;
+        }
+
+        try {
+            setIsDeleting(true);
+            await axios.delete(`/api/qna/admin/${qnaId}`, {
+                data: {
+                    adminId,
+                    deletionReason,
+                },
+            });
+            setQnas((current) => {
+                const next = current.filter((qna) => qna.qnaId !== qnaId);
+                setCurrentPage((page) => Math.min(page, Math.max(1, Math.ceil(next.length / itemsPerPage))));
+                return next;
+            });
+            setSelectedQna(null);
+            alert({ message: '문의가 삭제되었습니다.', type: 'success' });
+        } catch (deleteError) {
+            console.error('관리자 문의 삭제 실패:', deleteError);
+            alert({
+                message: deleteError.response?.data?.message || '문의를 삭제하지 못했습니다.',
+                type: 'error',
+            });
+        } finally {
+            setIsDeleting(false);
+        }
+    }
 
     return (
         <div style={{ fontFamily: 'inherit' }}>
@@ -365,26 +410,36 @@ function QnaTable() {
                                     onChange={(event) => handleAnswerChange(selectedQna.qnaId, event.target.value)}
                                     placeholder="문의에 대한 답변을 입력해주세요."
                                     rows={6}
-                                    maxLength={500}
+                                    maxLength={255}
                                     style={{ width: '100%', padding: '13px 14px', border: '1px solid #cfdcd2', borderRadius: '6px', resize: 'vertical', boxSizing: 'border-box', color: '#26362c', font: 'inherit', lineHeight: 1.6 }}
                                 />
                                 <small>{(answerInputs[selectedQna.qnaId] || '').length}/500</small>
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '14px' }}>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '18px' }}>
                                     <button
                                         type="button"
                                         onClick={() => setSelectedQna(null)}
+                                        disabled={isDeleting}
                                         style={{ padding: '10px 18px', border: '1px solid #cfdcd2', borderRadius: '6px', background: '#fff', color: '#52645a', fontWeight: 700, cursor: 'pointer' }}
                                     >
                                         닫기
                                     </button>
                                     <button
                                         type="button"
+                                        onClick={() => handleDeleteQna(selectedQna.qnaId)}
+                                        disabled={isDeleting}
+                                        style={{ padding: '10px 18px', border: '1px solid #b42318', borderRadius: '6px', background: '#b42318', color: '#fff', fontWeight: 700, cursor: isDeleting ? 'wait' : 'pointer' }}
+                                    >
+                                        {isDeleting ? '삭제 중...' : '삭제'}
+                                    </button>
+                                    <button
+                                        type="button"
                                         onClick={() => handleAnswerSubmit(selectedQna.qnaId)}
+                                        disabled={isDeleting}
                                         style={{ padding: '10px 18px', border: '1px solid #176337', borderRadius: '6px', background: '#176337', color: '#fff', fontWeight: 700, cursor: 'pointer' }}
                                     >
                                         {selectedQna.answerContent ? '답변 수정' : '답변 등록'}
                                     </button>
-                                </div>
                             </div>
                         </div>
                     </section>

@@ -3,6 +3,7 @@ package me.soldesk.springbootback.domain.qna.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import me.soldesk.springbootback.domain.qna.dto.QnaAnswerRequest;
+import me.soldesk.springbootback.domain.qna.dto.QnaAdminDeleteRequest;
 import me.soldesk.springbootback.domain.qna.dto.QnaRequest;
 import me.soldesk.springbootback.domain.qna.dto.QnaResponse;
 import me.soldesk.springbootback.domain.qna.service.QnaService;
@@ -47,6 +48,11 @@ public class QnaController {
         return ResponseEntity.ok(qnaService.getAllQnas(viewerId));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<List<QnaResponse>> getMyQnas(@RequestParam Long buyerId) {
+        return ResponseEntity.ok(qnaService.getMyQnas(buyerId));
+    }
+
     // 4. QnA 상세 조회 API: GET /api/qna/detail/{qnaId}
     @GetMapping("/detail/{qnaId}")
     public ResponseEntity<QnaResponse> getQnaDetail(
@@ -72,8 +78,16 @@ public class QnaController {
     // 7. QnA 삭제 API: DELETE /api/qna/{qnaId}
     @DeleteMapping("/{qnaId}")
     public ResponseEntity<String> deleteQna(@PathVariable Long qnaId,
-                                            @RequestParam Long buyerId) {
+                                             @RequestParam Long buyerId) {
         qnaService.deleteQna(qnaId, buyerId);
         return ResponseEntity.ok("삭제 완료");
+    }
+
+    @DeleteMapping("/admin/{qnaId}")
+    public ResponseEntity<String> deleteQnaByAdmin(
+            @PathVariable Long qnaId,
+            @Valid @RequestBody QnaAdminDeleteRequest request) {
+        qnaService.deleteQnaByAdmin(qnaId, request);
+        return ResponseEntity.ok("문의가 삭제 처리되었습니다.");
     }
 }

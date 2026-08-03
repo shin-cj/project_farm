@@ -160,8 +160,8 @@ function ReportButton({
                                 setReportReason(e.target.value)}
                             placeholder="신고 사유를 구체적으로 입력해주세요."
                             rows={6}
-                            maxLength={500}/>
-                        <span>{reportReason.length}/500</span>
+                            maxLength={255}/>
+                        <span>{reportReason.length}/255</span>
 
                         {error && <p className="report-submit-error">{error}</p>}
 
