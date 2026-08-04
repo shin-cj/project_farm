@@ -528,6 +528,22 @@ function ProductDetailPage() {
     })
   }
 
+  const handleQuantityChange = (event) =>{
+    const {value} = event.target;
+
+    if (value === '') {
+      setQuantity('');
+      return;
+    }
+
+    let numVal = Number(value);
+
+    if (numVal > stockQuantity){
+      numVal = stockQuantity;
+    }
+    setQuantity(numVal);
+  }
+
   return (
       <main className="product-detail-page">
         <section className="product-detail-card">
@@ -635,7 +651,7 @@ function ProductDetailPage() {
                       min={minimumOrderQuantity}
                       max={stockQuantity}
                       value={quantity}
-                      onChange={(event) => setQuantity(event.target.value)}
+                      onChange={handleQuantityChange}
                   />
 
                   <button
@@ -1236,7 +1252,7 @@ function ProductDetailPage() {
                       min={minimumOrderQuantity}
                       max={stockQuantity}
                       value={quantity}
-                      onChange={(event) => setQuantity(event.target.value)}
+                      onChange={handleQuantityChange}
                   />
                 </label>
 
