@@ -152,6 +152,7 @@ GitHub 프로젝트의 [`database/setup`](https://github.com/shin-cj/project_far
 - OpenAI API 키
 - Pexels API 키
 - 토스페이먼츠 테스트 키
+- 
 
 ## 백엔드 실행 방법
 

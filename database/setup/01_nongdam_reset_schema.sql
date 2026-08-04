@@ -756,6 +756,19 @@ CREATE SEQUENCE seller_penalties_seq
     NOCACHE;
 
 
+ALTER TABLE product_stock_histories
+DROP CONSTRAINT ck_stock_histories_type;
+
+ALTER TABLE product_stock_histories
+ADD CONSTRAINT ck_stock_histories_type
+CHECK (change_type IN (
+    'INITIAL_STOCK',
+    'MANUAL_ADJUSTMENT',
+    'PAYMENT_DEDUCTION',
+    'PAYMENT_CANCEL_RESTORE',
+    'PAYMENT_REFUND_RESTORE'
+));
+
 SELECT * FROM REVIEWS;
 
 COMMIT;
