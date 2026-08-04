@@ -124,13 +124,13 @@ public class ReportService {
                 throw new IllegalArgumentException("신고할 상품 정보가 없습니다.");
             }
 
+            productId = request.getProductId();
+
             if(!canReportProduct(request.getReporterId(), productId)){
                 throw new IllegalArgumentException(
-                        "구매한 상품만 신고할 수 있습니다."
+                        "배송 완료된 상품만 신고할 수 있습니다."
                 );
             }
-
-            productId = request.getProductId();
 
             reportedUserId = reportRepository
                     .findSellerIdByProductId(productId)
